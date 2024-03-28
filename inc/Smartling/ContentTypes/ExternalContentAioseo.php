@@ -3,6 +3,7 @@
 namespace Smartling\ContentTypes;
 
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\PluginHelper;
@@ -98,7 +99,7 @@ class ExternalContentAioseo extends ExternalContentAbstract
         if ($this->contentTypeHelper->isPost($contentType)) {
             return parent::getSupportLevel($contentType, $contentId);
         }
-        return self::NOT_SUPPORTED;
+        return Pluggable::NOT_SUPPORTED;
     }
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array

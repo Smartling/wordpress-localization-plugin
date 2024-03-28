@@ -13,7 +13,7 @@ class PostContentHelper
     public const SMARTLING_LOCKED = 'smartlingLocked';
     public const SMARTLING_LOCKED_ATTRIBUTES = 'smartlingLockedAttributes';
 
-    public function __construct(private GutenbergBlockHelper $blockHelper)
+    public function __construct(private ArrayHelper $arrayHelper, private GutenbergBlockHelper $blockHelper)
     {
     }
 
@@ -38,8 +38,9 @@ class PostContentHelper
                 $targetBlock = $this->getBlockByPath($targetBlocks, $path);
                 assert($targetBlock !== null);
                 $attributes = $resultBlock->getAttributes();
-                if (array_key_exists($attribute, $targetBlock->toArray()['attrs'])) {
-                    $attributes[$attribute] = $targetBlock->getAttributes()[$attribute];
+                $targetValue = ArrayHelper::getValue($targetBlock->getAttributes(), $attribute);
+                if ($targetValue !== null) {
+                    $attributes = $this->arrayHelper->setValue($attributes, $attribute, $targetValue);
                 }
                 $resultBlocks = $this->setBlockByPath($resultBlocks, $path, $resultBlock->withAttributes($attributes));
             }
@@ -159,7 +160,15 @@ class PostContentHelper
 
     public function setBlockByPath(array $blocks, string $path, GutenbergBlock $gutenbergBlock): array
     {
-        return $this->setBlock($blocks, $path, $gutenbergBlock)['block']->getInnerBlocks();
+        $result = $this->setBlock($blocks, $path, $gutenbergBlock);
+
+        if ($result['useInnerBlock']) {
+            return $result['block']->getInnerBlocks();
+        }
+
+        $blocks[$result['index']] = $result['block'];
+
+        return $blocks;
     }
 
     #[ArrayShape(['block' => GutenbergBlock::class, 'index' => '?integer', 'useInnerBlock' => 'boolean'])]
@@ -179,7 +188,7 @@ class PostContentHelper
                 }
                 $blockInfo = $this->setBlock($block->getInnerBlocks(), implode('/', $parts), $gutenbergBlock);
                 $replacement = $blockInfo['useInnerBlock'] ? $blockInfo['block']->getInnerBlocks()[$blockInfo['index']] : $blockInfo['block'];
-                $block = $block->withInnerBlock($replacement, $blockInfo['useInnerBlock'] ? $blockInfo['index'] : $index);
+                $block = $block->withInnerBlock($replacement, $blockInfo['index']);
             }
         }
         unset($block);

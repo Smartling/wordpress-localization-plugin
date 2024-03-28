@@ -3,14 +3,16 @@
 namespace Smartling\Tests\Smartling\ContentTypes;
 
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\ContentTypePluggableInterface;
 use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\ContentTypes\ExternalContentElementor;
 use PHPUnit\Framework\TestCase;
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\LinkProcessor;
 use Smartling\Helpers\PluginHelper;
+use Smartling\Helpers\SiteHelper;
+use Smartling\Helpers\UserHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Helpers\WordpressLinkHelper;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -22,8 +24,8 @@ class ExternalContentElementorTest extends TestCase {
         $proxy->method('getPostMeta')->willReturn('', []);
         $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => []]);
         $proxy->method('is_plugin_active')->willReturn(true);
-        $this->assertEquals(ContentTypePluggableInterface::NOT_SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
-        $this->assertEquals(ContentTypePluggableInterface::SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
+        $this->assertEquals(Pluggable::NOT_SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
+        $this->assertEquals(Pluggable::SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
     }
 
     /**
@@ -70,7 +72,7 @@ class ExternalContentElementorTest extends TestCase {
                 [
                     ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [19366],
                     ContentTypeHelper::POST_TYPE_ATTACHMENT => [597, 598],
-                ]
+                ],
             ],
             'realistic content with background images' => [
                 file_get_contents(__DIR__ . '/wp-834.json'),
@@ -246,7 +248,7 @@ and management of:',
             'meta' => [
                 'x' => 'relevant',
             ],
-        ], $this->getExternalContentElementor()->alterContentFieldsForUpload([
+        ], $this->getExternalContentElementor()->removeUntranslatableFieldsForUpload([
             'entity' => [
                 'post_content' => 'irrelevant',
             ],
@@ -254,8 +256,8 @@ and management of:',
                 'x' => 'relevant',
                 '_elementor_data' => 'irrelevant',
                 '_elementor_version' => 'irrelevant',
-            ]
-        ]));
+            ],
+        ], $this->createMock(SubmissionEntity::class)));
     }
 
     private function getExternalContentElementor(?WordpressFunctionProxyHelper $proxy = null, ?SubmissionManager $submissionManager = null): ExternalContentElementor
@@ -265,21 +267,25 @@ and management of:',
         $pluginHelper = $this->createMock(PluginHelper::class);
         $pluginHelper->method('versionInRange')->willReturn(true);
         if ($proxy === null) {
-            $proxy = new WordpressFunctionProxyHelper();
+            $proxy = $this->createPartialMock(WordpressFunctionProxyHelper::class, ['add_action']);
         }
         if ($submissionManager === null) {
             $submissionManager = $this->createMock(SubmissionManager::class);
         }
         $fieldsFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)->disableOriginalConstructor()->onlyMethods([])->getMock();
 
+        $siteHelper = $this->createPartialMock(SiteHelper::class, ['restoreBlogId', 'switchBlogId']);
+
         return new ExternalContentElementor(
             $contentTypeHelper,
             new ElementFactory(),
             $fieldsFilterHelper,
             $pluginHelper,
+            $siteHelper,
             $submissionManager,
+            $this->createMock(UserHelper::class),
             $proxy,
-            new WordpressLinkHelper($submissionManager, $proxy),
+            new LinkProcessor($siteHelper),
         );
     }
 }

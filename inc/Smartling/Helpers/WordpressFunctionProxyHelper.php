@@ -11,6 +11,14 @@ namespace Smartling\Helpers;
 
 class WordpressFunctionProxyHelper
 {
+    public function add_action()
+    {
+        return add_action(...func_get_args());
+    }
+    public function get_home_url()
+    {
+        return get_home_url(...func_get_args());
+    }
     public static function getPostTypes()
     {
         return get_post_types(...func_get_args());
@@ -40,6 +48,11 @@ class WordpressFunctionProxyHelper
     public function get_current_blog_id()
     {
         return get_current_blog_id(...func_get_args());
+    }
+
+    public function get_current_user_id()
+    {
+        return get_current_user_id(...func_get_args());
     }
 
     public function get_taxonomies()
@@ -141,6 +154,11 @@ class WordpressFunctionProxyHelper
         return wp_get_active_network_plugins(...func_get_args());
     }
 
+    public function wp_get_current_user()
+    {
+        return wp_get_current_user(...func_get_args());
+    }
+
     public function wp_send_json()
     {
         return wp_send_json(...func_get_args());
@@ -149,5 +167,10 @@ class WordpressFunctionProxyHelper
     public function wp_send_json_error()
     {
         return wp_send_json_error(...func_get_args());
+    }
+
+    public function wp_set_current_user(int $id, string $name = '')
+    {
+        return wp_set_current_user($id, $name);
     }
 }

@@ -46,6 +46,16 @@ class SubmissionManager extends EntityManagerAbstract
         $this->submissionsJobsManager = $submissionsJobsManager;
     }
 
+    public function buildConditionBlockFromSearchParameters(array $parameters): ConditionBlock
+    {
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
+        foreach ($parameters as $key => $value) {
+            $block->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, $key, $value));
+        }
+
+        return $block;
+    }
+
     private function isValidContentType(?string $contentType): bool
     {
         return
@@ -132,18 +142,9 @@ class SubmissionManager extends EntityManagerAbstract
         return $result;
     }
 
-    private function getTotalByFieldInValues(ConditionBlock $conditionBlock): int
+    public function count(ConditionBlock $conditionBlock): int
     {
-        $countQuery = $this->buildCountQuery(
-            null,
-            null,
-            null,
-            $conditionBlock,
-        );
-
-        $totalCount = $this->getDbal()->fetch($countQuery);
-
-        return (int)$totalCount[0]->cnt;
+        return (int)$this->getDbal()->fetch($this->buildCountQuery(baseCondition: $conditionBlock))[0]->cnt;
     }
 
     public function getTotalInUploadQueue(): int
@@ -152,7 +153,7 @@ class SubmissionManager extends EntityManagerAbstract
         $block->addConditionBlock($this->getConditionBlockForCloning());
         $block->addConditionBlock($this->getConditionBlockForUploadJob());
 
-        return $this->getTotalByFieldInValues($block);
+        return $this->count($block);
     }
 
     public function getTotalInCheckStatusHelperQueue(): int
@@ -165,7 +166,7 @@ class SubmissionManager extends EntityManagerAbstract
         ));
         $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
 
-        return $this->getTotalByFieldInValues($conditionBlock);
+        return $this->count($conditionBlock);
     }
 
 
@@ -210,8 +211,12 @@ class SubmissionManager extends EntityManagerAbstract
         return $query;
     }
 
-    public function buildCountQuery(?string $contentType, ?string $status, ?int $outdatedFlag, ConditionBlock $baseCondition = null): string
-    {
+    public function buildCountQuery(
+        ?string $contentType = null,
+        ?string $status = null,
+        ?int $outdatedFlag = null,
+        ?ConditionBlock $baseCondition = null,
+    ): string {
         $whereOptions = null;
 
         if (null !== $contentType || null !== $status || null !== $outdatedFlag || null !== $baseCondition) {
@@ -261,10 +266,11 @@ class SubmissionManager extends EntityManagerAbstract
      *
      * @param array $params
      * @param int $limit (if 0 - unlimited)
+     * @param int $page (first page is 1, not 0)
      *
      * @return SubmissionEntity[]
      */
-    public function find(array $params = [], int $limit = 0): array
+    public function find(array $params = [], int $limit = 0, int $page = 1): array
     {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
 
@@ -278,8 +284,7 @@ class SubmissionManager extends EntityManagerAbstract
             $block->addCondition($condition);
         }
 
-
-        $pageOptions = 0 === $limit ? null : ['limit' => $limit, 'page' => 1];
+        $pageOptions = 0 === $limit ? null : ['limit' => $limit, 'page' => $page];
 
         $query = $this->buildQuery(null, null, null, [], $pageOptions, $block);
 

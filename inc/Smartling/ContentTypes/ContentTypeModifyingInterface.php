@@ -2,7 +2,9 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Submissions\SubmissionEntity;
+
 interface ContentTypeModifyingInterface extends ContentTypePluggableInterface
 {
-    public function alterContentFieldsForUpload(array $source): array;
+    public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array;
 }

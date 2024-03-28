@@ -5,6 +5,8 @@ namespace Smartling\ContentTypes\Elementor\Elements;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 class IconList extends Unknown {
     public function getType(): string
@@ -37,5 +39,25 @@ class IconList extends Unknown {
         }
 
         return [$this->getId() => $return];
+    }
+
+    public function setTargetContent(
+        RelatedContentInfo $info,
+        array $strings,
+        SubmissionEntity $submission,
+        SubmissionManager $submissionManager,
+    ): static {
+        foreach ($strings[$this->id]['icon_list'] ?? [] as $id => $setting) {
+            if (is_array($setting) && array_key_exists('text', $setting)) {
+                foreach ($this->raw['settings']['icon_list'] ?? [] as $key => $icon) {
+                    if (($icon['_id'] ?? '') === $id) {
+                        $this->raw['settings']['icon_list'][$key]['text'] = $setting['text'];
+                        break;
+                    }
+                }
+            }
+        }
+
+        return new self($this->raw);
     }
 }

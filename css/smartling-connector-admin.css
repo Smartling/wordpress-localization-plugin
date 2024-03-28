@@ -341,8 +341,7 @@ th.center {
 }
 
 .update-nag table th {
-    width: 200px;
-    max-width: 200px;
+    max-width: 240px;
 }
 
 .update-nag table td {

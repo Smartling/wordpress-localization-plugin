@@ -2,10 +2,12 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Extensions\StringHandler;
+use Smartling\Services\HandlerManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-class WordpressLinkHelper {
+class WordpressLinkHelper implements StringHandler {
     use LoggerSafeTrait;
 
     public function __construct(
@@ -37,5 +39,13 @@ class WordpressLinkHelper {
         }
 
         return null;
+    }
+
+    public function handle(string $string, ?HandlerManager $handlerManager, ?SubmissionEntity $submission): string
+    {
+        if ($submission === null) {
+            return $string;
+        }
+        return $this->getTargetBlogLink($string, $submission->getTargetBlogId()) ?? $string;
     }
 }

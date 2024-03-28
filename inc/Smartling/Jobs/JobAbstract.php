@@ -87,7 +87,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      * @throws EntityNotFoundException
      * @throws SmartlingApiException
      */
-    public function placeLockFlag(bool $renew = false): void
+    public function placeLockFlag(bool $renew = false, string $source = ''): void
     {
         $profile = $this->getActiveProfile();
         $flagName = $this->getCronFlagName();
@@ -96,7 +96,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         if (true === $renew) {
             $msgTemplate = 'Renewing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)';
         } else {
-            if ($this->cache->get($flagName)) {
+            if ($source !== self::SOURCE_USER && $this->cache->get($flagName)) {
                 throw new \RuntimeException(self::THROTTLED_MESSAGE);
             }
             $msgTemplate = 'Placing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)';
@@ -156,7 +156,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
 
         $message = null;
         try {
-            $this->tryRunJob();
+            $this->tryRunJob($source);
         } catch (EntityNotFoundException) {
             $message = "No active profiles, skipping {$this->getJobHookName()} run";
             $this->getLogger()->debug($message);
@@ -187,9 +187,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      * @throws EntityNotFoundException
      * @throws SmartlingApiException
      */
-    private function tryRunJob(): void
+    private function tryRunJob(string $source = ''): void
     {
-        $this->placeLockFlag();
+        $this->placeLockFlag(source: $source);
         try {
             $this->run();
         } finally {

@@ -10,13 +10,19 @@ class Condition
     private string $field;
     private array $values;
 
-    protected function __construct(string $condition, string $field, array $values, bool $escapeField = true)
+    public function __construct(string $condition, string $field, array|float|int|string $values, bool $escapeField = true)
     {
         $this->condition = $condition;
         $this->field = $escapeField ? QueryBuilder::escapeName($field) : $field;
+        if (!is_array($values)) {
+            $values = [$values];
+        }
         $this->values = QueryBuilder::escapeValues($values);
     }
 
+    /**
+     * @deprecated Call new Condition() instead
+     */
     public static function getCondition(string $condition, string $field, array $values, bool $escapeField = true): Condition
     {
         return new self($condition, $field, $values, $escapeField);

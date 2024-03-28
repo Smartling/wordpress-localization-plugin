@@ -33,6 +33,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Extensions\Acf\AcfDynamicSupport;
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
     use Smartling\Helpers\ContentHelper;
+    use Smartling\Helpers\ContentSerializationHelper;
     use Smartling\Helpers\CustomMenuContentTypeHelper;
     use Smartling\Helpers\FieldsFilterHelper;
     use Smartling\Helpers\FileUriHelper;
@@ -519,10 +520,16 @@ namespace Smartling\Tests\Services {
 
             $settingsManager = $this->createMock(SettingsManager::class);
 
-            $fieldFilterHelper = $this->getMockBuilder(FieldsFilterHelper::class)
-                ->setConstructorArgs([$settingsManager, $this->createMock(AcfDynamicSupport::class)])
-                ->onlyMethods([])
-                ->getMock();
+
+            $wordpressProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wordpressProxy->method('get_post_type')->willReturn('page');
+
+            $fieldFilterHelper = new FieldsFilterHelper(
+                $this->createMock(AcfDynamicSupport::class),
+                $this->createMock(ContentSerializationHelper::class),
+                $settingsManager,
+                $wordpressProxy,
+            );
 
             $metaFieldProcessorManager = $this->createMock(MetaFieldProcessorManager::class);
             $metaFieldProcessorManager->method('getProcessor')->willReturnCallback(function (string $fieldName) {
@@ -532,8 +539,6 @@ namespace Smartling\Tests\Services {
                 return $this->createMock(DefaultMetaFieldProcessor::class);
             });
 
-            $wordpressProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-            $wordpressProxy->method('get_post_type')->willReturn('page');
 
             $x = $this->getContentRelationDiscoveryService(
                 $this->createMock(ApiWrapper::class),

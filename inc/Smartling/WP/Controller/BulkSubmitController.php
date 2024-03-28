@@ -62,7 +62,6 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
                 $this->siteHelper,
                 Bootstrap::getContainer()->get('entrypoint'),
                 $this->getManager(),
-                $this->getPluginInfo(),
                 $profile
             );
             $this->view($table);

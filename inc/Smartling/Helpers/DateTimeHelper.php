@@ -132,10 +132,7 @@ class DateTimeHelper
         return static::dateTimeToString(new DateTime('now', static::getDefaultTimezone()));
     }
 
-    /**
-     * @return string
-     */
-    public static function getWordpressDateFormat()
+    public static function getWordpressDateFormat(): string
     {
         if (null === static::$wp_date_format) {
             static::$wp_date_format = get_option('date_format');

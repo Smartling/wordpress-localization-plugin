@@ -9,8 +9,6 @@ use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
-use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 class Unknown extends ElementAbstract {
     public function getRelated(): RelatedContentInfo
@@ -36,7 +34,7 @@ class Unknown extends ElementAbstract {
     public function getTranslatableStrings(): array
     {
         $return = [];
-        $keys = ['background_image/alt', 'text'];
+        $keys = ['background_image/alt', 'html', 'text', 'title'];
         foreach ($this->elements as $element) {
             if ($element instanceof Element) {
                 $return[] = $element->getTranslatableStrings();
@@ -57,5 +55,4 @@ class Unknown extends ElementAbstract {
     {
         return ElementFactory::UNKNOWN_ELEMENT;
     }
-
 }

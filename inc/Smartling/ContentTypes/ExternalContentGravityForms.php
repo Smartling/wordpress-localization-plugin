@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\DbAl\WordpressContentEntities\GravityFormFormData;
 use Smartling\DbAl\WordpressContentEntities\GravityFormsFormHandler;
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\LoggerSafeTrait;
@@ -43,13 +44,13 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         $this->gutenbergBlockHelper = $gutenbergBlockHelper;
         $this->handler = $handler;
         $this->siteHelper = $siteHelper;
-        if (parent::getSupportLevel(self::CONTENT_TYPE) === self::SUPPORTED) {
+        if (parent::getSupportLevel(self::CONTENT_TYPE) === Pluggable::SUPPORTED) {
             $contentEntitiesIOFactory->registerHandler(self::CONTENT_TYPE, $handler);
             $contentTypeManager->addDescriptor($contentType);
         }
     }
 
-    public function alterContentFieldsForUpload(array $source): array
+    public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
     {
         unset($source['entity']['displayMeta']);
         return $source;
@@ -57,14 +58,22 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
 
     public function getSupportLevel(string $contentType, ?int $contentId = null): string
     {
-        if ($contentType === self::CONTENT_TYPE || $this->contentTypeHelper->isPost($contentType)) {
+        if ($contentType === self::CONTENT_TYPE
+            || ($this->contentTypeHelper->isPost($contentType)
+                && str_contains(
+                    $this->wpProxy->get_post($contentId)->post_content,
+                    'gravityforms',
+                ))) {
             return parent::getSupportLevel($contentType, $contentId);
         }
-        return self::NOT_SUPPORTED;
+        return Pluggable::NOT_SUPPORTED;
     }
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
+        if ($submission->getContentType() !== self::CONTENT_TYPE) {
+            return [];
+        }
         $formData = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
             return $this->handler->getFormData($submission->getSourceId());
         });

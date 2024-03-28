@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes;
 
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
@@ -43,14 +44,16 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         $this->submissionManager = $submissionManager;
     }
 
-    public function alterContentFieldsForUpload(array $source): array
+    public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
     {
-        foreach ($this->removeOnUploadFields as $removeKey => $removeValue) {
-            if (array_key_exists($removeKey, $source)) {
-                foreach ($removeValue as $field) {
-                    foreach ($source[$removeKey] as $sourceKey => $sourceValue) {
-                        if (preg_match("~$field~", $sourceKey)) {
-                            unset($source[$removeKey][$sourceKey]);
+        if (array_key_exists(self::META_FIELD_NAME, $source['meta'] ?? [])) {
+            foreach ($this->removeOnUploadFields as $removeKey => $removeValue) {
+                if (array_key_exists($removeKey, $source)) {
+                    foreach ($removeValue as $field) {
+                        foreach ($source[$removeKey] as $sourceKey => $sourceValue) {
+                            if (preg_match("~$field~", $sourceKey)) {
+                                unset($source[$removeKey][$sourceKey]);
+                            }
                         }
                     }
                 }
@@ -65,7 +68,7 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
         if ($this->contentTypeHelper->isPost($contentType) && $this->getDataFromPostMeta($contentId) !== '') {
             return parent::getSupportLevel($contentType, $contentId);
         }
-        return self::NOT_SUPPORTED;
+        return Pluggable::NOT_SUPPORTED;
     }
 
     private function extractContent(array $data): ExternalData {
@@ -127,7 +130,9 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
     public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
     {
         $translation['meta'][self::META_FIELD_NAME] = $this->buildData(unserialize($original['meta'][self::META_FIELD_NAME] ?? '') ?: [], $translation[$this->getPluginId()] ?? [], $submission);
-        $translation['meta'][self::META_SETTINGS_NAME] = $original['meta'][self::META_SETTINGS_NAME];
+        if (array_key_exists(self::META_SETTINGS_NAME, $original['meta'])) {
+            $translation['meta'][self::META_SETTINGS_NAME] = $original['meta'][self::META_SETTINGS_NAME];
+        }
         unset($translation[$this->getPluginId()]);
         return $translation;
     }

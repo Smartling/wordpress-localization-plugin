@@ -2,35 +2,26 @@
 
 namespace Smartling\Tests\Smartling\Helpers;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
 
-/**
- * Class FieldsFilterHelperTest
- * @package Smartling\Tests\Smartling\Helpers
- * @covers  \Smartling\Helpers\FieldsFilterHelper
- */
 class FieldsFilterHelperTest extends TestCase
 {
-
     use InvokeMethodTrait;
     use SettingsManagerMock;
 
     /**
-     * @covers       \Smartling\Helpers\FieldsFilterHelper::structurizeArray
      * @dataProvider structurizeArrayDataProvider
-     *
-     * @param array $flat
-     * @param array $structured
      */
     public function testStructurizeArray(array $flat, array $structured)
     {
-        $obj = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
-        $result = $this->invokeMethod($obj, 'structurizeArray', [$flat]);
-        self::assertEquals($structured, $result);
+        $this->assertEquals($structured, $this->getFieldsFilterHelper()->structurizeArray($flat));
     }
 
     /**
@@ -105,7 +96,7 @@ class FieldsFilterHelperTest extends TestCase
         // testing complex structure
         $complex = $fields;
         $complexStructure = [];
-        foreach ($complex as $source => & $expected) {
+        foreach ($complex as &$expected) {
             $complexStructure = array_merge_recursive($complexStructure, $expected);
             $expected = 'test';
 
@@ -116,7 +107,7 @@ class FieldsFilterHelperTest extends TestCase
 
     public function testRemoveFields()
     {
-        $x = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
+        $x = $this->getFieldsFilterHelper();
         $fields = [
             'meta/stays' => 'value',
             'meta/tool_templates_1000_stays' => 'value',
@@ -130,7 +121,7 @@ class FieldsFilterHelperTest extends TestCase
 
     public function testRemoveFieldsRegex()
     {
-        $x = new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock());
+        $x = $this->getFieldsFilterHelper();
 
         $fields = ['meta/stays' => 'value'];
         for ($i = 0; $i < 301; $i++) {
@@ -175,7 +166,7 @@ class FieldsFilterHelperTest extends TestCase
         $fields = ['meta/stays' => 'value'];
         $this->assertEquals(
             $fields,
-            (new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()))->removeFields($fields, [], true),
+            $this->getFieldsFilterHelper()->removeFields($fields, [], true),
             'Should not remove any fields on empty regex list'
         );
     }
@@ -184,16 +175,23 @@ class FieldsFilterHelperTest extends TestCase
     {
         $this->assertEquals(
             [],
-            (new FieldsFilterHelper($this->getSettingsManagerMock(), $this->getAcfDynamicSupportMock()))->removeFields([], ['irrelevant'], true),
+            $this->getFieldsFilterHelper()->removeFields([], ['irrelevant'], true),
             'Should return empty list on empty fields list'
         );
     }
 
-    /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|AcfDynamicSupport
-     */
-    private function getAcfDynamicSupportMock()
+    private function getAcfDynamicSupportMock():AcfDynamicSupport|MockObject
     {
         return $this->getMockBuilder(AcfDynamicSupport::class)->disableOriginalConstructor()->getMock();
+    }
+
+    private function getFieldsFilterHelper(): FieldsFilterHelper
+    {
+        return new FieldsFilterHelper(
+            $this->getAcfDynamicSupportMock(),
+            $this->createMock(ContentSerializationHelper::class),
+            $this->getSettingsManagerMock(),
+            $this->createMock(WordpressFunctionProxyHelper::class),
+        );
     }
 }

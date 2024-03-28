@@ -6,6 +6,8 @@ use Smartling\Settings\Locale;
 
 class ArrayHelper
 {
+    private const NESTED_KEY_SEPARATOR = '.';
+
     /**
      * Retrieves the value of an array element or object property with the given key or property name.
      * If the key does not exist in the array or object, the default value will be returned instead.
@@ -49,7 +51,7 @@ class ArrayHelper
             return $array[$key];
         }
 
-        if (($pos = strrpos($key, '.')) !== false) {
+        if (($pos = strrpos($key, self::NESTED_KEY_SEPARATOR)) !== false) {
             $array = static::getValue($array, substr($key, 0, $pos), $default);
             $key = substr($key, $pos + 1);
         }
@@ -63,6 +65,23 @@ class ArrayHelper
         }
 
         return $default;
+    }
+
+    public function setValue(array $array, string $key, mixed $value): array
+    {
+        $result = $array;
+        $parts = explode(self::NESTED_KEY_SEPARATOR, $key);
+        if (count($parts) > 1) {
+            $index = array_shift($parts);
+            if (!array_key_exists($index, $result)) {
+                $result[$index] = [];
+            }
+            $result[$index] = $this->setValue($result[$index], implode(self::NESTED_KEY_SEPARATOR, $parts), $value);
+        } else {
+            $result[$key] = $value;
+        }
+
+        return $result;
     }
 
     /**
