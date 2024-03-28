@@ -216,9 +216,4 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         unset($translation[$this->getPluginId()]);
         return $translation;
     }
-
-    public function alterContentFieldsForUpload(array $source): array
-    {
-        return []; // TODO implement
-    }
 }

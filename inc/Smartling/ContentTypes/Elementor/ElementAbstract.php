@@ -107,9 +107,9 @@ abstract class ElementAbstract implements Element {
         SubmissionEntity $submission,
         SubmissionManager $submissionManager,
     ): static {
-        foreach ($this->elements as &$element) {
+        foreach ($this->elements as $key => $element) {
             if ($element instanceof Element) {
-                $element = $element->setTargetContent(
+                $this->elements[$key] = $element->setTargetContent(
                     new RelatedContentInfo($info->getInfo()[$this->id] ?? []),
                     $strings[$this->id] ?? $strings[$element->id] ?? [],
                     $submission,
@@ -117,7 +117,6 @@ abstract class ElementAbstract implements Element {
                 );
             }
         }
-        unset ($element);
         foreach ($strings[$this->id] ?? [] as $path => $string) {
             if (!is_array($string)) {
                 $this->settings[$path] = $string;

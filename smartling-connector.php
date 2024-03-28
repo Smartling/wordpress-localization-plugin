@@ -20,7 +20,7 @@ use Smartling\RestApi;
  * Text Domain:       smartling-connector
  * Domain Path:       /languages
  * Requires PHP:      8.0
- * Elementor tested up to: 3.18.3
+ * Elementor tested up to: 3.20.2
  */
 
 // If this file is called directly, abort.
