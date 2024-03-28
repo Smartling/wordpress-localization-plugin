@@ -125,9 +125,9 @@ abstract class ElementAbstract implements Element {
         if (count($this->settings) > 0) {
             $this->raw['settings'] = $this->settings;
         }
+        $this->raw['elements'] = $this->elements;
         foreach ($info->getOwnRelatedContent($this->id) as $path => $content) {
             assert($content instanceof Content);
-            $this->raw['elements'] = $this->elements;
             $this->raw = $this->setRelations($content, $path, $submission, $submissionManager)->toArray();
         }
 
