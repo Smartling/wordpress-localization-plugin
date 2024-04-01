@@ -45,23 +45,13 @@ class FieldsFilterHelper
         return $output;
     }
 
+    /**
+     * @deprecated
+     * @see ArrayHelper::structurize()
+     */
     public function structurizeArray(array $flatArray, string $divider = self::ARRAY_DIVIDER): array
     {
-        $output = [];
-
-        foreach ($flatArray as $key => $element) {
-            $pathElements = explode($divider, $key);
-            $pointer = &$output;
-            for ($i = 0; $i < (count($pathElements) - 1); $i++) {
-                if (!isset($pointer[$pathElements[$i]])) {
-                    $pointer[$pathElements[$i]] = [];
-                }
-                $pointer = &$pointer[$pathElements[$i]];
-            }
-            $pointer[end($pathElements)] = $element;
-        }
-
-        return $output;
+        return (new ArrayHelper())->structurize($flatArray, $divider);
     }
 
     private function processArrayElement(string $currentPath, mixed $elementValue, string $divider): array

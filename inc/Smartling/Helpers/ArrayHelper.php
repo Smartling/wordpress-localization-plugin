@@ -122,6 +122,17 @@ class ArrayHelper
         return is_array($value) && 0 < count($value);
     }
 
+    public function flatten(array $array, string $base = '', string $divider = '/'): array
+    {
+        $output = [];
+        foreach ($array as $key => $value) {
+            $key = '' === $base ? $key : "$base$divider$key";
+            $output = $this->add($output, is_array($value) ? $this->flatten($value, $key, $divider) : [$key => $value]);
+        }
+
+        return $output;
+    }
+
     public static function first(array $array): mixed
     {
         if (!static::notEmpty($array)) {
@@ -150,6 +161,25 @@ class ArrayHelper
         });
     }
 
+    public function structurize(array $array, $divider = '/'): array
+    {
+        $result = [];
+
+        foreach ($array as $key => $element) {
+            $pathElements = explode($divider, $key);
+            $pointer = &$result;
+            for ($i = 0; $i < (count($pathElements) - 1); $i++) {
+                if (!isset($pointer[$pathElements[$i]])) {
+                    $pointer[$pathElements[$i]] = [];
+                }
+                $pointer = &$pointer[$pathElements[$i]];
+            }
+            $pointer[end($pathElements)] = $element;
+        }
+
+        return $result;
+    }
+
     public static function toArrayOfIntegers(array $array, ?string $errorMessage): array
     {
         return array_map(static function($value) use ($errorMessage) {
@@ -158,5 +188,15 @@ class ArrayHelper
             }
             return (int)$value;
         }, $array);
+    }
+
+    public function add(...$arrays): array
+    {
+        $result = [];
+        foreach ($arrays as $array) {
+            $result += $array;
+        }
+
+        return $result;
     }
 }
