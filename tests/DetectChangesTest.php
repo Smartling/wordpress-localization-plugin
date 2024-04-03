@@ -2,11 +2,15 @@
 
 namespace Smartling\Tests;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Smartling\DbAl\UploadQueueManager;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\DetectChangesHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DummyLoggerMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
@@ -21,20 +25,16 @@ class DetectChangesTest extends TestCase
     use InvokeMethodTrait;
     use SettingsManagerMock;
 
-    private $detectChangesHelperMock;
+    private DetectChangesHelper $detectChangesHelperMock;
 
     protected function setUp(): void
     {
-        $mock = $this->createMock(DetectChangesHelper::class);
-
-        $profileMock = $this->createMock(ConfigurationProfileEntity::class);
-
-        $settingsManager = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile']);
-        $settingsManager->method('getSingleSettingsProfile')->willReturn($profileMock);
-
-        $mock->method('getSettingsManager')->willReturn($settingsManager);
-
-        $this->detectChangesHelperMock = $mock;
+        $this->detectChangesHelperMock = new DetectChangesHelper(
+            $this->createMock(ContentSerializationHelper::class),
+            $this->createMock(UploadQueueManager::class),
+            $this->createMock(SettingsManager::class),
+            $this->createMock(SubmissionManager::class),
+        );
     }
 
     /**
@@ -52,7 +52,7 @@ class DetectChangesTest extends TestCase
 
         $processedSubmission = $this->invokeMethod(
             $this->detectChangesHelperMock,
-            'checkSubmissionHash',
+            'update',
             [
                 $submission,
                 $needStatusChange,

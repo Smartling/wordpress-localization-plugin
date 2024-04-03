@@ -36,7 +36,6 @@ class LockTranslationFieldTest extends SmartlingUnitTestCaseAbstract
         );
 
         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-        $submission->setBatchUid('');
         $submission = $this->getSubmissionManager()->storeEntity($submission);
         $submission = $this->uploadDownload($submission);
 
@@ -51,7 +50,6 @@ class LockTranslationFieldTest extends SmartlingUnitTestCaseAbstract
         );
 
         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-        $submission->setBatchUid('');
         $submission->setLockedFields(['entity/post_title']);
         $submission = $this->getSubmissionManager()->storeEntity($submission);
 

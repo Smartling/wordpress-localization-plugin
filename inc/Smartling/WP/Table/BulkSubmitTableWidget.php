@@ -4,11 +4,13 @@ namespace Smartling\WP\Table;
 
 use DateTime;
 use JetBrains\PhpStorm\ArrayShape;
+use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
@@ -19,7 +21,7 @@ use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
-use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Jobs\JobEntity;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -64,10 +66,12 @@ class BulkSubmitTableWidget extends SmartlingListTable
     }
 
     public function __construct(
+        private ApiWrapperInterface $apiWrapper,
         protected LocalizationPluginProxyInterface $localizationPluginProxy,
         protected SiteHelper $siteHelper,
         protected SmartlingCore $core,
         protected SubmissionManager $manager,
+        private UploadQueueManager $uploadQueueManager,
         protected ConfigurationProfileEntity $profile,
     ) {
         $this->setSource($_REQUEST);
@@ -227,7 +231,14 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     $type = $this->getContentTypeFilterValue();
                     $curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
-                        $submissionEntity = $this->core->createForTranslation($type, $curBlogId, $id, (int)$blogId, new JobEntityWithBatchUid($batchUid, $jobName, $clone ? '' : $smartlingData['jobId'], $profile->getProjectId()), $clone);
+                        $submissionEntity = $this->core->createForTranslation(
+                            $type,
+                            $curBlogId,
+                            $id,
+                            (int)$blogId,
+                            new JobEntity($jobName, $clone ? '' : $smartlingData['jobId'], $profile->getProjectId()),
+                            $clone,
+                        );
 
                         $this->getLogger()
                             ->info(vsprintf(

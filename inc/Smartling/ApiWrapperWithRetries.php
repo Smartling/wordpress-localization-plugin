@@ -4,7 +4,7 @@ namespace Smartling;
 
 use DateTime;
 use Smartling\Helpers\LoggerSafeTrait;
-use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
@@ -46,10 +46,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null): void
+    public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntity $job = null, ?bool $isAuthorize = null): void
     {
-        $this->withRetry(function () use ($profile, $jobInfo, $actionType, $isAuthorize, $clientData, $description) {
-            $this->base->createAuditLogRecord($profile, $actionType, $description, $clientData, $jobInfo, $isAuthorize);
+        $this->withRetry(function () use ($profile, $job, $actionType, $isAuthorize, $clientData, $description) {
+            $this->base->createAuditLogRecord($profile, $actionType, $description, $clientData, $job, $isAuthorize);
         });
     }
 
@@ -67,10 +67,9 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function uploadContent(SubmissionEntity $entity, string $xmlString = '', string $filename = '', array $smartlingLocaleList = []): bool
-    {
-        return $this->withRetry(function () use ($entity, $xmlString, $filename, $smartlingLocaleList) {
-            return $this->base->uploadContent($entity, $xmlString, $filename, $smartlingLocaleList);
+    public function uploadContent(SubmissionEntity $entity, string $xmlString, string $batchUid = '', string $filename = '', array $smartlingLocaleList = []): bool {
+        return $this->withRetry(function () use ($batchUid, $entity, $xmlString, $filename, $smartlingLocaleList) {
+            return $this->base->uploadContent($entity, $xmlString, $batchUid, $filename, $smartlingLocaleList);
         });
     }
 
@@ -158,10 +157,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid
+    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile): JobEntity
     {
-        return $this->withRetry(function () use ($profile, $authorize) {
-            return $this->base->retrieveJobInfoForDailyBucketJob($profile, $authorize);
+        return $this->withRetry(function () use ($profile) {
+            return $this->base->retrieveJobInfoForDailyBucketJob($profile);
         });
     }
 

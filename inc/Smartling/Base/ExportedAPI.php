@@ -63,6 +63,7 @@ interface ExportedAPI
     /**
      * Action that sends given SubmissionEntity to smartling for translation
      * @param SubmissionEntity
+     * @param string jobUid
      */
     public const ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION = 'smartling_send_for_translation';
 

@@ -4,6 +4,7 @@ namespace Smartling\Base;
 
 use Exception;
 use Smartling\ContentTypes\ExternalContentManager;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
@@ -30,6 +31,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         private FileUriHelper $fileUriHelper,
         private GutenbergBlockHelper $gutenbergBlockHelper,
         private PostContentHelper $postContentHelper,
+        private UploadQueueManager $uploadQueueManager,
         private XmlHelper $xmlHelper,
         private TestRunHelper $testRunHelper,
         private WordpressFunctionProxyHelper $wpProxy,
@@ -38,7 +40,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
         add_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, [$this, 'cloneContent']);
         add_action(ExportedAPI::ACTION_SMARTLING_PREPARE_SUBMISSION_UPLOAD, [$this, 'prepareUpload']);
-        add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'sendForTranslationBySubmission']);
+        add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'sendForTranslationBySubmission'], accepted_args: 2);
         add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);
         add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
@@ -117,17 +119,13 @@ class SmartlingCore extends SmartlingCoreAbstract
         return $this->getApiWrapper()->uploadContent($submission, $xmlFileContent);
     }
 
-    /**
-     * Sends data to smartling via temporary file
-     *
-     * @param SubmissionEntity $submission
-     * @param string           $xmlFileContent
-     * @param array            $smartlingLocaleList
-     *
-     * @return bool
-     */
-    protected function sendFile(SubmissionEntity $submission, $xmlFileContent, array $smartlingLocaleList = [])
-    {
+    protected function sendFile(
+        ConfigurationProfileEntity $profile,
+        SubmissionEntity $submission,
+        string $jobUid,
+        string $xmlFileContent,
+        array $smartlingLocaleList = [],
+    ): bool {
         $workDir = sys_get_temp_dir();
 
         if (is_writable($workDir)) {
@@ -147,7 +145,18 @@ class SmartlingCore extends SmartlingCoreAbstract
                 return false;
             }
 
-            $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList);
+            if ($jobUid === '') {
+                $jobUid = $this->getApiWrapper()->retrieveJobInfoForDailyBucketJob($profile)->getJobInformationEntity()->getJobUid();
+            }
+            $batchUid = $this->getApiWrapper()->createBatch($profile, $jobUid, $profile->getAutoAuthorize())['batchUid'];
+            $result = $this->getApiWrapper()->uploadContent(
+                $submission,
+                $xmlFileContent,
+                $batchUid,
+                $tmp_file,
+                $smartlingLocaleList,
+            );
+            $this->getApiWrapper()->executeBatch($profile, $batchUid);
             unlink($tmp_file);
             return $result;
         }

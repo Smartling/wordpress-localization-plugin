@@ -4,6 +4,7 @@ namespace IntegrationTests\tests;
 
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Models\UploadQueueItem;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
@@ -104,6 +105,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $translationHelper->prepareSubmission('category', $sourceBlogId, $taxonomyId, $targetBlogId);
         $submission = $translationHelper->prepareSubmission('post', $sourceBlogId, $postId, $targetBlogId);
         $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_NEW, $submission->getStatus());
+        $this->addToUploadQueue($submission->getId());
 
         $this->executeUpload();
         $this->forceSubmissionDownload($submission);

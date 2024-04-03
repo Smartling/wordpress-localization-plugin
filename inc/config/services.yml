@@ -90,8 +90,8 @@ services:
 
   queue.db:
     class: Smartling\Queue\Queue
-    calls:
-      - ["setDbal", ["@site.db"]]
+    arguments:
+      - "@site.db"
 
   content.aioseo:
     class: Smartling\ContentTypes\ExternalContentAioseo
@@ -183,6 +183,7 @@ services:
       - "@file.uri.helper"
       - "@helper.gutenberg"
       - "@helper.post.content"
+      - "@manager.upload.queue"
       - "@helper.xml"
       - "@test.run.helper"
       - "@wp.proxy"
@@ -237,6 +238,11 @@ services:
     arguments:
       - "@site.db"
 
+  manager.upload.queue:
+    class: Smartling\DbAl\UploadQueueManager
+    arguments:
+      - "@site.db"
+
   content.type.helper:
     class: Smartling\ContentTypes\ContentTypeHelper
     arguments:
@@ -253,10 +259,11 @@ services:
 
   detect-changes.helper:
     class: Smartling\Helpers\DetectChangesHelper
-    calls:
-      - [ "setSettingsManager" , [ "@manager.settings" ] ]
-      - [ "setSubmissionManager" , [ "@manager.submission" ] ]
-      - [ "setContentSerializationHelper" , [ "@content-serialization.helper" ] ]
+    arguments:
+      - "@content-serialization.helper"
+      - "@manager.upload.queue"
+      - "@manager.settings"
+      - "@manager.submission"
 
   site.db:
     class: Smartling\DbAl\DB
@@ -328,8 +335,8 @@ services:
       - "@site.helper"
       - "@manager.submission"
       - "@site.cache"
-    calls:
-      - [ "setQueue", [ "@queue.db" ]]
+      - "@queue.db"
+      - "@manager.upload.queue"
 
   wp.settings.edit:
     class: Smartling\WP\Controller\ConfigurationProfileFormController
@@ -397,11 +404,14 @@ services:
   wp.bulkSubmit:
     class: Smartling\WP\Controller\BulkSubmitController
     arguments:
+      - "@api.wrapper.with.retries"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@manager.settings"
       - "@site.helper"
+      - "@entrypoint"
       - "@manager.submission"
+      - "@manager.upload.queue"
       - "@site.cache"
 
   helper.gutenberg:
@@ -542,6 +552,7 @@ services:
       - "@fields-filter.helper"
       - "@file.uri.helper"
       - "@meta-field.processor.manager"
+      - "@manager.upload.queue"
       - "@multilang.proxy"
       - "@smartling.helper.absolute-image-path-support"
       - "@helper.shortcode"

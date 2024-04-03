@@ -14,7 +14,6 @@ namespace {
 
 namespace Smartling\Tests\Services {
 
-    use PHPUnit\Framework\Constraint\IsInstanceOf;
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
     use Smartling\ApiWrapper;
@@ -26,6 +25,7 @@ namespace Smartling\Tests\Services {
     use Smartling\ContentTypes\ExternalContentManager;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
     use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+    use Smartling\DbAl\UploadQueueManager;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
     use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
     use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
@@ -47,7 +47,6 @@ namespace Smartling\Tests\Services {
     use Smartling\Helpers\TranslationHelper;
     use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Jobs\JobEntity;
-    use Smartling\Jobs\JobEntityWithBatchUid;
     use Smartling\Jobs\JobManager;
     use Smartling\Jobs\SubmissionJobEntity;
     use Smartling\Jobs\SubmissionsJobsManager;
@@ -103,9 +102,9 @@ namespace Smartling\Tests\Services {
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
             $submission = $this->createMock(SubmissionEntity::class);
-            $submission->expects(self::once())->method('setBatchUid')->with($batchUid);
             $submission->expects(self::once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $submission->expects(self::never())->method('setSourceTitle');
+            $submission->method('getId')->willReturn(17);
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
 
@@ -116,9 +115,9 @@ namespace Smartling\Tests\Services {
                 'source_id' => $sourceId,
             ])->willReturn([$submission]);
 
-            $submissionManager->expects(self::once())->method('storeEntity')->with($submission);
+            $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturnArgument(0);
 
-            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null) use ($batchUid, $jobName, $jobUid, $profile, $sourceBlogId, $sourceId, $targetBlogId): void {
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData, JobEntity $job, ?bool $isAuthorize = null) use ($jobName, $jobUid, $profile, $sourceBlogId, $sourceId, $targetBlogId): void {
                 $this->assertEquals($profile, $configurationProfile);
                 $this->assertEquals(CreateRecordParameters::ACTION_TYPE_UPLOAD, $actionType);
                 $this->assertEquals('From Widget', $description);
@@ -128,9 +127,6 @@ namespace Smartling\Tests\Services {
                     'sourceId' => $sourceId,
                     'targetBlogIds' => [$targetBlogId],
                 ], $clientData);
-                $this->assertNotNull($jobInfo);
-                $this->assertEquals($batchUid, $jobInfo->getBatchUid());
-                $job = $jobInfo->getJobInformationEntity();
                 $this->assertEquals($jobName, $job->getJobName());
                 $this->assertEquals($jobUid, $job->getJobUid());
                 $this->assertEquals($profile->getProjectId(), $job->getProjectUid());
@@ -187,7 +183,6 @@ namespace Smartling\Tests\Services {
             }, $sourceIds);
 
             $submission = $this->createMock(SubmissionEntity::class);
-            $submission->expects(self::exactly(count($sourceIds)))->method('setBatchUid')->with($batchUid);
             $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
             $matcherSubmission = $this->exactly(count($sourceIds));
             $submission->expects($matcherSubmission)->method('setSourceTitle')
@@ -251,7 +246,6 @@ namespace Smartling\Tests\Services {
             $menuSubmission->method('getContentType')->willReturn(ContentTypeNavigationMenu::WP_CONTENT_TYPE);
             $menuSubmission->method('getSourceId')->willReturn($sourceIds[0]);
             $menuSubmission->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
-            $menuSubmission->expects($this->once())->method('setBatchUid')->with($batchUid);
             /**
              * @var SubmissionEntity[]|MockObject[] $menuItemSubmissions
              */
@@ -262,7 +256,6 @@ namespace Smartling\Tests\Services {
                 $menuItemSubmission = $this->createMock(SubmissionEntity::class);
                 $menuItemSubmission->method('getContentType')->willReturn(ContentTypeNavigationMenuItem::WP_CONTENT_TYPE);
                 $menuItemSubmission->method('getSourceId')->willReturn($menuItemId);
-                $menuItemSubmission->expects($this->once())->method('setBatchUid')->with($batchUid);
                 $menuItemSubmission->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $menuItemSubmissions[] = $menuItemSubmission;
                 $post = new \stdClass();
@@ -329,6 +322,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(FieldsFilterHelper::class),
                 $this->createMock(FileUriHelper::class),
                 $this->createMock(MetaFieldProcessorManager::class),
+                $this->createMock(UploadQueueManager::class),
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
@@ -344,7 +338,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(WordpressFunctionProxyHelper::class),
             );
 
-            $x->bulkUpload(new JobEntityWithBatchUid($batchUid, $jobName, $jobUid, $projectUid), $sourceIds, $contentType, $sourceBlogId, $targetBlogId);
+            $x->bulkUpload(new JobEntity($jobName, $jobUid, $projectUid), $sourceIds, $contentType, $sourceBlogId, $targetBlogId);
             $this->assertCount(0, $unsavedSubmissionIds);
         }
 
@@ -577,7 +571,7 @@ namespace Smartling\Tests\Services {
 
             $apiWrapper = $this->createMock(ApiWrapper::class);
             $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
-            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null) use ($depth1AttachmentId, $depth2AttachmentId): void {
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData) use ($depth1AttachmentId, $depth2AttachmentId): void {
                 try { // ApiWrapper call is wrapped in try/catch, this is needed to ensure exception gets thrown in test
                     $this->assertEquals([
                         'attachment' => [$depth2AttachmentId],
@@ -601,6 +595,7 @@ namespace Smartling\Tests\Services {
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
 
             $submission = $this->createMock(SubmissionEntity::class);
+            $submission->method('getId')->willReturn(3);
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
             $submissionManager->expects(self::once())->method('find')->with([
@@ -611,11 +606,23 @@ namespace Smartling\Tests\Services {
             ])->willReturn([$submission]);
 
             // Expects the original submission and 2 related submissions are stored to DB
-            $submissionManager->expects(self::exactly(3))->method('storeEntity')
-                ->withConsecutive([$submission], [new IsInstanceOf(SubmissionEntity::class)], [new IsInstanceOf(SubmissionEntity::class)])
-                ->willReturnArgument(0);
+            $matcher = $this->exactly(3);
+            $submissionManager->expects($matcher)->method('storeEntity')
+                ->willReturnCallback(function (SubmissionEntity $argument) use ($matcher, $submission) {
+                    if ($matcher->getInvocationCount() === 1) {
+                        $this->assertEquals($submission, $argument);
+                    }
 
-            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
+                    return $argument;
+                });
+
+            $factorySubmission = $this->createMock(SubmissionEntity::class);
+            $factorySubmission->method('getId')->willReturn(11);
+
+            $submissionFactory = $this->createMock(SubmissionFactory::class);
+            $submissionFactory->method('fromArray')->willReturn($factorySubmission);
+
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, submissionFactory: $submissionFactory);
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'job' => [
@@ -810,6 +817,7 @@ namespace Smartling\Tests\Services {
                 $fieldsFilterHelper,
                 $this->createMock(FileUriHelper::class),
                 $metaFieldProcessorManager,
+                $this->createMock(UploadQueueManager::class),
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),

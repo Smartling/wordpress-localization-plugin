@@ -16,7 +16,7 @@ use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Helpers\TestRunHelper;
-use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -115,15 +115,13 @@ class ApiWrapper implements ApiWrapperInterface
             ->releaseLock("{$profile->getProjectId()}-$key");
     }
 
-    public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null): void
+    public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntity $job = null, ?bool $isAuthorize = null): void
     {
         $record = new CreateRecordParameters();
         $record->setActionType($actionType);
-        if ($jobInfo !== null) {
-            $job = $jobInfo->getJobInformationEntity();
+        if ($job !== null) {
             $record->setTranslationJobUid($job->getJobUid());
             $record->setTranslationJobName($job->getJobName());
-            $record->setBatchUid($jobInfo->getBatchUid());
         }
         if ($isAuthorize !== null) {
             $record->setTranslationJobAuthorize($isAuthorize);
@@ -230,8 +228,13 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->settings->getSmartlingLocaleBySubmission($entity);
     }
 
-    public function uploadContent(SubmissionEntity $entity, string $xmlString = '', string $filename = '', array $smartlingLocaleList = []): bool
-    {
+    public function uploadContent(
+        SubmissionEntity $entity,
+        string $xmlString,
+        string $batchUid = '',
+        string $filename = '',
+        array $smartlingLocaleList = [],
+    ): bool {
         $this->getLogger()
             ->info(vsprintf(
                        'Starting file \'%s\' upload for entity = \'%s\', blog = \'%s\', id = \'%s\', locales:%s.',
@@ -256,8 +259,9 @@ class ApiWrapper implements ApiWrapperInterface
                     $filename,
                     $entity->getFileUri(),
                     'xml',
-                    $entity->getBatchUid(),
-                    $params);
+                    $batchUid,
+                    $params,
+                );
 
                 $message = vsprintf(
                     'Smartling uploaded "%s" for locales:%s.',
@@ -567,7 +571,7 @@ class ApiWrapper implements ApiWrapperInterface
         return new JobEntityWithStatus($result['jobStatus'], $result['jobName'], $result['translationJobUid'], $profile->getProjectId());
     }
 
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid
+    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile): JobEntity
     {
         $jobName = $this->getBaseNameForDailyBucketJob();
         $jobId = null;
@@ -605,9 +609,7 @@ class ApiWrapper implements ApiWrapperInterface
                 throw new \RuntimeException('Queueing file upload into the bucket job failed: can\'t find/create job.');
             }
 
-            $result = $this->createBatch($profile, $jobId, $authorize);
-
-            return new JobEntityWithBatchUid($result['batchUid'], $jobName, $jobId, $profile->getProjectId());
+            return new JobEntity($jobName, $jobId, $profile->getProjectId());
         } catch (SmartlingApiException $e) {
             $this->getLogger()->error(vsprintf('Can\'t create batch for a daily job "%s". Error: %s', [
                 $jobName,
