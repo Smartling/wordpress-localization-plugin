@@ -146,9 +146,9 @@ class SmartlingCore extends SmartlingCoreAbstract
             }
 
             if ($jobUid === '') {
-                $jobUid = $this->getApiWrapper()->retrieveJobInfoForDailyBucketJob($profile)->getJobInformationEntity()->getJobUid();
+                $jobUid = $this->getApiWrapper()->retrieveJobInfoForDailyBucketJob($profile)->getJobUid();
             }
-            $batchUid = $this->getApiWrapper()->createBatch($profile, $jobUid, $profile->getAutoAuthorize())['batchUid'];
+            $batchUid = $this->getApiWrapper()->createBatch($profile, $jobUid, [], $profile->getAutoAuthorize());
             $result = $this->getApiWrapper()->uploadContent(
                 $submission,
                 $xmlFileContent,

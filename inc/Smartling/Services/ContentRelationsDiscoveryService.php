@@ -158,6 +158,7 @@ class ContentRelationsDiscoveryService
         $profile = $this->settingsManager->getSingleSettingsProfile($curBlogId);
         $job = $request->getJobInformation();
         $jobInfo = new JobEntity($job->getName(), $job->getId(), $profile->getProjectId());
+        $batchUid = null;
 
         if ($request->isBulk()) {
             $this->bulkUpload($jobInfo, $request->getIds(), $request->getContentType(), $curBlogId, $request->getTargetBlogIds());
@@ -227,6 +228,9 @@ class ContentRelationsDiscoveryService
                 $submission = ArrayHelper::first($result);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
+                if ($batchUid === null) {
+                    $batchUid = $this->apiWrapper->createBatch($profile, $jobUid, [$submission->getFileUri()]);
+                }
                 $this->uploadQueueManager->enqueue(new UploadQueueItem($submission->getId(), $job->getId()));
             }
 

@@ -13,6 +13,7 @@ use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
+use Smartling\Vendor\Smartling\Batch\BatchApiV2;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 use Smartling\Vendor\Smartling\Jobs\JobStatus;
 
@@ -132,8 +133,9 @@ interface ApiWrapperInterface
     /**
      * @throws SmartlingApiException
      */
-    #[ArrayShape(['batchUid' => 'string'])]
-    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array;
+    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, array $fileUris, bool $authorize = false): string;
+
+    public function getLastBatchForJob(ConfigurationProfileEntity $profile, string $jobUid, #[ExpectedValues(BatchApiV2::BATCH_STATUS_LIST)] string $status): ?array;
 
     /**
      * @return string batch uid for a given job

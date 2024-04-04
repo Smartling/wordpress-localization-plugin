@@ -4,6 +4,7 @@ namespace Smartling;
 
 use DateTime;
 use DateTimeZone;
+use JetBrains\PhpStorm\ExpectedValues;
 use Smartling\API\FileApiExtended;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
@@ -24,9 +25,10 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Psr\Log\NullLogger;
 use Smartling\Vendor\Smartling\AuditLog\AuditLogApi;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
+use Smartling\Vendor\Smartling\AuthApi\AuthApiInterface;
 use Smartling\Vendor\Smartling\AuthApi\AuthTokenProvider;
-use Smartling\Vendor\Smartling\Batch\BatchApi;
-use Smartling\Vendor\Smartling\Batch\Params\CreateBatchParameters;
+use Smartling\Vendor\Smartling\Batch\BatchApiV2;
+use Smartling\Vendor\Smartling\Batch\Params\ListBatchesParameters;
 use Smartling\Vendor\Smartling\DistributedLockService\DistributedLockServiceApi;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 use Smartling\Vendor\Smartling\File\FileApi;
@@ -76,6 +78,11 @@ class ApiWrapper implements ApiWrapperInterface
         LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
 
         return $profile;
+    }
+
+    private function getAuthApi(ConfigurationProfileEntity $profile): AuthApiInterface
+    {
+        return AuthTokenProvider::create($profile->getUserIdentifier(), $profile->getSecretKey());
     }
 
     private function getAuthProvider(ConfigurationProfileEntity $profile): AuthTokenProvider
@@ -417,9 +424,9 @@ class ApiWrapper implements ApiWrapperInterface
         return JobsApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
     }
 
-    private function getBatchApi(ConfigurationProfileEntity $profile): BatchApi
+    private function getBatchApi(ConfigurationProfileEntity $profile): BatchApiV2
     {
-        return BatchApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger());
+        return new BatchApiV2($this->getAuthApi($profile), $profile->getProjectId(), $this->getLogger());
     }
 
     public function listJobs(ConfigurationProfileEntity $profile, ?string $name = null, array $statuses = []): array
@@ -476,13 +483,9 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->getJobsApi($profile)->updateJob($jobId, $params);
     }
 
-    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array
+    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, array $fileUris, bool $authorize = false): string
     {
-        $createBatchParameters = new CreateBatchParameters();
-        $createBatchParameters->setTranslationJobUid($jobUid);
-        $createBatchParameters->setAuthorize($authorize);
-
-        return $this->getBatchApi($profile)->createBatch($createBatchParameters);
+        return $this->getBatchApi($profile)->createBatch($authorize, $jobUid, $fileUris)['batchUid'];
     }
 
     public function executeBatch(ConfigurationProfileEntity $profile, string $batchUid): void
@@ -510,7 +513,7 @@ class ApiWrapper implements ApiWrapperInterface
                 $this->getLogger()->debug(vsprintf('Updated job "%s": "%s"', [$jobId, json_encode($updateJob, JSON_THROW_ON_ERROR)]));
             }
 
-            $result = $this->createBatch($profile, $jobId, $authorize);
+            $result = $this->createBatch($profile, $jobId, [], $authorize);
 
             $this->getLogger()->debug(vsprintf('Created batch "%s" for job "%s"', [$result['batchUid'], $jobId]));
 

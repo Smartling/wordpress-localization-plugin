@@ -3,6 +3,7 @@
 namespace Smartling;
 
 use DateTime;
+use JetBrains\PhpStorm\ExpectedValues;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithStatus;
@@ -11,6 +12,7 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Jralph\Retry\Command;
 use Smartling\Vendor\Jralph\Retry\Retry;
 use Smartling\Vendor\Jralph\Retry\RetryException;
+use Smartling\Vendor\Smartling\Batch\BatchApiV2;
 
 class ApiWrapperWithRetries implements ApiWrapperInterface {
     use LoggerSafeTrait;
@@ -129,10 +131,17 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array
+    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, array $fileUris, bool $authorize = false): string
     {
-        return $this->withRetry(function () use ($profile, $jobUid, $authorize) {
-            return $this->base->createBatch($profile, $jobUid, $authorize);
+        return $this->withRetry(function () use ($profile, $jobUid, $authorize, $fileUris) {
+            return $this->base->createBatch($profile, $jobUid, $fileUris, $authorize);
+        });
+    }
+
+    public function getLastBatchForJob(ConfigurationProfileEntity $profile, string $jobUid, #[ExpectedValues(BatchApiV2::BATCH_STATUS_LIST)] string $status): ?array
+    {
+        return $this->withRetry(function () use ($profile, $jobUid, $status) {
+            return $this->base->getLastBatchForJob($profile, $jobUid, $status);
         });
     }
 
