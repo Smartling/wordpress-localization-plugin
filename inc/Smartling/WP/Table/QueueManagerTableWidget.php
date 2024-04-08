@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Table;
 
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\LastModifiedCheckJob;
@@ -15,26 +16,16 @@ use Smartling\WP\WPHookInterface;
 
 class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterface
 {
-    private SubmissionManager $submissionManager;
-    private QueueInterface $queue;
-
-    public function getQueue(): QueueInterface
-    {
-        return $this->queue;
-    }
-
-    public function setQueue(QueueInterface $queue): void
-    {
-        $this->queue = $queue;
-    }
-
     public function register(): void
     {
     }
 
-    public function __construct(SubmissionManager $submissionManager)
+    public function __construct(
+        private QueueInterface $queue,
+        private SubmissionManager $submissionManager,
+        private UploadQueueManager $uploadQueueManager,
+    )
     {
-        $this->submissionManager = $submissionManager;
         $this->setSource($_REQUEST);
         parent::__construct([
                                 'singular' => __('Queue'),
@@ -61,8 +52,8 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
 
     public function prepare_items(): void
     {
-        $curStats = $this->getQueue()->stats();
-        $newSubmissionsCount = $this->submissionManager->getTotalInUploadQueue();
+        $curStats = $this->queue->stats();
+        $newSubmissionsCount = $this->uploadQueueManager->count();
         $collectorQueueSize = $this->submissionManager->getTotalInCheckStatusHelperQueue();
         $checkStatusPoolSize = $curStats[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE] ?? 0;
         $downloadPoolSize = $curStats[QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE] ?? 0;
@@ -107,7 +98,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                                 sprintf(
                                     admin_url('admin-post.php') . '?action=cnq&_c_action=%s&argument=%s',
                                     ConfigurationProfilesController::ACTION_QUEUE_PURGE,
-                                    QueueInterface::VIRTUAL_UPLOAD_QUEUE,
+                                    QueueInterface::UPLOAD_QUEUE,
                                 ),
                             ),
                             'style' => 'font-weight: bold',

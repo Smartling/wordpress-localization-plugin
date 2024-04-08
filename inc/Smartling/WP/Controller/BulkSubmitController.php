@@ -1,17 +1,39 @@
 <?php
 namespace Smartling\WP\Controller;
 
-use Smartling\Bootstrap;
+use Smartling\ApiWrapperInterface;
+use Smartling\Base\SmartlingCore;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
 class BulkSubmitController extends WPAbstract implements WPHookInterface
 {
+    public function __construct(
+        private ApiWrapperInterface $apiWrapper,
+        LocalizationPluginProxyInterface $connector,
+        PluginInfo $pluginInfo,
+        SettingsManager $settingsManager,
+        SiteHelper $siteHelper,
+        private SmartlingCore $core,
+        SubmissionManager $manager,
+        private UploadQueueManager $uploadQueueManager,
+        Cache $cache,
+    ) {
+        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
+    }
+
     public function register(): void
     {
         if (!DiagnosticsHelper::isBlocked()) {
@@ -58,10 +80,12 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
         } else {
             $profile = ArrayHelper::first($applicableProfiles);
             $table = new BulkSubmitTableWidget(
+                $this->apiWrapper,
                 $this->localizationPluginProxy,
                 $this->siteHelper,
-                Bootstrap::getContainer()->get('entrypoint'),
+                $this->core,
                 $this->getManager(),
+                $this->uploadQueueManager,
                 $profile
             );
             $this->view($table);

@@ -4,6 +4,7 @@ namespace Smartling;
 
 use DateTime;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -46,10 +47,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null): void
+    public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntity $job = null, ?bool $isAuthorize = null): void
     {
-        $this->withRetry(function () use ($profile, $jobInfo, $actionType, $isAuthorize, $clientData, $description) {
-            $this->base->createAuditLogRecord($profile, $actionType, $description, $clientData, $jobInfo, $isAuthorize);
+        $this->withRetry(function () use ($profile, $job, $actionType, $isAuthorize, $clientData, $description) {
+            $this->base->createAuditLogRecord($profile, $actionType, $description, $clientData, $job, $isAuthorize);
         });
     }
 
@@ -67,10 +68,9 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function uploadContent(SubmissionEntity $entity, string $xmlString = '', string $filename = '', array $smartlingLocaleList = []): bool
-    {
-        return $this->withRetry(function () use ($entity, $xmlString, $filename, $smartlingLocaleList) {
-            return $this->base->uploadContent($entity, $xmlString, $filename, $smartlingLocaleList);
+    public function uploadContent(SubmissionEntity $entity, string $xmlString, string $batchUid, array $smartlingLocaleList): bool {
+        return $this->withRetry(function () use ($batchUid, $entity, $xmlString, $smartlingLocaleList) {
+            return $this->base->uploadContent($entity, $xmlString, $batchUid, $smartlingLocaleList);
         });
     }
 
@@ -130,24 +130,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array
+    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, array $fileUris, bool $authorize = false): string
     {
-        return $this->withRetry(function () use ($profile, $jobUid, $authorize) {
-            return $this->base->createBatch($profile, $jobUid, $authorize);
-        });
-    }
-
-    public function retrieveBatch(ConfigurationProfileEntity $profile, string $jobId, bool $authorize = true, array $updateJob = []): string
-    {
-        return $this->withRetry(function () use ($profile, $jobId, $authorize, $updateJob) {
-            return $this->base->retrieveBatch($profile, $jobId, $authorize, $updateJob);
-        });
-    }
-
-    public function executeBatch(ConfigurationProfileEntity $profile, string $batchUid): void
-    {
-        $this->withRetry(function () use ($profile, $batchUid) {
-            $this->base->executeBatch($profile, $batchUid);
+        return $this->withRetry(function () use ($profile, $jobUid, $authorize, $fileUris) {
+            return $this->base->createBatch($profile, $jobUid, $fileUris, $authorize);
         });
     }
 
@@ -158,10 +144,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid
+    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
     {
-        return $this->withRetry(function () use ($profile, $authorize) {
-            return $this->base->retrieveJobInfoForDailyBucketJob($profile, $authorize);
+        return $this->withRetry(function () use ($authorize, $profile, $fileUris) {
+            return $this->base->retrieveJobInfoForDailyBucketJob($profile, $fileUris);
         });
     }
 

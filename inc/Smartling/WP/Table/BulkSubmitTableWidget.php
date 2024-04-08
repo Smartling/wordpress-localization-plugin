@@ -4,11 +4,13 @@ namespace Smartling\WP\Table;
 
 use DateTime;
 use JetBrains\PhpStorm\ArrayShape;
+use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
@@ -64,10 +66,12 @@ class BulkSubmitTableWidget extends SmartlingListTable
     }
 
     public function __construct(
+        private ApiWrapperInterface $apiWrapper,
         protected LocalizationPluginProxyInterface $localizationPluginProxy,
         protected SiteHelper $siteHelper,
         protected SmartlingCore $core,
         protected SubmissionManager $manager,
+        private UploadQueueManager $uploadQueueManager,
         protected ConfigurationProfileEntity $profile,
     ) {
         $this->setSource($_REQUEST);

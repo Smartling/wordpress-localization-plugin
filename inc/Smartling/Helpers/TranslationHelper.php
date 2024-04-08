@@ -177,7 +177,6 @@ class TranslationHelper
                 ]
             );
 
-            $relatedSubmission->setBatchUid($jobInfo->getBatchUid());
             $relatedSubmission->setJobInfo($jobInfo->getJobInformationEntity());
             $serialized = $relatedSubmission->toArray(false);
             if (null === $serialized[SubmissionEntity::FIELD_FILE_URI]) {

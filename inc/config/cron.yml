@@ -25,6 +25,7 @@ services:
       - "@transient.cache"
       - "@manager.settings"
       - "@manager.submission"
+      - "@manager.upload.queue"
       - "%cron.interval.throttle%"
       - "%cron.interval.upload%"
       - "%cron.job.default_ttl%"

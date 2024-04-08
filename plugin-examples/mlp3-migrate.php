@@ -9,6 +9,7 @@
 
 use Smartling\DbAl\DB;
 use Smartling\DbAl\DummyLocalizationPlugin;
+use Smartling\DbAl\Migrations\DbMigrationManager;
 use Smartling\DbAl\MultilingualPress3Connector;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\SiteHelper;
@@ -20,7 +21,7 @@ use Smartling\Submissions\SubmissionManager;
 $log = [];
 $showForm = true;
 add_action('admin_menu', static function () use ($log, $showForm) {
-    $db = new DB();
+    $db = new DB(new DbMigrationManager());
     $localizationProxy = new MultilingualPress3Connector();
     $pageSize = 20;
     $siteHelper = new SiteHelper();

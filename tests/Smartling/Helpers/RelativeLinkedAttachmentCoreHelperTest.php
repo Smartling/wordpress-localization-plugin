@@ -35,7 +35,6 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
         $jobInfo = new JobEntity('', '', '', 1, new \DateTime('2000-12-24 01:23:46'), new \DateTime('2001-12-24 02:34:45'));
-        $submission->setBatchUid('');
         $submission->setJobInfo($jobInfo);
         $acf = $this->createMock(AcfDynamicSupport::class);
         $acf->method('getDefinitions')->willReturn($definitions);
@@ -81,7 +80,6 @@ class RelativeLinkedAttachmentCoreHelperTest extends TestCase
         $submission = $this->getSubmission();
         $submission->setSourceId($sourceId);
         $submission->setTargetId($targetId);
-        $submission->setBatchUid('');
 
         $acf = $this->createMock(AcfDynamicSupport::class);
         $acf->method('getDefinitions')->willReturn(

@@ -8,6 +8,7 @@ use JetBrains\PhpStorm\ExpectedValues;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
 use Smartling\Exception\SmartlingNetworkException;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -18,7 +19,6 @@ use Smartling\Vendor\Smartling\Jobs\JobStatus;
 
 interface ApiWrapperInterface
 {
-    public const CREATE_BATCH_RESPONSE = ['batchUid' => 'string'];
     public const CREATE_JOB_RESPONSE = [
         'translationJobUid' => 'string',
         'jobName' => 'string',
@@ -66,7 +66,7 @@ interface ApiWrapperInterface
         string $actionType,
         string $description,
         array $clientData,
-        ?JobEntityWithBatchUid $jobInfo = null,
+        ?JobEntity $job = null,
         ?bool $isAuthorize = null
     ): void;
 
@@ -89,7 +89,12 @@ interface ApiWrapperInterface
     /**
      * @throws SmartlingFileUploadException
      */
-    public function uploadContent(SubmissionEntity $entity, string $xmlString = '', string $filename = '', array $smartlingLocaleList = []): bool;
+    public function uploadContent(
+        SubmissionEntity $entity,
+        string $xmlString,
+        string $batchUid,
+        array $smartlingLocaleList,
+    ): bool;
 
     public function getSupportedLocales(ConfigurationProfileEntity $profile): array;
 
@@ -127,19 +132,12 @@ interface ApiWrapperInterface
     /**
      * @throws SmartlingApiException
      */
-    #[ArrayShape(self::CREATE_BATCH_RESPONSE)]
-    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array;
-
-    /**
-     * @return string batch uid for a given job
-     * @throws SmartlingApiException
-     */
-    public function retrieveBatch(ConfigurationProfileEntity $profile, string $jobId, bool $authorize = true, array $updateJob = []): string;
+    public function cancelBatchFile(ConfigurationProfileEntity $profile, string $batchUid, string $fileUri): void;
 
     /**
      * @throws SmartlingApiException
      */
-    public function executeBatch(ConfigurationProfileEntity $profile, string $batchUid): void;
+    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, array $fileUris, bool $authorize = false): string;
 
     public function getProgressToken(ConfigurationProfileEntity $profile): array;
 
@@ -150,7 +148,7 @@ interface ApiWrapperInterface
     /**
      * @throws SmartlingApiException
      */
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid;
+    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid;
 
     public function isUnrecoverable(\Exception $e): bool;
 }

@@ -4,6 +4,9 @@ namespace Smartling\Helpers;
 use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
+use Smartling\Exception\BlogNotFoundException;
+use Smartling\Exception\SmartlingConfigException;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Processors\ContentEntitiesIOFactory;
@@ -23,6 +26,10 @@ class FileUriHelper
     ) {
     }
 
+    /**
+     * @throws SmartlingInvalidFactoryArgumentException
+     * @throws SmartlingConfigException
+     */
     private function buildFileUri(SubmissionEntity $submission): string {
         try {
             $wrapper = $this->ioFactory->getMapper($submission->getContentType());
@@ -51,6 +58,12 @@ class FileUriHelper
         );
     }
 
+    /**
+     * @throws SmartlingInvalidFactoryArgumentException
+     * @throws BlogNotFoundException
+     * @throws SmartlingConfigException
+     * @throws SmartlingDirectRunRuntimeException
+     */
     public function generateFileUri(SubmissionEntity $submission): string {
         if ($this->siteHelper->getCurrentBlogId() !== $submission->getSourceBlogId()) {
             $fileUri = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {

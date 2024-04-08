@@ -2,116 +2,37 @@
 
 namespace Smartling\Helpers;
 
-use Smartling\Exception\SmartlingExceptionAbstract;
-use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\DbAl\UploadQueueManager;
+use Smartling\Models\UploadQueueEntity;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\Controller\LiveNotificationController;
 
-/**
- * Class DetectChangesHelper
- * @package Smartling\Helpers
- */
 class DetectChangesHelper
 {
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    use LoggerSafeTrait;
 
-    /**
-     * @var ContentSerializationHelper
-     */
-    private $contentSerializationHelper;
-
-    /**
-     * @var SettingsManager
-     */
-    private $settingsManager;
-
-    /**
-     * @var SubmissionManager
-     */
-    private $submissionManager;
-
-    /**
-     * DetectChangesHelper constructor.
-     */
-    public function __construct() {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-    }
-
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
+    public function __construct(
+        private ContentSerializationHelper $contentSerializationHelper,
+        private UploadQueueManager $uploadQueueManager,
+        private SettingsManager $settingsManager,
+        private SubmissionManager $submissionManager,
+    ) {
     }
 
     /**
-     * @return SettingsManager
-     */
-    public function getSettingsManager()
-    {
-        return $this->settingsManager;
-    }
-
-    /**
-     * @param SettingsManager $settingsManager
-     */
-    public function setSettingsManager($settingsManager)
-    {
-        $this->settingsManager = $settingsManager;
-    }
-
-    /**
-     * @return SubmissionManager
-     */
-    public function getSubmissionManager()
-    {
-        return $this->submissionManager;
-    }
-
-    /**
-     * @param SubmissionManager $submissionManager
-     */
-    public function setSubmissionManager($submissionManager)
-    {
-        $this->submissionManager = $submissionManager;
-    }
-
-    /**
-     * @return ContentSerializationHelper
-     */
-    public function getContentSerializationHelper()
-    {
-        return $this->contentSerializationHelper;
-    }
-
-    /**
-     * @param ContentSerializationHelper $contentSerializationHelper
-     */
-    public function setContentSerializationHelper($contentSerializationHelper)
-    {
-        $this->contentSerializationHelper = $contentSerializationHelper;
-    }
-
-    /**
-     * @param $blogId
-     * @param $contentId
-     * @param $contentType
-     *
      * @return SubmissionEntity[]
      */
-    private function getSubmissions($blogId, $contentId, $contentType)
+    private function getSubmissions(int $blogId, int $contentId, string $contentType): array
     {
         try {
             $params = [
                 SubmissionEntity::FIELD_SOURCE_ID       => $contentId,
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID  => $blogId,
                 SubmissionEntity::FIELD_CONTENT_TYPE    => $contentType,
-                SubmissionEntity::FIELD_TARGET_BLOG_ID  => $this->getSettingsManager()
+                SubmissionEntity::FIELD_TARGET_BLOG_ID  => $this->settingsManager
                                                                 ->getProfileTargetBlogIdsByMainBlogId($blogId),
                 SubmissionEntity::FIELD_STATUS => [
                     SubmissionEntity::SUBMISSION_STATUS_NEW,
@@ -121,30 +42,21 @@ class DetectChangesHelper
                     ],
             ];
 
-            return $this->getSubmissionManager()->find($params);
-        } catch (\Exception $e) {
+            return $this->submissionManager->find($params);
+        } catch (\Exception) {
             return [];
         }
     }
 
     /**
-     * @param $blogId
-     *
-     * @return \Smartling\Settings\ConfigurationProfileEntity[]
+     * @return ConfigurationProfileEntity[]
      */
-    private function getProfiles($blogId)
+    private function getProfiles(int $blogId): array
     {
-        return $this->getSettingsManager()->findEntityByMainLocale($blogId);
+        return $this->settingsManager->findEntityByMainLocale($blogId);
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     * @param bool             $needUpdateStatus
-     * @param string           $currentHash
-     *
-     * @return SubmissionEntity
-     */
-    private function checkSubmissionHash(SubmissionEntity $submission, $needUpdateStatus, $currentHash)
+    private function update(SubmissionEntity $submission, bool $needUpdateStatus, string $currentHash): SubmissionEntity
     {
         $this->getLogger()->debug(vsprintf('Checking submission id=%s.', [$submission->getId()]));
         if ($currentHash !== $submission->getSourceContentHash()) {
@@ -163,20 +75,20 @@ class DetectChangesHelper
                 );
 
                 LiveNotificationController::pushNotification(
-                    $this
-                        ->getSettingsManager()
+                    $this->settingsManager
                         ->getSingleSettingsProfile($submission->getSourceBlogId())
                         ->getProjectId(),
                     LiveNotificationController::getContentId($submission),
                     LiveNotificationController::SEVERITY_WARNING,
-                    vsprintf('<p>Content outdated for %s %s blog %s.</p>', [
+                    sprintf('<p>Content outdated for %s id %s blog %s.</p>',
                         $submission->getContentType(),
                         $submission->getSourceId(),
                         $submission->getSourceBlogId()
-                    ])
+                    ),
                 );
 
                 $submission->setStatus($newStatus);
+                $this->uploadQueueManager->enqueue([new UploadQueueEntity($submission->getId(), '')]);
             }
         } else {
             $this->getLogger()->debug(
@@ -188,12 +100,7 @@ class DetectChangesHelper
         return $submission;
     }
 
-    /**
-     * @param int    $blogId
-     * @param int    $contentId
-     * @param string $contentType
-     */
-    public function detectChanges($blogId, $contentId, $contentType)
+    public function detectChanges(int $blogId, int $contentId, string $contentType): void
     {
         $submissions = $this->getSubmissions($blogId, $contentId, $contentType);
 
@@ -203,9 +110,9 @@ class DetectChangesHelper
             );
 
             return;
-        } else {
-            $this->getLogger()->debug(vsprintf('Found %s submissions to check.', [count($submissions)]));
         }
+
+        $this->getLogger()->debug(vsprintf('Found %s submissions to check.', [count($submissions)]));
 
         try {
             $profiles = $this->getProfiles($blogId);
@@ -213,20 +120,17 @@ class DetectChangesHelper
             if (0 < count($profiles)) {
                 $profile = $profiles[0];
 
-                $currentHash = $this->getContentSerializationHelper()->calculateHash($submissions[0]);
+                $currentHash = $this->contentSerializationHelper->calculateHash($submissions[0]);
 
-                /**
-                 * @var ConfigurationProfileEntity $profile
-                 */
                 $needUpdateStatus = $profile->getUploadOnUpdate() === ConfigurationProfileEntity::UPLOAD_ON_CHANGE_AUTO;
 
                 foreach ($submissions as $submission) {
-                    $this->checkSubmissionHash($submission, $needUpdateStatus, $currentHash);
+                    $this->update($submission, $needUpdateStatus, $currentHash);
                 }
 
-                $this->getSubmissionManager()->storeSubmissions($submissions);
+                $this->submissionManager->storeSubmissions($submissions);
             }
-        } catch (SmartlingExceptionAbstract $e) {
+        } catch (\Exception $e) {
             $this->getLogger()->warning($e->getMessage(), ['exception' => $e]);
 
             return;

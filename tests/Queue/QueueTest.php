@@ -16,8 +16,7 @@ class QueueTest extends TestCase
     use DummyLoggerMock;
     use InvokeMethodTrait;
 
-    private $queue;
-    private $dbal;
+    private ?SmartlingToCMSDatabaseAccessWrapperInterface $dbal = null;
 
     public static function setUpBeforeClass(): void
     {
@@ -30,7 +29,6 @@ class QueueTest extends TestCase
     {
         $this->dbal = $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class);
         $this->dbal->method('completeTableName')->willReturn(Queue::getTableName());
-        $this->queue = new Queue();
     }
 
     /**
@@ -43,8 +41,7 @@ class QueueTest extends TestCase
     {
         $this->dbal->expects(self::once())->method('query')->with($expectedQuery);
 
-        $this->queue->setDbal($this->dbal);
-        $this->queue->enqueue($value, $queue);
+        (new Queue($this->dbal))->enqueue($value, $queue);
     }
 
     /**
@@ -57,17 +54,11 @@ class QueueTest extends TestCase
     {
         $this->expectException(SmartlingDbException::class);
         $this->dbal->expects(self::once())->method('query')->with($expectedQuery)->willReturn(false);
-        $this->queue->setDbal($this->dbal);
-        $this->queue->enqueue($value, $queue);
+
+        (new Queue($this->dbal))->enqueue($value, $queue);
     }
 
-    /**
-     * @param string $queueName
-     * @param mixed  $value
-     *
-     * @return array
-     */
-    private function generatePositiveEnqueueDataSet(string $queueName, $value): array
+    private function generatePositiveEnqueueDataSet(string $queueName, array $value): array
     {
         return
             [
@@ -128,8 +119,7 @@ class QueueTest extends TestCase
 
     public function testDeleteQuery()
     {
-        $x = new Queue();
-        $tableName = $x::getTableName();
+        $tableName = Queue::getTableName();
         $queueName = 'test';
         $itemId = 1313;
         $payload = ['status' => 'OK'];
@@ -139,22 +129,19 @@ class QueueTest extends TestCase
             ->with("SELECT `id`, `queue`, `payload` FROM `$tableName` WHERE ( `queue` = '$queueName' ) LIMIT 0,1")
             ->willReturn([['id' => $itemId, 'payload' => json_encode($payload, JSON_THROW_ON_ERROR)]]);
         $db->expects($this->once())->method('query')
-            ->with("DELETE FROM `smartling_queue` WHERE ( `queue` = '$queueName' AND `id` = '$itemId' ) LIMIT 1");
-        $x->setDbal($db);
+            ->with("DELETE FROM `$tableName` WHERE ( `queue` = '$queueName' AND `id` = '$itemId' ) LIMIT 1");
 
-        $x->dequeue($queueName);
+        (new Queue($db))->dequeue($queueName);
     }
 
     /**
      * @dataProvider dequeueDataProvider
-     * @param string $queue
-     * @param string $expectedQuery
      */
     public function testDequeue(string $queue, string $expectedQuery)
     {
         $this->dbal->expects(self::once())->method('fetch')->with($expectedQuery, \ARRAY_A)->willReturn([]);
-        $this->queue->setDbal($this->dbal);
-        $this->queue->dequeue($queue);
+
+        (new Queue($this->dbal))->dequeue($queue);
     }
 
     public function dequeueDataProvider(): array
@@ -167,15 +154,12 @@ class QueueTest extends TestCase
 
     /**
      * @dataProvider purgeDataProvider
-     *
-     * @param string $queueName
-     * @param string $expectedQuery
      */
     public function testPurge(string $queueName, string $expectedQuery)
     {
         $this->dbal->expects(self::once())->method('query')->with($expectedQuery);
-        $this->queue->setDbal($this->dbal);
-        $this->queue->purge($queueName);
+
+        (new Queue($this->dbal))->purge($queueName);
     }
 
     public function purgeDataProvider(): array
@@ -187,13 +171,12 @@ class QueueTest extends TestCase
 
     /**
      * @dataProvider statsDataProvider
-     * @param string $expectedQuery
      */
     public function testStats(string $expectedQuery)
     {
         $this->dbal->expects(self::once())->method('fetch')->with($expectedQuery, \ARRAY_A)->willReturn([]);
-        $this->queue->setDbal($this->dbal);
-        $this->queue->stats();
+
+        (new Queue($this->dbal))->stats();
     }
 
     public function statsDataProvider(): array

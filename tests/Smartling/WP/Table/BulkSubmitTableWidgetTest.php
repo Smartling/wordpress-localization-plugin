@@ -33,7 +33,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
     use Smartling\Base\SmartlingCore;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
-    use Smartling\Helpers\PluginInfo;
     use Smartling\Helpers\SiteHelper;
     use Smartling\Jobs\JobEntityWithBatchUid;
     use Smartling\Processors\ContentEntitiesIOFactory;

@@ -3,13 +3,18 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\Bootstrap;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Helpers\AdminNoticesHelper;
+use Smartling\Helpers\Cache;
+use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\JobAbstract;
-use Smartling\Queue\Queue;
 use Smartling\Queue\QueueInterface;
 use Smartling\Services\GlobalSettingsManager;
-use Smartling\Submissions\SubmissionEntity;
+use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Table\QueueManagerTableWidget;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -22,26 +27,17 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
 
     public const MENU_SLUG = 'smartling_configuration_profile_list';
 
-    /**
-     * @var Queue
-     */
-    private $queue;
-
-    /**
-     * @return Queue
-     */
-    public function getQueue()
-    {
-        return $this->queue;
-    }
-
-    /**
-     * @param Queue $queue
-     * @noinspection PhpUnused used in services.yml
-     */
-    public function setQueue($queue)
-    {
-        $this->queue = $queue;
+    public function __construct(
+        LocalizationPluginProxyInterface $connector,
+        PluginInfo $pluginInfo,
+        SettingsManager $settingsManager,
+        SiteHelper $siteHelper,
+        SubmissionManager $manager,
+        Cache $cache,
+        private QueueInterface $queue,
+        private UploadQueueManager $uploadQueueManager,
+    ) {
+        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
 
     public function wp_enqueue(): void
@@ -128,21 +124,10 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         switch ($action) {
             case self::ACTION_QUEUE_PURGE:
                 try {
-                    if ($argument === QueueInterface::VIRTUAL_UPLOAD_QUEUE) {
-                        $submissions = $this->getManager()->find([
-                            SubmissionEntity::FIELD_STATUS => SubmissionEntity::SUBMISSION_STATUS_NEW,
-                        ]);
-                        if (count($submissions) > 0) {
-                            $ids = [];
-                            foreach ($submissions as $submission) {
-                                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_CANCELLED);
-                                $ids[] = $submission->getId();
-                            }
-                            $this->getLogger()->notice('User cancelled submissionCount=' . count($submissions) . ' submissions, submissionIds="' . implode(",", $ids) . '"');
-                            $this->getManager()->storeSubmissions($submissions);
-                        }
+                    if ($argument === QueueInterface::UPLOAD_QUEUE) {
+                        $this->uploadQueueManager->purge();
                     } else {
-                        $this->getQueue()->purge($argument);
+                        $this->queue->purge($argument);
                     }
                     $response['status'] = [
                         'code' => 200,
@@ -202,14 +187,12 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         );
     }
 
-    public function listProfiles()
+    public function listProfiles(): void
     {
-
-        $cnqTable = new QueueManagerTableWidget($this->getManager());
-        $cnqTable->setQueue($this->getQueue());
-
-        $profilesTable = new ConfigurationProfilesWidget($this->getPluginInfo()->getSettingsManager());
-        $this->view(['profilesTable' => $profilesTable, 'cnqTable' => $cnqTable]);
+        $this->view([
+            'profilesTable' => new ConfigurationProfilesWidget($this->getPluginInfo()->getSettingsManager()),
+            'cnqTable' => new QueueManagerTableWidget($this->queue, $this->getManager(), $this->uploadQueueManager),
+        ]);
     }
 
     private function signLogFile()
@@ -270,5 +253,4 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
     {
         return array_key_exists($keyName, $_REQUEST) ? $_REQUEST[$keyName] : $defaultValue;
     }
-
 }

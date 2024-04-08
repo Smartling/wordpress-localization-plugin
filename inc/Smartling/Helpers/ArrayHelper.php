@@ -180,7 +180,7 @@ class ArrayHelper
         return $result;
     }
 
-    public static function toArrayOfIntegers(array $array, ?string $errorMessage): array
+    public static function toArrayOfIntegers(array $array, ?string $errorMessage = null): array
     {
         return array_map(static function($value) use ($errorMessage) {
             if (!is_numeric($value)) {
