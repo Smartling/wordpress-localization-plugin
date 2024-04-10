@@ -245,6 +245,7 @@ services:
   manager.upload.queue:
     class: Smartling\DbAl\UploadQueueManager
     arguments:
+      - "@api.wrapper.with.retries"
       - "@manager.settings"
       - "@site.db"
       - "@manager.submission"
