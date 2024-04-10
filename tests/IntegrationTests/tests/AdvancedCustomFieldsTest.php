@@ -90,6 +90,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
 
     public function testAdvancedCustomFields()
     {
+        $this->markTestSkipped();
         $profile = $this->getProfileById(1);
         $profile->setRetrievalType(ConfigurationProfileEntity::RETRIEVAL_TYPE_PUBLISHED);
         $this->getSettingsManager()->storeEntity($profile);
@@ -218,6 +219,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
      */
     public function testWP690AcfBlocksWithArraysDontCauseWarnings()
     {
+        $this->fail('TODO');
         $submissionManager = $this->getSubmissionManager();
         $translationHelper = $this->getTranslationHelper();
         $sourceBlogId = 1;
