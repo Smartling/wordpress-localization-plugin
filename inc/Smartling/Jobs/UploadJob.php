@@ -61,7 +61,7 @@ class UploadJob extends JobAbstract
                         $this->getLogger()->notice("Skipping upload of submissionId={$submission->getId()}: no active profile found for blogId={$submission->getSourceBlogId()}");
                         continue;
                     }
-                    $batchUids[$submission->getSourceBlogId()] = $this->api->retrieveJobInfoForDailyBucketJob($profile, [$submission->getFileUri()]);
+                    $batchUids[$submission->getSourceBlogId()] = $this->api->retrieveJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid();
                 }
                 $batchUid = $batchUids[$submission->getSourceBlogId()];
             }
