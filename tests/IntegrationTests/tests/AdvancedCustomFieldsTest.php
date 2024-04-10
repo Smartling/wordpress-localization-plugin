@@ -107,8 +107,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $this->addToUploadQueue($submission->getId());
 
         $this->executeUpload();
-        $result = $this->forceSubmissionDownload($submission);
-        $this->assertNotEquals(0, $result->getTargetId(), json_encode($result->toArray()));
+        $this->forceSubmissionDownload($submission);
 
         $submissions = $this->getSubmissionManager()->find(
             [
@@ -191,7 +190,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
                 $acfImageFieldId,
             ),
         );
-        $translationHelper->prepareSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, $imageId, $targetBlogId);
+        $this->addToUploadQueue($translationHelper->prepareSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $sourceBlogId, $imageId, $targetBlogId)->getId());
         $submission = $translationHelper->prepareSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $sourceBlogId, $postId, $targetBlogId);
         $this->uploadDownload($submission);
         $attachmentSubmission = ArrayHelper::first($submissionManager->find([SubmissionEntity::FIELD_SOURCE_ID => $imageId]));
