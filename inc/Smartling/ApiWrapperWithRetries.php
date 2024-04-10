@@ -19,11 +19,8 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
     public const RETRY_ATTEMPTS = 4;
     private const RETRY_WAIT_SECONDS = 1;
 
-    private ApiWrapperInterface $base;
-
-    public function __construct(ApiWrapperInterface $base)
+    public function __construct(private ApiWrapperInterface $base, private int $retryWaitSeconds = 1)
     {
-        $this->base = $base;
     }
 
     public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
@@ -130,6 +127,13 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
+    public function cancelBatchFile(ConfigurationProfileEntity $profile, string $batchUid, string $fileUri): void
+    {
+        $this->withRetry(function () use ($profile, $batchUid, $fileUri) {
+            $this->base->cancelBatchFile($profile, $batchUid, $fileUri);
+        });
+    }
+
     public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, array $fileUris, bool $authorize = false): string
     {
         return $this->withRetry(function () use ($profile, $jobUid, $authorize, $fileUris) {
@@ -146,7 +150,7 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
 
     public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
     {
-        return $this->withRetry(function () use ($authorize, $profile, $fileUris) {
+        return $this->withRetry(function () use ($profile, $fileUris) {
             return $this->base->retrieveJobInfoForDailyBucketJob($profile, $fileUris);
         });
     }
@@ -187,7 +191,7 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         try {
             return (new Retry(new Command($command)))
                 ->attempts(self::RETRY_ATTEMPTS)
-                ->wait(self::RETRY_WAIT_SECONDS)
+                ->wait($this->retryWaitSeconds)
                 ->onlyIf(function ($attempt, $error) {
                     return ($error instanceof \Exception && !$this->isUnrecoverable($error));
                 })

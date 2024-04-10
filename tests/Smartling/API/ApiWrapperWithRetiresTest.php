@@ -14,7 +14,7 @@ class ApiWrapperWithRetiresTest extends TestCase
     {
         $base = $this->createMock(ApiWrapper::class);
         $base->expects($this->exactly(ApiWrapperWithRetries::RETRY_ATTEMPTS))->method('acquireLock')->willThrowException(new SmartlingApiException('test'));
-        $x = new ApiWrapperWithRetries($base);
+        $x = new ApiWrapperWithRetries($base, 0);
         try {
             $x->acquireLock($this->createMock(ConfigurationProfileEntity::class), 'key', 100500);
         } catch (SmartlingApiException $e) {
@@ -26,7 +26,7 @@ class ApiWrapperWithRetiresTest extends TestCase
     {
         $base = $this->createPartialMock(ApiWrapper::class, ['acquireLock']);
         $base->expects($this->once())->method('acquireLock')->willThrowException(new SmartlingApiException([['key' => 'forbidden']]));
-        $x = new ApiWrapperWithRetries($base);
+        $x = new ApiWrapperWithRetries($base, 0);
         try {
             $x->acquireLock($this->createMock(ConfigurationProfileEntity::class), 'key', 100500);
         } catch (SmartlingApiException $e) {

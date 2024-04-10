@@ -81,16 +81,29 @@ namespace Smartling\Tests\Services {
             $sourceId = 48;
             $contentType = 'post';
             $targetBlogId = 2;
-            $batchUid = 'batchUid';
             $jobName = 'Job Name';
             $jobUid = 'abcdef123456';
             $projectUid = 'projectUid';
 
-            $apiWrapper = $this->createMock(ApiWrapper::class);
-            $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
-
             $profile = $this->createMock(ConfigurationProfileEntity::class);
             $profile->method('getProjectId')->willReturn($projectUid);
+
+            $apiWrapper = $this->createMock(ApiWrapper::class);
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData, JobEntity $job, ?bool $isAuthorize = null) use ($jobName, $jobUid, $profile, $sourceBlogId, $sourceId, $targetBlogId): void {
+                $this->assertEquals($profile, $configurationProfile);
+                $this->assertEquals(CreateRecordParameters::ACTION_TYPE_UPLOAD, $actionType);
+                $this->assertEquals('From Widget', $description);
+                $this->assertEquals([
+                    'relatedContentIds' => [],
+                    'sourceBlogId' => $sourceBlogId,
+                    'sourceId' => $sourceId,
+                    'targetBlogIds' => [$targetBlogId],
+                ], $clientData);
+                $this->assertEquals($jobName, $job->getJobName());
+                $this->assertEquals($jobUid, $job->getJobUid());
+                $this->assertEquals($profile->getProjectId(), $job->getProjectUid());
+                $this->assertTrue($isAuthorize);
+            });
 
             $settingsManager = $this->createMock(SettingsManager::class);
             $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
@@ -108,32 +121,19 @@ namespace Smartling\Tests\Services {
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
 
-            $submissionManager->expects(self::once())->method('find')->with([
+            $submissionManager->expects(self::once())->method('findOne')->with([
                 'source_blog_id' => $sourceBlogId,
                 'target_blog_id' => $targetBlogId,
                 'content_type' => $contentType,
                 'source_id' => $sourceId,
-            ])->willReturn([$submission]);
+            ])->willReturn($submission);
 
             $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturnArgument(0);
 
-            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData, JobEntity $job, ?bool $isAuthorize = null) use ($jobName, $jobUid, $profile, $sourceBlogId, $sourceId, $targetBlogId): void {
-                $this->assertEquals($profile, $configurationProfile);
-                $this->assertEquals(CreateRecordParameters::ACTION_TYPE_UPLOAD, $actionType);
-                $this->assertEquals('From Widget', $description);
-                $this->assertEquals([
-                    'relatedContentIds' => [],
-                    'sourceBlogId' => $sourceBlogId,
-                    'sourceId' => $sourceId,
-                    'targetBlogIds' => [$targetBlogId],
-                ], $clientData);
-                $this->assertEquals($jobName, $job->getJobName());
-                $this->assertEquals($jobUid, $job->getJobUid());
-                $this->assertEquals($profile->getProjectId(), $job->getProjectUid());
-                $this->assertTrue($isAuthorize);
-            });
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
 
-            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, wpProxy: $wpProxy);
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
@@ -158,13 +158,11 @@ namespace Smartling\Tests\Services {
             $contentType = 'post';
             $targetBlogId = 2;
             $titlePrefix = 'postTitle';
-            $batchUid = 'batchUid';
             $jobName = 'Job Name';
             $jobUid = 'abcdef123456';
             $projectUid = 'projectUid';
 
             $apiWrapper = $this->createMock(ApiWrapper::class);
-            $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
 
             $profile = $this->createMock(ConfigurationProfileEntity::class);
             $profile->method('getProjectId')->willReturn($projectUid);
@@ -182,35 +180,52 @@ namespace Smartling\Tests\Services {
                 return $titlePrefix . $id;
             }, $sourceIds);
 
-            $submission = $this->createMock(SubmissionEntity::class);
-            $submission->expects(self::exactly(count($sourceIds)))->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
-            $matcherSubmission = $this->exactly(count($sourceIds));
-            $submission->expects($matcherSubmission)->method('setSourceTitle')
-                ->willReturnCallback(function ($actual) use ($expectedTitles, $matcherSubmission, $submission) {
-                    $this->assertEquals($expectedTitles[$matcherSubmission->getInvocationCount() - 1], $actual);
-                    return $submission;
-                });
-            $submission->method('getId')->willReturn(48, 49);
+            $submission1 = $this->createMock(SubmissionEntity::class);
+            $submission1->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            $submission1->expects($this->once())->method('setSourceTitle')->with($expectedTitles[0]);
+            $submission1->method('getId')->willReturn(48);
+
+            $submission2 = $this->createMock(SubmissionEntity::class);
+            $submission2->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
+            $submission2->expects($this->once())->method('setSourceTitle')->with($expectedTitles[1]);
+            $submission2->method('getId')->willReturn(49);
+
+            $submissions = [$submission1, $submission2];
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
 
-            $matcherSubmissionManager = $this->exactly(count($sourceIds));
-            $submissionManager->expects($matcherSubmissionManager)->method('findTargetBlogSubmission')
+            $matcherFind = $this->exactly(count($sourceIds));
+            $submissionManager->expects($matcherFind)->method('findTargetBlogSubmission')
                 ->willReturnCallback(function ($callContentType, $callSourceBlogId, $callContentId, $callTargetBlogId)
-                use ($contentType, $matcherSubmissionManager, $sourceBlogId, $sourceIds, $submission, $targetBlogId) {
+                use ($contentType, $matcherFind, $sourceBlogId, $sourceIds, $submissions, $targetBlogId) {
+                    $index = $matcherFind->getInvocationCount() - 1;
                     $this->assertEquals($sourceBlogId, $callSourceBlogId);
                     $this->assertEquals($targetBlogId, $callTargetBlogId);
                     $this->assertEquals($contentType, $callContentType);
-                    $this->assertEquals($sourceIds[$matcherSubmissionManager->getInvocationCount() - 1], $callContentId);
+                    $this->assertEquals($sourceIds[$index], $callContentId);
 
-                    return $submission;
+                    return $submissions[$index];
                 });
 
-            $submissionManager->expects(self::never())->method('getSubmissionEntity')->with([$contentType, $sourceBlogId]);
+            $submissionManager->expects(self::never())->method('getSubmissionEntity');
 
-            $submissionManager->expects(self::exactly(count($sourceIds)))->method('storeEntity')->with($submission);
+            $matcherStore = $this->exactly(count($sourceIds));
+            $submissionManager->expects($matcherStore)->method('storeEntity')->willReturnCallback(function ($submission) use ($matcherStore, $submissions) {
+                $this->assertEquals($submissions[$matcherStore->getInvocationCount() - 1], $submission);
 
-            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager);
+                return $submission;
+            });
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $apiWrapper,
+                $contentHelper,
+                $settingsManager,
+                $submissionManager,
+                wpProxy: $wpProxy,
+            );
 
             $x->expects(self::exactly(count($sourceIds)))->method('getTitle')->willReturnCallback(static function (SubmissionEntity $submission) use ($titlePrefix) {
                 return $titlePrefix . $submission->getId();
@@ -238,13 +253,13 @@ namespace Smartling\Tests\Services {
             $sourceIds = [161];
             $contentType = ContentTypeNavigationMenu::WP_CONTENT_TYPE;
             $targetBlogId = [2];
-            $batchUid = 'batchUid';
             $jobName = 'Job Name';
             $jobUid = 'abcdef123456';
             $projectUid = 'projectUid';
             $menuSubmission = $this->createMock(SubmissionEntity::class);
             $menuSubmission->method('getContentType')->willReturn(ContentTypeNavigationMenu::WP_CONTENT_TYPE);
             $menuSubmission->method('getSourceId')->willReturn($sourceIds[0]);
+            $menuSubmission->method('getId')->willReturn($sourceIds[0]);
             $menuSubmission->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
             /**
              * @var SubmissionEntity[]|MockObject[] $menuItemSubmissions
@@ -257,6 +272,7 @@ namespace Smartling\Tests\Services {
                 $menuItemSubmission->method('getContentType')->willReturn(ContentTypeNavigationMenuItem::WP_CONTENT_TYPE);
                 $menuItemSubmission->method('getSourceId')->willReturn($menuItemId);
                 $menuItemSubmission->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                $menuItemSubmission->method('getId')->willReturn($menuItemId);
                 $menuItemSubmissions[] = $menuItemSubmission;
                 $post = new \stdClass();
                 $post->ID = $menuItemId;
@@ -265,9 +281,6 @@ namespace Smartling\Tests\Services {
             }
 
             $this->assertCount(4, $unsavedSubmissionIds);
-            $apiWrapper = $this->createMock(ApiWrapper::class);
-            $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
-
             $profile = $this->createMock(ConfigurationProfileEntity::class);
             $profile->method('getProjectId')->willReturn($projectUid);
 
@@ -315,6 +328,9 @@ namespace Smartling\Tests\Services {
             $customMenuContentTypeHelper = $this->createMock(CustomMenuContentTypeHelper::class);
             $customMenuContentTypeHelper->method('getMenuItems')->willReturn($menuItemPosts);
 
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
             $x = new ContentRelationsDiscoveryService(
                 $this->createMock(AcfDynamicSupport::class),
                 $contentHelper,
@@ -329,16 +345,16 @@ namespace Smartling\Tests\Services {
                 $this->createMock(GutenbergBlockHelper::class),
                 $this->createMock(SubmissionFactory::class),
                 $submissionManager,
-                $apiWrapper,
+                $this->createMock(ApiWrapper::class),
                 $this->createMock(MediaAttachmentRulesManager::class),
                 $this->createMock(ReplacerFactory::class),
                 $settingsManager,
                 $customMenuContentTypeHelper,
                 $this->createMock(ExternalContentManager::class),
-                $this->createMock(WordpressFunctionProxyHelper::class),
+                $wpProxy,
             );
 
-            $x->bulkUpload($targetBlogIdnew JobEntityWithBatchUid($batchUid, $jobName, $jobUid, $projectUid), $sourceIds, $contentType, $profile, $targetBlogId, $sourceBlogId);
+            $x->bulkUpload(true, $sourceIds, $contentType, $sourceBlogId, new JobEntity($jobName, $jobUid, $projectUid), $profile, $targetBlogId, $sourceBlogId);
             $this->assertCount(0, $unsavedSubmissionIds);
         }
 
@@ -352,14 +368,12 @@ namespace Smartling\Tests\Services {
             $sourceId = 48;
             $contentType = 'post';
             $targetBlogId = 2;
-            $batchUid = 'batchUid';
             $jobName = 'Job Name';
             $jobUid = 'abcdef123456';
             $projectUid = 'projectUid';
             $createdJobId = 3;
 
             $apiWrapper = $this->createMock(ApiWrapper::class);
-            $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
 
             $profile = $this->createMock(ConfigurationProfileEntity::class);
             $profile->method('getProjectId')->willReturn($projectUid);
@@ -398,7 +412,10 @@ namespace Smartling\Tests\Services {
             ])->onlyMethods(['find'])->getMock();
             $submissionManager->method('find')->willReturn([]);
 
-            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, new SubmissionFactory());
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, new SubmissionFactory(), wpProxy: $wpProxy);
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
@@ -455,11 +472,15 @@ namespace Smartling\Tests\Services {
                 }
             });
 
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
             $x = $this->getContentRelationDiscoveryService(
                 $this->createMock(ApiWrapper::class),
                 $contentHelper,
                 $this->createMock(SettingsManager::class),
-                $submissionManager
+                $submissionManager,
+                wpProxy: $wpProxy,
             );
             $x->clone(new UserCloneRequest($rootPostId, $contentType, [$cloneLevel1 => [$targetBlogId => [$contentType => [$childPostId]]]], [$targetBlogId]));
 
@@ -479,11 +500,15 @@ namespace Smartling\Tests\Services {
             $submissionManager->expects($this->once())->method('findTargetBlogSubmission')->willReturn($existing);
             $submissionManager->expects($this->once())->method('storeSubmissions')->with([]);
 
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn(1);
+
             $x = $this->getContentRelationDiscoveryService(
                 $this->createMock(ApiWrapper::class),
                 $this->createMock(ContentHelper::class),
                 $this->createMock(SettingsManager::class),
-                $submissionManager
+                $submissionManager,
+                wpProxy: $wpProxy,
             );
             $x->clone(new UserCloneRequest($contentId, $contentType, [], [$targetBlogId]));
         }
@@ -514,9 +539,10 @@ namespace Smartling\Tests\Services {
 
             $settingsManager = $this->createMock(SettingsManager::class);
 
-
             $wordpressProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wordpressProxy->method('get_current_blog_id')->willReturn(1);
             $wordpressProxy->method('get_post_type')->willReturn('page');
+
 
             $fieldFilterHelper = new FieldsFilterHelper(
                 $this->createMock(AcfDynamicSupport::class),
@@ -554,7 +580,6 @@ namespace Smartling\Tests\Services {
 
         public function testRelatedItemsSentForTranslation()
         {
-            $batchUid = 'batchUid';
             $contentType = 'post';
             $jobAuthorize = 'false';
             $jobDescription = 'Test Job Description';
@@ -570,7 +595,6 @@ namespace Smartling\Tests\Services {
             $targetBlogId = 2;
 
             $apiWrapper = $this->createMock(ApiWrapper::class);
-            $apiWrapper->method('retrieveBatch')->willReturn($batchUid);
             $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(function (ConfigurationProfileEntity $configurationProfile, string $actionType, string $description, array $clientData) use ($depth1AttachmentId, $depth2AttachmentId): void {
                 try { // ApiWrapper call is wrapped in try/catch, this is needed to ensure exception gets thrown in test
                     $this->assertEquals([
@@ -598,12 +622,12 @@ namespace Smartling\Tests\Services {
             $submission->method('getId')->willReturn(3);
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
-            $submissionManager->expects(self::once())->method('find')->with([
+            $submissionManager->expects(self::once())->method('findOne')->with([
                 'source_blog_id' => $sourceBlogId,
                 'target_blog_id' => $targetBlogId,
                 'content_type' => $contentType,
                 'source_id' => $sourceId,
-            ])->willReturn([$submission]);
+            ])->willReturn($submission);
 
             // Expects the original submission and 2 related submissions are stored to DB
             $matcher = $this->exactly(3);
@@ -622,7 +646,17 @@ namespace Smartling\Tests\Services {
             $submissionFactory = $this->createMock(SubmissionFactory::class);
             $submissionFactory->method('fromArray')->willReturn($factorySubmission);
 
-            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, submissionFactory: $submissionFactory);
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $apiWrapper,
+                $contentHelper,
+                $settingsManager,
+                $submissionManager,
+                submissionFactory: $submissionFactory,
+                wpProxy: $wpProxy,
+            );
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'job' => [
@@ -731,6 +765,7 @@ namespace Smartling\Tests\Services {
             $replacerFactory->method('getReplacer')->willReturn($this->createMock(ContentIdReplacer::class));
 
             $wordpressProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wordpressProxy->method('get_current_blog_id')->willReturn(1);
             $wordpressProxy->method('get_post_type')->willReturn($contentType);
 
             $x = $this->getContentRelationDiscoveryService(
