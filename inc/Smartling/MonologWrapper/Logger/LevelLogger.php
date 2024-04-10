@@ -42,6 +42,15 @@ class LevelLogger extends Logger implements LoggerWithStringContext
         return false;
     }
 
+    public function alterContext(array $context): void
+    {
+        foreach ($this->context as $existingKey => $_) {
+            if (array_key_exists($existingKey, $context)) {
+                $this->context[$existingKey] = $context[$existingKey];
+            }
+        }
+    }
+
     public function withStringContext(array $context, callable $callable): mixed
     {
         foreach ($context as $key => $value) {

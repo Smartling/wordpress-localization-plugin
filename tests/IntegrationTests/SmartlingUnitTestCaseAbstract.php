@@ -190,7 +190,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         self::flush_cache();
     }
 
-    protected function forceSubmissionDownload(SubmissionEntity $submission): void
+    protected function forceSubmissionDownload(SubmissionEntity $submission): SubmissionEntity
     {
         $queue = $this->get('queue.db');
         /**
@@ -198,6 +198,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
          */
         $queue->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
         $this->executeDownload();
+        return $this->getSubmissionManager()->getEntityById($submission->getId());
     }
 
     protected static function wpCliExec(string $command, string $subCommand, string $parameters): void

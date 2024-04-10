@@ -46,7 +46,7 @@ abstract class ExternalContentAbstract extends PluggableAbstract implements Cont
         return [];
     }
 
-    protected function getTargetId(int $sourceBlogId, int $sourceId, int $targetBlogId, string $contentType = ContentTypeHelper::POST_TYPE_ATTACHMENT): ?int
+    public function getTargetId(int $sourceBlogId, int $sourceId, int $targetBlogId, string $contentType = ContentTypeHelper::POST_TYPE_ATTACHMENT): ?int
     {
         $this->getLogger()->debug("Searching for target id to replace sourceId=$sourceId");
         $parameters = [

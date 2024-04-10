@@ -60,7 +60,7 @@ class UploadQueueManager {
                     continue 2;
                 }
 
-                $locales->add([new IntStringPair($submission->getId(), $locale)]);
+                $locales = $locales->add([new IntStringPair($submission->getId(), $locale)]);
                 $submissions[] = $submission;
             }
 

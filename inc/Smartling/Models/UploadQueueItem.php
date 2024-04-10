@@ -65,4 +65,12 @@ class UploadQueueItem {
 
         return new self($submissions, $this->batchUid, $locales);
     }
+
+    public function setBatchUid(string $batchUid): self
+    {
+        $result = clone $this;
+        $result->batchUid = $batchUid;
+
+        return $result;
+    }
 }

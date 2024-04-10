@@ -14,7 +14,7 @@ class GlobalWidget extends Unknown {
 
     public function getRelated(): RelatedContentInfo
     {
-        $result = new RelatedContentInfo();
+        $result = parent::getRelated();
         $id = $this->getIntSettingByKey('templateID', $this->raw);
         if ($id !== null) {
             $result->addContent(new Content($id, ContentRelationsDiscoveryService::POST_BASED_PROCESSOR), $this->id, 'templateID');

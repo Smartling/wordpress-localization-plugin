@@ -159,13 +159,16 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         #region cloning
         $submission = $this->uploadDownload($this->createSubmissionForCloning(ContentTypeHelper::CONTENT_TYPE_POST, $posts[0][0]));
         ++$expectedPostsCloned;
-        $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
+        $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus(), $submission->getLastError());
         $this->getSiteHelper()->withBlog($cloneBlogId, $this->assertResult($expectedImagesCloned, $originalContent, $expectedPostsCloned, $submission));
+        $lastCloneId = $submission->getId();
         #endregion
         #region translation
-        $submission = $this->uploadDownload($this->createSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $posts[0][0])); // TODO rename into $submission
+        $submission = $this->createSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $posts[0][0]);
+        $this->assertNotEquals($lastCloneId, $submission->getId());
+        $submission = $this->uploadDownload($submission);
         ++$expectedPostsTranslated;
-        $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
+        $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus(), $submission->getLastError());
         $this->getSiteHelper()->withBlog($translationBlogId, $this->assertResult(
             $expectedImagesTranslated,
             str_replace('Root Post content for translation', '[R~óót P~óst c~óñté~ñt fó~r trá~ñslá~tíóñ]', $originalContent),

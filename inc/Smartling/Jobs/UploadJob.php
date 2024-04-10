@@ -5,7 +5,9 @@ namespace Smartling\Jobs;
 use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\UploadQueueManager;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\Cache;
+use Smartling\Helpers\FileUriHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 
@@ -16,6 +18,7 @@ class UploadJob extends JobAbstract
     public function __construct(
         ApiWrapperInterface $api,
         Cache $cache,
+        private FileUriHelper $fileUriHelper,
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager,
         private UploadQueueManager $uploadQueueManager,
@@ -45,25 +48,24 @@ class UploadJob extends JobAbstract
     private function processUploadQueue(): void
     {
         $batchUids = [];
+        $profiles = [];
         while (($item = $this->uploadQueueManager->dequeue()) !== null) {
             $submission = $item->getSubmissions()[0];
-            $batchUid = $item->getBatchUid();
-            if ($batchUid === '') {
-                if (!array_key_exists($submission->getSourceBlogId(), $batchUids)) {
-                    $profile = null;
-                    $profiles = $this->settingsManager->getActiveProfiles();
-                    foreach ($profiles as $profile) {
-                        if ($profile->getOriginalBlogId()->getBlogId() === $submission->getSourceBlogId()) {
-                            break;
-                        }
-                    }
-                    if ($profile === null) {
-                        $this->getLogger()->notice("Skipping upload of submissionId={$submission->getId()}: no active profile found for blogId={$submission->getSourceBlogId()}");
-                        continue;
-                    }
-                    $batchUids[$submission->getSourceBlogId()] = $this->api->retrieveJobInfoForDailyBucketJob($profile, [$submission->getFileUri()]);
+            if ($submission->getFileUri() === '') {
+                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
+                $this->submissionManager->storeEntity($submission);
+            }
+            if (!array_key_exists($submission->getSourceBlogId(), $profiles)) {
+                try {
+                    $profiles[$submission->getSourceBlogId()] = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+                } catch (SmartlingDbException) {
+                    $this->getLogger()->notice("Skipping upload of submissionId={$submission->getId()}: no active profile found for blogId={$submission->getSourceBlogId()}");
+                    continue;
                 }
-                $batchUid = $batchUids[$submission->getSourceBlogId()];
+            }
+            $profile = $profiles[$submission->getSourceBlogId()];
+            if ($item->getBatchUid() === '') {
+                $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());
             }
 
             $this->getLogger()->info(sprintf(
@@ -75,7 +77,7 @@ class UploadJob extends JobAbstract
                 $submission->getSourceId(),
                 $submission->getTargetBlogId(),
                 $submission->getTargetLocale(),
-                $batchUid,
+                $item->getBatchUid(),
             ));
 
             try {

@@ -23,6 +23,7 @@ services:
     arguments:
       - "@api.wrapper.with.retries"
       - "@transient.cache"
+      - "@file.uri.helper"
       - "@manager.settings"
       - "@manager.submission"
       - "@manager.upload.queue"

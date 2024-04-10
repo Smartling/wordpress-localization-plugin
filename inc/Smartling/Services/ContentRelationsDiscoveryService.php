@@ -33,7 +33,6 @@ use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Models\IntegerIterator;
-use Smartling\Models\UploadQueueEntity;
 use Smartling\Models\UserCloneRequest;
 use Smartling\Models\DetectedRelations;
 use Smartling\Models\GutenbergBlock;
@@ -108,7 +107,7 @@ class ContentRelationsDiscoveryService
                 if ($batchUid === null) {
                     $batchUid = $this->apiWrapper->createBatch($profile, $jobInfo->getJobUid(), [$fileUri]);
                 }
-                $queueIds[] = $submission->getId();
+                $queueIds[] = [$submission->getId()];
                 $this->logSubmissionCreated($submission, 'Bulk upload request', $jobInfo);
                 if ($submission->getContentType() === ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
                     $menuIds[] = $submission->getSourceId();
@@ -120,7 +119,7 @@ class ContentRelationsDiscoveryService
                 $carry[] = $item->ID;
                 return $carry;
             }, []);
-            $queueIds[] = $this->bulkUpload(
+            $queueIds =  $this->bulkUpload(
                 $authorize,
                 $menuItemIds,
                 ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,

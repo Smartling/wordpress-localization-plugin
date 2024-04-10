@@ -72,7 +72,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         protected SiteHelper $siteHelper,
         protected SmartlingCore $core,
         protected SubmissionManager $manager,
-        private UploadQueueManager $uploadQueueManager,
+        protected UploadQueueManager $uploadQueueManager,
         protected ConfigurationProfileEntity $profile,
     ) {
         $this->setSource($_REQUEST);

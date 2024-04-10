@@ -43,7 +43,7 @@ class DownloadTranslationJob extends JobAbstract
 
     private function processDownloadQueue(): void
     {
-        while (false !== ($submissionId = $this->queue->dequeue(QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE))) {
+        while (null !== ($submissionId = $this->queue->dequeue(QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE))) {
             $submissionId = ArrayHelper::first($submissionId);
             $result = $this->submissionManager->find(['id' => $submissionId]);
 

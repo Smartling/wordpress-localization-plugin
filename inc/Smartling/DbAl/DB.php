@@ -409,7 +409,7 @@ Please download the log file (click <strong><a href="%s">here</a></strong>) and 
     public function getRowArray(string $query, int $index = 0): ?array
     {
         $result = $this->wpdb->get_row($query, ARRAY_A, $index);
-        if ($result === null) {
+        if ($result === null && $this->wpdb->last_error !== '') {
             $this->logFailedQuery($query);
         }
 

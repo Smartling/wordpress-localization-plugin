@@ -141,6 +141,13 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
+    public function registerBatchFile(ConfigurationProfileEntity $profile, string $batchUid, string $fileUri): void
+    {
+        $this->withRetry(function () use ($profile, $batchUid, $fileUri) {
+            $this->base->registerBatchFile($profile, $batchUid, $fileUri);
+        });
+    }
+
     public function findLastJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
     {
         return $this->withRetry(function () use ($profile, $fileUri) {
@@ -148,10 +155,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
+    public function getOrCreateJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
     {
         return $this->withRetry(function () use ($profile, $fileUris) {
-            return $this->base->retrieveJobInfoForDailyBucketJob($profile, $fileUris);
+            return $this->base->getOrCreateJobInfoForDailyBucketJob($profile, $fileUris);
         });
     }
 

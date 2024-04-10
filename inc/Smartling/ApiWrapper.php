@@ -235,7 +235,7 @@ class ApiWrapper implements ApiWrapperInterface
         array $smartlingLocaleList,
     ): bool {
         $this->getLogger()->info(sprintf(
-            'Starting upload for fileUri="%s", batchUid=%s, contentType="%s", sourceBlogId="%s", sourceId="%s", locales:%s.',
+            'Starting upload for fileUri="%s", batchUid=%s, contentType="%s", sourceBlogId="%s", sourceId="%s", locales="%s"',
             $entity->getFileUri(),
             $batchUid,
             $entity->getContentType(),
@@ -492,6 +492,11 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->getBatchApiV2($profile)->createBatch($authorize, $jobUid, $fileUris);
     }
 
+    public function registerBatchFile(ConfigurationProfileEntity $profile, string $batchUid, string $fileUri): void
+    {
+        $this->getBatchApiV2($profile)->registerBatchFile($batchUid, $fileUri);
+    }
+
     private function getBaseNameForDailyBucketJob(string $suffix = ''): string
     {
         return ApiWrapperInterface::DAILY_BUCKET_JOB_NAME_PREFIX . ' ' . date(DateTimeHelper::getWordpressDateFormat()) . $suffix;
@@ -514,7 +519,7 @@ class ApiWrapper implements ApiWrapperInterface
         return new JobEntityWithStatus($result['jobStatus'], $result['jobName'], $result['translationJobUid'], $profile->getProjectId());
     }
 
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
+    public function getOrCreateJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
     {
         $jobName = $this->getBaseNameForDailyBucketJob();
         $jobId = null;
