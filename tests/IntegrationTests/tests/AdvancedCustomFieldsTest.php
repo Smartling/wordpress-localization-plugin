@@ -196,7 +196,9 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $this->uploadDownload($submission);
         $attachmentSubmission = ArrayHelper::first($submissionManager->find([SubmissionEntity::FIELD_SOURCE_ID => $imageId]));
         $this->assertInstanceOf(SubmissionEntity::class, $attachmentSubmission);
-        $submission = ArrayHelper::first($submissionManager->find([SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::CONTENT_TYPE_POST]));
+        $submissions = $submissionManager->find([SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::CONTENT_TYPE_POST]);
+        $this->assertCount(1, $submissions);
+        $submission = ArrayHelper::first($submissions);
         $this->assertInstanceOf(SubmissionEntity::class, $submission);
         $targetPost = $this->getTargetPost($this->getSiteHelper(), $submission);
         $this->assertNotEquals($imageId, $attachmentSubmission->getTargetId(), 'Attachment id expected to change after translation');
