@@ -107,7 +107,8 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $this->addToUploadQueue($submission->getId());
 
         $this->executeUpload();
-        $this->forceSubmissionDownload($submission);
+        $result = $this->forceSubmissionDownload($submission);
+        $this->assertNotEquals(0, $result->getTargetId(), json_encode($result->toArray()));
 
         $submissions = $this->getSubmissionManager()->find(
             [
