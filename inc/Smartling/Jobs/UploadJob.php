@@ -64,15 +64,8 @@ class UploadJob extends JobAbstract
                 }
             }
             $profile = $profiles[$submission->getSourceBlogId()];
-            $batchUid = $item->getBatchUid();
-            if ($batchUid === '') {
-                if (!array_key_exists($submission->getSourceBlogId(), $batchUids)) {
-                    $batchUids[$submission->getSourceBlogId()] = $this->api->retrieveJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid();
-                } else {
-                    $this->api->registerBatchFile($profile, $batchUids[$submission->getSourceBlogId()], $submission->getFileUri());
-                }
-                $batchUid = $batchUids[$submission->getSourceBlogId()];
-                $item = $item->setBatchUid($batchUid);
+            if ($item->getBatchUid() === '') {
+                $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());
             }
 
             $this->getLogger()->info(sprintf(
@@ -84,7 +77,7 @@ class UploadJob extends JobAbstract
                 $submission->getSourceId(),
                 $submission->getTargetBlogId(),
                 $submission->getTargetLocale(),
-                $batchUid,
+                $item->getBatchUid(),
             ));
 
             try {

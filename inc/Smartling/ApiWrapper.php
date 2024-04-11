@@ -519,7 +519,7 @@ class ApiWrapper implements ApiWrapperInterface
         return new JobEntityWithStatus($result['jobStatus'], $result['jobName'], $result['translationJobUid'], $profile->getProjectId());
     }
 
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
+    public function getOrCreateJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
     {
         $jobName = $this->getBaseNameForDailyBucketJob();
         $jobId = null;

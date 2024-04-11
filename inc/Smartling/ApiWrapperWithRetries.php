@@ -155,10 +155,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
+    public function getOrCreateJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
     {
         return $this->withRetry(function () use ($profile, $fileUris) {
-            return $this->base->retrieveJobInfoForDailyBucketJob($profile, $fileUris);
+            return $this->base->getOrCreateJobInfoForDailyBucketJob($profile, $fileUris);
         });
     }
 

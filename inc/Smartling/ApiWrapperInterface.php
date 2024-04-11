@@ -153,7 +153,7 @@ interface ApiWrapperInterface
     /**
      * @throws SmartlingApiException
      */
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid;
+    public function getOrCreateJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid;
 
     public function isUnrecoverable(\Exception $e): bool;
 }
