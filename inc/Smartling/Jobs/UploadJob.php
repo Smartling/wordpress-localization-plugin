@@ -7,6 +7,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\Cache;
+use Smartling\Helpers\FileUriHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 
@@ -17,6 +18,7 @@ class UploadJob extends JobAbstract
     public function __construct(
         ApiWrapperInterface $api,
         Cache $cache,
+        private FileUriHelper $fileUriHelper,
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager,
         private UploadQueueManager $uploadQueueManager,
@@ -49,6 +51,10 @@ class UploadJob extends JobAbstract
         $profiles = [];
         while (($item = $this->uploadQueueManager->dequeue()) !== null) {
             $submission = $item->getSubmissions()[0];
+            if ($submission->getFileUri() === '') {
+                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
+                $this->submissionManager->storeEntity($submission);
+            }
             if (!array_key_exists($submission->getSourceBlogId(), $profiles)) {
                 try {
                     $profiles[$submission->getSourceBlogId()] = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
