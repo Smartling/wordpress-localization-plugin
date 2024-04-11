@@ -53,7 +53,6 @@ class LockTranslationTest extends SmartlingUnitTestCaseAbstract
         );
 
         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-        $submission->setBatchUid('');
         $submission->setIsLocked(true);
         $submission = $this->getSubmissionManager()->storeEntity($submission);
 
