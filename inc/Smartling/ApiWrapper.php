@@ -492,6 +492,11 @@ class ApiWrapper implements ApiWrapperInterface
         return $this->getBatchApiV2($profile)->createBatch($authorize, $jobUid, $fileUris);
     }
 
+    public function registerBatchFile(ConfigurationProfileEntity $profile, string $batchUid, string $fileUri): void
+    {
+        $this->getBatchApiV2($profile)->registerBatchFile($batchUid, $fileUri);
+    }
+
     private function getBaseNameForDailyBucketJob(string $suffix = ''): string
     {
         return ApiWrapperInterface::DAILY_BUCKET_JOB_NAME_PREFIX . ' ' . date(DateTimeHelper::getWordpressDateFormat()) . $suffix;

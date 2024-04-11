@@ -139,6 +139,11 @@ interface ApiWrapperInterface
      */
     public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, array $fileUris, bool $authorize = false): string;
 
+    /**
+     * @throws SmartlingApiException
+     */
+    public function registerBatchFile(ConfigurationProfileEntity $profile, string $batchUid, string $fileUri): void;
+
     public function getProgressToken(ConfigurationProfileEntity $profile): array;
 
     public function deleteNotificationRecord(ConfigurationProfileEntity $profile, string $space, string $object, string $record): void;

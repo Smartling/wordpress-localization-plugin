@@ -141,6 +141,13 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
+    public function registerBatchFile(ConfigurationProfileEntity $profile, string $batchUid, string $fileUri): void
+    {
+        $this->withRetry(function () use ($profile, $batchUid, $fileUri) {
+            $this->base->registerBatchFile($profile, $batchUid, $fileUri);
+        });
+    }
+
     public function findLastJobByFileUri(ConfigurationProfileEntity $profile, string $fileUri): ?JobEntityWithStatus
     {
         return $this->withRetry(function () use ($profile, $fileUri) {
