@@ -510,7 +510,13 @@ trait SmartlingCoreUploadTrait
         foreach ($item->getSubmissions() as $submission) {
             if (1 === $submission->getIsLocked()) {
                 $this->getLogger()
-                    ->notice(sprintf('Requested re-upload of locked submissionId=%s, skipping.', $submission->getId()));
+                    ->notice(sprintf('Requested upload of locked submissionId=%s, skipping.', $submission->getId()));
+
+                $item = $item->removeSubmission($submission);
+            }
+            if ($submission->isCloned()) {
+                $this->getLogger()
+                    ->notice(sprintf('Requested upload of cloned submissionId=%s, skipping.', $submission->getId()));
 
                 $item = $item->removeSubmission($submission);
             }

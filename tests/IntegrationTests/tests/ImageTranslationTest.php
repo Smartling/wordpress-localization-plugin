@@ -16,6 +16,8 @@ class ImageTranslationTest extends SmartlingUnitTestCaseAbstract
         $attachmentId = $this->createAttachment();
         $submission = $this->createSubmission('attachment', $attachmentId);
         $submissionId = $submissionManager->storeEntity($submission)->getId();
+        $this->addToUploadQueue($attachmentId);
+        $this->addToUploadQueue($submissionId);
         $this->executeUpload();
         $submission = $this->getSubmissionById($submissionId);
         $attachment = (array)$this->factory()->attachment->get_object_by_id($attachmentId);
