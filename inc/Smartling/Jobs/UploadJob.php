@@ -65,6 +65,7 @@ class UploadJob extends JobAbstract
                 }
                 $batchUid = $batchUids[$submission->getSourceBlogId()];
             }
+            $item = $item->setBatchUid($batchUid);
 
             $this->getLogger()->info(sprintf(
                 'Cron Job upload for submissionId="%s" with status="%s" contentType="%s", sourceBlogId="%s", contentId="%s", targetBlogId="%s", targetLocale="%s", batchUid="%s"',

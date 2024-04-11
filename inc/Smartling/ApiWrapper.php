@@ -235,7 +235,7 @@ class ApiWrapper implements ApiWrapperInterface
         array $smartlingLocaleList,
     ): bool {
         $this->getLogger()->info(sprintf(
-            'Starting upload for fileUri="%s", batchUid=%s, contentType="%s", sourceBlogId="%s", sourceId="%s", locales:%s.',
+            'Starting upload for fileUri="%s", batchUid=%s, contentType="%s", sourceBlogId="%s", sourceId="%s", locales="%s"',
             $entity->getFileUri(),
             $batchUid,
             $entity->getContentType(),
