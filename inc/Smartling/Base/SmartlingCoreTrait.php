@@ -88,6 +88,8 @@ trait SmartlingCoreTrait
         usleep(10000);
         $submission->setTargetId($targetContent->getId());
         $this->getLogger()->debug('Set submission target id to ' . $targetContent->getId());
+        $this->getLogger()->alterContext(['targetId' => $submission->getTargetId()]);
+        $this->getLogger()->debug('Set submission target id to ' . $targetContent->getId());
         usleep(10000);
         $submission = $this->getSubmissionManager()->storeEntity($submission);
         $this->externalContentManager->setExternalContent($unfilteredSourceData, $this->externalContentManager->getExternalContent([], $submission, true), $submission);
