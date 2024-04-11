@@ -83,8 +83,12 @@ trait SmartlingCoreTrait
         }
 
         $targetContent = $this->getContentHelper()->writeTargetContent($submission, $targetContent);
+        usleep(10000);
         $this->getLogger()->debug('Target content: ' . json_encode($targetContent->toArray()));
+        usleep(10000);
         $submission->setTargetId($targetContent->getId());
+        $this->getLogger()->debug('Set submission target id to ' . $targetContent->getId());
+        usleep(10000);
         $submission = $this->getSubmissionManager()->storeEntity($submission);
         $this->externalContentManager->setExternalContent($unfilteredSourceData, $this->externalContentManager->getExternalContent([], $submission, true), $submission);
         $this->setObjectTerms($submission);
