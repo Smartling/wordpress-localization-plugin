@@ -145,7 +145,9 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
             return;
         }
 
-        // TODO add usage debug
+        if (($_POST[self::WIDGET_DATA_NAME]['locales'] ?? null) !== null) {
+            $this->getLogger()->warning("Download or upload skipped. Revert code to revision 01ea5f0928d39b3fb0fad0d3c1372330c0555b96");
+        }
         add_action("edited_{$termType}", [$this, 'save']);
     }
 }

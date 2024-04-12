@@ -601,7 +601,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    public function createForTranslation(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone): SubmissionEntity
+    public function prepareForUpload(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone): SubmissionEntity
     {
         $translationHelper = $this->getTranslationHelper();
         $submission = $translationHelper
@@ -613,20 +613,18 @@ trait SmartlingCoreUploadTrait
             $submission->setSourceContentHash('');
             $submission->setSourceTitle($contentEntity->getTitle());
             $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
-        } elseif (0 === $submission->getIsLocked()) {
-            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-        } else {
+        } elseif ($submission->isLocked()) {
             $this->getLogger()
-                ->debug(vsprintf('Requested re-upload of protected submission id=%s. Skipping.', [$submission->getId()]));
+                ->debug(sprintf('Requested upload of locked submissionId=%s. Skipping.', $submission->getId()));
+        } else {
+            $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         }
 
         $isCloned = true === $clone ? 1 : 0;
         $submission->setIsCloned($isCloned);
         $submission->setJobInfo($jobInfo->getJobInformationEntity());
-        $submission = $this->getSubmissionManager()->storeEntity($submission);
-        $this->uploadQueueManager->enqueue([new UploadQueueEntity($submission->getId(), $jobInfo->getBatchUid())]);
 
-        return $submission;
+        return $this->getSubmissionManager()->storeEntity($submission);
     }
 
     private function removeExcludedFields(array $fields, ConfigurationProfileEntity $configurationProfile): array

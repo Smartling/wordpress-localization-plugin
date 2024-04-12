@@ -28,7 +28,6 @@ class SubmissionManager extends EntityManagerAbstract
     private string $jobsTableAlias = 'j';
     private string $submissionTableAlias = 's';
     private string $submissionJobTableAlias = 'sj';
-    private string $tableName;
 
     public function getSubmissionStatusLabels(): array
     {
@@ -45,7 +44,6 @@ class SubmissionManager extends EntityManagerAbstract
         parent::__construct($dbal, $pageSize, $siteHelper, $localizationPluginProxy);
         $this->jobManager = $jobManager;
         $this->submissionsJobsManager = $submissionsJobsManager;
-        $this->tableName = $dbal->completeTableName(SubmissionEntity::getTableName());
     }
 
     public function buildConditionBlockFromSearchParameters(array $parameters): ConditionBlock
@@ -623,25 +621,6 @@ class SubmissionManager extends EntityManagerAbstract
         return $this->storeEntity($submission);
     }
 
-    /**
-     * @return SubmissionEntity[]
-     */
-    public function getWithSameSource(SubmissionEntity $submission): array
-    {
-        $result = [];
-        foreach ($this->find([
-            SubmissionEntity::FIELD_CONTENT_TYPE => $submission->getContentType(),
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
-            SubmissionEntity::FIELD_SOURCE_ID => $submission->getSourceId(),
-        ]) as $found) {
-            if ($found->getId() !== $submission->getId()) {
-                $result[] = $found;
-            }
-        }
-
-        return $result;
-    }
-
     public function getGroupedIdsByFileUri(): array
     {
         $this->getDbal()->query('SET group_concat_max_len=2048000');
@@ -760,15 +739,5 @@ SQL;
             $this->submissionTableAlias => array_keys(SubmissionEntity::getFieldDefinitions()),
             $this->jobsTableAlias => array_keys(JobEntity::getFieldDefinitions()),
         ];
-    }
-
-    private function getConditionBlockForCloning(): ConditionBlock
-    {
-        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_CLONED, [1]));
-
-        return $block;
     }
 }

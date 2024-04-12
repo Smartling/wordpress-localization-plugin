@@ -32,6 +32,7 @@ use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\JobEntity;
+use Smartling\Models\IntegerIterator;
 use Smartling\Models\UploadQueueEntity;
 use Smartling\Models\UserCloneRequest;
 use Smartling\Models\DetectedRelations;
@@ -86,6 +87,7 @@ class ContentRelationsDiscoveryService
         ConfigurationProfileEntity $profile,
         array $targetBlogIds,
         string $batchUid = null,
+        bool $enqueue = true,
     ): array {
         $this->getLogger()->debug("Bulk upload request, contentIds=" . implode(',', $contentIds));
         $queueIds = [];
@@ -118,11 +120,21 @@ class ContentRelationsDiscoveryService
                 $carry[] = $item->ID;
                 return $carry;
             }, []);
-            $queueIds += $this->bulkUpload($authorize, $menuItemIds, ContentTypeNavigationMenuItem::WP_CONTENT_TYPE, $currentBlogId, $jobInfo, $profile, $targetBlogIds, $batchUid);
+            $queueIds[] = $this->bulkUpload(
+                $authorize,
+                $menuItemIds,
+                ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
+                $currentBlogId,
+                $jobInfo,
+                $profile,
+                $targetBlogIds,
+                $batchUid,
+                false,
+            );
         }
-        $this->uploadQueueManager->enqueue(array_map(static function ($item) use ($batchUid) {
-            return new UploadQueueEntity($item, $batchUid);
-        }, $queueIds));
+        if ($enqueue) {
+            $this->uploadQueueManager->enqueue(new IntegerIterator(array_merge(...$queueIds)), $batchUid);
+        }
 
         return $queueIds;
     }
@@ -233,7 +245,7 @@ class ContentRelationsDiscoveryService
         }
 
         $batchUid = null;
-        $queueItems = [];
+        $queueIds = new IntegerIterator();
         foreach ($request->getTargetBlogIds() as $targetBlogId) {
             $submissionTemplateArray = [
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => $curBlogId,
@@ -262,7 +274,7 @@ class ContentRelationsDiscoveryService
                 if ($batchUid === null) {
                     $batchUid = $this->apiWrapper->createBatch($profile, $jobInfo->getJobUid(), [$submission->getFileUri()]);
                 }
-                $queueItems[] = new UploadQueueEntity($submission->getId(), $batchUid);
+                $queueIds[] = $submission->getId();
             }
 
             $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
@@ -286,13 +298,13 @@ class ContentRelationsDiscoveryService
                     if ($batchUid === null) {
                         $batchUid = $this->apiWrapper->createBatch($profile, $jobInfo->getJobUid(), [$submission->getFileUri()]);
                     }
-                    $queueItems[] = new UploadQueueEntity($submission->getId(), $batchUid);
+                    $queueIds[] = $submission->getId();
                 } catch (SmartlingInvalidFactoryArgumentException) {
                     $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");
                 }
             }
         }
-        $this->uploadQueueManager->enqueue($queueItems);
+        $this->uploadQueueManager->enqueue($queueIds, $batchUid);
     }
 
     /**

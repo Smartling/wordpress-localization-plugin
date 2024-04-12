@@ -10,7 +10,7 @@ class IntStringPairCollection {
     /**
      * @param IntStringPair[]|string[] $items
      */
-    public function __construct(array $items)
+    public function __construct(array $items = [])
     {
         $array = [];
         foreach ($items as $key => $value) {

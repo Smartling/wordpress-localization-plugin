@@ -602,7 +602,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 return;
             }
 
-            // TODO add usage debug
+            if (($_POST[self::WIDGET_DATA_NAME]['locales'] ?? null) !== null) {
+                $this->getLogger()->warning("Download or upload skipped. Revert code to revision 105ae9db6e11a64bf7620c0f421ee41c57271f83");
+            }
             add_action('save_post', [$this, 'save']);
         }
     }

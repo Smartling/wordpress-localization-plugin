@@ -10,10 +10,12 @@ use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
+use Smartling\Models\IntegerIterator;
 use Smartling\Models\IntStringPair;
 use Smartling\Models\IntStringPairCollection;
 use Smartling\Models\UploadQueueEntity;
 use Smartling\Models\UploadQueueItem;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -39,107 +41,82 @@ class UploadQueueManager {
     public function dequeue(): ?UploadQueueItem
     {
         while (($result = $this->db->getRowArray(QueryBuilder::buildSelectQuery($this->tableName, [
+            UploadQueueEntity::FIELD_ID,
             UploadQueueEntity::FIELD_BATCH_UID,
-            UploadQueueEntity::FIELD_SUBMISSION_ID,
+            UploadQueueEntity::FIELD_SUBMISSION_IDS,
         ]))) !== null) {
+            $this->delete($result[UploadQueueEntity::FIELD_ID]);
             $batchUid = $result[UploadQueueEntity::FIELD_BATCH_UID];
-            $submissionId = $result[UploadQueueEntity::FIELD_SUBMISSION_ID];
-            $submission = $this->submissionManager->getEntityById($submissionId);
-
-            if ($submission === null) {
-                $this->deleteSubmission($submissionId, 'Unable to get submission entity');
-                continue;
-            }
-
-            $locale = $this->getSmartlingLocale($submission);
-            if ($locale === null) {
-                $this->deleteSubmission($submissionId, 'Unable to get Smartling locale');
-                continue;
-            }
-
-            $locales = new IntStringPairCollection([$submission->getId() => $locale]);
-            $submissions = [$submission];
-
-            foreach ($this->submissionManager->getWithSameSource($submission) as $submission) {
-                if (count($this->findIds($this->getConditionBlock($batchUid, $submission->getId()))) > 0) {
-                    $locale = $this->getSmartlingLocale($submission);
-                    if ($locale === null) {
-                        $this->deleteSubmission($submission->getId(), 'Unable to get Smartling locale');
-                        continue;
-                    }
-                    $locales = $locales->add([new IntStringPair($submission->getId(), $locale)]);
-                    $submissions[] = $submission;
+            $locales = new IntStringPairCollection();
+            $submissions = [];
+            foreach(IntegerIterator::fromString($result[UploadQueueEntity::FIELD_SUBMISSION_IDS]) as $submissionId) {
+                $submission = $this->submissionManager->getEntityById($submissionId);
+                if ($submission === null) {
+                    continue 2;
                 }
+
+                $locale = $this->getSmartlingLocale($submission);
+                if ($locale === null) {
+                    continue 2;
+                }
+
+                $locales->add([new IntStringPair($submission->getId(), $locale)]);
+                $submissions[] = $submission;
             }
 
-            $item = new UploadQueueItem($submissions, $batchUid, $locales);
-            $this->delete($item);
-
-            return $item;
+            return new UploadQueueItem($submissions, $batchUid, $locales);
         }
 
         return null;
     }
 
-    /**
-     * @param UploadQueueEntity[] $items
-     */
-    public function enqueue(array $items): void
+    public function enqueue(IntegerIterator $submissionIds, string $batchUid): void
     {
-        $this->db->query('START TRANSACTION');
-        try {
-            foreach ($items as $item) {
-                assert($item instanceof UploadQueueEntity);
-                $this->db->query(QueryBuilder::buildInsertQuery($this->tableName, [
-                    UploadQueueEntity::FIELD_BATCH_UID => $item->getBatchUid(),
-                    UploadQueueEntity::FIELD_CREATED => DateTimeHelper::nowAsString(),
-                    UploadQueueEntity::FIELD_SUBMISSION_ID => $item->getSubmissionId(),
-                ], true));
-            }
-            $this->db->query('COMMIT');
-        } catch (\Throwable $e) {
-            $this->db->query('ROLLBACK');
-            throw $e;
+        if (count($submissionIds) > 0) {
+            $this->db->query(QueryBuilder::buildInsertQuery($this->tableName, [
+                UploadQueueEntity::FIELD_BATCH_UID => $batchUid,
+                UploadQueueEntity::FIELD_CREATED => DateTimeHelper::nowAsString(),
+                UploadQueueEntity::FIELD_SUBMISSION_IDS => $submissionIds->serialize(),
+            ]));
         }
     }
 
     public function purge(): void
     {
-        foreach ($this->db->getRowArray(QueryBuilder::buildSelectQuery($this->tableName, [
+        $items = $this->db->getResultsArray(QueryBuilder::buildSelectQuery($this->tableName, [
+            UploadQueueEntity::FIELD_ID,
             UploadQueueEntity::FIELD_BATCH_UID,
-            UploadQueueEntity::FIELD_SUBMISSION_ID,
-        ])) as $item) {
-            $submission = $this->submissionManager->getEntityById($item[UploadQueueEntity::FIELD_SUBMISSION_ID]);
-            if ($submission === null) {
-                continue;
-            }
-            try {
-                $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
-            } catch (SmartlingDbException) {
-                continue;
-            }
-            $batchUid = $item[UploadQueueEntity::FIELD_BATCH_UID];
-            try {
-                $this->api->cancelBatchFile($profile, $batchUid, $submission->getFileUri());
-            } catch (SmartlingApiException) {
-                continue;
-            }
-            $locale = $this->getSmartlingLocale($submission);
-            if ($locale === null) {
-                $this->deleteSubmission($submission->getId(), 'Queue purge');
-            } else {
-                $this->delete(new UploadQueueItem([$submission], $batchUid, new IntStringPairCollection([$submission->getId() => $locale])));
+            UploadQueueEntity::FIELD_SUBMISSION_IDS,
+        ]));
+        $this->db->query("TRUNCATE $this->tableName");
+        $profiles = [];
+        foreach ($items as $item) {
+            foreach (IntegerIterator::fromString($item[UploadQueueEntity::FIELD_SUBMISSION_IDS]) as $submissionId) {
+                $submission = $this->submissionManager->getEntityById($submissionId);
+                if ($submission === null) {
+                    continue;
+                }
+                if (!array_key_exists($submission->getSourceBlogId(), $profiles)) {
+                    try {
+                        $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+                    } catch (SmartlingDbException) {
+                        $profile = null;
+                    }
+                    $profiles[$submission->getSourceBlogId()] = $profile;
+                }
+                $profile = $profiles[$submission->getSourceBlogId()];
+                if (!$profile instanceof ConfigurationProfileEntity) {
+                    continue;
+                }
+
+                $batchUid = $item[UploadQueueEntity::FIELD_BATCH_UID];
+                try {
+                    $this->api->cancelBatchFile($profile, $batchUid, $submission->getFileUri());
+                } catch (SmartlingApiException) {
+                    continue;
+                }
             }
         }
-        $this->db->query("TRUNCATE $this->tableName");
-    }
-
-    private function deleteSubmission(int $submissionId, string $reason): void
-    {
-        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $block->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, UploadQueueEntity::FIELD_SUBMISSION_ID, $submissionId));
-        $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $block));
-        $this->getLogger()->debug("Deleted submissionId from upload queue: $reason");
     }
 
     private function getSmartlingLocale(SubmissionEntity $submission): ?string
@@ -153,32 +130,11 @@ class UploadQueueManager {
         return null;
     }
 
-    private function delete(UploadQueueItem $item): void
+    private function delete(int $id): void
     {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $block->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, UploadQueueEntity::FIELD_BATCH_UID, $item->getBatchUid()));
-        $block->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_IN, UploadQueueEntity::FIELD_SUBMISSION_ID, array_map(static function (SubmissionEntity $submission) {
-            return $submission->getId();
-        }, $item->getSubmissions())));
-        $query = QueryBuilder::buildDeleteQuery($this->tableName, $block);
-        $this->db->query($query);
-    }
+        $block->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, UploadQueueEntity::FIELD_ID, $id));
 
-    private function findIds(ConditionBlock $block): ?array
-    {
-        return $this->db->getRowArray(QueryBuilder::buildSelectQuery(
-            $this->tableName,
-            [UploadQueueEntity::FIELD_SUBMISSION_ID],
-            $block,
-        ));
-    }
-
-    private function getConditionBlock(string $batchUid, int $submissionId): ConditionBlock
-    {
-        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $block->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, UploadQueueEntity::FIELD_BATCH_UID, $batchUid));
-        $block->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, UploadQueueEntity::FIELD_SUBMISSION_ID, $submissionId));
-
-        return $block;
+        $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $block));
     }
 }
