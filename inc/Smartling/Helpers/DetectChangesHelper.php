@@ -3,7 +3,7 @@
 namespace Smartling\Helpers;
 
 use Smartling\DbAl\UploadQueueManager;
-use Smartling\Models\UploadQueueEntity;
+use Smartling\Models\IntegerIterator;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -88,7 +88,7 @@ class DetectChangesHelper
                 );
 
                 $submission->setStatus($newStatus);
-                $this->uploadQueueManager->enqueue([new UploadQueueEntity($submission->getId(), '')]);
+                $this->uploadQueueManager->enqueue(new IntegerIterator([$submission->getId()]), '');
             }
         } else {
             $this->getLogger()->debug(

@@ -7,12 +7,13 @@ use Smartling\SmartlingTableDefinitionInterface;
 
 class UploadQueueEntity implements SmartlingTableDefinitionInterface
 {
+    public const FIELD_ID = 'id';
     public const FIELD_BATCH_UID = 'batch_uid';
     public const FIELD_CREATED = 'created';
-    public const FIELD_SUBMISSION_ID = 'submission_id';
+    public const FIELD_SUBMISSION_IDS = 'submission_ids';
     public const TABLE_NAME = 'smartling_upload_queue';
 
-    public function __construct(private int $submissionId, private string $batchUid)
+    public function __construct(private  $submissionId, private string $batchUid)
     {
     }
 
@@ -34,7 +35,8 @@ class UploadQueueEntity implements SmartlingTableDefinitionInterface
     public static function getFieldDefinitions(): array
     {
         return [
-            self::FIELD_SUBMISSION_ID => SmartlingEntityAbstract::DB_TYPE_U_BIGINT,
+            self::FIELD_ID => SmartlingEntityAbstract::DB_TYPE_U_BIGINT . ' ' . SmartlingEntityAbstract::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
+            self::FIELD_SUBMISSION_IDS => SmartlingEntityAbstract::DB_TYPE_STRING_TEXT,
             self::FIELD_BATCH_UID => SmartlingEntityAbstract::DB_TYPE_STRING_64 . ' ' . SmartlingEntityAbstract::DB_TYPE_DEFAULT_EMPTYSTRING,
             self::FIELD_CREATED => SmartlingEntityAbstract::DB_TYPE_DATETIME,
         ];
@@ -50,7 +52,7 @@ class UploadQueueEntity implements SmartlingTableDefinitionInterface
         return [
             [
                 'type' => 'primary',
-                'columns' => [self::FIELD_SUBMISSION_ID, self::FIELD_BATCH_UID . '(12)'],
+                'columns' => [self::FIELD_ID],
             ],
         ];
     }

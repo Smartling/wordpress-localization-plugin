@@ -16,6 +16,7 @@ use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\Jobs\UploadJob;
+use Smartling\Models\IntegerIterator;
 use Smartling\Models\IntStringPairCollection;
 use Smartling\Models\UploadQueueEntity;
 use Smartling\Models\UploadQueueItem;
@@ -345,7 +346,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     public function addToUploadQueue(int $submissionId, string $batchUid = ''): void
     {
-        $this->getUploadQueueManager()->enqueue([new UploadQueueEntity($submissionId, $batchUid)]);
+        $this->getUploadQueueManager()->enqueue(new IntegerIterator([$submissionId]), $batchUid);
     }
 
     protected function executeUpload(): void
