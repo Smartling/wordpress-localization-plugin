@@ -147,15 +147,6 @@ class SubmissionManager extends EntityManagerAbstract
         return (int)$this->getDbal()->fetch($this->buildCountQuery(baseCondition: $conditionBlock))[0]->cnt;
     }
 
-    public function getTotalInUploadQueue(): int
-    {
-        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
-        $block->addConditionBlock($this->getConditionBlockForCloning());
-        $block->addConditionBlock($this->getConditionBlockForUploadJob());
-
-        return $this->count($block);
-    }
-
     public function getTotalInCheckStatusHelperQueue(): int
     {
         $conditionBlock = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
@@ -167,18 +158,6 @@ class SubmissionManager extends EntityManagerAbstract
         $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
 
         return $this->count($conditionBlock);
-    }
-
-
-    public function searchByBatchUid(string $batchUid): array
-    {
-        $block = ConditionBlock::getConditionBlock();
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_BATCH_UID, [$batchUid]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ,
-            SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
-        $total = 0;
-
-        return $this->searchByCondition($block, null, null, null, [], null, $total);
     }
 
     /**
@@ -760,25 +739,5 @@ SQL;
             $this->submissionTableAlias => array_keys(SubmissionEntity::getFieldDefinitions()),
             $this->jobsTableAlias => array_keys(JobEntity::getFieldDefinitions()),
         ];
-    }
-
-    private function getConditionBlockForUploadJob(): ConditionBlock
-    {
-        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_NOT_EQ, SubmissionEntity::FIELD_BATCH_UID, ['']));
-
-        return $block;
-    }
-
-    private function getConditionBlockForCloning(): ConditionBlock
-    {
-        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_CLONED, [1]));
-
-        return $block;
     }
 }

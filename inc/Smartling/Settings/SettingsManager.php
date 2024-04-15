@@ -47,6 +47,10 @@ class SettingsManager extends EntityManagerAbstract
         return $this->getEntities($cnt, true);
     }
 
+    /**
+     * @throws SmartlingConfigException
+     * @throws SmartlingDbException
+     */
     public function getSmartlingLocaleBySubmission(SubmissionEntity $submission): string
     {
         $profile = $this->getSingleSettingsProfile($submission->getSourceBlogId());

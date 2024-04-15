@@ -13,28 +13,12 @@ use Smartling\Helpers\QueryBuilder\QueryBuilder;
 
 class Queue extends SmartlingEntityAbstract implements QueueInterface
 {
-    /**
-     * @var SmartlingToCMSDatabaseAccessWrapperInterface
-     */
-    private $dbal;
-
-    /**
-     * @return SmartlingToCMSDatabaseAccessWrapperInterface
-     */
-    public function getDbal()
+    public function __construct(private SmartlingToCMSDatabaseAccessWrapperInterface $dbal)
     {
-        return $this->dbal;
+        parent::__construct();
     }
 
-    /**
-     * @param SmartlingToCMSDatabaseAccessWrapperInterface $dbal
-     */
-    public function setDbal(SmartlingToCMSDatabaseAccessWrapperInterface $dbal)
-    {
-        $this->dbal = $dbal;
-    }
-
-    public static function getFieldDefinitions()
+    public static function getFieldDefinitions(): array
     {
         return [
             'id'           => static::DB_TYPE_U_BIGINT . ' ' . static::DB_TYPE_INT_MODIFIER_AUTOINCREMENT,
@@ -44,7 +28,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         ];
     }
 
-    public static function getFieldLabels()
+    public static function getFieldLabels(): array
     {
         return [
             'id'      => __('Job Id'),
@@ -53,7 +37,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         ];
     }
 
-    public static function getSortableFields()
+    public static function getSortableFields(): array
     {
         return [
             'id',
@@ -61,7 +45,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         ];
     }
 
-    public static function getIndexes()
+    public static function getIndexes(): array
     {
         return [
             [
@@ -75,17 +59,17 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         ];
     }
 
-    public static function getTableName()
+    public static function getTableName(): string
     {
         return 'smartling_queue';
     }
 
-    private function testValueToBeEnqueued(array $value)
+    private function testValueToBeEnqueued(array $value): bool
     {
-        $res = $value === json_decode(json_encode($value), true);
+        $res = $value === json_decode(json_encode($value, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
         if (!$res) {
             $message = vsprintf('Error: $value !== json_decode(json_encode($value)). Encoded string: %s', [
-              json_encode($value),
+                json_encode($value, JSON_THROW_ON_ERROR),
             ]);
             $this->logger->error($message);
         }
@@ -93,22 +77,17 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         return $res;
     }
 
-    private function testQueue($queue)
-    {
-        return is_string($queue);
-    }
-
     public function isVirtual(string $queue): bool
     {
-        return $queue === QueueInterface::VIRTUAL_UPLOAD_QUEUE;
+        return $queue === QueueInterface::UPLOAD_QUEUE;
     }
 
-    private function getRealTableName()
+    private function getRealTableName(): string
     {
-        return $this->getDbal()->completeTableName(static::getTableName());
+        return $this->dbal->completeTableName(static::getTableName());
     }
 
-    private function set($value, $queue)
+    private function set(mixed $value, string $queue): void
     {
         $query = QueryBuilder::buildInsertQuery(
             $this->getRealTableName(),
@@ -120,55 +99,45 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
             true
         );
 
-        $result = $this->getDbal()->query($query);
+        $result = $this->dbal->query($query);
 
         if (false === $result) {
             $message = vsprintf('Error while adding element to queue: %s', [
-                $this->getDbal()->getLastErrorMessage(),
+                $this->dbal->getLastErrorMessage(),
             ]);
             $this->logger->error($message);
             throw new SmartlingDbException($message);
         }
     }
 
-    private function delete($id, $queue)
+    private function delete(mixed $id, string $queue): void
     {
         $id = (int)$id;
 
         $conditionBlock = ConditionBlock::getConditionBlock();
 
-        $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'queue', [
-            $queue,
-        ]));
-
-        $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'id', [
-            $id,
-        ]));
+        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, 'queue', $queue));
+        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, 'id', $id));
 
         $query = QueryBuilder::buildDeleteQuery($this->getRealTableName(), $conditionBlock, ['limit' => 1]);
 
-        $result = $this->getDbal()->query($query);
+        $result = $this->dbal->query($query);
 
         if (false === $result) {
             $message = vsprintf('Error while deleting element from queue: %s; Query: %s', [
-                $this->getDbal()->getLastErrorMessage(),
+                $this->dbal->getLastErrorMessage(),
                 $query
             ]);
             $this->logger->error($message);
             throw new SmartlingDbException($message);
         }
-
-        return $result;
-
     }
 
-    private function get($queue)
+    private function get($queue): array
     {
         $conditionBlock = ConditionBlock::getConditionBlock();
 
-        $conditionBlock->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'queue', [
-            $queue,
-        ]));
+        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, 'queue', $queue));
 
         $query = QueryBuilder::buildSelectQuery(
             $this->getRealTableName(),
@@ -184,11 +153,11 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
                 'page'  => 1,
             ]);
 
-        $result = $this->getDbal()->fetch($query, \ARRAY_A);
+        $result = $this->dbal->fetch($query, \ARRAY_A);
 
         if (!is_array($result)) {
             $message = vsprintf('Error while getting element from queue: %s', [
-                $this->getDbal()->getLastErrorMessage(),
+                $this->dbal->getLastErrorMessage(),
             ]);
             $this->logger->error($message);
             throw new SmartlingDbException($message);
@@ -197,58 +166,44 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         return $result;
     }
 
-    /**
-     * Adds an array to the queue
-     *
-     * @param array  $value
-     * @param string $queue
-     */
-    public function enqueue(array $value, $queue)
+    public function enqueue(array $value, string $queue): void
     {
-        if ($this->testValueToBeEnqueued($value) && $this->testQueue($queue)) {
-            $encodedValue = json_encode($value);
+        if ($this->testValueToBeEnqueued($value)) {
+            $encodedValue = json_encode($value, JSON_THROW_ON_ERROR);
             $this->set($encodedValue, $queue);
         }
     }
 
-    private function extractValue(array $array, $key)
+    private function extractValue(array $array, mixed $key): mixed
     {
         if (array_key_exists($key, $array)) {
             return $array[$key];
-        } else {
-            $message = vsprintf('Expected array %s to have key %s but it doesn\'t.', [
-                var_export($array, true),
-                var_export($key, true),
-            ]);
-            throw new \LogicException($message);
         }
+
+        throw new \OutOfBoundsException(sprintf('Expected array %s to have key %s but it doesn\'t.',
+            var_export($array, true),
+            var_export($key, true),
+        ));
     }
 
-    /**
-     * @param string $queue
-     *
-     * @return array|false if queue is empty
-     */
-    public function dequeue($queue)
+    public function dequeue(string $queue): mixed
     {
-        if ($this->testQueue($queue)) {
-            $result = $this->get($queue);
+        $result = $this->get($queue);
 
-            if (is_array($result) && 1 === count($result)) {
-                $row = ArrayHelper::first($result);
+        if (1 === count($result)) {
+            $row = ArrayHelper::first($result);
 
-                $id = $this->extractValue($row, 'id');
-                $payload = $this->extractValue($row, 'payload');
+            $id = $this->extractValue($row, 'id');
+            $payload = $this->extractValue($row, 'payload');
 
-                $value = json_decode($payload, true);
+            $value = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
 
-                $this->delete($id, $queue);
+            $this->delete($id, $queue);
 
-                return $value;
-            }
+            return $value;
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -262,23 +217,23 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
 
         if (null !== $queue) {
             $condition = ConditionBlock::getConditionBlock();
-            $condition->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, 'queue', [$queue]));
+            $condition->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, 'queue', $queue));
         }
 
         $query = QueryBuilder::buildDeleteQuery($this->getRealTableName(), $condition, $pageOptions);
 
-        $result = $this->getDbal()->query($query);
+        $result = $this->dbal->query($query);
 
         if (false === $result) {
             if (null !== $queue) {
                 $template = 'Error while purging all elements from queue=%s. Message: %s';
                 $message = vsprintf($template, [
                     $queue,
-                    $this->getDbal()->getLastErrorMessage(),
+                    $this->dbal->getLastErrorMessage(),
                 ]);
             } else {
                 $template = 'Error while purging all elements from all queues. Message: %s';
-                $message = vsprintf($template, [$this->getDbal()->getLastErrorMessage()]);
+                $message = vsprintf($template, [$this->dbal->getLastErrorMessage()]);
             }
 
             $this->logger->error($message);
@@ -286,9 +241,6 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         }
     }
 
-    /**
-     * @return array['queue' => elements_count]
-     */
     public function stats(): array
     {
         $query = QueryBuilder::buildSelectQuery(
@@ -302,7 +254,7 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
                 ['queue']
         );
 
-        $result = $this->getDbal()->fetch($query, \ARRAY_A);
+        $result = $this->dbal->fetch($query, \ARRAY_A);
         $output = [];
         foreach ($result as $row) {
             $output[$row['queue']] = (int)$row['num'];

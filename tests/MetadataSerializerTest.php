@@ -219,7 +219,9 @@ class MetadataSerializerTest extends TestCase
     {
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $wpProxy->method('maybe_unserialize')->willReturnCallback(function ($original) {
-            if (!is_string($original)) {
+            if (!is_string($original)
+                || strlen($original) < 4
+                || $original[1] !== ':') {
                 return $original;
             }
             try {

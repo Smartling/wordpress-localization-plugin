@@ -20,7 +20,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
     public const DB_TYPE_UINT_SWITCH = 'INT(1) UNSIGNED NOT NULL DEFAULT \'0\'';
     public const DB_TYPE_UINT_SWITCH_ON = 'INT(1) UNSIGNED NOT NULL DEFAULT \'1\'';
 
-    public const DB_TYPE_STRING_TEXT = 'TEXT NOT NULL DEFAULT \'\'';
+    public const DB_TYPE_STRING_TEXT = 'TEXT NOT NULL';
 
     public const DB_TYPE_HASH_MD5 = 'CHAR(32) NOT NULL';
     /**

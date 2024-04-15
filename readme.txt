@@ -66,13 +66,13 @@ Additional information on the Smartling Connector for WordPress can be found [he
 * Reworked elementor elements processing
 
 = 3.8.13 =
-* Added support for nested JSON Gutenberg attributes locking
-* Added filter smartling_filter_before_clone_content_written
+* Added `smartling_filter_before_clone_content_written` filter
+* Added possibility of locking of nested JSON Gutenberg block attributes
 
 = 3.8.12 =
 * Fixed Elementor and other known plugins content not being added for translation when cron is invoked from non-source blog for submission
 * Fixed strings not being added to some languages when uploading for multiple languages when there are more than one active profile for the source blog
-* Improved shortcode detection to avoid Smartling placeholders present in translated content with placeholders
+* Improved shortcode detection to avoid Smartling placeholders present in translated content with shortcodes
 
 = 3.8.11 =
 * Added support for custom Smartling directives in the expert settings

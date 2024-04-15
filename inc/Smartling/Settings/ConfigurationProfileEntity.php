@@ -227,6 +227,17 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         }
     }
 
+    public function getSmartlingLocale(int $targetBlogId): ?string
+    {
+        foreach ($this->getTargetLocales() as $targetLocale) {
+            if ($targetLocale->getBlogId() === $targetBlogId) {
+                return $targetLocale->getSmartlingLocale();
+            }
+        }
+
+        return null;
+    }
+
     /**
      * @return TargetLocale[]
      */

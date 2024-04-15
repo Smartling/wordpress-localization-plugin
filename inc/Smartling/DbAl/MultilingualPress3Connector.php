@@ -6,6 +6,7 @@ use Inpsyde\MultilingualPress\Core\Admin\SiteSettingsRepository;
 use Inpsyde\MultilingualPress\Framework\Api\ContentRelations;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Models\UploadQueueItem;
 use Smartling\Submissions\SubmissionEntity;
 use function Inpsyde\MultilingualPress\resolve;
 
@@ -14,7 +15,7 @@ class MultilingualPress3Connector extends MultilingualPressConnector implements 
     use LoggerSafeTrait;
     public function addHooks(): void
     {
-        add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'linkObjects']);
+        add_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, [$this, 'processSubmissions']);
     }
 
     public function getBlogLocaleById(int $blogId): string
@@ -64,6 +65,13 @@ class MultilingualPress3Connector extends MultilingualPressConnector implements 
             }
         }
         return false;
+    }
+
+    public function processSubmissions(UploadQueueItem $item): void
+    {
+        foreach ($item->getSubmissions() as $submission) {
+            $this->linkObjects($submission);
+        }
     }
 
     public function unlinkObjects(SubmissionEntity $submission): bool

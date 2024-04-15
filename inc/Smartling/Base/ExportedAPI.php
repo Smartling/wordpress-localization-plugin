@@ -8,6 +8,8 @@ use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Models\NotificationParameters;
+use Smartling\Models\UploadQueueEntity;
+use Smartling\Models\UploadQueueItem;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -62,9 +64,9 @@ interface ExportedAPI
 
     /**
      * Action that sends given SubmissionEntity to smartling for translation
-     * @param SubmissionEntity
+     * @param UploadQueueItem
      */
-    public const ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION = 'smartling_send_for_translation';
+    public const ACTION_SMARTLING_SEND_FOR_TRANSLATION = 'smartling_send_for_translation';
 
     /**
      * Action that clones content of given SubmissionEntity without translation
