@@ -32,6 +32,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
     use PHPUnit\Framework\TestCase;
     use Smartling\Base\SmartlingCore;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
+    use Smartling\DbAl\UploadQueueManager;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
     use Smartling\Helpers\SiteHelper;
     use Smartling\Jobs\JobEntityWithBatchUid;
@@ -73,7 +74,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $this->assertEquals('', $jobInfo->getJobUid());
                 $this->assertEquals($projectUid, $jobInfo->getProjectUid());
                 $this->assertTrue($clone);
-                return new SubmissionEntity();
+                return (new SubmissionEntity())->setId(1);
             });
 
             $profile = $this->createMock(ConfigurationProfileEntity::class);
@@ -85,6 +86,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $this->createMock(SiteHelper::class),
                 $core,
                 $manager,
+                $this->createMock(UploadQueueManager::class),
                 $profile,
             ) extends BulkSubmitTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
@@ -93,6 +95,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     protected SiteHelper $siteHelper,
                     protected SmartlingCore $core,
                     protected SubmissionManager $manager,
+                    protected UploadQueueManager $uploadQueueManager,
                     protected ConfigurationProfileEntity $profile,
                 ) {
                 }
