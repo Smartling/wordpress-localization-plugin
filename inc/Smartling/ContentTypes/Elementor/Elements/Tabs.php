@@ -30,11 +30,11 @@ class Tabs extends Unknown {
 
     public function setTargetContent(RelatedContentInfo $info, array $strings, SubmissionEntity $submission, SubmissionManager $submissionManager,): static
     {
-        foreach ($strings[$this->id] ?? [] as $path => $array) {
+        foreach ($strings[$this->id] ?? [] as $array) {
             if (is_array($array)) {
                 foreach ($array as $id => $values) {
                     foreach ($this->settings['tabs'] ?? [] as $index => $tab) {
-                        if ($tab['_id'] ?? '' === $id) {
+                        if (($tab['_id'] ?? '') === $id) {
                             foreach ($values as $property => $value) {
                                 $this->settings['tabs'][$index][$property] = $value;
                             }

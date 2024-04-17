@@ -14,6 +14,6 @@ class Counter extends Unknown {
 
     public function getTranslatableStrings(): array
     {
-        return [$this->getId() => $this->getTranslatableStringsByKeys(['prefix', 'suffix'])];
+        return [$this->getId() => $this->getTranslatableStringsByKeys(['prefix', 'suffix', 'title'])];
     }
 }
