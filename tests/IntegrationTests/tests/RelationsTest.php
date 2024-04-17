@@ -16,7 +16,6 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
 
     public function testSubmitPostWithCategoryWhichHasParentCategory()
     {
-        $this->markTestSkipped();
         $categoryId = $this->createTerm('New category');
 
         $postId = $this->createPost();
