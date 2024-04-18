@@ -119,7 +119,7 @@ class ContentRelationsDiscoveryService
                 $carry[] = $item->ID;
                 return $carry;
             }, []);
-            $queueIds[] = $this->bulkUpload( // TODO test
+            $queueIds = $this->bulkUpload(
                 $authorize,
                 $menuItemIds,
                 ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
