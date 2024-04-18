@@ -3,6 +3,7 @@
 namespace Smartling\ContentTypes\Elementor\Elements;
 
 use Smartling\ContentTypes\ContentTypeHelper;
+use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
@@ -42,10 +43,10 @@ class IconList extends Unknown {
     }
 
     public function setTargetContent(
+        ExternalContentElementor $externalContentElementor,
         RelatedContentInfo $info,
         array $strings,
         SubmissionEntity $submission,
-        SubmissionManager $submissionManager,
     ): static {
         foreach ($strings[$this->id]['icon_list'] ?? [] as $id => $setting) {
             if (is_array($setting) && array_key_exists('text', $setting)) {

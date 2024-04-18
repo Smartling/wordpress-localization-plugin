@@ -3,7 +3,6 @@
 namespace Smartling\ContentTypes;
 
 use Elementor\Core\Documents_Manager;
-use Elementor\Core\DynamicTags\Manager;
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\Extensions\Pluggable;
@@ -47,8 +46,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         ]
     ];
 
-    private ?Manager $dynamicTagsManager = null;
-
     public function __construct(
         private ContentTypeHelper $contentTypeHelper,
         private ElementFactory $elementFactory,
@@ -63,15 +60,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     {
         $wpProxy->add_action(ExportedAPI::ACTION_AFTER_TARGET_METADATA_WRITTEN, [$this, 'afterMetaWritten']);
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
-        $managerPath = WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
-        if (file_exists($managerPath)) {
-            try {
-                require_once $managerPath;
-                $this->dynamicTagsManager = new Manager();
-            } catch (\Throwable $e) {
-                $this->getLogger()->notice('Unable to initialize Elementor dynamic tags manager, Elementor tags processing not available: ' . $e->getMessage());
-            }
-        }
     }
 
     public function afterMetaWritten(SubmissionEntity $submission): void
@@ -83,10 +71,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
             $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
             $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
-            if ($supportLevel !== Pluggable::NOT_SUPPORTED) {
-                $this->userHelper->asAdministratorOrEditor(function () use ($submission) {
+            $documentsManagerPath = WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
+            if ($supportLevel !== Pluggable::NOT_SUPPORTED && file_exists($documentsManagerPath)) {
+                $this->userHelper->asAdministratorOrEditor(function () use ($documentsManagerPath, $submission) {
                     try {
-                        require_once WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
+                        require_once $documentsManagerPath;
                         $manager = new Documents_Manager();
                         do_action('elementor/documents/register', $manager);
                         /** @noinspection PhpParamsInspection */
@@ -189,10 +178,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         foreach ($original as $array) {
             $element = $this->elementFactory->fromArray($array);
             $result[] = $element->setTargetContent(
+                $this,
                 $this->getData($original)->getRelatedContentInfo(),
                 $strings,
                 $submission,
-                $this->submissionManager,
             )->toArray();
         }
 

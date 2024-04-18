@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes\Elementor;
 
+use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
@@ -17,13 +18,13 @@ interface Element {
         Content $content,
         string $path,
         SubmissionEntity $submission,
-        SubmissionManager $submissionManager,
+        ExternalContentElementor $externalContentElementor,
     ): self;
     public function setTargetContent(
+        ExternalContentElementor $externalContentElementor,
         RelatedContentInfo $info,
         array $strings,
         SubmissionEntity $submission,
-        SubmissionManager $submissionManager,
     ): self;
     public function toArray(): array;
 }

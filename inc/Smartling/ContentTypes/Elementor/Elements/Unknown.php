@@ -2,7 +2,6 @@
 
 namespace Smartling\ContentTypes\Elementor\Elements;
 
-use Elementor\Core\DynamicTags\Manager;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\Elementor\Element;
 use Smartling\ContentTypes\Elementor\ElementAbstract;
@@ -14,9 +13,6 @@ use Smartling\Models\RelatedContentInfo;
 
 class Unknown extends ElementAbstract {
     use LoggerSafeTrait;
-
-    private const SETTING_KEY_DYNAMIC = '__dynamic__';
-    private const SETTING_KEY_POPUP = 'popup';
 
     public function getRelated(): RelatedContentInfo
     {
@@ -35,29 +31,23 @@ class Unknown extends ElementAbstract {
             }
         }
 
-        if (array_key_exists(self::SETTING_KEY_DYNAMIC, $this->settings)
-            && is_array($this->settings[self::SETTING_KEY_DYNAMIC])
+        if (array_key_exists(ElementAbstract::SETTING_KEY_DYNAMIC, $this->settings)
+            && is_array($this->settings[ElementAbstract::SETTING_KEY_DYNAMIC])
         ) {
-            $dynamicTagsManager = null;
-            $managerPath = WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
-            if (file_exists($managerPath)) {
-                try {
-                    require_once $managerPath;
-                    $dynamicTagsManager = new Manager();
-                } catch (\Throwable $e) {
-                    $this->getLogger()->notice('Unable to initialize Elementor dynamic tags manager, Elementor tags processing not available: ' . $e->getMessage());
-                }
-                foreach ($this->settings[self::SETTING_KEY_DYNAMIC] as $property => $value) {
+            $dynamicTagsManager = $this->getDynamicTagsManager();
+            if ($dynamicTagsManager !== null) {
+                foreach ($this->settings[ElementAbstract::SETTING_KEY_DYNAMIC] as $property => $value) {
                     try {
                         $relatedId = $dynamicTagsManager->parse_tag_text($value, [], function ($id, $name, $settings) {
-                            if (is_array($settings) && array_key_exists(self::SETTING_KEY_POPUP, $settings)) {
-                                return (int)$settings[self::SETTING_KEY_POPUP];
+                            if (is_array($settings) && array_key_exists(ElementAbstract::SETTING_KEY_POPUP, $settings)) {
+                                return (int)$settings[ElementAbstract::SETTING_KEY_POPUP];
                             }
 
                             return null;
                         });
                         if ($relatedId !== null) {
-                            $return->addContent(new Content($relatedId, ContentTypeHelper::CONTENT_TYPE_UNKNOWN), $this->id, implode('/', ['settings', self::SETTING_KEY_DYNAMIC, $property]));
+                            $return->addContent(new Content($relatedId, ContentTypeHelper::CONTENT_TYPE_UNKNOWN), $this->id, implode('/', ['settings',
+                                ElementAbstract::SETTING_KEY_DYNAMIC, $property]));
                         }
                     } catch (\Throwable $e) {
                         $this->getLogger()->notice("Failed to get related id for property=$property, tag=$value: {$e->getMessage()}");

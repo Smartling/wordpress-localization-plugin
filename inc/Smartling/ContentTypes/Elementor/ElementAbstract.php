@@ -2,13 +2,19 @@
 
 namespace Smartling\ContentTypes\Elementor;
 
+use Elementor\Core\DynamicTags\Manager;
+use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 abstract class ElementAbstract implements Element {
+    use LoggerSafeTrait;
+    protected const SETTING_KEY_DYNAMIC = '__dynamic__';
+    protected const SETTING_KEY_POPUP = 'popup';
+
     protected array $elements;
     protected string $id;
     protected array $raw;
@@ -82,19 +88,23 @@ abstract class ElementAbstract implements Element {
         Content $content,
         string $path,
         SubmissionEntity $submission,
-        SubmissionManager $submissionManager,
+        ExternalContentElementor $externalContentElementor,
     ): static {
+        $arrayHelper = new ArrayHelper();
         $result = clone $this;
-        $target = $submissionManager->findTargetBlogSubmission(
-            $content->getContentType(),
+        $targetId = $externalContentElementor->getTargetId(
             $submission->getSourceBlogId(),
             $content->getContentId(),
             $submission->getTargetBlogId(),
+            $content->getContentType(),
         );
-        if ($target !== null) {
+        if ($targetId !== null) {
             $result->raw = array_replace_recursive(
                 $result->raw,
-                (new ArrayHelper())->structurize([$path => $target->getTargetId()]),
+                $arrayHelper->structurize([$path => $this->isDynamicProperty($path)
+                    ? $this->replaceDynamicTagSetting($arrayHelper->flatten($result->raw)[$path] ?? '', (string)$targetId)
+                    : $targetId
+                ]),
             );
         }
 
@@ -102,18 +112,18 @@ abstract class ElementAbstract implements Element {
     }
 
     public function setTargetContent(
+        ExternalContentElementor $externalContentElementor,
         RelatedContentInfo $info,
         array $strings,
         SubmissionEntity $submission,
-        SubmissionManager $submissionManager,
     ): static {
         foreach ($this->elements as $key => $element) {
             if ($element instanceof Element) {
                 $this->elements[$key] = $element->setTargetContent(
+                    $externalContentElementor,
                     new RelatedContentInfo($info->getInfo()[$this->id] ?? []),
                     $strings[$this->id] ?? $strings[$element->id] ?? [],
                     $submission,
-                    $submissionManager,
                 );
             }
         }
@@ -128,7 +138,7 @@ abstract class ElementAbstract implements Element {
         $this->raw['elements'] = $this->elements;
         foreach ($info->getOwnRelatedContent($this->id) as $path => $content) {
             assert($content instanceof Content);
-            $this->raw = $this->setRelations($content, $path, $submission, $submissionManager)->toArray();
+            $this->raw = $this->setRelations($content, $path, $submission, $externalContentElementor)->toArray();
         }
 
         return new static($this->raw);
@@ -143,5 +153,53 @@ abstract class ElementAbstract implements Element {
         }
 
         return $this->raw;
+    }
+
+    public function isDynamicProperty(string $path): bool
+    {
+        return str_contains($path, self::SETTING_KEY_DYNAMIC);
+    }
+
+    public function getDynamicTagsManager(): ?Manager
+    {
+        if (class_exists(Manager::class)) {
+            return new Manager();
+        }
+        $managerPath = WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
+        if (file_exists($managerPath)) {
+            try {
+                require_once $managerPath;
+                return new Manager();
+            } catch (\Throwable $e) {
+                $this->getLogger()->notice('Unable to initialize Elementor dynamic tags manager, Elementor tags processing not available: ' . $e->getMessage());
+            }
+        }
+
+        return null;
+    }
+
+    public function replaceDynamicTagSetting(string $tag, string $value): string
+    {
+        $dynamicTagsManager = $this->getDynamicTagsManager();
+        if ($dynamicTagsManager === null) {
+            $this->getLogger()->info("Elementor dynamic tags manager not available, skip replacing tag=\"$tag\", value=\"$value\"");
+        }
+        try {
+            $tagData = $dynamicTagsManager->tag_text_to_tag_data($tag);
+        } catch (\Throwable $e) {
+            $this->getLogger()->warning("Unable to convert Elementor tagText=\"$tag\" to array, value=\"$value\": {$e->getMessage()}");
+            return $tag;
+        }
+        if (($tagData['name'] ?? '') !== self::SETTING_KEY_POPUP) {
+            $this->getLogger()->warning("Unknown Elementor tag encountered, skipping replacement, tagText=\"$tag\"");
+            return $tag;
+        }
+        try {
+            $tagData['settings'][self::SETTING_KEY_POPUP] = $value; // $value must be string in order to be converted back to tag
+            return $dynamicTagsManager->tag_data_to_tag_text(...array_values($tagData));
+        } catch (\Throwable $e) {
+            $this->getLogger()->warning("Unable to convert Elementor tag data to text: {$e->getMessage()}");
+        }
+        return $tag;
     }
 }

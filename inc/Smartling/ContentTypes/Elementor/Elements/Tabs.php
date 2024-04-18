@@ -2,6 +2,7 @@
 
 namespace Smartling\ContentTypes\Elementor\Elements;
 
+use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -28,7 +29,7 @@ class Tabs extends Unknown {
         return [$this->getId() => $return];
     }
 
-    public function setTargetContent(RelatedContentInfo $info, array $strings, SubmissionEntity $submission, SubmissionManager $submissionManager,): static
+    public function setTargetContent(ExternalContentElementor $externalContentElementor, RelatedContentInfo $info, array $strings, SubmissionEntity $submission,): static
     {
         foreach ($strings[$this->id] ?? [] as $array) {
             if (is_array($array)) {
