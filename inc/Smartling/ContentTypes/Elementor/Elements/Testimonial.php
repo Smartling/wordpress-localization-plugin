@@ -14,7 +14,7 @@ class Testimonial extends Unknown {
 
     public function getRelated(): RelatedContentInfo
     {
-        $return = new RelatedContentInfo();
+        $return = parent::getRelated();
         $key = 'testimonial_image/id';
         $id = $this->getIntSettingByKey($key, $this->settings);
         if ($id !== null) {

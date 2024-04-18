@@ -17,7 +17,7 @@ class Reviews extends Unknown {
 
     public function getRelated(): RelatedContentInfo
     {
-        $return = new RelatedContentInfo();
+        $return = parent::getRelated();
         $key = 'image/id';
 
         $id = $this->getIntSettingByKey($key, $this->settings);

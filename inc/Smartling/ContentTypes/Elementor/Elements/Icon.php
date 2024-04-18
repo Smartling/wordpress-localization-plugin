@@ -14,7 +14,7 @@ class Icon extends Unknown {
 
     public function getRelated(): RelatedContentInfo
     {
-        $return = new RelatedContentInfo();
+        $return = parent::getRelated();
         $key = 'selected_icon/value/id';
         $id = $this->getIntSettingByKey($key, $this->settings);
         if ($id !== null) {

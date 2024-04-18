@@ -24,9 +24,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 {
     use LoggerSafeTrait;
 
-    private const DYNAMIC = '__dynamic__';
     protected const META_FIELD_NAME = '_elementor_data';
-    private const POPUP = 'popup';
     private const PROPERTY_TEMPLATE_ID = 'templateID';
 
     private array $copyFields = [

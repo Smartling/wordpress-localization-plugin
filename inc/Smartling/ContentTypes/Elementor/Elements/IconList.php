@@ -16,7 +16,7 @@ class IconList extends Unknown {
 
     public function getRelated(): RelatedContentInfo
     {
-        $return = new RelatedContentInfo();
+        $return = parent::getRelated();
         foreach ($this->settings['icon_list'] ?? [] as $index => $listItem) {
             $key = "icon_list/$index/selected_icon/value/id";
             $id = $this->getIntSettingByKey($key, $this->settings);
