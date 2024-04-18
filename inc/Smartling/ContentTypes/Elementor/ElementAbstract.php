@@ -196,6 +196,8 @@ abstract class ElementAbstract implements Element {
         }
         try {
             $tagData['settings'][self::SETTING_KEY_POPUP] = $value; // $value must be string in order to be converted back to tag
+            $this->getLogger()->debug(json_encode($tagData));
+            usleep(1000);
             return $dynamicTagsManager->tag_data_to_tag_text(...array_values($tagData));
         } catch (\Throwable $e) {
             $this->getLogger()->warning("Unable to convert Elementor tag data to text: {$e->getMessage()}");
