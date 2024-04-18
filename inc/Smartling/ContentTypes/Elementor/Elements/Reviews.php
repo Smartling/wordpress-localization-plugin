@@ -2,21 +2,37 @@
 
 namespace Smartling\ContentTypes\Elementor\Elements;
 
+use Smartling\ContentTypes\ContentTypeHelper;
+use Smartling\ContentTypes\Elementor\Element;
+use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-class Slides extends Unknown {
+class Reviews extends Unknown {
     public function getType(): string
     {
-        return 'slides';
+        return 'reviews';
+    }
+
+    public function getRelated(): RelatedContentInfo
+    {
+        $return = new RelatedContentInfo();
+        $key = 'image/id';
+
+        $id = $this->getIntSettingByKey($key, $this->settings);
+        if ($id !== null) {
+            $return->addContent(new Content($id, ContentTypeHelper::POST_TYPE_ATTACHMENT), $this->id, "settings/$key");
+        }
+
+        return $return;
     }
 
     public function getTranslatableStrings(): array
     {
         $return = [];
         foreach ($this->settings['slides'] ?? [] as $slide) {
-            foreach (['content', 'title'] as $field) {
+            foreach (['content', 'name', 'title'] as $field) {
                 $return[$slide['_id']][$field] = $slide[$field];
             }
         }
@@ -26,14 +42,12 @@ class Slides extends Unknown {
 
     public function setTargetContent(RelatedContentInfo $info, array $strings, SubmissionEntity $submission, SubmissionManager $submissionManager): static
     {
-        foreach ($strings[$this->id] ?? [] as $array) {
+        foreach ($strings[$this->id] ?? [] as $key => $array) {
             if (is_array($array)) {
-                foreach ($array as $id => $values) {
+                foreach ($array as $property => $translation) {
                     foreach ($this->settings['slides'] ?? [] as $index => $slide) {
-                        if (($slide['_id'] ?? '') === $id) {
-                            foreach ($values as $property => $value) {
-                                $this->settings['slides'][$index][$property] = $value;
-                            }
+                        if (($slide['_id'] ?? '') === $key) {
+                            $this->settings['slides'][$index][$property] = $translation;
                         }
                     }
                 }
