@@ -4,10 +4,6 @@ namespace Smartling\Tests\IntegrationTests\tests;
 
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
-/**
- * Class ImageTranslationTest
- * @package Smartling\Tests\IntegrationTests\tests
- */
 class ImageTranslationTest extends SmartlingUnitTestCaseAbstract
 {
     public function testImageTranslation()

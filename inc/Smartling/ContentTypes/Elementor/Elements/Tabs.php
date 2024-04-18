@@ -5,7 +5,6 @@ namespace Smartling\ContentTypes\Elementor\Elements;
 use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 class Tabs extends Unknown {
     public function getType(): string

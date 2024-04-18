@@ -46,8 +46,11 @@ class Unknown extends ElementAbstract {
                             return null;
                         });
                         if ($relatedId !== null) {
-                            $return->addContent(new Content($relatedId, ContentTypeHelper::CONTENT_TYPE_UNKNOWN), $this->id, implode('/', ['settings',
-                                ElementAbstract::SETTING_KEY_DYNAMIC, $property]));
+                            $return->addContent(
+                                new Content($relatedId, ContentTypeHelper::CONTENT_TYPE_UNKNOWN),
+                                $this->id,
+                                implode('/', ['settings', ElementAbstract::SETTING_KEY_DYNAMIC, $property]),
+                            );
                         }
                     } catch (\Throwable $e) {
                         $this->getLogger()->notice("Failed to get related id for property=$property, tag=$value: {$e->getMessage()}");

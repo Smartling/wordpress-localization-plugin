@@ -47,7 +47,6 @@ class UploadJob extends JobAbstract
 
     private function processUploadQueue(): void
     {
-        $batchUids = [];
         $profiles = [];
         while (($item = $this->uploadQueueManager->dequeue()) !== null) {
             $submission = $item->getSubmissions()[0];

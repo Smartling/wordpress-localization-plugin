@@ -2,10 +2,6 @@
 
 namespace Smartling\ContentTypes\Elementor\Elements;
 
-use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\Models\Content;
-use Smartling\Models\RelatedContentInfo;
-
 class Counter extends Unknown {
     public function getType(): string
     {

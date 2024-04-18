@@ -2,6 +2,7 @@
 
 namespace Smartling\Models;
 
+use JetBrains\PhpStorm\Pure;
 use Smartling\Submissions\SubmissionEntity;
 
 class UploadQueueItem {
@@ -66,6 +67,7 @@ class UploadQueueItem {
         return new self($submissions, $this->batchUid, $locales);
     }
 
+    #[Pure]
     public function setBatchUid(string $batchUid): self
     {
         $result = clone $this;
