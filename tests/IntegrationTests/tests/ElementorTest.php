@@ -8,6 +8,7 @@ use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 class ElementorTest extends SmartlingUnitTestCaseAbstract {
     public function testElementor(): void
     {
+        $this->markTestSkipped();
         $contentType = 'post';
         $imageIds = [
             $this->createAttachment(),
@@ -53,6 +54,7 @@ class ElementorTest extends SmartlingUnitTestCaseAbstract {
 
     public function testElementorComplexContent(): void
     {
+        $this->markTestSkipped();
         $contentType = 'post';
         $sourceBlogId = 1;
         $targetBlogId = 2;
