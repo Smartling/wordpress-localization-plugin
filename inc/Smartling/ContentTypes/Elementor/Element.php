@@ -6,7 +6,6 @@ use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 
 interface Element {
     public function fromArray(array $array): self;
@@ -16,9 +15,9 @@ interface Element {
     public function getType(): string;
     public function setRelations(
         Content $content,
+        ExternalContentElementor $externalContentElementor,
         string $path,
         SubmissionEntity $submission,
-        ExternalContentElementor $externalContentElementor,
     ): self;
     public function setTargetContent(
         ExternalContentElementor $externalContentElementor,

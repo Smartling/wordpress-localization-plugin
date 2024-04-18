@@ -86,9 +86,9 @@ abstract class ElementAbstract implements Element {
 
     public function setRelations(
         Content $content,
+        ExternalContentElementor $externalContentElementor,
         string $path,
         SubmissionEntity $submission,
-        ExternalContentElementor $externalContentElementor,
     ): static {
         $arrayHelper = new ArrayHelper();
         $result = clone $this;
@@ -138,7 +138,7 @@ abstract class ElementAbstract implements Element {
         $this->raw['elements'] = $this->elements;
         foreach ($info->getOwnRelatedContent($this->id) as $path => $content) {
             assert($content instanceof Content);
-            $this->raw = $this->setRelations($content, $path, $submission, $externalContentElementor)->toArray();
+            $this->raw = $this->setRelations($content, $externalContentElementor, $path, $submission)->toArray();
         }
 
         return new static($this->raw);
