@@ -60,8 +60,6 @@ class ApiWrapper implements ApiWrapperInterface
         private SettingsManager $settings,
         private string $pluginName,
         private string $pluginVersion,
-        private string $userIdentifier = '',
-        private string $userSecret = '',
     ) {
     }
 
@@ -98,20 +96,6 @@ class ApiWrapper implements ApiWrapperInterface
                 $profile->getSecretKey(),
                 $this->getLogger()
             );
-            $this->getCache()->set($cacheKey, $authProvider);
-        }
-
-        return $authProvider;
-    }
-
-    public function getAuthProviderForUser(string $user, string $secret): AuthTokenProvider
-    {
-        $cacheKey = self::AUTH_PROVIDER_CACHE_KEY_PREFIX . $user;
-        $authProvider = $this->getCache()->get($cacheKey);
-        if ($authProvider === false) {
-            AuthTokenProvider::setCurrentClientId($this->pluginName);
-            AuthTokenProvider::setCurrentClientVersion($this->pluginVersion);
-            $authProvider = AuthTokenProvider::create($user, $secret, $this->getLogger());
             $this->getCache()->set($cacheKey, $authProvider);
         }
 
@@ -701,17 +685,23 @@ class ApiWrapper implements ApiWrapperInterface
 
     public function getSettingsServiceApi(string $projectUid): SettingsServiceApi
     {
-        return new SettingsServiceApi($this->getAuthProviderForUser($this->userIdentifier, $this->userSecret), $projectUid);
+        return new SettingsServiceApi(
+            $this->getAuthProvider($this->settings->getActiveProfileByProjectId($projectUid)),
+            $projectUid,
+        );
     }
 
     public function getSubmissionApi(string $projectUid): SubmissionServiceApi
     {
-        return new SubmissionServiceApi($this->getAuthProviderForUser($this->userIdentifier, $this->userSecret), $projectUid);
+        return new SubmissionServiceApi(
+            $this->getAuthProvider($this->settings->getActiveProfileByProjectId($projectUid)),
+            $projectUid,
+        );
     }
 
     public function getSettings(string $projectUid): array
     {
-        return $this->getSettingsServiceApi($projectUid)->getSettings($projectUid);
+        return $this->getSettingsServiceApi($projectUid)->getSettings();
     }
 
     public function createSubmission(string $projectUid, string $translationRequestUid, AssetUid $assetUid, string $targetLocale): void

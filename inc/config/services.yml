@@ -82,8 +82,6 @@ services:
       - "@manager.settings"
       - "%plugin.name%"
       - "%plugin.version%"
-      - "%user.identifier%"
-      - "%user.secret%"
 
   api.wrapper.with.retries:
     class: Smartling\ApiWrapperWithRetries
