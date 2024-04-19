@@ -172,7 +172,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $this->getData($this->readMeta($contentId))->getRelatedContentInfo()->getRelatedContentList();
     }
 
-    private function mergeElementorData(array $original, array $strings, SubmissionEntity $submission): array
+    private function mergeElementorData(array $original, array $strings, Submission $submission): array
     {
         $result = [];
         foreach ($original as $array) {
@@ -188,7 +188,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $result;
     }
 
-    public function setContentFields(array $original, array $translation, SubmissionEntity $submission): array
+    public function setContentFields(array $original, array $translation, Submission $submission): array
     {
         if (array_key_exists('meta', $original)) {
             foreach ($this->copyFields as $field) {
