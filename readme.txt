@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 3.9.0 =
 * Reworked elementor elements processing
+* Reworked upload queue
 
 = 3.8.13 =
 * Added `smartling_filter_before_clone_content_written` filter
