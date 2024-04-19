@@ -3,11 +3,10 @@
 namespace Smartling\ContentTypes\Elementor\Elements;
 
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\Elementor\Submission;
 use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
-use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\Submission;
 
 class IconList extends Unknown {
     public function getType(): string
