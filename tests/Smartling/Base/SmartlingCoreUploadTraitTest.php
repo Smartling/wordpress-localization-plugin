@@ -6,9 +6,12 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Smartling\Base\SmartlingCoreUploadTrait;
 use Smartling\ContentTypes\ExternalContentManager;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\DecodedTranslation;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
@@ -23,33 +26,25 @@ use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
+use Smartling\Tests\Traits\DbAlMock;
 use Smartling\Tuner\MediaAttachmentRulesManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 require __DIR__ . '/../../wordpressBlocks.php';
 
 class SmartlingCoreUpload {
     use SmartlingCoreUploadTrait;
 
-    private ContentHelper $contentHelper;
-    private ExternalContentManager $externalContentManager;
-    private FieldsFilterHelper $fieldsFilterHelper;
-    private GutenbergBlockHelper $blockHelper;
-    private SettingsManager $settingsManager;
-    private SubmissionManager $submissionManager;
-    private TestRunHelper $testRunHelper;
-    private WordpressFunctionProxyHelper $wpProxy;
-
-    public function __construct(ContentHelper $contentHelper, ExternalContentManager $externalContentManager, FieldsFilterHelper $fieldsFilterHelper, SettingsManager $settingsManager, SubmissionManager $submissionManager, TestRunHelper $testRunHelper, WordpressFunctionProxyHelper $wpProxy)
-    {
-        $this->contentHelper = $contentHelper;
-        /** @noinspection UnusedConstructorDependenciesInspection the way this test works, this is needed */
-        $this->externalContentManager = $externalContentManager;
-        $this->fieldsFilterHelper = $fieldsFilterHelper;
-        $this->settingsManager = $settingsManager;
-        $this->submissionManager = $submissionManager;
-        /** @noinspection UnusedConstructorDependenciesInspection the way this test works, this is needed */
-        $this->testRunHelper = $testRunHelper;
-        $this->wpProxy = $wpProxy;
+    public function __construct(
+        private ContentHelper $contentHelper,
+        private ExternalContentManager $externalContentManager,
+        private FieldsFilterHelper $fieldsFilterHelper,
+        private SettingsManager $settingsManager,
+        private SubmissionManager $submissionManager,
+        private TestRunHelper $testRunHelper,
+        private UploadQueueManager $uploadQueueManager,
+        private WordpressFunctionProxyHelper $wpProxy,
+    ) {
     }
 
     public function getLogger(): NullLogger
@@ -58,10 +53,6 @@ class SmartlingCoreUpload {
     }
 
     public function prepareFieldProcessorValues()
-    {
-    }
-
-    public function prepareRelatedSubmissions()
     {
     }
 
@@ -93,6 +84,7 @@ class SmartlingCoreUpload {
 
 class SmartlingCoreUploadTraitTest extends TestCase
 {
+    use DbAlMock;
     private PostEntityStd $resultEntity;
 
     public function setUp(): void
@@ -143,7 +135,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $fieldsFilterHelper = $this->createPartialMock(FieldsFilterHelper::class, ['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding']);
         $fieldsFilterHelper->method('processStringsAfterDecoding')->willReturnArgument(0);
         $fieldsFilterHelper->method('applyTranslatedValues')->willReturnArgument(2);
-        $fieldsFilterHelper->method('getLogger')->willReturn(new NullLogger());
+        $fieldsFilterHelper->method('getLogger')->willReturn($this->createMock(LoggerInterface::class));
 
         $profile = $this->getMockBuilder(ConfigurationProfileEntity::class)->disableOriginalConstructor()->getMock();
         $profile->method('getCleanMetadataOnDownload')->willReturn(1);
@@ -300,7 +292,7 @@ HTML;
         $fieldsFilterHelper = $this->createPartialMock(FieldsFilterHelper::class, ['applyTranslatedValues', 'getLogger', 'processStringsAfterDecoding']);
         $fieldsFilterHelper->method('processStringsAfterDecoding')->willReturnArgument(0);
         $fieldsFilterHelper->method('applyTranslatedValues')->willReturnArgument(2);
-        $fieldsFilterHelper->method('getLogger')->willReturn(new NullLogger());
+        $fieldsFilterHelper->method('getLogger')->willReturn($this->createMock(LoggerInterface::class));
 
         $profile = $this->getMockBuilder(ConfigurationProfileEntity::class)->disableOriginalConstructor()->getMock();
 
@@ -328,11 +320,13 @@ HTML;
 
     private function assertSuccessApplyXml(SmartlingCoreUpload $smartlingCoreUpload, SubmissionEntity $submission, XmlHelper $xmlHelper)
     {
-        $postContentHelper = new PostContentHelper(new GutenbergBlockHelper(
+        $postContentHelper = new PostContentHelper(new ArrayHelper(), new GutenbergBlockHelper(
             $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(ContentSerializationHelper::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
+            $this->createMock(SettingsManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
         ));
         $result = $smartlingCoreUpload->applyXML($submission, ' ', $xmlHelper, $postContentHelper);
@@ -340,12 +334,27 @@ HTML;
     }
 
     private function getSmartlingCoreUpload(
-        ContentHelper $contentHelper,
-        FieldsFilterHelper $fieldsFilterHelper,
-        SettingsManager $settingsManager,
-        SubmissionManager $submissionManager
-    )
-    {
+        ?ContentHelper $contentHelper = null,
+        ?FieldsFilterHelper $fieldsFilterHelper = null,
+        ?SettingsManager $settingsManager = null,
+        ?SubmissionManager $submissionManager = null,
+        ?UploadQueueManager $uploadQueueManager = null,
+    ) {
+        if ($contentHelper === null) {
+            $contentHelper = $this->createMock(ContentHelper::class);
+        }
+        if ($fieldsFilterHelper === null) {
+            $fieldsFilterHelper = $this->createMock(FieldsFilterHelper::class);
+        }
+        if ($settingsManager === null) {
+            $settingsManager = $this->createMock(SettingsManager::class);
+        }
+        if ($submissionManager === null) {
+            $submissionManager = $this->createMock(SubmissionManager::class);
+        }
+        if ($uploadQueueManager === null) {
+            $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+        }
         $externalContentManager = $this->createMock(ExternalContentManager::class);
         $externalContentManager->method('setExternalContent')->willReturnArgument(1);
 
@@ -355,6 +364,15 @@ HTML;
             return is_serialized($original) ? @unserialize($original) : $original;
         });
 
-        return new SmartlingCoreUpload($contentHelper, $externalContentManager, $fieldsFilterHelper, $settingsManager, $submissionManager, $this->createMock(TestRunHelper::class), $wpProxy);
+        return new SmartlingCoreUpload(
+            $contentHelper,
+            $externalContentManager,
+            $fieldsFilterHelper,
+            $settingsManager,
+            $submissionManager,
+            $this->createMock(TestRunHelper::class),
+            $uploadQueueManager,
+            $wpProxy,
+        );
     }
 }

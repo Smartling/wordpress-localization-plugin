@@ -4,6 +4,7 @@ namespace Smartling;
 
 use DateTime;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\JobEntityWithStatus;
 use Smartling\Models\AssetUid;
@@ -19,11 +20,8 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
     public const RETRY_ATTEMPTS = 4;
     private const RETRY_WAIT_SECONDS = 1;
 
-    private ApiWrapperInterface $base;
-
-    public function __construct(ApiWrapperInterface $base)
+    public function __construct(private ApiWrapperInterface $base, private int $retryWaitSeconds = 1)
     {
-        $this->base = $base;
     }
 
     public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
@@ -47,10 +45,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntityWithBatchUid $jobInfo = null, ?bool $isAuthorize = null): void
+    public function createAuditLogRecord(ConfigurationProfileEntity $profile, string $actionType, string $description, array $clientData, ?JobEntity $job = null, ?bool $isAuthorize = null): void
     {
-        $this->withRetry(function () use ($profile, $jobInfo, $actionType, $isAuthorize, $clientData, $description) {
-            $this->base->createAuditLogRecord($profile, $actionType, $description, $clientData, $jobInfo, $isAuthorize);
+        $this->withRetry(function () use ($profile, $job, $actionType, $isAuthorize, $clientData, $description) {
+            $this->base->createAuditLogRecord($profile, $actionType, $description, $clientData, $job, $isAuthorize);
         });
     }
 
@@ -75,10 +73,9 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function uploadContent(SubmissionEntity $entity, string $xmlString = '', string $filename = '', array $smartlingLocaleList = []): bool
-    {
-        return $this->withRetry(function () use ($entity, $xmlString, $filename, $smartlingLocaleList) {
-            return $this->base->uploadContent($entity, $xmlString, $filename, $smartlingLocaleList);
+    public function uploadContent(SubmissionEntity $entity, string $xmlString, string $batchUid, array $smartlingLocaleList): bool {
+        return $this->withRetry(function () use ($batchUid, $entity, $xmlString, $smartlingLocaleList) {
+            return $this->base->uploadContent($entity, $xmlString, $batchUid, $smartlingLocaleList);
         });
     }
 
@@ -138,24 +135,24 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, bool $authorize = false): array
+    public function cancelBatchFile(ConfigurationProfileEntity $profile, string $batchUid, string $fileUri): void
     {
-        return $this->withRetry(function () use ($profile, $jobUid, $authorize) {
-            return $this->base->createBatch($profile, $jobUid, $authorize);
+        $this->withRetry(function () use ($profile, $batchUid, $fileUri) {
+            $this->base->cancelBatchFile($profile, $batchUid, $fileUri);
         });
     }
 
-    public function retrieveBatch(ConfigurationProfileEntity $profile, string $jobId, bool $authorize = true, array $updateJob = []): string
+    public function createBatch(ConfigurationProfileEntity $profile, string $jobUid, array $fileUris, bool $authorize = false): string
     {
-        return $this->withRetry(function () use ($profile, $jobId, $authorize, $updateJob) {
-            return $this->base->retrieveBatch($profile, $jobId, $authorize, $updateJob);
+        return $this->withRetry(function () use ($profile, $jobUid, $authorize, $fileUris) {
+            return $this->base->createBatch($profile, $jobUid, $fileUris, $authorize);
         });
     }
 
-    public function executeBatch(ConfigurationProfileEntity $profile, string $batchUid): void
+    public function registerBatchFile(ConfigurationProfileEntity $profile, string $batchUid, string $fileUri): void
     {
-        $this->withRetry(function () use ($profile, $batchUid) {
-            $this->base->executeBatch($profile, $batchUid);
+        $this->withRetry(function () use ($profile, $batchUid, $fileUri) {
+            $this->base->registerBatchFile($profile, $batchUid, $fileUri);
         });
     }
 
@@ -166,10 +163,10 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function retrieveJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, bool $authorize): JobEntityWithBatchUid
+    public function getOrCreateJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid
     {
-        return $this->withRetry(function () use ($profile, $authorize) {
-            return $this->base->retrieveJobInfoForDailyBucketJob($profile, $authorize);
+        return $this->withRetry(function () use ($profile, $fileUris) {
+            return $this->base->getOrCreateJobInfoForDailyBucketJob($profile, $fileUris);
         });
     }
 
@@ -251,7 +248,7 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         try {
             return (new Retry(new Command($command)))
                 ->attempts(self::RETRY_ATTEMPTS)
-                ->wait(self::RETRY_WAIT_SECONDS)
+                ->wait($this->retryWaitSeconds)
                 ->onlyIf(function ($attempt, $error) {
                     return ($error instanceof \Exception && !$this->isUnrecoverable($error));
                 })

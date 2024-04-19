@@ -3,11 +3,15 @@
 namespace Smartling\Tests\Smartling\Helpers;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\DetectChangesHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Traits\DbAlMock;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 use Smartling\Tests\Traits\SettingsManagerMock;
@@ -45,8 +49,7 @@ class DetectChangesHelperTest extends TestCase
             ->with(2)
             ->willReturn($profile);
 
-        $submissionManagerMock = $this->mockSubmissionManager(
-            $this->mockDbAl());
+        $submissionManagerMock = $this->mockSubmissionManager($this->mockDbAl());
 
         $submissionManagerMock
             ->expects(self::once())
@@ -64,11 +67,7 @@ class DetectChangesHelperTest extends TestCase
                 ]
             ]);
 
-        $helper = new DetectChangesHelper();
-        $helper->setSettingsManager($mock);
-        $helper->setSubmissionManager($submissionManagerMock);
-
-        $this->invokeMethod($helper, 'getSubmissions', [2, 5, 'page']);
+        $this->invokeMethod($this->getHelper($mock, $submissionManagerMock), 'getSubmissions', [2, 5, 'page']);
     }
 
     /**
@@ -86,13 +85,20 @@ class DetectChangesHelperTest extends TestCase
                 throw new SmartlingDbException();
             });
 
-        $submissionManagerMock = $this->mockSubmissionManager(
-            $this->mockDbAl());
-
-        $helper = new DetectChangesHelper();
-        $helper->setSettingsManager($mock);
-        $helper->setSubmissionManager($submissionManagerMock);
+        $helper = $this->getHelper($mock, $this->mockSubmissionManager($this->mockDbAl()));
 
         self::assertEquals([], $this->invokeMethod($helper, 'getSubmissions', [2, 5, 'page']));
+    }
+
+    private function getHelper(
+        SettingsManager $settingsManager,
+        SubmissionManager $submissionManager,
+    ): DetectChangesHelper {
+        return new DetectChangesHelper(
+            $this->createMock(ContentSerializationHelper::class),
+            $this->createMock(UploadQueueManager::class),
+            $settingsManager,
+            $submissionManager,
+        );
     }
 }

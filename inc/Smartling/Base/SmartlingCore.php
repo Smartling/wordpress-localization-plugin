@@ -4,6 +4,7 @@ namespace Smartling\Base;
 
 use Exception;
 use Smartling\ContentTypes\ExternalContentManager;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
@@ -30,6 +31,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         private FileUriHelper $fileUriHelper,
         private GutenbergBlockHelper $gutenbergBlockHelper,
         private PostContentHelper $postContentHelper,
+        private UploadQueueManager $uploadQueueManager,
         private XmlHelper $xmlHelper,
         private TestRunHelper $testRunHelper,
         private WordpressFunctionProxyHelper $wpProxy,
@@ -38,7 +40,7 @@ class SmartlingCore extends SmartlingCoreAbstract
 
         add_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, [$this, 'cloneContent']);
         add_action(ExportedAPI::ACTION_SMARTLING_PREPARE_SUBMISSION_UPLOAD, [$this, 'prepareUpload']);
-        add_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, [$this, 'sendForTranslationBySubmission']);
+        add_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, [$this, 'sendForTranslation']);
         add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);
         add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
         add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
@@ -88,6 +90,7 @@ class SmartlingCore extends SmartlingCoreAbstract
                     $content[$key] = $this->gutenbergBlockHelper->replacePostTranslateBlockContent($value, $value, $submission);
                 }
             }
+            $content = apply_filters(ExportedAPI::FILTER_BEFORE_CLONE_CONTENT_WRITTEN, $content, $submission);
             $this->getContentHelper()->writeTargetContent($submission, $entity->fromArray($content));
 
             $metadata = [];
@@ -101,58 +104,6 @@ class SmartlingCore extends SmartlingCoreAbstract
             $this->getSubmissionManager()->storeEntity($submission);
             $this->getLogger()->info('Cloned submission');
         });
-    }
-
-    /**
-     * Sends data to smartling directly
-     *
-     * @param SubmissionEntity $submission
-     * @param string           $xmlFileContent
-     *
-     * @return bool
-     */
-    protected function sendStream(SubmissionEntity $submission, $xmlFileContent)
-    {
-        return $this->getApiWrapper()->uploadContent($submission, $xmlFileContent);
-    }
-
-    /**
-     * Sends data to smartling via temporary file
-     *
-     * @param SubmissionEntity $submission
-     * @param string           $xmlFileContent
-     * @param array            $smartlingLocaleList
-     *
-     * @return bool
-     */
-    protected function sendFile(SubmissionEntity $submission, $xmlFileContent, array $smartlingLocaleList = [])
-    {
-        $workDir = sys_get_temp_dir();
-
-        if (is_writable($workDir)) {
-            // File extension is needed for Guzzle. Library sets content type
-            // depending on file extension (application/xml).
-            $tmp_file = tempnam($workDir, '_smartling_temp_') . '.xml';
-            $bytesWritten = file_put_contents($tmp_file, $xmlFileContent);
-
-            if (0 === $bytesWritten) {
-                $this->getLogger()->warning('Nothing was written to temporary file.');
-                return false;
-            }
-
-            $tmpFileSize = filesize($tmp_file);
-            if ($tmpFileSize !== $bytesWritten || $tmpFileSize !== strlen($xmlFileContent)) {
-                $this->getLogger()->warning('Expected size of temporary file doesn\'t equals to real.');
-                return false;
-            }
-
-            $result = $this->getApiWrapper()->uploadContent($submission, '', $tmp_file, $smartlingLocaleList);
-            unlink($tmp_file);
-            return $result;
-        }
-
-        $this->getLogger()->warning(vsprintf('Working directory : \'%s\' doesn\'t seen to be writable',[$workDir]));
-        return false;
     }
 
     /**

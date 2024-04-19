@@ -5,7 +5,6 @@ namespace Smartling\Base;
 use Smartling\DbAl\WordpressContentEntities\EntityWithPostStatus;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -15,9 +14,9 @@ trait SmartlingCoreTrait
     use SmartlingCoreDownloadTrait;
     use SmartlingCoreAttachments;
 
-    private function prepareFieldProcessorValues(SubmissionEntity $submission): void
+    private function prepareFieldProcessorValues(SubmissionEntity $submission): array
     {
-        ContentSerializationHelper::prepareFieldProcessorValues($this->getSettingsManager(), $submission);
+        return $this->getContentSerializationHelper()->prepareFieldProcessorValues($submission);
     }
 
     public function prepareTargetContent(SubmissionEntity $submission): SubmissionEntity
@@ -50,8 +49,11 @@ trait SmartlingCoreTrait
         }
 
         $this->getLogger()->debug(
-            sprintf('Preparing target entity for submissionId=%s, targetBlogId="%s".',
+            sprintf('Preparing target entity for submissionId=%s, sourceId=%s, contentType=%s, sourceBlogId=%s, targetBlogId="%s"',
                 $submission->getId(),
+                $submission->getSourceId(),
+                $submission->getContentType(),
+                $submission->getSourceBlogId(),
                 $submission->getTargetBlogId(),
             )
         );
@@ -86,18 +88,13 @@ trait SmartlingCoreTrait
         $this->externalContentManager->setExternalContent($unfilteredSourceData, $this->externalContentManager->getExternalContent([], $submission, true), $submission);
         $this->setObjectTerms($submission);
 
-        $this->getLogger()
-            ->debug(
-                vsprintf(
-                    'Created target entity for submission = \'%s\' for locale = \'%s\' in blog =\'%s\', id = \'%s\'.',
-                    [
-                        $submission->getId(),
-                        $submission->getTargetLocale(),
-                        $submission->getTargetBlogId(),
-                        $targetContent->getId(),
-                    ]
-                )
-            );
+        $this->getLogger()->debug(sprintf(
+            'Created target entity for submissionId="%s", locale="%s" in targetBlogId="%s", targetId="%s"',
+            $submission->getId(),
+            $this->getSettingsManager()->getSmartlingLocaleBySubmission($submission),
+            $submission->getTargetBlogId(),
+            $targetContent->getId(),
+        ));
 
         if (array_key_exists('meta', $filteredData) && ArrayHelper::notEmpty($filteredData['meta'])) {
             $metaFields = $filteredData['meta'];

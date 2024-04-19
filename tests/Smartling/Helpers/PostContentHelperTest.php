@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Smartling\Helpers;
 
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +21,7 @@ class PostContentHelperTest extends TestCase {
             return $this->toGutenbergBlocks((new \WP_Block_Parser())->parse($string));
         });
 
-        $x = new PostContentHelper($blockHelper);
+        $x = new PostContentHelper(new ArrayHelper(), $blockHelper);
         $this->assertStringEqualsFile(
             __DIR__ . $expectedPath,
             $x->applyContentWithBlockLocks(
@@ -35,12 +36,13 @@ class PostContentHelperTest extends TestCase {
         return [
             ['/Resources/WP733_target.html', '/Resources/WP733_translation.html', '/Resources/WP733_expected.html'],
             ['/Resources/WP-868_target.html', '/Resources/WP-868_translation.html', '/Resources/WP-868_expected.html'],
+            ['/Resources/WP-880_target.html', '/Resources/WP-880_translation.html', '/Resources/WP-880_expected.html'],
         ];
     }
 
     public function testSetBlockByPath()
     {
-        $x = new PostContentHelper($this->createMock(GutenbergBlockHelper::class));
+        $x = new PostContentHelper(new ArrayHelper(), $this->createMock(GutenbergBlockHelper::class));
         $innerAttributes = ['attribute' => 'value', PostContentHelper::SMARTLING_LOCK_ID => 'innerBlock'];
         $innerBlock = new GutenbergBlock('inner', $innerAttributes, [], '', []);
         $blocks = [

@@ -1,5 +1,7 @@
 <?php
 
+namespace IntegrationTests\tests;
+
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 

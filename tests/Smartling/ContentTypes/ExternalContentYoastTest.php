@@ -5,6 +5,7 @@ namespace Smartling\ContentTypes;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -138,8 +139,10 @@ class ExternalContentYoastTest extends TestCase {
     private function getFieldsFilterHelper(): FieldsFilterHelper
     {
         return new FieldsFilterHelper(
-            $this->createMock(SettingsManager::class),
             $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(ContentSerializationHelper::class),
+            $this->createMock(SettingsManager::class),
+            $this->createMock(WordpressFunctionProxyHelper::class),
         );
     }
 }

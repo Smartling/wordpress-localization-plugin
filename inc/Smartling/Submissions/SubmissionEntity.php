@@ -8,7 +8,6 @@ use Smartling\Exception\SmartlingSubmissionsProcessingException;
 use Smartling\Helpers\TextHelper;
 use Smartling\Helpers\WordpressUserHelper;
 use Smartling\Jobs\JobEntity;
-use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 /**
@@ -82,7 +81,6 @@ class SubmissionEntity extends SmartlingEntityAbstract implements Submission
     public const FIELD_LAST_MODIFIED = 'last_modified';
     public const FIELD_OUTDATED = 'outdated';
     public const FIELD_LAST_ERROR = 'last_error';
-    public const FIELD_BATCH_UID = 'batch_uid';
     public const FIELD_LOCKED_FIELDS = 'locked_fields';
     public const FIELD_CREATED_AT = 'created_at';
 
@@ -117,7 +115,6 @@ class SubmissionEntity extends SmartlingEntityAbstract implements Submission
             static::FIELD_LAST_MODIFIED => static::DB_TYPE_DATETIME,
             static::FIELD_OUTDATED => static::DB_TYPE_UINT_SWITCH,
             static::FIELD_LAST_ERROR => static::DB_TYPE_STRING_TEXT,
-            static::FIELD_BATCH_UID => static::DB_TYPE_STRING_64 . ' ' . static::DB_TYPE_DEFAULT_EMPTYSTRING,
             static::FIELD_LOCKED_FIELDS => 'TEXT NULL',
             static::FIELD_CREATED_AT => static::DB_TYPE_DATETIME,
         ];
@@ -312,7 +309,6 @@ class SubmissionEntity extends SmartlingEntityAbstract implements Submission
                 $this->setOutdated(0);
                 break;
             case static::SUBMISSION_STATUS_FAILED:
-                $this->setBatchUid('');
                 break;
         }
 
@@ -611,25 +607,9 @@ class SubmissionEntity extends SmartlingEntityAbstract implements Submission
         $this->stateFields[static::FIELD_LAST_ERROR] = trim($message);
     }
 
-    public function getBatchUid(): string
-    {
-        return (string)$this->stateFields[static::FIELD_BATCH_UID];
-    }
-
-    public function setBatchUid($batchUid): void
-    {
-        $this->stateFields[static::FIELD_BATCH_UID] = trim((string)$batchUid);
-    }
-
     public function getJobInfo(): JobEntity
     {
         return $this->jobInformation ?? JobEntity::EMPTY();
-    }
-
-    public function getJobInfoWithBatchUid(): JobEntityWithBatchUid
-    {
-        $jobInfo = $this->getJobInfo();
-        return new JobEntityWithBatchUid($this->getBatchUid(), $jobInfo->getJobName(), $jobInfo->getJobUid(), $jobInfo->getProjectUid());
     }
 
     public function setJobInfo(JobEntity $jobInfo): void

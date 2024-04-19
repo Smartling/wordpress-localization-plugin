@@ -13,7 +13,7 @@ class PostContentHelper
     public const SMARTLING_LOCKED = 'smartlingLocked';
     public const SMARTLING_LOCKED_ATTRIBUTES = 'smartlingLockedAttributes';
 
-    public function __construct(private GutenbergBlockHelper $blockHelper)
+    public function __construct(private ArrayHelper $arrayHelper, private GutenbergBlockHelper $blockHelper)
     {
     }
 
@@ -38,8 +38,9 @@ class PostContentHelper
                 $targetBlock = $this->getBlockByPath($targetBlocks, $path);
                 assert($targetBlock !== null);
                 $attributes = $resultBlock->getAttributes();
-                if (array_key_exists($attribute, $targetBlock->toArray()['attrs'])) {
-                    $attributes[$attribute] = $targetBlock->getAttributes()[$attribute];
+                $targetValue = ArrayHelper::getValue($targetBlock->getAttributes(), $attribute);
+                if ($targetValue !== null) {
+                    $attributes = $this->arrayHelper->setValue($attributes, $attribute, $targetValue);
                 }
                 $resultBlocks = $this->setBlockByPath($resultBlocks, $path, $resultBlock->withAttributes($attributes));
             }

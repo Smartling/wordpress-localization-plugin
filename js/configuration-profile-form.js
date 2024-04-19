@@ -24,6 +24,7 @@
                 'params': {
                     'smartling_add_slashes_before_saving_content': $('#smartling_add_slashes_before_saving_content').val(),
                     'smartling_add_slashes_before_saving_meta': $('#smartling_add_slashes_before_saving_meta').val(),
+                    'smartling_custom_directives': $('#smartling_custom_directives').val(),
                     'selfCheckDisabled': $('#selfCheckDisabled').val(),
                     'disableLogging': $('#disableLogging').val(),
                     'loggingPath': $('#loggingPath').val(),

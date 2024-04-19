@@ -11,13 +11,13 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\CommonLogMessagesTrait;
+use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
-use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithBatchUid;
-use Smartling\Queue\Queue;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -25,58 +25,55 @@ use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class PostWidgetController
- *
- * @package Smartling\WP\Controller
- */
 class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 {
     use DetectContentChangeTrait;
 
-    const WIDGET_NAME = 'smartling_connector_widget';
-    const WIDGET_DATA_NAME = 'smartling';
-    const CONNECTOR_NONCE = 'smartling_connector_nonce';
+    private const WIDGET_NAME = 'smartling_connector_widget';
+    public const WIDGET_DATA_NAME = 'smartling';
+    private const CONNECTOR_NONCE = 'smartling_connector_nonce';
 
-    private ApiWrapperInterface $apiWrapper;
-    protected $servedContentType = 'undefined';
-    protected $needSave = 'Need to have title';
-    protected $noOriginalFound = 'No original post found';
-    protected $abilityNeeded = 'edit_post';
+    protected string $servedContentType = 'undefined';
+    protected string $needSave = 'Need to have title';
+    protected string $noOriginalFound = 'No original post found';
+    protected string $abilityNeeded = 'edit_post';
 
-    const RESPONSE_AJAX_STATUS_FAIL = 'FAIL';
-    const RESPONSE_AJAX_STATUS_SUCCESS = 'SUCCESS';
+    private const RESPONSE_AJAX_STATUS_FAIL = 'FAIL';
+    private const RESPONSE_AJAX_STATUS_SUCCESS = 'SUCCESS';
 
-    const ERROR_KEY_FIELD_MISSING = 'field.missing';
-    const ERROR_MSG_FIELD_MISSING = 'Required field \'%s\' is missing.';
+    private const ERROR_KEY_FIELD_MISSING = 'field.missing';
+    private const ERROR_MSG_FIELD_MISSING = 'Required field \'%s\' is missing.';
 
-    const ERROR_KEY_NO_PROFILE_FOUND = 'profile.not.found';
-    const ERROR_MSG_NO_PROFILE_FOUND = 'No suitable configuration profile found.';
+    private const ERROR_KEY_NO_PROFILE_FOUND = 'profile.not.found';
+    private const ERROR_MSG_NO_PROFILE_FOUND = 'No suitable configuration profile found.';
 
-    const ERROR_KEY_TARGET_BLOG_EMPTY = 'no.target';
-    const ERROR_MSG_TARGET_BLOG_EMPTY = 'No target blog selected.';
+    private const ERROR_KEY_TARGET_BLOG_EMPTY = 'no.target';
+    private const ERROR_MSG_TARGET_BLOG_EMPTY = 'No target blog selected.';
 
-    const ERROR_KEY_NO_CONTENT = 'no.content';
-    const ERROR_MSG_NO_CONTENT = 'No source content selected.';
+    private const ERROR_KEY_NO_CONTENT = 'no.content';
+    private const ERROR_MSG_NO_CONTENT = 'No source content selected.';
 
 
-    const ERROR_KEY_INVALID_BLOG = 'invalid.blog';
-    const ERROR_MSG_INVALID_BLOG = 'Invalid blog value.';
+    private const ERROR_KEY_INVALID_BLOG = 'invalid.blog';
+    private const ERROR_MSG_INVALID_BLOG = 'Invalid blog value.';
 
-    const ERROR_KEY_BATCH_FETCH_FAILED = 'fail.fetch.batch';
-    const ERROR_MSG_BATCH_FETCH_FAILED = 'Failed fetching batch for job.';
+    private const ERROR_KEY_TYPE_MISSING = 'content.type.missing';
+    private const ERROR_MSG_TYPE_MISSING = 'Source content-type missing.';
 
-    const ERROR_KEY_TYPE_MISSING = 'content.type.missing';
-    const ERROR_MSG_TYPE_MISSING = 'Source content-type missing.';
-
-    private $mutedTypes = [
+    private array $mutedTypes = [
         'attachment',
     ];
 
-    public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $connector, PluginInfo $pluginInfo, SettingsManager $settingsManager, SiteHelper $siteHelper, SubmissionManager $manager, Cache $cache)
-    {
-        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
-        $this->apiWrapper = $apiWrapper;
+    public function __construct(
+        private ApiWrapperInterface $apiWrapper,
+        LocalizationPluginProxyInterface $connector,
+        PluginInfo $pluginInfo,
+        SettingsManager $settingsManager,
+        SiteHelper $siteHelper,
+        private SubmissionManager $submissionManager,
+        Cache $cache,
+    ) {
+        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $submissionManager, $cache);
     }
 
     private function isMuted()
@@ -316,29 +313,29 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         if ($continue) {
             try {
                 $jobName = $data['job']['name'];
-                $batchUid = $this->getCore()->getApiWrapper()->retrieveBatch(
-                    $profile,
-                    $data['job']['id'],
-                    'true' === $data['job']['authorize'],
-                    [
-                        'name' => $jobName,
-                        'description' => $data['job']['description'],
-                        'dueDate' => [
-                            'date' => $data['job']['dueDate'],
-                            'timezone' => $data['job']['timezone'],
-                        ],
-                    ]
-                );
+                if (!empty($jobName)) {
+                    $description = empty($data['job']['description'] ?? '') ? null : $data['job']['description'];
+                    $dueDate = null;
+
+                    if (!empty($data['job']['dueDate']['date'] ?? '') && !empty($data['job']['dueDate']['timezone'] ?? '')) {
+                        $dueDate = \DateTime::createFromFormat(DateTimeHelper::DATE_TIME_FORMAT_JOB, $data['job']['dueDate']['date'], new \DateTimeZone($data['job']['dueDate']['timezone']));
+                        $dueDate->setTimeZone(new \DateTimeZone('UTC'));
+                    }
+
+                    $this->getCore()->getApiWrapper()->updateJob($profile, $data['job']['id'], $jobName, $description, $dueDate);
+
+                    $this->getLogger()->info(sprintf('Updated jobId=%s: %s', $data['job']['id'], json_encode($data['job'], JSON_THROW_ON_ERROR)));
+                }
             } catch (\Exception $e) {
                 $this->getLogger()->error(
-                    vsprintf(
-                        'Failed adding content to upload queue: %s for %s. Translation aborted.',
-                        [self::ERROR_MSG_BATCH_FETCH_FAILED, var_export($_POST, true)])
+                    sprintf(
+                        'Failed adding content to upload queue: %s for %s. Translation aborted. Reason: %s',
+                        'Job update failed', var_export($_POST, true), $e->getMessage())
                 );
                 $result = [
-                    'status' => 'FAIL',
-                    'key' => self::ERROR_KEY_BATCH_FETCH_FAILED,
-                    'message' => self::ERROR_MSG_BATCH_FETCH_FAILED,
+                    'status' => self::RESPONSE_AJAX_STATUS_FAIL,
+                    'key' => 'fail.update.job',
+                    'message' => 'Job update failed',
                 ];
             }
         }
@@ -349,16 +346,10 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             $contentType = &$data['content']['type'];
             $sourceBlog = $this->siteHelper->getCurrentBlogId();
 
-            /**
-             * Walk through target blogs
-             */
             foreach ($data['blogs'] as $targetBlogId) {
-                /**
-                 * Walk source content ids
-                 */
                 foreach ($sourceIds as $sourceId) {
                     try {
-                        $jobInfo = new JobEntityWithBatchUid($batchUid, $jobName, $data['job']['id'], $profile->getProjectId());
+                        $jobInfo = new JobEntityWithBatchUid('', $jobName, $data['job']['id'], $profile->getProjectId());
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId)) {
                             $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
                         } else {
@@ -367,9 +358,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
                         if (0 < $submission->getId()) {
                             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                            $submission->setBatchUid($jobInfo->getBatchUid());
                             $submission->setJobInfo($jobInfo->getJobInformationEntity());
-                            $submission = $this->getCore()->getSubmissionManager()->storeEntity($submission);
+                            $submission = $this->submissionManager->storeEntity($submission);
                         }
 
                         $this->getLogger()->info(
@@ -382,17 +372,16 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                                     $targetBlogId,
                                     $submission->getTargetLocale(),
                                     $data['job']['id'],
-                                    $submission->getBatchUid(),
                                 ]
                             ));
                     } catch (\Exception $e) {
                         $this->getLogger()->error(sprintf(
-                            "Failed adding '%s' from blog='%s', id='%s' for target blog id='%s' for translation queue with batchUid='%s': %s",
+                            "Failed adding '%s' from blog='%s', id='%s' for target blog id='%s' for translation queue with jobUid='%s': %s",
                             $contentType,
                             $sourceBlog,
                             $sourceId,
                             $targetBlogId,
-                            $batchUid,
+                            $data['job']['id'],
                             $e->getMessage()
                         ));
                     }
@@ -467,10 +456,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             try {
                 $currentBlogId = $this->siteHelper->getCurrentBlogId();
                 $profile = $this->settingsManager->findEntityByMainLocale($currentBlogId);
-                $submissionManager = $this->getManager();
-
                 if (0 < count($profile)) {
-                    $submissions = $submissionManager
+                    $submissions = $this->submissionManager
                                         ->find([
                                             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
                                             SubmissionEntity::FIELD_SOURCE_ID => $post->ID,
@@ -486,7 +473,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 } else {
                     echo '<p>' . __('No suitable configuration profile found.') . '</p>';
                 }
-                if (count($submissionManager->find([
+                if (count($this->submissionManager->find([
                     SubmissionEntity::FIELD_TARGET_BLOG_ID => $currentBlogId,
                     SubmissionEntity::FIELD_TARGET_ID => $post->ID,
                     ], 1)) > 0) {
@@ -615,150 +602,8 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 return;
             }
 
-            $data = $_POST[self::WIDGET_DATA_NAME];
-
-            $this->getLogger()->debug(vsprintf('got POST data: %s', [var_export($_POST, true)]));
-
-            if (null !== $data && array_key_exists('locales', $data)) {
-                $locales = [];
-                if (is_array($data['locales'])) {
-                    foreach ($data['locales'] as $_locale) {
-                        if (array_key_exists('enabled', $_locale) && 'on' === $_locale['enabled']) {
-                            $locales[] = (int)$_locale['blog'];
-                        }
-                    }
-                } elseif (is_string($data['locales'])) {
-                    $locales = explode(',', $data['locales']);
-                } else {
-                    return;
-                }
-                $this->getLogger()->debug(vsprintf('Finished parsing locales: %s', [var_export($locales, true)]));
-                $core = $this->getCore();
-                $translationHelper = $core->getTranslationHelper();
-                if (array_key_exists('sub', $_POST) && count($locales) > 0) {
-                    switch ($_POST['sub']) {
-                        case 'Upload':
-                            $this->getLogger()->debug('Upload case detected.');
-                            if (0 < count($locales)) {
-                                $wrapper = $this->getCore()->getApiWrapper();
-                                $profile = ArrayHelper::first($this->getProfiles());
-
-                                if (!$profile) {
-                                    $this->getLogger()->error('No suitable configuration profile found.');
-
-                                    return;
-                                }
-                                $this->getLogger()->debug(vsprintf('Retrieving batch for jobId=%s', [$data['jobId']]));
-
-                                try {
-                                    $batchUid = $wrapper->retrieveBatch($profile, $data['jobId'],
-                                        'true' === $data['authorize'], [
-                                            'name' => $data['jobName'],
-                                            'description' => $data['jobDescription'],
-                                            'dueDate' => [
-                                                'date' => $data['jobDueDate'],
-                                                'timezone' => $data['timezone'],
-                                            ],
-                                        ]);
-                                } catch (\Exception $e) {
-                                    $this
-                                        ->getLogger()
-                                        ->error(
-                                            vsprintf(
-                                                'Failed retrieving batch for job %s. Translation aborted.',
-                                                [
-                                                    var_export($_POST['jobId'], true),
-                                                ]
-                                            )
-                                        );
-                                    return;
-                                }
-
-                                $jobInfo = new JobEntityWithBatchUid($batchUid, $data['jobName'], $data['jobId'], $profile->getProjectId());
-                                foreach ($locales as $blogId) {
-                                    if ($translationHelper->isRelatedSubmissionCreationNeeded($this->servedContentType, $currentBlogId, $originalId, (int)$blogId)) {
-                                        $submission = $translationHelper->tryPrepareRelatedContent($this->servedContentType, $currentBlogId, $originalId, (int)$blogId, $jobInfo);
-                                    } else {
-                                        $submission = $translationHelper->getExistingSubmissionOrCreateNew($this->servedContentType, $currentBlogId, $originalId, (int)$blogId, $jobInfo);
-                                    }
-
-                                    if (0 < $submission->getId()) {
-                                        $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                                        $submission->setBatchUid($jobInfo->getBatchUid());
-                                        $submission->setJobInfo($jobInfo->getJobInformationEntity());
-                                        $submission = $core->getSubmissionManager()->storeEntity($submission);
-                                    }
-
-                                    $this->getLogger()->info(
-                                        vsprintf(
-                                            static::$MSG_UPLOAD_ENQUEUE_ENTITY_JOB,
-                                            [
-                                                $this->servedContentType,
-                                                $currentBlogId,
-                                                $originalId,
-                                                (int)$blogId,
-                                                $submission->getTargetLocale(),
-                                                $data['jobId'],
-                                                $submission->getBatchUid(),
-                                            ]
-                                        ));
-                                }
-
-                                /**
-                                 * $this->getLogger()->debug('Triggering Upload Job.');
-                                 * do_action(UploadJob::JOB_HOOK_NAME);
-                                 */
-
-                            } else {
-                                $this->getLogger()->debug('No locales found.');
-                            }
-                            break;
-                        case 'Download':
-                            foreach ($locales as $targetBlogId) {
-                                $submissions = $this->getManager()
-                                                    ->find(
-                                                        [
-                                                            SubmissionEntity::FIELD_SOURCE_ID=> $originalId,
-                                                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
-                                                            SubmissionEntity::FIELD_CONTENT_TYPE => $this->servedContentType,
-                                                            SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogId,
-                                                        ]
-                                                    );
-
-                                if (0 < count($submissions)) {
-                                    $submission = ArrayHelper::first($submissions);
-
-                                    $this->getLogger()
-                                         ->info(
-                                             vsprintf(
-                                                 static::$MSG_DOWNLOAD_ENQUEUE_ENTITY,
-                                                 [
-                                                     $submission->getId(),
-                                                     $submission->getStatus(),
-                                                     $this->servedContentType,
-                                                     $currentBlogId,
-                                                     $originalId,
-                                                     $submission->getTargetBlogId(),
-                                                     $submission->getTargetLocale(),
-                                                 ]
-                                             )
-                                         );
-
-                                    $core->getQueue()
-                                         ->enqueue([$submission->getId()], Queue::QUEUE_NAME_DOWNLOAD_QUEUE);
-                                }
-                            }
-                            $this->getLogger()->debug(vsprintf('Initiating Download Job', []));
-                            do_action(DownloadTranslationJob::JOB_HOOK_NAME);
-                            break;
-                        default:
-                            $this->getLogger()->debug(vsprintf('got Unknown action: \'%s\'', [$_POST['sub']]));
-                    }
-                } else {
-                    $this->getLogger()->debug('No smartling action found.');
-                }
-            } else {
-                $this->getLogger()->debug('Seems that no data to process.');
+            if (($_POST[self::WIDGET_DATA_NAME]['locales'] ?? null) !== null) {
+                $this->getLogger()->warning("Download or upload skipped. Revert code to revision 105ae9db6e11a64bf7620c0f421ee41c57271f83");
             }
             add_action('save_post', [$this, 'save']);
         }

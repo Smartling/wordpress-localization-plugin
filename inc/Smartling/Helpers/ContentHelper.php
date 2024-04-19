@@ -91,6 +91,9 @@ class ContentHelper
         return $return;
     }
 
+    /**
+     * @throws EntityNotFoundException
+     */
     public function readSourceContent(Submission $submission): Entity
     {
         if (false === ($cached = $this->getRuntimeCache()->get($this->getCacheKey($submission), 'sourceContent'))) {

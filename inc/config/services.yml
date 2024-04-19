@@ -40,6 +40,9 @@ services:
         - "@wp.proxy"
         - "@wp.link.helper"
 
+  helper.array:
+    class: Smartling\Helpers\ArrayHelper
+
   helper.customMenu:
     class: Smartling\Helpers\CustomMenuContentTypeHelper
     arguments:
@@ -57,6 +60,7 @@ services:
   helper.post.content:
     class: Smartling\Helpers\PostContentHelper
     arguments:
+      - "@helper.array"
       - "@helper.gutenberg"
 
   helper.user:
@@ -68,7 +72,9 @@ services:
   helper.xml:
     class: Smartling\Helpers\XmlHelper
     arguments:
+      - "@content-serialization.helper"
       - "@serializer.json"
+      - "@manager.settings"
 
   wrapper.sdk.api.smartling:
     class: Smartling\ApiWrapper
@@ -86,8 +92,8 @@ services:
 
   queue.db:
     class: Smartling\Queue\Queue
-    calls:
-      - ["setDbal", ["@site.db"]]
+    arguments:
+      - "@site.db"
 
   content.aioseo:
     class: Smartling\ContentTypes\ExternalContentAioseo
@@ -113,6 +119,7 @@ services:
     class: Smartling\ContentTypes\ExternalContentElementor
     arguments:
       - "@content.type.helper"
+      - "@elementor.factory"
       - "@fields-filter.helper"
       - "@helper.plugins"
       - "@site.helper"
@@ -120,6 +127,9 @@ services:
       - "@helper.user"
       - "@wp.proxy"
       - "@link.processor"
+
+  elementor.factory:
+    class: Smartling\ContentTypes\Elementor\ElementFactory
 
   content.gravity.forms:
     class: Smartling\ContentTypes\ExternalContentGravityForms
@@ -179,6 +189,7 @@ services:
       - "@file.uri.helper"
       - "@helper.gutenberg"
       - "@helper.post.content"
+      - "@manager.upload.queue"
       - "@helper.xml"
       - "@test.run.helper"
       - "@wp.proxy"
@@ -204,6 +215,7 @@ services:
     class: Smartling\ContentTypes\ExternalContentManager
     arguments:
       - "@fields-filter.helper"
+      - "@site.helper"
     calls:
       - ["addHandler", ["@content.aioseo"]]
       - ["addHandler", ["@content.beaver.builder"]]
@@ -232,6 +244,14 @@ services:
     arguments:
       - "@site.db"
 
+  manager.upload.queue:
+    class: Smartling\DbAl\UploadQueueManager
+    arguments:
+      - "@api.wrapper.with.retries"
+      - "@manager.settings"
+      - "@site.db"
+      - "@manager.submission"
+
   content.type.helper:
     class: Smartling\ContentTypes\ContentTypeHelper
     arguments:
@@ -248,10 +268,11 @@ services:
 
   detect-changes.helper:
     class: Smartling\Helpers\DetectChangesHelper
-    calls:
-      - [ "setSettingsManager" , [ "@manager.settings" ] ]
-      - [ "setSubmissionManager" , [ "@manager.submission" ] ]
-      - [ "setContentSerializationHelper" , [ "@content-serialization.helper" ] ]
+    arguments:
+      - "@content-serialization.helper"
+      - "@manager.upload.queue"
+      - "@manager.settings"
+      - "@manager.submission"
 
   site.db:
     class: Smartling\DbAl\DB
@@ -323,8 +344,8 @@ services:
       - "@site.helper"
       - "@manager.submission"
       - "@site.cache"
-    calls:
-      - [ "setQueue", [ "@queue.db" ]]
+      - "@queue.db"
+      - "@manager.upload.queue"
 
   wp.settings.edit:
     class: Smartling\WP\Controller\ConfigurationProfileFormController
@@ -392,28 +413,37 @@ services:
   wp.bulkSubmit:
     class: Smartling\WP\Controller\BulkSubmitController
     arguments:
+      - "@api.wrapper.with.retries"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@manager.settings"
       - "@site.helper"
+      - "@entrypoint"
       - "@manager.submission"
+      - "@manager.upload.queue"
       - "@site.cache"
 
   helper.gutenberg:
     class: Smartling\Helpers\GutenbergBlockHelper
     arguments:
       - "@acf.dynamic.support"
+      - "@content-serialization.helper"
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
       - "@serializer.json"
+      - "@manager.settings"
       - "@wp.proxy"
     calls:
       - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
 
   helper.shortcode:
     class: Smartling\Helpers\ShortcodeHelper
-    calls:
-      - [ "setFieldsFilter", [ "@fields-filter.helper" ]]
+    arguments:
+      - "@content-serialization.helper"
+      - "@fields-filter.helper"
+      - "@helper.placeholders"
+      - "@manager.settings"
+      - "@wp.proxy"
 
   default.meta-field-processor:
     class: Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor
@@ -480,13 +510,16 @@ services:
   fields-filter.helper:
     class: Smartling\Helpers\FieldsFilterHelper
     arguments:
-      - "@manager.settings"
       - "@acf.dynamic.support"
+      - "@content-serialization.helper"
+      - "@manager.settings"
+      - "@wp.proxy"
 
   content-serialization.helper:
     class: Smartling\Helpers\ContentSerializationHelper
     arguments:
     - "@content.helper"
+    - "@manager.settings"
 
   acf.dynamic.support:
     class: Smartling\Extensions\Acf\AcfDynamicSupport
@@ -528,6 +561,7 @@ services:
       - "@fields-filter.helper"
       - "@file.uri.helper"
       - "@meta-field.processor.manager"
+      - "@manager.upload.queue"
       - "@multilang.proxy"
       - "@smartling.helper.absolute-image-path-support"
       - "@helper.shortcode"

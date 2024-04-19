@@ -5,15 +5,19 @@ namespace Smartling\Tests\Smartling\Base;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapper;
 use Smartling\ContentTypes\ExternalContentManager;
+use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\PostContentHelper;
 use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
@@ -51,17 +55,29 @@ class SmartlingCoreTest extends TestCase
         $wpProxy = new WordpressFunctionProxyHelper();
         $gutenbergBlockHelper = new GutenbergBlockHelper(
             $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(ContentSerializationHelper::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
             new SerializerJsonWithFallback(),
+            $this->createMock(SettingsManager::class),
             $wpProxy,
         );
+
+
         $this->core = new SmartlingCore(
-            new ExternalContentManager(new FieldsFilterHelper($this->createMock(SettingsManager::class), $this->createMock(AcfDynamicSupport::class))),
+            new ExternalContentManager(new FieldsFilterHelper(
+                $this->createMock(AcfDynamicSupport::class),
+                $this->createMock(ContentSerializationHelper::class),
+                $this->createMock(SettingsManager::class),
+                $wpProxy,
+            ),
+                $this->createMock(SiteHelper::class),
+            ),
             $this->createMock(FileUriHelper::class),
             $gutenbergBlockHelper,
-            new PostContentHelper($gutenbergBlockHelper),
-            new XmlHelper(new SerializerJsonWithFallback()),
+            new PostContentHelper(new ArrayHelper(), $gutenbergBlockHelper),
+            $this->createMock(UploadQueueManager::class),
+            new XmlHelper($this->createMock(ContentSerializationHelper::class), new SerializerJsonWithFallback(), $this->createMock(SettingsManager::class)),
             $this->createMock(TestRunHelper::class),
             $wpProxy,
         );
@@ -334,136 +350,6 @@ class SmartlingCoreTest extends TestCase
                 ],
             ],
         ];
-    }
-
-    public function testFixSubmissionBatchUid()
-    {
-        $this->expectException(SmartlingDbException::class);
-        $obj = $this->core;
-        $submission = new SubmissionEntity();
-        $submission
-            ->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW)
-            ->setContentType('post')
-            ->setSourceBlogId(1)
-            ->setSourceId(1)
-            ->setTargetBlogId(1);
-
-
-        $settingsManager = $this->getSettingsManagerMock();
-
-        $submissionManager = $this->mockSubmissionManager(
-            $this->mockDbAl()
-        );
-
-        $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturn($submission);
-
-        $obj->setSubmissionManager($submissionManager);
-
-        $settingsManager
-            ->method('findEntityByMainLocale')
-            ->with($submission->getSourceBlogId())
-            ->willReturn([]);
-
-        $settingsManager
-            ->method('getSingleSettingsProfile')
-            ->with($submission->getSourceBlogId())
-            ->willThrowException(new SmartlingDbException(''));
-
-        $obj->setSettingsManager($settingsManager);
-        $this->invokeMethod($obj, 'fixSubmissionBatchUid', [$submission]);
-    }
-
-    public function testFixSubmissionBatchUidWithApiWrapper()
-    {
-        $this->expectException(SmartlingApiException::class);
-        $obj = $this->core;
-        $submission = new SubmissionEntity();
-        $submission
-            ->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW)
-            ->setContentType('post')
-            ->setSourceBlogId(1)
-            ->setSourceId(1)
-            ->setTargetBlogId(1);
-
-
-        $profile = $this->createMock(ConfigurationProfileEntity::class);
-
-        $settingsManager = $this->getSettingsManagerMock();
-
-        $submissionManager = $this->mockSubmissionManager(
-            $this->mockDbAl()
-        );
-
-        $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturn($submission);
-
-        $obj->setSubmissionManager($submissionManager);
-
-        $settingsManager
-            ->method('findEntityByMainLocale')
-            ->with($submission->getSourceBlogId())
-            ->willReturn([$profile]);
-
-        $settingsManager
-            ->method('getSingleSettingsProfile')
-            ->with($submission->getSourceBlogId())
-            ->willReturn($profile);
-
-        $obj->setSettingsManager($settingsManager);
-
-        $apiWrapper = new ApiWrapper($settingsManager,'a','b');
-        $obj->setApiWrapper($apiWrapper);
-
-        $this->invokeMethod($obj, 'fixSubmissionBatchUid', [$submission]);
-    }
-
-    public function testFixSubmissionBatchUidWithApiWrapperAndBatchUid()
-    {
-        $batchUid = 'testtest';
-        $obj = $this->core;
-        $submission = new SubmissionEntity();
-        $submission
-            ->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW)
-            ->setContentType('post')
-            ->setSourceBlogId(1)
-            ->setSourceId(1)
-            ->setTargetBlogId(1);
-
-        $profile = $this->createMock(ConfigurationProfileEntity::class);
-
-        $settingsManager = $this->getSettingsManagerMock();
-
-        $submissionManager = $this->mockSubmissionManager(
-            $this->mockDbAl()
-        );
-
-        $submissionManager->expects(self::once())->method('storeEntity')->with($submission)->willReturn($submission);
-
-        $obj->setSubmissionManager($submissionManager);
-
-        $settingsManager
-            ->method('findEntityByMainLocale')
-            ->with($submission->getSourceBlogId())
-            ->willReturn([$profile]);
-
-        $settingsManager
-            ->method('getSingleSettingsProfile')
-            ->with($submission->getSourceBlogId())
-            ->willReturn($profile);
-
-        $obj->setSettingsManager($settingsManager);
-
-        $apiWrapperMock = $this->createPartialMock(ApiWrapper::class, ['retrieveJobInfoForDailyBucketJob']);
-        $apiWrapperMock
-            ->expects(self::once())
-            ->method('retrieveJobInfoForDailyBucketJob')
-            ->with($profile, false)
-            ->willReturn(new JobEntityWithBatchUid($batchUid,'jobName', '', ''));
-
-        $obj->setApiWrapper($apiWrapperMock);
-
-        $result = $this->invokeMethod($obj, 'fixSubmissionBatchUid', [$submission]);
-
-        self::assertEquals($batchUid, $result->getBatchUid());
     }
 
     public function testExceptionOnTargetPlaceholderCreationFail()

@@ -4,41 +4,28 @@ namespace Smartling\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\DB;
-use Smartling\Tests\Traits\InvokeMethodTrait;
 
 class DbAlTest extends TestCase
 {
-    use InvokeMethodTrait;
-
-    private $dbal;
-
-    protected function setUp(): void
-    {
-        $this->dbal = $this->createPartialMock( DB::class, ['getWpdb']);
-    }
-
     /**
      * @dataProvider getCharsetCollateDataProvider
-     *
-     * @param string $charset
-     * @param string $collate
-     * @param string $expectedResult
      */
     public function testGetCharsetCollate(string $charset, string $collate, string $expectedResult)
     {
-        $this->dbal
-            ->method('getWpdb')
-            ->willReturn(
-                (object)
-                [
-                    'charset' => $charset,
-                    'collate' => $collate,
-                ]
-            );
+        $wpdb = new class($charset, $collate) {
+            public string $base_prefix = '';
+            public function __construct(public string $charset, public string $collate)
+            {
+            }
+        };
 
-        $result = $this->invokeMethod($this->dbal, 'getCharsetCollate', []);
+        $result = (new DB($wpdb))->prepareSql([
+            'columns' => [],
+            'indexes' => [],
+            'name' => '',
+        ]);
 
-        self::assertEquals($expectedResult, $result);
+        $this->assertStringContainsString($expectedResult, $result);
     }
 
     public function getCharsetCollateDataProvider(): array

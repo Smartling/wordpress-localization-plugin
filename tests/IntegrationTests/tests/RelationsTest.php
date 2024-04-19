@@ -163,7 +163,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         $this->getSiteHelper()->withBlog($cloneBlogId, $this->assertResult($expectedImagesCloned, $originalContent, $expectedPostsCloned, $submission));
         #endregion
         #region translation
-        $submission = $this->uploadDownload($this->createSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $posts[0][0])); // TODO rename into $submission
+        $submission = $this->uploadDownload($this->createSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $posts[0][0]));
         ++$expectedPostsTranslated;
         $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
         $this->getSiteHelper()->withBlog($translationBlogId, $this->assertResult(

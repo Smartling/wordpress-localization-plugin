@@ -2,13 +2,32 @@
 
 namespace Smartling\Jobs;
 
+use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
-use Smartling\Submissions\SubmissionEntity;
-use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
+use Smartling\DbAl\UploadQueueManager;
+use Smartling\Exception\SmartlingDbException;
+use Smartling\Helpers\Cache;
+use Smartling\Helpers\FileUriHelper;
+use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionManager;
 
 class UploadJob extends JobAbstract
 {
     public const JOB_HOOK_NAME = 'smartling-upload-task';
+
+    public function __construct(
+        ApiWrapperInterface $api,
+        Cache $cache,
+        private FileUriHelper $fileUriHelper,
+        SettingsManager $settingsManager,
+        SubmissionManager $submissionManager,
+        private UploadQueueManager $uploadQueueManager,
+        int $throttleIntervalSeconds,
+        string $jobRunInterval,
+        int $workerTTL,
+    ) {
+        parent::__construct($api, $cache, $settingsManager, $submissionManager, $throttleIntervalSeconds, $jobRunInterval, $workerTTL);
+    }
 
     public function getJobHookName(): string
     {
@@ -23,35 +42,50 @@ class UploadJob extends JobAbstract
 
         $this->processCloning();
 
-        $this->processDailyBucketJob();
-
         $this->getLogger()->debug('Finished UploadJob.');
     }
 
     private function processUploadQueue(): void
     {
-        while (($entity = $this->submissionManager->findSubmissionForUploadJob()) !== null) {
-            $this->getLogger()->info(
-                vsprintf(
-                    'Cron Job triggers content upload for submission id="%s" with status="%s" for entity="%s", blog="%s", id="%s", targetBlog="%s", locale="%s", batchUid="%s".',
-                    [
-                        $entity->getId(),
-                        $entity->getStatus(),
-                        $entity->getContentType(),
-                        $entity->getSourceBlogId(),
-                        $entity->getSourceId(),
-                        $entity->getTargetBlogId(),
-                        $entity->getTargetLocale(),
-                        $entity->getBatchUid(),
-                    ]
-                )
-            );
+        $profiles = [];
+        while (($item = $this->uploadQueueManager->dequeue()) !== null) {
+            $submission = $item->getSubmissions()[0];
+            if ($submission->getFileUri() === '') {
+                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
+                $this->submissionManager->storeEntity($submission);
+            }
+            if (!array_key_exists($submission->getSourceBlogId(), $profiles)) {
+                try {
+                    $profiles[$submission->getSourceBlogId()] = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+                } catch (SmartlingDbException) {
+                    $this->getLogger()->notice("Skipping upload of submissionId={$submission->getId()}: no active profile found for blogId={$submission->getSourceBlogId()}");
+                    continue;
+                }
+            }
+            $profile = $profiles[$submission->getSourceBlogId()];
+            if ($item->getBatchUid() === '') {
+                $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());
+            }
+
+            $this->getLogger()->info(sprintf(
+                'Cron Job upload for submissionId="%s" with status="%s" contentType="%s", sourceBlogId="%s", contentId="%s", targetBlogId="%s", targetLocale="%s", batchUid="%s"',
+                $submission->getId(),
+                $submission->getStatus(),
+                $submission->getContentType(),
+                $submission->getSourceBlogId(),
+                $submission->getSourceId(),
+                $submission->getTargetBlogId(),
+                $submission->getTargetLocale(),
+                $item->getBatchUid(),
+            ));
 
             try {
-                do_action(ExportedAPI::ACTION_SMARTLING_SEND_FILE_FOR_TRANSLATION, $entity);
+                do_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, $item);
             } catch (\Exception $e) {
-                $this->getLogger()->notice(sprintf('Failing submissionId=%s: %s', $entity->getId(), $e->getMessage()));
-                $this->submissionManager->setErrorMessage($entity, $e->getMessage());
+                foreach ($item->getSubmissions() as $submission) {
+                    $this->getLogger()->notice(sprintf('Failing submissionId=%s: %s', $submission->getId(), $e->getMessage()));
+                    $this->submissionManager->setErrorMessage($submission, $e->getMessage());
+                }
             }
             $this->placeLockFlag(true);
         }
@@ -61,86 +95,6 @@ class UploadJob extends JobAbstract
     {
         while (($submission = $this->submissionManager->findSubmissionForCloning()) !== null) {
             do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
-        }
-    }
-
-    private function processDailyBucketJob(): void
-    {
-        foreach ($this->settingsManager->getActiveProfiles() as $activeProfile) {
-            if ($activeProfile->getUploadOnUpdate() === 0) {
-                $this->getLogger()->debug(sprintf(
-                    "Skipping profile projectId: %s for daily bucket job processing",
-                    $activeProfile->getProjectId()
-                ));
-                continue;
-            }
-            $originalBlogId = $activeProfile->getOriginalBlogId()->getBlogId();
-            $entities = $this->submissionManager->find(
-                [
-                    SubmissionEntity::FIELD_STATUS => [SubmissionEntity::SUBMISSION_STATUS_NEW],
-                    SubmissionEntity::FIELD_IS_LOCKED => 0,
-                    SubmissionEntity::FIELD_IS_CLONED => 0,
-                    SubmissionEntity::FIELD_BATCH_UID => '',
-                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $originalBlogId,
-                ]
-            );
-
-            if (!empty($entities)) {
-                $this->getLogger()->info('Started dealing with daily bucket job.');
-
-                try {
-                    $jobInfo = $this->api->retrieveJobInfoForDailyBucketJob($activeProfile, $activeProfile->getAutoAuthorize());
-
-                    foreach ($entities as $entity) {
-                        if ($jobInfo->getBatchUid() === '') {
-                            $this->getLogger()->warning(
-                                vsprintf(
-                                    'Cron Job failed to mark content for upload into daily bucket job for submission id="%s" with status="%s" for entity="%s", blog="%s", id="%s", targetBlog="%s", locale="%s", batchUid="%s".',
-                                    [
-                                        $entity->getId(),
-                                        $entity->getStatus(),
-                                        $entity->getContentType(),
-                                        $entity->getSourceBlogId(),
-                                        $entity->getSourceId(),
-                                        $entity->getTargetBlogId(),
-                                        $entity->getTargetLocale(),
-                                        $entity->getBatchUid(),
-                                    ]
-                                )
-                            );
-
-                            continue;
-                        }
-
-                        $entity->setBatchUid($jobInfo->getBatchUid());
-                        $entity->setJobInfo($jobInfo->getJobInformationEntity());
-
-                        $this->getLogger()->info(
-                            vsprintf(
-                                'Cron Job marks content for upload into daily bucket job for submission id="%s" with status="%s" for entity="%s", blog="%s", id="%s", targetBlog="%s", locale="%s", batchUid="%s".',
-                                [
-                                    $entity->getId(),
-                                    $entity->getStatus(),
-                                    $entity->getContentType(),
-                                    $entity->getSourceBlogId(),
-                                    $entity->getSourceId(),
-                                    $entity->getTargetBlogId(),
-                                    $entity->getTargetLocale(),
-                                    $entity->getBatchUid(),
-                                ]
-                            )
-                        );
-                    }
-
-                    $this->submissionManager->storeSubmissions($entities);
-                } catch (SmartlingApiException $e) {
-                    $this->getLogger()->error($e->formatErrors());
-                } catch (\Exception $e) {
-                    $this->getLogger()->error($e->getMessage());
-                }
-
-                $this->getLogger()->info('Finished dealing with daily bucket job.');
-            }
         }
     }
 }

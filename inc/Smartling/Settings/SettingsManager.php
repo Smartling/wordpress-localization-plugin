@@ -67,6 +67,10 @@ class SettingsManager extends EntityManagerAbstract
         throw new EntityNotFoundException("Unable to find active profile for sourceBlogId=$mainBlogId, targetSmartlingLocale=$smartlingLocale, activeProfileCount=" . count($profiles));
     }
 
+    /**
+     * @throws SmartlingConfigException
+     * @throws SmartlingDbException
+     */
     public function getSmartlingLocaleBySubmission(SubmissionEntity $submission): string
     {
         $profile = $this->getSingleSettingsProfile($submission->getSourceBlogId());
