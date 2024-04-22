@@ -2,70 +2,143 @@
 
 namespace Smartling;
 
-use Smartling\DbAl\WordpressContentEntities\EntityWithMetadata;
-use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
-use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Models\Content;
 use Smartling\Processors\ContentEntitiesIOFactory;
 
-class RestApi
-{
+class RestApi {
     use DITrait;
+
+    private const ASSET_UID_REGEX = '(?P<id>[a-z-_]+-\d+)';
+    private const NAMESPACE = 'smartling-connector/v2';
 
     private ContentEntitiesIOFactory $contentEntitiesIOFactory;
     private ContentHelper $contentHelper;
+    private FileUriHelper $fileUriHelper;
     private WordpressFunctionProxyHelper $wordpressProxy;
 
     public function __construct()
     {
         $this->contentEntitiesIOFactory = $this->fromContainer('factory.contentIO');
         $this->contentHelper = $this->fromContainer('content.helper');
+        $this->fileUriHelper = $this->fromContainer('file.uri.helper');
         $this->wordpressProxy = $this->fromContainer('wp.proxy');
     }
 
     public function initApi(): void
     {
         add_action('rest_api_init', function () {
-            register_rest_route('smartling-connector/v2', 'assets/(?P<id>[a-z-_]+-\d+)/raw', [
+            register_rest_route(self::NAMESPACE, 'assets/' . self::ASSET_UID_REGEX . '/raw', [
+                'methods' => 'GET',
                 'callback' => function (\WP_REST_Request $request) {
-                    $this->registerHandlers();
-                    $parts = explode("-", $request->get_param('id'));
-                    $id = array_pop($parts);
+                    $request = $this->setPrettyPrint($request);
+                    $assetUid = $this->getAssetUid($request->get_param('id'));
+                    if ($assetUid instanceof \WP_REST_Response) {
+                        return $assetUid;
+                    }
+
                     try {
-                        $entity = $this->contentHelper->getWrapper(implode("-", $parts))->get($id);
+                        return ($this->getProvider())->getRawContent($assetUid);
                     } catch (EntityNotFoundException|SmartlingInvalidFactoryArgumentException $e) {
                         return new \WP_REST_Response($e->getMessage(), 404);
                     }
-                    $result = [
-                        'entity' => $entity->toArray(),
-                    ];
-                    if ($entity instanceof EntityWithMetadata) {
-                        $result['meta'] = $entity->getMetadata();
-                    }
-                    return $result;
                 },
+                'permission_callback' => [$this, 'permissionCallbackRead'],
+            ]);
+            register_rest_route(self::NAMESPACE, 'assets', [
                 'methods' => 'GET',
-                'permission_callback' => [$this, 'permissionCallback'],
+                'callback' => function (\WP_REST_Request $request) {
+                    $request = $this->setPrettyPrint($request);
+                    return [
+                        'items' => $this->getProvider()->getAssets(
+                            $request->get_param('assetType'),
+                            $request->get_param('searchTerm'),
+                            $request->get_param('limit'),
+                            $request->get_param('sortBy'),
+                            $request->get_param('orderBy'),
+                        ),
+                        'nextPageToken' => '', // TODO discuss
+                    ];
+                },
+                'permission_callback' => [$this, 'permissionCallbackRead'],
+            ]);
+            register_rest_route(self::NAMESPACE, 'assets/' . self::ASSET_UID_REGEX . '/details', [
+                'methods' => 'GET',
+                'callback' => function (\WP_REST_Request $request) {
+                    $request = $this->setPrettyPrint($request);
+                    $assetUid = $this->getAssetUid($request->get_param('id'));
+                    if ($assetUid instanceof \WP_REST_Response) {
+                        return $assetUid;
+                    }
+                    return $this->getProvider()->getAsset($assetUid);
+                },
+                'permission_callback' => [$this, 'permissionCallbackRead'],
+            ]);
+            register_rest_route(self::NAMESPACE, 'assets/' . self::ASSET_UID_REGEX . '/related', [
+                'methods' => 'POST',
+                'callback' => function (\WP_REST_Request $request) {
+                    $request = $this->setPrettyPrint($request);
+                    $assetUid = $this->getAssetUid($request->get_param('id'));
+                    if ($assetUid instanceof \WP_REST_Response) {
+                        return $assetUid;
+                    }
+                    try {
+                        $parsed = json_decode($request->get_body(), true, 3, JSON_THROW_ON_ERROR);
+                    } catch (\JsonException $e) {
+                        return new \WP_REST_Response($e->getMessage(), 400);
+                    }
+
+                    return $this->getProvider()->getRelatedAssets(
+                        $assetUid,
+                        $parsed['limit'],
+                        $parsed['essential']['include'],
+                        ($parsed['child']['include'] ?? false) ? $parsed['child']['depth'] ?? 0 : 0,
+                        ($parsed['related']['include'] ?? false) ? $parsed['related']['depth'] ?? 0 : 0,
+                    );
+                },
+                'permission_callback' => [$this, 'permissionCallbackRead'],
             ]);
         });
     }
 
-    public static function permissionCallback(): bool
+    public static function permissionCallbackRead(): bool
     {
         return current_user_can('read');
     }
 
-    private function registerHandlers(): void
+    private function getAssetUid(string $string): Content|\WP_REST_Response
     {
-        foreach ($this->wordpressProxy->get_taxonomies() as $taxonomy) {
-            $this->contentEntitiesIOFactory->registerHandler($taxonomy, new TaxonomyEntityStd($taxonomy));
+        try {
+            $parts = explode('-', $string);
+            if (count($parts) < 2) {
+                throw new \InvalidArgumentException('AssetUid string expected to be contentType-id');
+            }
+            $id = array_pop($parts);
+
+            return new Content($id, implode('-', $parts));
+        } catch (\InvalidArgumentException $e) {
+            return new \WP_REST_Response($e->getMessage(), 400);
         }
-        foreach ($this->wordpressProxy->get_post_types() as $postType) {
-            $this->contentEntitiesIOFactory->registerHandler($postType, new PostEntityStd($postType));
-        }
-        $this->fromContainer('manager.content.external'); // Has side effect of registering external content handlers
+    }
+
+    private function setPrettyPrint(\WP_REST_Request $request): \WP_REST_Request
+    {
+        $request->set_param('_pretty', true);
+
+        return $request;
+    }
+
+    private function getProvider(): ContentProvider
+    {
+        return new ContentProvider(
+            $this->contentHelper,
+            $this->contentEntitiesIOFactory,
+            $this->fileUriHelper,
+            $this->wordpressProxy,
+        );
     }
 }
