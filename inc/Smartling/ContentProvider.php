@@ -2,6 +2,7 @@
 
 namespace Smartling;
 
+use Smartling\Base\SmartlingCore;
 use Smartling\DbAl\WordpressContentEntities\EntityWithMetadata;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
@@ -10,13 +11,18 @@ use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\Content;
 use Smartling\Processors\ContentEntitiesIOFactory;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\Submissions\SubmissionSimple;
 
 class ContentProvider {
+    private bool $knownTypesAdded = false;
     public function __construct(
         private ContentHelper $contentHelper,
         private ContentEntitiesIOFactory $contentEntitiesIOFactory,
         private FileUriHelper $fileUriHelper,
+        private SmartlingCore $core,
+        private SubmissionManager $submissionManager,
         private WordpressFunctionProxyHelper $wordpressProxy,
     ) {
     }
@@ -52,6 +58,16 @@ class ContentProvider {
         return array_map(function (\WP_Post $post) {
             return $this->mapAssetDetails($post);
         }, $posts);
+    }
+
+    public function getContent(Content $assetUid): string
+    {
+        $this->addHandlersForRegisteredTypes();
+        return $this->core->getXMLFiltered($this->submissionManager->findOne([
+            SubmissionEntity::FIELD_CONTENT_TYPE => $assetUid->getType(),
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->wordpressProxy->get_current_blog_id(),
+            SubmissionEntity::FIELD_SOURCE_ID => $assetUid->getId(),
+        ]));
     }
 
     public function getRawContent(Content $assetUid): array
@@ -128,11 +144,15 @@ class ContentProvider {
 
     private function addHandlersForRegisteredTypes(): void
     {
+        if ($this->knownTypesAdded) {
+            return;
+        }
         foreach ($this->wordpressProxy->get_taxonomies() as $taxonomy) {
             $this->contentEntitiesIOFactory->registerHandler($taxonomy, new TaxonomyEntityStd($taxonomy));
         }
         foreach ($this->wordpressProxy->get_post_types() as $postType) {
             $this->contentEntitiesIOFactory->registerHandler($postType, new PostEntityStd($postType));
         }
+        $this->knownTypesAdded = true;
     }
 }

@@ -21,12 +21,10 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\EventParameters\BeforeSerializeContentEventParameters;
 use Smartling\Helpers\PostContentHelper;
-use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
-use Smartling\Models\UploadQueueEntity;
 use Smartling\Models\UploadQueueItem;
 use Smartling\Replacers\ContentIdReplacer;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -106,8 +104,6 @@ trait SmartlingCoreUploadTrait
     }
 
     /**
-     * Prepare submission for upload and return XML string for translation
-     * @see prepareUpload
      * @throws EntityNotFoundException
      */
     public function getXMLFiltered(SubmissionEntity $submission): string
@@ -125,8 +121,6 @@ trait SmartlingCoreUploadTrait
         );
 
         try {
-            $submission = $this->prepareUpload($submission);
-
             $originalContent = $this->readSourceContentWithMetadataAsArray($submission);
             $source = $this->externalContentManager->getExternalContent($originalContent, $submission, false);
 
@@ -421,10 +415,12 @@ trait SmartlingCoreUploadTrait
     public function bulkSubmit(UploadQueueItem $item): void
     {
         $locales = $item->getSmartlingLocales()->getList();
-        $profile = $this->getSettingsManager()->getSingleSettingsProfile($item->getSubmissions()[0]->getSourceBlogId());
+        $entity = $item->getSubmissions()[0];
+        $profile = $this->getSettingsManager()->getSingleSettingsProfile($entity->getSourceBlogId());
 
         try {
-            $xml = $this->getXMLFiltered($item->getSubmissions()[0]);
+            $this->prepareUpload($entity);
+            $xml = $this->getXMLFiltered($entity);
             if ($xml === '') {
                 $this->getLogger()->debug('Skip upload of empty xml');
                 return;

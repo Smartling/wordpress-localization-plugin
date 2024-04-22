@@ -2,6 +2,7 @@
 
 namespace Smartling;
 
+use Smartling\Base\SmartlingCore;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Helpers\ContentHelper;
@@ -9,6 +10,7 @@ use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\Content;
 use Smartling\Processors\ContentEntitiesIOFactory;
+use Smartling\Submissions\SubmissionManager;
 
 class RestApi {
     use DITrait;
@@ -19,13 +21,17 @@ class RestApi {
     private ContentEntitiesIOFactory $contentEntitiesIOFactory;
     private ContentHelper $contentHelper;
     private FileUriHelper $fileUriHelper;
+    private SmartlingCore $core;
+    private SubmissionManager $submissionManager;
     private WordpressFunctionProxyHelper $wordpressProxy;
 
     public function __construct()
     {
         $this->contentEntitiesIOFactory = $this->fromContainer('factory.contentIO');
         $this->contentHelper = $this->fromContainer('content.helper');
+        $this->core = $this->fromContainer('core');
         $this->fileUriHelper = $this->fromContainer('file.uri.helper');
+        $this->submissionManager = $this->fromContainer('manager.submission');
         $this->wordpressProxy = $this->fromContainer('wp.proxy');
     }
 
@@ -102,6 +108,32 @@ class RestApi {
                 },
                 'permission_callback' => [$this, 'permissionCallbackRead'],
             ]);
+            register_rest_route(self::NAMESPACE, 'assets/' . self::ASSET_UID_REGEX . '/content/metadata', [
+                'methods' => 'POST', // TODO discuss
+                'callback' => function (\WP_REST_Request $request) {
+                    $request = $this->setPrettyPrint($request);
+                    $assetUid = $this->getAssetUid($request->get_param('id'));
+                    if ($assetUid instanceof \WP_REST_Response) {
+                        return $assetUid;
+                    }
+
+                    return [];
+                },
+                'permission_callback' => [$this, 'permissionCallbackRead'],
+            ]);
+            register_rest_route(self::NAMESPACE, 'assets/' . self::ASSET_UID_REGEX . '/content/body', [
+                'methods' => 'POST', // TODO discuss
+                'callback' => function (\WP_REST_Request $request) {
+                    $request = $this->setPrettyPrint($request);
+                    $assetUid = $this->getAssetUid($request->get_param('id'));
+                    if ($assetUid instanceof \WP_REST_Response) {
+                        return $assetUid;
+                    }
+
+                    return $this->getProvider()->getRawContent($assetUid);
+                },
+                'permission_callback' => [$this, 'permissionCallbackRead'],
+            ]);
         });
     }
 
@@ -138,6 +170,8 @@ class RestApi {
             $this->contentHelper,
             $this->contentEntitiesIOFactory,
             $this->fileUriHelper,
+            $this->core,
+            $this->submissionManager,
             $this->wordpressProxy,
         );
     }
