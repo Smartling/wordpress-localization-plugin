@@ -14,7 +14,6 @@ use Smartling\Helpers\QueryBuilder\QueryBuilder;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\Submission;
 use Smartling\Submissions\SubmissionManager;
 
 class ExternalContentAioseo extends ExternalContentAbstract
@@ -131,7 +130,7 @@ class ExternalContentAioseo extends ExternalContentAbstract
         return ['all-in-one-seo-pack/all_in_one_seo_pack.php'];
     }
 
-    public function setContentFields(array $original, array $translation, Submission $submission): ?array
+    public function setContentFields(array $original, array $translation, SubmissionEntity $submission): ?array
     {
         $translation = $translation[$this->getPluginId()] ?? [];
         foreach ($this->jsonFields as $field) {

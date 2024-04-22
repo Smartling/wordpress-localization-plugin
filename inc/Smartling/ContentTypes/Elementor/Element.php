@@ -5,7 +5,7 @@ namespace Smartling\ContentTypes\Elementor;
 use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
-use Smartling\Submissions\Submission;
+use Smartling\Submissions\SubmissionEntity;
 
 interface Element {
     public function fromArray(array $array): self;
@@ -17,13 +17,13 @@ interface Element {
         Content $content,
         ExternalContentElementor $externalContentElementor,
         string $path,
-        Submission $submission,
+        SubmissionEntity $submission,
     ): self;
     public function setTargetContent(
         ExternalContentElementor $externalContentElementor,
         RelatedContentInfo $info,
         array $strings,
-        Submission $submission,
+        SubmissionEntity $submission,
     ): self;
     public function toArray(): array;
 }

@@ -13,7 +13,6 @@ use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Models\AssetUid;
 use Smartling\Processors\ContentEntitiesIOFactory;
-use Smartling\Submissions\Submission;
 use Smartling\Submissions\SubmissionEntity;
 
 /**
@@ -63,12 +62,12 @@ class ContentHelper
         }
     }
 
-    public function ensureSourceBlogId(Submission $submission): void
+    public function ensureSourceBlogId(SubmissionEntity $submission): void
     {
         $this->ensureBlog($submission->getSourceBlogId());
     }
 
-    public function ensureTargetBlogId(Submission $submission): void
+    public function ensureTargetBlogId(SubmissionEntity $submission): void
     {
         $this->ensureBlog($submission->getTargetBlogId());
     }
@@ -94,7 +93,7 @@ class ContentHelper
     /**
      * @throws EntityNotFoundException
      */
-    public function readSourceContent(Submission $submission): Entity
+    public function readSourceContent(SubmissionEntity $submission): Entity
     {
         if (false === ($cached = $this->getRuntimeCache()->get($this->getCacheKey($submission), 'sourceContent'))) {
             $wrapper = $this->getWrapper($submission->getContentType());
@@ -172,7 +171,7 @@ class ContentHelper
         return $metadata;
     }
 
-    public function writeTargetContent(Submission $submission, Entity $entity): Entity
+    public function writeTargetContent(SubmissionEntity $submission, Entity $entity): Entity
     {
         $this->getLogger()->info(sprintf('Writing target content for submissionId=%d, contentType=%s, sourceBlogId=%d, sourceId=%d, targetBlogId=%d, targetId=%d', $submission->getId(), $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getTargetBlogId(), $submission->getTargetId()));
         $wrapper = $this->getWrapper($submission->getContentType());
@@ -201,7 +200,7 @@ class ContentHelper
         return $result;
     }
 
-    public function writeTargetMetadata(Submission $submission, array $metadata): void
+    public function writeTargetMetadata(SubmissionEntity $submission, array $metadata): void
     {
         $wrapper = $this->getWrapper($submission->getContentType());
         $this->ensureTargetBlogId($submission);
@@ -289,7 +288,7 @@ class ContentHelper
         return $result;
     }
 
-    private function getCacheKey(Submission $entity): string
+    private function getCacheKey(SubmissionEntity $entity): string
     {
         return implode('-', [$entity->getContentType(), $entity->getSourceBlogId(), $entity->getSourceId()]);
     }

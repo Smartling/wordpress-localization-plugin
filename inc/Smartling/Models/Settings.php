@@ -5,8 +5,6 @@ namespace Smartling\Models;
 class Settings {
 
     public function __construct(
-        private string $userIdentifier,
-        private string $secretKey,
         private string $retrievalType,
         private string $sourceLocale,
         private int $sourceBlogId,
@@ -24,16 +22,6 @@ class Settings {
             $array['sourceBlogId'],
             $array['targetLocales'],
         );
-    }
-
-    public function getUserIdentifier(): string
-    {
-        return $this->userIdentifier;
-    }
-
-    public function getSecretKey(): string
-    {
-        return $this->secretKey;
     }
 
     public function getRetrievalType(): string

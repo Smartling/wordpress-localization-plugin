@@ -7,7 +7,6 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Submissions\Submission;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -97,7 +96,7 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
         return $source;
     }
 
-    public function setContentFields(array $original, array $translation, Submission $submission): ?array
+    public function setContentFields(array $original, array $translation, SubmissionEntity $submission): ?array
     {
         if (!array_key_exists('meta', $original)
             || !array_key_exists($this->getPluginId(), $original)

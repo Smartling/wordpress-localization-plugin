@@ -8,7 +8,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
-use Smartling\Submissions\Submission;
+use Smartling\Submissions\SubmissionEntity;
 
 abstract class ElementAbstract implements Element {
     use LoggerSafeTrait;
@@ -88,7 +88,7 @@ abstract class ElementAbstract implements Element {
         Content $content,
         ExternalContentElementor $externalContentElementor,
         string $path,
-        Submission $submission,
+        SubmissionEntity $submission,
     ): static {
         $arrayHelper = new ArrayHelper();
         $result = clone $this;
@@ -115,7 +115,7 @@ abstract class ElementAbstract implements Element {
         ExternalContentElementor $externalContentElementor,
         RelatedContentInfo $info,
         array $strings,
-        Submission $submission,
+        SubmissionEntity $submission,
     ): static {
         foreach ($this->elements as $key => $element) {
             if ($element instanceof Element) {

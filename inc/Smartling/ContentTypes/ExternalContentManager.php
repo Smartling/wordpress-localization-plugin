@@ -7,7 +7,6 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\Submission;
 
 class ExternalContentManager
 {
@@ -97,7 +96,7 @@ class ExternalContentManager
         return $this->handlers;
     }
 
-    public function setExternalContent(array $original, array $translation, Submission $submission): array
+    public function setExternalContent(array $original, array $translation, SubmissionEntity $submission): array
     {
         foreach ($this->handlers as $handler) {
             if ($handler->getSupportLevel($submission->getContentType(), $submission->getSourceId()) === Pluggable::SUPPORTED) {

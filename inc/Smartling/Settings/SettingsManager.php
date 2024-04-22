@@ -4,7 +4,6 @@ namespace Smartling\Settings;
 
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\Exception\BlogNotFoundException;
-use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
@@ -46,25 +45,6 @@ class SettingsManager extends EntityManagerAbstract
         $cnt = 0;
 
         return $this->getEntities($cnt, true);
-    }
-
-    /**
-     * @throws EntityNotFoundException
-     */
-    public function getActiveProfile(int $mainBlogId, string $smartlingLocale): ConfigurationProfileEntity
-    {
-        $profiles = $this->getActiveProfiles();
-        foreach ($profiles as $profile) {
-            if ($profile->getOriginalBlogId()->getBlogId() === $mainBlogId) {
-                foreach ($profile->getTargetLocales() as $targetLocale) {
-                    if ($targetLocale->getSmartlingLocale() === $smartlingLocale) {
-                        return $profile;
-                    }
-                }
-            }
-        }
-
-        throw new EntityNotFoundException("Unable to find active profile for sourceBlogId=$mainBlogId, targetSmartlingLocale=$smartlingLocale, activeProfileCount=" . count($profiles));
     }
 
     /**
