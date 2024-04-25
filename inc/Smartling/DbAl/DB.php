@@ -381,6 +381,19 @@ Please download the log file (click <strong><a href="%s">here</a></strong>) and 
         return $this->loggedQuery($this->prepare($query, ...$args));
     }
 
+    public function withTransaction(callable $function): mixed
+    {
+        $this->wpdb->query('START TRANSACTION');
+        try {
+            $result = $function();
+        } catch (\Throwable $e) {
+            $this->wpdb->query('ROLLBACK');
+            throw $e;
+        }
+        $this->wpdb->query('COMMIT');
+        return $result;
+    }
+
     public function fetch(string $query, string $output = OBJECT): array|object|null
     {
         $results = $this->wpdb->get_results($query, $output);
