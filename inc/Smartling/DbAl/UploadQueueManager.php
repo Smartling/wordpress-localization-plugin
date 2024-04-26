@@ -72,13 +72,31 @@ class UploadQueueManager {
 
     public function enqueue(IntegerIterator $submissionIds, string $batchUid): void
     {
-        if (count($submissionIds) > 0) {
-            $this->db->query(QueryBuilder::buildInsertQuery($this->tableName, [
-                UploadQueueEntity::FIELD_BATCH_UID => $batchUid,
-                UploadQueueEntity::FIELD_CREATED => DateTimeHelper::nowAsString(),
-                UploadQueueEntity::FIELD_SUBMISSION_IDS => $submissionIds->serialize(),
-            ]));
-        }
+        $this->db->withTransaction(function () use ($batchUid, $submissionIds) {
+            $ids = $submissionIds->getArrayCopy();
+            while (count($ids) > 0) {
+                $id = $ids[0];
+                $submission = $this->submissionManager->getEntityById($id);
+                if ($submission === null) {
+                    array_shift($ids);
+                    continue;
+                }
+                $sameSourceSubmissions = $this->submissionManager->find([
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $submission->getContentType(),
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                    SubmissionEntity::FIELD_SOURCE_ID => $submission->getSourceId(),
+                ]);
+                $sameSourceIds = array_intersect(array_map(static function (SubmissionEntity $entity) {
+                    return $entity->getId();
+                }, $sameSourceSubmissions), $ids);
+                $this->db->query(QueryBuilder::buildInsertQuery($this->tableName, [
+                    UploadQueueEntity::FIELD_BATCH_UID => $batchUid,
+                    UploadQueueEntity::FIELD_CREATED => DateTimeHelper::nowAsString(),
+                    UploadQueueEntity::FIELD_SUBMISSION_IDS => (new IntegerIterator($sameSourceIds))->serialize(),
+                ]));
+                $ids = array_values(array_diff($ids, $sameSourceIds));
+            }
+        });
     }
 
     public function purge(): void

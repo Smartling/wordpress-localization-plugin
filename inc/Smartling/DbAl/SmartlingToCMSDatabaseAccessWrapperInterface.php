@@ -17,6 +17,8 @@ interface SmartlingToCMSDatabaseAccessWrapperInterface
      */
     public function queryPrepared(string $query, ...$args);
 
+    public function withTransaction(callable $function): mixed;
+
     /**
      * @param string $output \OBJECT || \ARRAY_A
      * @return array|null|object
