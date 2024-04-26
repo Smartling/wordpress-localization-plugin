@@ -106,11 +106,6 @@ class WordpressFunctionProxyHelper
         return wp_get_object_terms($objectId, get_taxonomies());
     }
 
-    public function get_permalink()
-    {
-        return get_permalink(...func_get_args());
-    }
-
     public function get_plugins(): array
     {
         if (function_exists('get_plugins')) {
@@ -123,11 +118,6 @@ class WordpressFunctionProxyHelper
     public function get_post()
     {
         return get_post(...func_get_args());
-    }
-
-    public function get_posts()
-    {
-        return get_posts(...func_get_args());
     }
 
     public function get_terms()
