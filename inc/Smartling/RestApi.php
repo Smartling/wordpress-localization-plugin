@@ -12,7 +12,7 @@ use Smartling\Models\Content;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionManager;
 
-class RestApi {
+class RestApi extends \WP_REST_Controller {
     use DITrait;
 
     private const ASSET_UID_REGEX = '(?P<id>[a-z-_]+-\d+)';
@@ -29,26 +29,21 @@ class RestApi {
     {
         $this->contentEntitiesIOFactory = $this->fromContainer('factory.contentIO');
         $this->contentHelper = $this->fromContainer('content.helper');
-        $this->core = $this->fromContainer('core');
+        $this->core = $this->fromContainer('entrypoint');
         $this->fileUriHelper = $this->fromContainer('file.uri.helper');
         $this->submissionManager = $this->fromContainer('manager.submission');
         $this->wordpressProxy = $this->fromContainer('wp.proxy');
     }
 
-    public function initApi(): void
+    public function register_routes(): void
     {
         add_action('rest_api_init', function () {
             register_rest_route(self::NAMESPACE, 'assets/' . self::ASSET_UID_REGEX . '/raw', [
                 'methods' => 'GET',
                 'callback' => function (\WP_REST_Request $request) {
                     $request = $this->setPrettyPrint($request);
-                    $assetUid = $this->getAssetUid($request->get_param('id'));
-                    if ($assetUid instanceof \WP_REST_Response) {
-                        return $assetUid;
-                    }
-
                     try {
-                        return ($this->getProvider())->getRawContent($assetUid);
+                        return ($this->getProvider())->getRawContent($this->getAssetUid($request->get_param('id')));
                     } catch (EntityNotFoundException|SmartlingInvalidFactoryArgumentException $e) {
                         return new \WP_REST_Response($e->getMessage(), 404);
                     }
@@ -76,11 +71,11 @@ class RestApi {
                 'methods' => 'GET',
                 'callback' => function (\WP_REST_Request $request) {
                     $request = $this->setPrettyPrint($request);
-                    $assetUid = $this->getAssetUid($request->get_param('id'));
-                    if ($assetUid instanceof \WP_REST_Response) {
-                        return $assetUid;
+                    try {
+                        return $this->getProvider()->getAsset($this->getAssetUid($request->get_param('id')));
+                    } catch (\Throwable $e) {
+                        return $this->errorResponse($e);
                     }
-                    return $this->getProvider()->getAsset($assetUid);
                 },
                 'permission_callback' => [$this, 'permissionCallbackRead'],
             ]);
@@ -88,23 +83,57 @@ class RestApi {
                 'methods' => 'POST',
                 'callback' => function (\WP_REST_Request $request) {
                     $request = $this->setPrettyPrint($request);
-                    $assetUid = $this->getAssetUid($request->get_param('id'));
-                    if ($assetUid instanceof \WP_REST_Response) {
-                        return $assetUid;
-                    }
                     try {
                         $parsed = json_decode($request->get_body(), true, 3, JSON_THROW_ON_ERROR);
                     } catch (\JsonException $e) {
                         return new \WP_REST_Response($e->getMessage(), 400);
                     }
 
-                    return $this->getProvider()->getRelatedAssets(
-                        $assetUid,
-                        $parsed['limit'],
-                        $parsed['essential']['include'],
-                        ($parsed['child']['include'] ?? false) ? $parsed['child']['depth'] ?? 0 : 0,
-                        ($parsed['related']['include'] ?? false) ? $parsed['related']['depth'] ?? 0 : 0,
-                    );
+                    $validationResult = rest_validate_value_from_schema($parsed, [
+                        'properties' => [
+                            'children' => [
+                                'properties' => [
+                                    'depth' => ['type' => 'integer', 'minimum' => 0],
+                                    'include' => ['type' => 'boolean'],
+                                ],
+                                'required' => ['depth', 'include'],
+                                'type' => 'object',
+                            ],
+                            'essential' => [
+                                'properties' => [
+                                    'include' => ['type' => 'boolean'],
+                                ],
+                                'required' => ['include'],
+                                'type' => 'object',
+                            ],
+                            'limit' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 100],
+                            'nextPageToken' => ['type' => 'string'],
+                            'required' => [
+                                'properties' => [
+                                    'depth' => ['type' => 'integer', 'minimum' => 0],
+                                    'include' => ['type' => 'boolean'],
+                                ],
+                                'required' => ['depth', 'include'],
+                                'type' => 'object',
+                            ],
+                        ],
+                        'required' => ['children', 'essential', 'limit', 'related'],
+                        'type' => 'object',
+                    ]);
+                    if ($validationResult !== true) {
+                        return $validationResult;
+                    }
+                    try {
+                        return $this->getProvider()->getRelatedAssets(
+                            $this->getAssetUid($request->get_param('id')),
+                            $parsed['limit'],
+                            $parsed['essential']['include'],
+                            ($parsed['child']['include'] ?? false) ? $parsed['child']['depth'] ?? 0 : 0,
+                            ($parsed['related']['include'] ?? false) ? $parsed['related']['depth'] ?? 0 : 0,
+                        );
+                    } catch (\Throwable $e) {
+                        return $this->errorResponse($e);
+                    }
                 },
                 'permission_callback' => [$this, 'permissionCallbackRead'],
             ]);
@@ -112,11 +141,6 @@ class RestApi {
                 'methods' => 'POST', // TODO discuss
                 'callback' => function (\WP_REST_Request $request) {
                     $request = $this->setPrettyPrint($request);
-                    $assetUid = $this->getAssetUid($request->get_param('id'));
-                    if ($assetUid instanceof \WP_REST_Response) {
-                        return $assetUid;
-                    }
-
                     return [];
                 },
                 'permission_callback' => [$this, 'permissionCallbackRead'],
@@ -125,12 +149,11 @@ class RestApi {
                 'methods' => 'POST', // TODO discuss
                 'callback' => function (\WP_REST_Request $request) {
                     $request = $this->setPrettyPrint($request);
-                    $assetUid = $this->getAssetUid($request->get_param('id'));
-                    if ($assetUid instanceof \WP_REST_Response) {
-                        return $assetUid;
+                    try {
+                        return $this->getProvider()->getRawContent($this->getAssetUid($request->get_param('id')));
+                    } catch (\Throwable $e) {
+                        return $this->errorResponse($e);
                     }
-
-                    return $this->getProvider()->getRawContent($assetUid);
                 },
                 'permission_callback' => [$this, 'permissionCallbackRead'],
             ]);
@@ -142,19 +165,33 @@ class RestApi {
         return current_user_can('read');
     }
 
-    private function getAssetUid(string $string): Content|\WP_REST_Response
+    private function getAssetUid(string $string): Content
     {
-        try {
-            $parts = explode('-', $string);
-            if (count($parts) < 2) {
-                throw new \InvalidArgumentException('AssetUid string expected to be contentType-id');
-            }
-            $id = array_pop($parts);
+        $parts = explode('-', $string);
+        if (count($parts) < 2) {
+            throw new \InvalidArgumentException('AssetUid string expected to be contentType-id');
+        }
+        $id = array_pop($parts);
 
-            return new Content($id, implode('-', $parts));
-        } catch (\InvalidArgumentException $e) {
+        return new Content($id, implode('-', $parts));
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    private function errorResponse(\Throwable $e): \WP_REST_Response
+    {
+        if ($e instanceof \InvalidArgumentException || $e instanceof \JsonException) {
             return new \WP_REST_Response($e->getMessage(), 400);
         }
+        if ($e instanceof EntityNotFoundException || $e instanceof SmartlingInvalidFactoryArgumentException) {
+            return new \WP_REST_Response($e->getMessage(), 404);
+        }
+        if ($e instanceof \TypeError) {
+            return new \WP_REST_Response(preg_replace('~, called in .+~', '', $e->getMessage()), 400);
+        }
+
+        throw $e;
     }
 
     private function setPrettyPrint(\WP_REST_Request $request): \WP_REST_Request

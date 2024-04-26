@@ -86,11 +86,11 @@ class ContentProvider {
 
     public function getRelatedAssets(
         Content $assetUid,
-        $limit = 10,
-        $essential = false,
-        $childDepth = 0,
-        $relatedDepth = 0,
-        $found = 0,
+        int $limit = 10,
+        bool $essential = false,
+        int $childDepth = 0,
+        int $relatedDepth = 0,
+        int $found = 0,
     ) {
         $arguments = [
             'numberposts' => $limit,
