@@ -94,9 +94,9 @@ abstract class ElementAbstract implements Element {
         $result = clone $this;
         $targetId = $externalContentElementor->getTargetId(
             $submission->getSourceBlogId(),
-            $content->getId(),
+            $content->getContentId(),
             $submission->getTargetBlogId(),
-            $content->getType(),
+            $content->getContentType(),
         );
         if ($targetId !== null) {
             $result->raw = array_replace_recursive(

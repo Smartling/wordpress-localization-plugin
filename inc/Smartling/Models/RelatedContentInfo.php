@@ -49,10 +49,10 @@ class RelatedContentInfo {
         $return = [];
         foreach ($flat as $item) {
             assert($item instanceof Content);
-            if (!array_key_exists($item->getType(), $return)) {
-                $return[$item->getType()] = [];
+            if (!array_key_exists($item->getContentType(), $return)) {
+                $return[$item->getContentType()] = [];
             }
-            $return[$item->getType()][] = $item->getId();
+            $return[$item->getContentType()][] = $item->getContentId();
         }
         foreach ($return as $key => $value) {
             $return[$key] = array_unique($value);

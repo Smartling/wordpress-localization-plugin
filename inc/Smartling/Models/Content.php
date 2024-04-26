@@ -9,12 +9,12 @@ class Content {
     ) {
     }
 
-    public function getId(): int
+    public function getContentId(): int
     {
         return $this->contentId;
     }
 
-    public function getType(): string
+    public function getContentType(): string
     {
         return $this->contentType;
     }
