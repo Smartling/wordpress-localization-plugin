@@ -419,8 +419,7 @@ trait SmartlingCoreUploadTrait
         $profile = $this->getSettingsManager()->getSingleSettingsProfile($entity->getSourceBlogId());
 
         try {
-            $this->prepareUpload($entity);
-            $xml = $this->getXMLFiltered($entity);
+            $xml = $this->getXMLFiltered($this->prepareUpload($entity));
             if ($xml === '') {
                 $this->getLogger()->debug('Skip upload of empty xml');
                 return;
