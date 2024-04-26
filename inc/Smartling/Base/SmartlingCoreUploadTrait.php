@@ -104,6 +104,8 @@ trait SmartlingCoreUploadTrait
     }
 
     /**
+     * Prepare submission for upload and return XML string for translation
+     * @see prepareUpload
      * @throws EntityNotFoundException
      */
     public function getXMLFiltered(SubmissionEntity $submission): string
@@ -121,6 +123,8 @@ trait SmartlingCoreUploadTrait
         );
 
         try {
+            $submission = $this->prepareUpload($submission);
+
             $originalContent = $this->readSourceContentWithMetadataAsArray($submission);
             $source = $this->externalContentManager->getExternalContent($originalContent, $submission, false);
 
@@ -415,11 +419,10 @@ trait SmartlingCoreUploadTrait
     public function bulkSubmit(UploadQueueItem $item): void
     {
         $locales = $item->getSmartlingLocales()->getList();
-        $entity = $item->getSubmissions()[0];
-        $profile = $this->getSettingsManager()->getSingleSettingsProfile($entity->getSourceBlogId());
+        $profile = $this->getSettingsManager()->getSingleSettingsProfile($item->getSubmissions()[0]->getSourceBlogId());
 
         try {
-            $xml = $this->getXMLFiltered($this->prepareUpload($entity));
+            $xml = $this->getXMLFiltered($item->getSubmissions()[0]);
             if ($xml === '') {
                 $this->getLogger()->debug('Skip upload of empty xml');
                 return;
