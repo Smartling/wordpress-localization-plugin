@@ -127,6 +127,14 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
         return $this->term_id;
     }
 
+    public function setId(int $id): static
+    {
+        $result = clone $this;
+        $this->term_id = $id;
+
+        return $result;
+    }
+
     public function getTitle(): string
     {
         return $this->name;

@@ -11,6 +11,7 @@ use Smartling\Exception\SmartlingNetworkException;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\JobEntityWithStatus;
+use Smartling\Models\AssetUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
@@ -74,6 +75,8 @@ interface ApiWrapperInterface
      * @throws SmartlingFileDownloadException
      */
     public function downloadFile(SubmissionEntity $entity): string;
+
+    public function getSettings(string $projectUid): array;
 
     /**
      * @throws SmartlingFileDownloadException
@@ -154,6 +157,16 @@ interface ApiWrapperInterface
      * @throws SmartlingApiException
      */
     public function getOrCreateJobInfoForDailyBucketJob(ConfigurationProfileEntity $profile, array $fileUris): JobEntityWithBatchUid;
+
+    public function createSubmission(string $projectUid, string $translationRequestUid, AssetUid $assetUid, string $targetLocale): void;
+
+    public function createTranslationRequest(string $projectUid, string $assetUid, string $title, string $fileUri, string $contentHash, string $originalLocale): string;
+
+    public function searchSubmissions(string $projectUid, ?array $assetUidStrings = null, ?string $targetLocale = null, ?array $translationRequestIds = null): \Generator;
+
+    public function searchTranslationPackages(string $projectUid, string $sourceAssetUid, string $targetLocale): array;
+
+    public function searchTranslationRequests(string $projectUid, array $assetUidStrings): \Generator;
 
     public function isUnrecoverable(\Exception $e): bool;
 }

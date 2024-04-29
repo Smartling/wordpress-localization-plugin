@@ -11,6 +11,7 @@ use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\Models\AssetUid;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -105,6 +106,25 @@ class ContentHelper
             $clone = clone $cached;
         }
         return $clone;
+    }
+
+    public function setContent(int $blogId, AssetUid $assetUid, Entity $entity): Entity
+    {
+        return $this->siteHelper->withBlog($blogId, function () use ($assetUid, $entity) {
+            $wrapper = $this->getWrapper($assetUid->getContentType());
+            $id = $wrapper->set($entity);
+            if ($id !== 0) {
+                return $wrapper->get($id);
+            }
+            throw new \RuntimeException("Unable to set content for assetUid=$assetUid");
+        });
+    }
+
+    public function getEntity(int $blogId, AssetUid $assetUid): Entity
+    {
+        return $this->siteHelper->withBlog($blogId, function () use ($assetUid) {
+            return $this->getWrapper($assetUid->getContentType())->get($assetUid->getId());
+        });
     }
 
     public function readTargetContent(SubmissionEntity $submission): Entity

@@ -4,6 +4,8 @@ namespace Smartling;
 
 use DateTime;
 use Smartling\API\FileApiExtended;
+use Smartling\API\SettingsServiceApi;
+use Smartling\API\SubmissionServiceApi;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingFileDownloadException;
 use Smartling\Exception\SmartlingFileUploadException;
@@ -17,6 +19,7 @@ use Smartling\Helpers\TestRunHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Jobs\JobEntityWithStatus;
+use Smartling\Models\AssetUid;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -46,21 +49,18 @@ class ApiWrapper implements ApiWrapperInterface
     use LoggerSafeTrait;
 
     private const ADDITIONAL_HEADERS = ['X-SL-UseSecondaryDB' => 'true'];
-
-    private SettingsManager $settings;
-    private string $pluginName;
-    private string $pluginVersion;
+    public const AUTH_PROVIDER_CACHE_KEY_PREFIX = 'profile.auth-provider.';
 
     public function getCache(): RuntimeCacheHelper
     {
         return RuntimeCacheHelper::getInstance();
     }
 
-    public function __construct(SettingsManager $manager, string $pluginName, string $pluginVersion)
-    {
-        $this->settings = $manager;
-        $this->pluginName = $pluginName;
-        $this->pluginVersion = $pluginVersion;
+    public function __construct(
+        private SettingsManager $settings,
+        private string $pluginName,
+        private string $pluginVersion,
+    ) {
     }
 
     /**
@@ -85,7 +85,7 @@ class ApiWrapper implements ApiWrapperInterface
 
     private function getAuthProvider(ConfigurationProfileEntity $profile): AuthTokenProvider
     {
-        $cacheKey = 'profile.auth-provider.' . $profile->getId();
+        $cacheKey = self::AUTH_PROVIDER_CACHE_KEY_PREFIX . $profile->getId();
         $authProvider = $this->getCache()->get($cacheKey);
 
         if (false === $authProvider) {
@@ -683,8 +683,75 @@ class ApiWrapper implements ApiWrapperInterface
         return $withAdditionalHeaders ? new FileApiExtended($auth, $projectId, self::ADDITIONAL_HEADERS) : FileApi::create($auth, $projectId, $this->logger);
     }
 
+    public function getSettingsServiceApi(string $projectUid): SettingsServiceApi
+    {
+        return new SettingsServiceApi(
+            $this->getAuthProvider($this->settings->getActiveProfileByProjectId($projectUid)),
+            $projectUid,
+        );
+    }
+
+    public function getSubmissionApi(string $projectUid): SubmissionServiceApi
+    {
+        return new SubmissionServiceApi(
+            $this->getAuthProvider($this->settings->getActiveProfileByProjectId($projectUid)),
+            $projectUid,
+        );
+    }
+
+    public function getSettings(string $projectUid): array
+    {
+        return $this->getSettingsServiceApi($projectUid)->getSettings();
+    }
+
+    public function createSubmission(string $projectUid, string $translationRequestUid, AssetUid $assetUid, string $targetLocale): void
+    {
+        $this->getSubmissionApi($projectUid)->createSubmission($assetUid, $targetLocale, $translationRequestUid);
+    }
+
+    public function createTranslationRequest(
+        string $projectUid,
+        string $assetUid,
+        string $title,
+        string $fileUri,
+        string $contentHash,
+        string $originalLocale,
+    ): string
+    {
+        return $this->getSubmissionApi($projectUid)
+            ->createTranslationRequest($assetUid, $title, $fileUri, $contentHash, $originalLocale);
+    }
+
+    public function searchSubmissions(string $projectUid, ?array $assetUidStrings = null, ?string $targetLocale = null, ?array $translationRequestIds = null): \Generator
+    {
+        return $this->getSubmissionApi($projectUid)->searchSubmissions($this->wrapSubmissionAssetKeys($assetUidStrings), $targetLocale);
+    }
+
+    public function searchTranslationPackages(string $projectUid, string $sourceAssetUid, string $targetLocale): array
+    {
+        return $this->getSubmissionApi($projectUid)->searchTranslationPackages($sourceAssetUid, $targetLocale);
+    }
+
+    public function searchTranslationRequests(string $projectUid, array $assetUidStrings): \Generator
+    {
+        return $this->getSubmissionApi($projectUid)->searchTranslationRequests($this->wrapSubmissionAssetKeys($assetUidStrings));
+    }
+
     private function formatError(\Exception $e): string
     {
         return $e instanceof SmartlingApiException ? $e->formatErrors() : $e->getMessage();
+    }
+
+    private function wrapSubmissionAssetKeys(?array $assetUidStrings): ?array
+    {
+        if ($assetUidStrings === null) {
+            return null;
+        }
+        $result = [];
+        foreach ($assetUidStrings as $assetUidString) {
+            $result[] = [SubmissionServiceApi::ASSET_UID_KEY => $assetUidString];
+        }
+
+        return $result;
     }
 }
