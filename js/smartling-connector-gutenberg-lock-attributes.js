@@ -23,12 +23,12 @@ const addSmartlingGutenbergLockAttributes = function () {
             return settings;
         });
         if (smartling.addLockIdAttributeOnSave === '1') {
-            wp.hooks.addFilter('blocks.getBlockAttributes', namespace, (attributes) => {
+            wp.hooks.addFilter('blocks.getSaveElement', namespace, (element, blockType, attributes) => {
                 if (!attributes[LOCK_ID_ATTRIBUTE] || attributes[LOCK_ID_ATTRIBUTE] === '') {
                     attributes[LOCK_ID_ATTRIBUTE] = generateSmartlingLockId();
                 }
 
-                return attributes;
+                return element;
             });
         }
         added = true;
