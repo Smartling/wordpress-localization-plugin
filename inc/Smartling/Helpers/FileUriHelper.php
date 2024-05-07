@@ -10,7 +10,7 @@ use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Processors\ContentEntitiesIOFactory;
-use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\Submission;
 
 class FileUriHelper
 {
@@ -30,7 +30,7 @@ class FileUriHelper
      * @throws SmartlingInvalidFactoryArgumentException
      * @throws SmartlingConfigException
      */
-    private function buildFileUri(SubmissionEntity $submission): string {
+    private function buildFileUri(Submission $submission): string {
         try {
             $wrapper = $this->ioFactory->getMapper($submission->getContentType());
         } catch (SmartlingInvalidFactoryArgumentException $e) {
@@ -64,7 +64,7 @@ class FileUriHelper
      * @throws SmartlingConfigException
      * @throws SmartlingDirectRunRuntimeException
      */
-    public function generateFileUri(SubmissionEntity $submission): string {
+    public function generateFileUri(Submission $submission): string {
         if ($this->siteHelper->getCurrentBlogId() !== $submission->getSourceBlogId()) {
             $fileUri = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
                 return $this->buildFileUri($submission);
