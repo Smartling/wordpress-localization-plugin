@@ -231,6 +231,7 @@ class Bootstrap
             $this->testUpdates();
         }
 
+        add_action('wp_ajax_' . UiMessageHelper::DISMISS_MESSAGE_ACTION, [UiMessageHelper::class, 'dismissMessage']);
         add_action('admin_notices', [UiMessageHelper::class, 'displayMessages']);
     }
 
