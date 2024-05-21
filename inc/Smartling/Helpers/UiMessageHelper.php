@@ -10,8 +10,9 @@ class UiMessageHelper
     public static function dismissMessage(): void
     {
         $cache = self::getCache();
-        $info = $_GET;
-        $cache->set(self::CACHE_KEY_PREFIX . $info['hash'], true, 60 * 60 * 180);
+        if (array_key_exists('hash', $_GET)) {
+            $cache->set(self::CACHE_KEY_PREFIX . $_GET['hash'], true, 60 * 60 * 180);
+        }
     }
 
     public static function displayMessages(): void
