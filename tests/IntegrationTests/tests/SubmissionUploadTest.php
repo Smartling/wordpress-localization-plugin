@@ -41,9 +41,10 @@ class SubmissionUploadTest extends SmartlingUnitTestCaseAbstract
         ));
         $submissions = $submissionManager->find([SubmissionEntity::FIELD_SOURCE_ID => $postId]);
         $this->assertCount(2, $submissions, 'Expected two new submissions to be created');
-        $submissionIds = array_reduce($submissions, static function (SubmissionEntity $entity) {
-            return $entity->getId();
-        });
+        $submissionIds = array_reduce($submissions, static function (array $carry, SubmissionEntity $entity) {
+            $carry[] = $entity->getId();
+            return $carry;
+        }, []);
         $this->addToUploadQueue($submissionIds);
         $this->executeUpload();
         $submissions = $submissionManager->find([SubmissionEntity::FIELD_SOURCE_ID => $postId]);
