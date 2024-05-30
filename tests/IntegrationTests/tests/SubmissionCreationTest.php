@@ -3,6 +3,7 @@
 namespace Smartling\Tests\IntegrationTests\tests;
 
 use Smartling\Jobs\JobEntity;
+use Smartling\Models\UserTranslationRequest;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
 class SubmissionCreationTest extends SmartlingUnitTestCaseAbstract

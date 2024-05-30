@@ -343,9 +343,12 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         self::wpCliExec('cron', 'event', vsprintf('run %s', [$task]));
     }
 
-    public function addToUploadQueue(int $submissionId, string $batchUid = ''): void
+    public function addToUploadQueue(int|iterable $submissionIds, string $batchUid = ''): void
     {
-        $this->getUploadQueueManager()->enqueue(new IntegerIterator([$submissionId]), $batchUid);
+        if (is_int($submissionIds)) {
+            $submissionIds = new IntegerIterator([$submissionIds]);
+        }
+        $this->getUploadQueueManager()->enqueue($submissionIds, $batchUid);
     }
 
     protected function executeUpload(): void
