@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 3.9.1 =
 * Fixed submissions not being created on target site when uploading to multiple target sites
+* Added possibility to dismiss admin notices for extended periods of time
 
 = 3.9.0 =
 * Reworked elementor elements processing
