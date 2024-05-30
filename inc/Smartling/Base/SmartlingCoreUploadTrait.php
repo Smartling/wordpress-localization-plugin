@@ -419,17 +419,22 @@ trait SmartlingCoreUploadTrait
     public function bulkSubmit(UploadQueueItem $item): void
     {
         $locales = $item->getSmartlingLocales()->getList();
-        $profile = $this->getSettingsManager()->getSingleSettingsProfile($item->getSubmissions()[0]->getSourceBlogId());
+        $profile = null;
+        $xml = '';
 
         try {
-            $xml = $this->getXMLFiltered($item->getSubmissions()[0]);
-            if ($xml === '') {
-                $this->getLogger()->debug('Skip upload of empty xml');
-                return;
-            }
             foreach ($item->getSubmissions() as $submission) {
-                $fileUri = $this->fileUriHelper->generateFileUri($submission);
-                $submission->setFileUri($fileUri);
+                if ($profile === null) {
+                    $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+                }
+                $submission = $this->prepareUpload($submission);
+                if ($xml === '') {
+                    $xml = $this->getXMLFiltered($item->getSubmissions()[0]);
+                    if ($xml === '') {
+                        $this->getLogger()->debug('Skip upload of empty xml');
+                        return;
+                    }
+                }
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission->setSubmissionDate(DateTimeHelper::nowAsString());
             }
