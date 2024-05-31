@@ -495,16 +495,18 @@ trait SmartlingCoreUploadTrait
                 $this->getSubmissionManager()
                     ->setErrorMessage($submission, vsprintf('Could not submit because: %s', [$e->getMessage()]));
             }
-            $submission = $item->getSubmissions()[0];
+            if ($profile !== null) {
+                $submission = $item->getSubmissions()[0];
 
-            LiveNotificationController::pushNotification(
-                $profile->getProjectId(),
-                LiveNotificationController::getContentId($submission),
-                LiveNotificationController::SEVERITY_ERROR,
-                vsprintf('<p>Failed sending file %s.</p>', [
-                    $submission->getFileUri(),
-                ])
-            );
+                LiveNotificationController::pushNotification(
+                    $profile->getProjectId(),
+                    LiveNotificationController::getContentId($submission),
+                    LiveNotificationController::SEVERITY_ERROR,
+                    vsprintf('<p>Failed sending file %s.</p>', [
+                        $submission->getFileUri(),
+                    ])
+                );
+            }
         }
     }
 
