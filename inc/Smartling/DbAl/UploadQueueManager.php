@@ -35,7 +35,9 @@ class UploadQueueManager {
 
     public function count(): int
     {
-        return (int)$this->db->getRowArray("SELECT COUNT(*) cnt from $this->tableName")['cnt'];
+        return (int)$this->db->getRowArray(
+            "SELECT SUM(LENGTH(submission_ids) - LENGTH(REPLACE(submission_ids, ',', '')) + 1) cnt from $this->tableName"
+        )['cnt'];
     }
 
     public function dequeue(): ?UploadQueueItem
