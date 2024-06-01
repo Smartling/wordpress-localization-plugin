@@ -30,6 +30,7 @@ $needWrapper = ($tag instanceof WP_Term);
     const isBulkSubmitPage = <?= $isBulkSubmitPage ? 'true' : 'false'?>;
     let l1Relations = {missingTranslatedReferences: {}, originalReferences: {}};
     let l2Relations = {missingTranslatedReferences: {}, originalReferences: {}};
+    let globalButton;
 </script>
 
 <?php if ($needWrapper) : ?>
@@ -622,8 +623,8 @@ if ($post instanceof WP_Post) {
                         message = e.responseJSON.response.message;
                     }
                     uiShowMessage("<?= BaseAjaxServiceAbstract::RESPONSE_FAILED ?>", message);
-                });
-                unlockUploadWidgetButton(btn);
+                })
+                    .then(() => unlockUploadWidgetButton(btn));
             });
 
             $("#createJob").on("click", function (e) {
@@ -649,7 +650,7 @@ if ($post instanceof WP_Post) {
                     jobSelectEl.change();
 
                     $("#addToJob").click();
-
+                    unlockUploadWidgetButton(btn);
                 }, function (data) {
                     var messages = [];
                     if (undefined !== data["global"]) {
@@ -662,8 +663,8 @@ if ($post instanceof WP_Post) {
                     }
                     var text = "<span>" + messages.join("</span><span>") + "</span>";
                     $("#error-messages").html(text);
+                    unlockUploadWidgetButton(btn);
                 });
-                unlockUploadWidgetButton(btn);
             });
 
             jobSelectEl.on("change", function () {
