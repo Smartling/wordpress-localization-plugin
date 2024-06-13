@@ -271,7 +271,12 @@ class ContentRelationsDiscoveryService
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
                 if ($batchUid === null) {
-                    $batchUid = $this->apiWrapper->createBatch($profile, $jobInfo->getJobUid(), [$submission->getFileUri()]);
+                    $batchUid = $this->apiWrapper->createBatch(
+                        $profile,
+                        $jobInfo->getJobUid(),
+                        [$submission->getFileUri()],
+                        $job->isAuthorize(),
+                    );
                 }
                 $queueIds[] = $submission->getId();
             }
