@@ -142,7 +142,11 @@ class LastModifiedCheckJob extends JobAbstract
      */
     private function lastModifiedCheck(string $queueName, bool $failMissing): void
     {
-        while (false !== ($serializedPair = $this->queue->dequeue($queueName))) {
+        while (true) {
+            $serializedPair = $this->queue->dequeue($queueName);
+            if (!is_array($serializedPair)) {
+                break;
+            }
             if (false === $this->validateSerializedPair($serializedPair)) {
                 $this->getLogger()->warning(vsprintf('Got unexpected data from queue : \'%s\'. Skipping', [
                     var_export($serializedPair, true),
