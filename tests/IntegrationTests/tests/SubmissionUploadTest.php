@@ -49,6 +49,7 @@ class SubmissionUploadTest extends SmartlingUnitTestCaseAbstract
         $this->executeUpload();
         $submissions = $submissionManager->find([SubmissionEntity::FIELD_SOURCE_ID => $postId]);
         foreach ($submissions as $submission) {
+            $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS, $submission->getStatus());
             $this->assertNotEquals(0, $submission->getTargetId());
             $this->forceSubmissionDownload($submission);
             $submission = $submissionManager->getEntityById($submission->getId());
