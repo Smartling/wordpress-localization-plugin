@@ -436,8 +436,8 @@ trait SmartlingCoreUploadTrait
                 $submission->setFileUri($fileUri);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $submission->setSubmissionDate(DateTimeHelper::nowAsString());
+                $this->getSubmissionManager()->storeSubmissions([$submission]);
             }
-            $this->getSubmissionManager()->storeSubmissions($item->getSubmissions());
 
             LiveNotificationController::pushNotification(
                 $profile->getProjectId(),
