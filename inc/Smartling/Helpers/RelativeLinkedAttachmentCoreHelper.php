@@ -321,8 +321,8 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
                     }
                 }
             }
-        } catch (\Exception) {
-            $this->getLogger()->debug("Failed to decode block $block, skipping id replacements");
+        } catch (\Exception $e) {
+            $this->getLogger()->debug("Failed to decode block $block, skipping id replacements: " . $e->getMessage());
         }
         return $result;
     }
