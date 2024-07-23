@@ -33,3 +33,10 @@ services:
       - ".+"
       - "smartlingLockId"
       - "copy"
+
+  wordpress.editor.mode:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - ".+"
+      - "mode"
+      - "copy"
