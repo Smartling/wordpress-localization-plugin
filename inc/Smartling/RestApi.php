@@ -18,18 +18,14 @@ class RestApi extends \WP_REST_Controller {
     private const ASSET_UID_REGEX = '(?P<id>[a-z-_]+-\d+)';
     private const NAMESPACE = 'smartling-connector/v2';
 
-    private ContentEntitiesIOFactory $contentEntitiesIOFactory;
     private ContentHelper $contentHelper;
     private FileUriHelper $fileUriHelper;
-    private SmartlingCore $core;
     private SubmissionManager $submissionManager;
     private WordpressFunctionProxyHelper $wordpressProxy;
 
     public function __construct()
     {
-        $this->contentEntitiesIOFactory = $this->fromContainer('factory.contentIO');
         $this->contentHelper = $this->fromContainer('content.helper');
-        $this->core = $this->fromContainer('entrypoint');
         $this->fileUriHelper = $this->fromContainer('file.uri.helper');
         $this->submissionManager = $this->fromContainer('manager.submission');
         $this->wordpressProxy = $this->fromContainer('wp.proxy');
@@ -205,11 +201,21 @@ class RestApi extends \WP_REST_Controller {
     {
         return new ContentProvider(
             $this->contentHelper,
-            $this->contentEntitiesIOFactory,
+            $this->getContentEntitiesIOFactory(),
             $this->fileUriHelper,
-            $this->core,
+            $this->getCore(),
             $this->submissionManager,
             $this->wordpressProxy,
         );
+    }
+
+    private function getContentEntitiesIOFactory(): ContentEntitiesIOFactory
+    {
+        return $this->fromContainer('factory.contentIO');
+    }
+
+    private function getCore(): SmartlingCore
+    {
+        return $this->fromContainer('entrypoint');
     }
 }
