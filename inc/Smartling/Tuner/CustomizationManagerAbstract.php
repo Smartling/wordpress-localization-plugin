@@ -11,7 +11,11 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
 
     protected function generateId(int $length = 12): string
     {
-        return substr(md5(microtime(true)), 0, $length);
+        if ($length > 23) {
+            throw new \RuntimeException("Length should be less than 24 characters");
+        }
+
+        return substr(uniqid("", true), 0, $length);
     }
 
     public function __construct($storageKey)

@@ -204,7 +204,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
             '<!-- wp:acf/custom-image %s /-->',
                 stripslashes(json_encode([
                     'id' => '',
-                    'name' => '[á~cf/c~ústó~m-ím~ágé]',
+                    'name' => 'acf/custom-image',
                     'data' => ['mediaId' => $attachmentSubmission->getTargetId(), '_mediaId' => $acfImageFieldId],
                 ], JSON_UNESCAPED_UNICODE)),
             ),

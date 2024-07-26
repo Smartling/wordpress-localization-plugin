@@ -499,6 +499,7 @@ class AcfDynamicSupport
 
         switch ($type) {
             case 'image':
+            case 'image_aspect_ratio_crop':
             case 'file':
             case 'gallery':
                 return self::REFERENCED_TYPE_MEDIA;
