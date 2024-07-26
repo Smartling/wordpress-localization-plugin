@@ -12,7 +12,7 @@ abstract class CustomizationManagerAbstract implements ManagerInterface, \Iterat
     protected function generateId(int $length = 12): string
     {
         if ($length > 23) {
-            throw new \RuntimeException("Length should be less than 23 characters");
+            throw new \RuntimeException("Length should be less than 24 characters");
         }
 
         return substr(uniqid("", true), 0, $length);
