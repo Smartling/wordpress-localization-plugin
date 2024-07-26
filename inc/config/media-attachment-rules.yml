@@ -4,6 +4,8 @@ parameters:
     - "@image.id.related.content"
     - "@media-text.media-id.related.attachment"
     - "@smartling.lock.id.copy"
+    - "@acf.name"
+    - "@wordpress.editor.mode"
 
 services:
   image.id.related.attachment:
@@ -32,6 +34,13 @@ services:
     arguments:
       - ".+"
       - "smartlingLockId"
+      - "copy"
+
+  acf.name:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "acf/.+"
+      - "name"
       - "copy"
 
   wordpress.editor.mode:
