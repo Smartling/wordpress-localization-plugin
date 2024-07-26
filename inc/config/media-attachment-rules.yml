@@ -46,6 +46,6 @@ services:
   wordpress.editor.mode:
     class: Smartling\Helpers\GutenbergReplacementRule
     arguments:
-      - ".+"
+      - "acf/.+"
       - "mode"
       - "copy"
