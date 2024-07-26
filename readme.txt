@@ -63,8 +63,8 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 3.9.4 =
-* Added support for ACF fields with type `image_aspect_ratio_crop` when processing related items
-* Fixed import of fine-tuning lists failing to import partially on the first try
+* Added support for related attachment from Advanced Custom Fields: Image Aspect Ratio Crop plugin
+* Fixed import of fine-tuning lists failing to import partially
 
 = 3.9.3 =
 * Fixed submissions stuck in New status after uploading
