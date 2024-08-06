@@ -19,6 +19,7 @@ class UploadJob extends JobAbstract
         ApiWrapperInterface $api,
         Cache $cache,
         private FileUriHelper $fileUriHelper,
+        private JobManager $jobManager,
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager,
         private UploadQueueManager $uploadQueueManager,
@@ -63,12 +64,20 @@ class UploadJob extends JobAbstract
                 }
             }
             $profile = $profiles[$submission->getSourceBlogId()];
+            $job = $this->jobManager->getBySubmissionId($submission->getId());
             if ($item->getBatchUid() === '') {
-                $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());
+                if ($job === null) {
+                    $jobInfo = $this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()]);
+                    $batchUid = $jobInfo->getBatchUid();
+                    $job = $jobInfo->getJobInformationEntity();
+                } else {
+                    $batchUid = $this->api->createBatch($profile, $job->getJobUid(), [$submission->getFileUri()]);
+                }
+                $item = $item->setBatchUid($batchUid);
             }
 
             $this->getLogger()->info(sprintf(
-                'Cron Job upload for submissionId="%s" with status="%s" contentType="%s", sourceBlogId="%s", contentId="%s", targetBlogId="%s", targetLocale="%s", batchUid="%s"',
+                'Cron Job upload for submissionId="%s" with status="%s" contentType="%s", sourceBlogId="%s", contentId="%s", targetBlogId="%s", targetLocale="%s", jobName="%s", jobUid="%s", batchUid="%s"',
                 $submission->getId(),
                 $submission->getStatus(),
                 $submission->getContentType(),
@@ -76,12 +85,14 @@ class UploadJob extends JobAbstract
                 $submission->getSourceId(),
                 $submission->getTargetBlogId(),
                 $submission->getTargetLocale(),
+                $job->getJobName(),
+                $job->getJobUid(),
                 $item->getBatchUid(),
             ));
 
             try {
                 do_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, $item);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 foreach ($item->getSubmissions() as $submission) {
                     $this->getLogger()->notice(sprintf('Failing submissionId=%s: %s', $submission->getId(), $e->getMessage()));
                     $this->submissionManager->setErrorMessage($submission, $e->getMessage());

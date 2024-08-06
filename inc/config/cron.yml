@@ -24,6 +24,7 @@ services:
       - "@api.wrapper.with.retries"
       - "@transient.cache"
       - "@file.uri.helper"
+      - "@manager.job"
       - "@manager.settings"
       - "@manager.submission"
       - "@manager.upload.queue"
