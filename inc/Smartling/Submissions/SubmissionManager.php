@@ -266,7 +266,6 @@ class SubmissionManager extends EntityManagerAbstract
         $pageOptions = 0 === $limit ? null : ['limit' => $limit, 'page' => $page];
 
         $query = $this->buildQuery(null, null, null, [], $pageOptions, $block);
-        echo $query;
 
         return $this->fetchData($query);
     }

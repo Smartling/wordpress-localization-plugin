@@ -88,7 +88,7 @@ HTML);
             $targetBlogs,
             new JobInformation($job['translationJobUid'], false, $jobName, '', '', ''),
         ));
-        $this->assertCount($existingSubmissionCount + 2, $submissionManager->find());
+        $this->assertCount($existingSubmissionCount + 2, $submissionManager->find([1 => 1]));
         // findOne returns null on multiple submissions
         $submissionPost = $submissionManager->findOne([SubmissionEntity::FIELD_SOURCE_ID => $postId]);
         $this->assertNotNull($submissionPost);
