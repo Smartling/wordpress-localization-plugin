@@ -524,6 +524,7 @@ services:
     arguments:
       - "@manager.settings"
       - "@site.helper"
+      - "@wp.proxy"
 
   acf.type.detector:
     class: Smartling\Extensions\Acf\AcfTypeDetector
