@@ -42,6 +42,17 @@ namespace {
             return $parsed_args;
         }
     }
+    if (!class_exists(\ACF_Data::class)) {
+        class ACF_Data {
+            public function __construct(public array $data = [])
+            {
+            }
+
+            public function get_data() {
+                return $this->data;
+            }
+        }
+    }
     require __DIR__ . '/../../wordpressBlocks.php';
 }
 
@@ -57,6 +68,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     use Smartling\Helpers\GutenbergBlockHelper;
     use Smartling\Helpers\GutenbergReplacementRule;
     use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
+    use Smartling\Helpers\SiteHelper;
     use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Models\GutenbergBlock;
     use Smartling\Replacers\ReplacerFactory;
@@ -429,7 +441,28 @@ namespace Smartling\Tests\Smartling\Helpers {
 
     public function testTranslationAttributesWithRelations()
     {
-        $acfDynamicSupport = $this->createPartialMock(AcfDynamicSupport::class, ['getReferencedTypeByKey']);
+        global $acf_stores; // validated in AcfDynamicSupport
+        $acf_stores = [
+            'local-fields' => new \ACF_Data(
+                [['key' => 'field_6006a62721335', 'type' => 'image', 'name' => '', 'parent' => '']],
+            ),
+            'local-groups' => new \ACF_Data(),
+        ];
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('get_post_types')->willReturn([
+            'acf-field' => 'acf-field',
+            'acf-field-group' => 'acf-field-group',
+        ]);
+        $acfDynamicSupport = $this->getMockBuilder(AcfDynamicSupport::class)
+            ->setConstructorArgs([
+                $this->createMock(SettingsManager::class),
+                $this->createMock(SiteHelper::class),
+                $wpProxy,
+            ])
+            ->onlyMethods([
+                'getReferencedTypeByKey',
+            ])
+            ->getMock();
         $acfDynamicSupport->method('getReferencedTypeByKey')->willReturnCallback(static function(string $key): string {
             if ($key === 'field_6006a62721335') {
                 return AcfDynamicSupport::REFERENCED_TYPE_MEDIA;
