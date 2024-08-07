@@ -5,6 +5,7 @@ namespace IntegrationTests\tests;
 use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\DbAl\UploadQueueManager;
+use Smartling\Models\IntegerIterator;
 use Smartling\Models\JobInformation;
 use Smartling\Models\UserTranslationRequest;
 use Smartling\Services\ContentRelationsDiscoveryService;
@@ -90,8 +91,10 @@ HTML);
         ));
         $this->assertCount($existingSubmissionCount + 2, $submissionManager->find([1 => 1]));
         // findOne returns null on multiple submissions
-        $this->assertNotNull($submissionManager->findOne([SubmissionEntity::FIELD_SOURCE_ID => $postId]));
-        $this->assertNotNull($submissionManager->findOne([SubmissionEntity::FIELD_SOURCE_ID => $attachmentId]));
+        $submissionPost = $submissionManager->findOne([SubmissionEntity::FIELD_SOURCE_ID => $postId]);
+        $this->assertNotNull($submissionPost);
+        $submissionAttachment = $submissionManager->findOne([SubmissionEntity::FIELD_SOURCE_ID => $attachmentId]);
+        $this->assertNotNull($submissionAttachment);
         $uploadQueueManager = $this->getContainer()->get('manager.upload.queue');
         assert($uploadQueueManager instanceof UploadQueueManager);
         $this->assertNotEquals(0, $uploadQueueManager->count());
@@ -99,9 +102,14 @@ HTML);
         do {
             $uploadQueueItem = $uploadQueueManager->dequeue();
             $submissionsToUpload += count($uploadQueueItem->getSubmissions());
-            $this->assertNotEquals('', $uploadQueueItem->getBatchUid());
+            $batchUid = $uploadQueueItem->getBatchUid();
+            $this->assertNotEquals('', $batchUid);
         } while ($uploadQueueManager->count() > 0);
         $this->assertEquals(2, $submissionsToUpload);
+        $uploadQueueManager->enqueue(
+            new IntegerIterator([$submissionPost->getId(), $submissionAttachment->getId()]),
+            $batchUid,
+        );
         $this->executeUpload();
         $this->assertEquals(
             SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS,

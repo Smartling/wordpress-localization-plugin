@@ -302,7 +302,7 @@ class ContentRelationsDiscoveryService
         $this->uploadQueueManager->enqueue($queueIds, $this->apiWrapper->createBatch(
             $profile,
             $jobInfo->getJobUid(),
-            $fileUris,
+            array_unique($fileUris),
             $job->isAuthorize(),
         ));
     }
