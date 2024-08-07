@@ -61,7 +61,7 @@ class AcfTypeDetectorTest extends TestCase
         $ads = new AcfDynamicSupport(
             $settingsManager,
             $siteHelper,
-            $this->createMock(WordpressFunctionProxyHelper::class),
+            new WordpressFunctionProxyHelper(),
         );
         $ads->run();
 
