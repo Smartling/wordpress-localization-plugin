@@ -440,12 +440,14 @@ namespace Smartling\Tests\Smartling\Helpers {
     public function testTranslationAttributesWithRelations()
     {
         global $acf_stores; // validated in AcfDynamicSupport
-        $acf_stores = [
-            'local-fields' => new ACFish_Data(
-                [['key' => 'field_6006a62721335', 'type' => 'image', 'name' => '', 'parent' => '']],
-            ),
-            'local-groups' => new ACFish_Data(),
-        ];
+        if ($acf_stores === null) {
+            $acf_stores = [
+                'local-fields' => new ACFish_Data(
+                    [['key' => 'field_6006a62721335', 'type' => 'image', 'name' => '', 'parent' => '']],
+                ),
+                'local-groups' => new ACFish_Data(),
+            ];
+        }
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $wpProxy->method('get_post_types')->willReturn([
             'acf-field' => 'acf-field',
