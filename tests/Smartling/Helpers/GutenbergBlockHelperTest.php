@@ -86,6 +86,8 @@ namespace Smartling\Tests\Smartling\Helpers {
     use InvokeMethodTrait;
     use SettingsManagerMock;
 
+    private mixed $acfStores;
+
     /**
      * @return MockObject|GutenbergBlockHelper
      */
@@ -121,6 +123,8 @@ namespace Smartling\Tests\Smartling\Helpers {
 
     protected function setUp(): void
     {
+        global $acf_stores;
+        $this->acfStores = $acf_stores;
         $this->helper = new GutenbergBlockHelper(
             $this->createMock(AcfDynamicSupport::class),
             $this->createMock(ContentSerializationHelper::class),
@@ -130,6 +134,11 @@ namespace Smartling\Tests\Smartling\Helpers {
             $this->createMock(SettingsManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
         );
+    }
+
+    protected function tearDown(): void {
+        global $acf_stores;
+        $acf_stores = $this->acfStores;
     }
 
     public function testRegisterFilters()
@@ -440,14 +449,12 @@ namespace Smartling\Tests\Smartling\Helpers {
     public function testTranslationAttributesWithRelations()
     {
         global $acf_stores; // validated in AcfDynamicSupport
-        if ($acf_stores === null) {
-            $acf_stores = [
-                'local-fields' => new ACFish_Data(
-                    [['key' => 'field_6006a62721335', 'type' => 'image', 'name' => '', 'parent' => '']],
-                ),
-                'local-groups' => new ACFish_Data(),
-            ];
-        }
+        $acf_stores = [
+            'local-fields' => new ACFish_Data(
+                [['key' => 'field_6006a62721335', 'type' => 'image', 'name' => '', 'parent' => '']],
+            ),
+            'local-groups' => new ACFish_Data(),
+        ];
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $wpProxy->method('get_post_types')->willReturn([
             'acf-field' => 'acf-field',
