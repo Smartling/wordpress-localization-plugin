@@ -42,21 +42,19 @@ namespace {
             return $parsed_args;
         }
     }
-    if (!class_exists(\ACF_Data::class)) {
-        class ACF_Data {
-            public function __construct(public array $data = [])
-            {
-            }
-
-            public function get_data() {
-                return $this->data;
-            }
-        }
-    }
     require __DIR__ . '/../../wordpressBlocks.php';
 }
 
 namespace Smartling\Tests\Smartling\Helpers {
+    class ACFish_Data {
+        public function __construct(public array $data = [])
+        {
+        }
+
+        public function get_data() {
+            return $this->data;
+        }
+    }
 
     use PHPUnit\Framework\MockObject\MockObject;
     use PHPUnit\Framework\TestCase;
@@ -443,10 +441,10 @@ namespace Smartling\Tests\Smartling\Helpers {
     {
         global $acf_stores; // validated in AcfDynamicSupport
         $acf_stores = [
-            'local-fields' => new \ACF_Data(
+            'local-fields' => new ACFish_Data(
                 [['key' => 'field_6006a62721335', 'type' => 'image', 'name' => '', 'parent' => '']],
             ),
-            'local-groups' => new \ACF_Data(),
+            'local-groups' => new ACFish_Data(),
         ];
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $wpProxy->method('get_post_types')->willReturn([
@@ -461,6 +459,7 @@ namespace Smartling\Tests\Smartling\Helpers {
             ])
             ->onlyMethods([
                 'getReferencedTypeByKey',
+                'validateAcfStores'
             ])
             ->getMock();
         $acfDynamicSupport->method('getReferencedTypeByKey')->willReturnCallback(static function(string $key): string {
@@ -469,6 +468,7 @@ namespace Smartling\Tests\Smartling\Helpers {
             }
             return AcfDynamicSupport::REFERENCED_TYPE_NONE;
         });
+        $acfDynamicSupport->method('validateAcfStores')->willReturn(true);
         $replacer = $this->createMock(ReplacerInterface::class);
         $replacer->expects($this->exactly(2))->method('processAttributeOnDownload')->willReturnCallback(static function($originalValue) {
             $replacements = [
