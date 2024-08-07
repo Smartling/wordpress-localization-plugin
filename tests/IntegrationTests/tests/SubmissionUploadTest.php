@@ -90,10 +90,8 @@ HTML);
         ));
         $this->assertCount($existingSubmissionCount + 2, $submissionManager->find([1 => 1]));
         // findOne returns null on multiple submissions
-        $submissionPost = $submissionManager->findOne([SubmissionEntity::FIELD_SOURCE_ID => $postId]);
-        $this->assertNotNull($submissionPost);
-        $submissionImage = $submissionManager->findOne([SubmissionEntity::FIELD_SOURCE_ID => $attachmentId]);
-        $this->assertNotNull($submissionImage);
+        $this->assertNotNull($submissionManager->findOne([SubmissionEntity::FIELD_SOURCE_ID => $postId]));
+        $this->assertNotNull($submissionManager->findOne([SubmissionEntity::FIELD_SOURCE_ID => $attachmentId]));
         $uploadQueueManager = $this->getContainer()->get('manager.upload.queue');
         assert($uploadQueueManager instanceof UploadQueueManager);
         $this->assertNotEquals(0, $uploadQueueManager->count());

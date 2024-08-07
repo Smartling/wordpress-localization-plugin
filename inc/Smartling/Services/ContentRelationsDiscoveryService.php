@@ -105,7 +105,7 @@ class ContentRelationsDiscoveryService
                 }
                 $submission = $this->submissionManager->storeEntity($submission);
                 if ($batchUid === null) {
-                    $batchUid = $this->apiWrapper->createBatch($profile, $jobInfo->getJobUid(), [$fileUri]);
+                    $batchUid = $this->apiWrapper->createBatch($profile, $jobInfo->getJobUid(), [$fileUri], $authorize);
                 }
                 $queueIds[] = [$submission->getId()];
                 $this->logSubmissionCreated($submission, 'Bulk upload request', $jobInfo);
@@ -243,7 +243,7 @@ class ContentRelationsDiscoveryService
             ));
         }
 
-        $batchUid = null;
+        $fileUris = [];
         $queueIds = new IntegerIterator();
         foreach ($request->getTargetBlogIds() as $targetBlogId) {
             $submissionTemplateArray = [
@@ -261,7 +261,7 @@ class ContentRelationsDiscoveryService
 
             $sources = $this->getSources($request, $targetBlogId);
 
-            $submission = $this->submissionManager->findOne($searchParams, 1);
+            $submission = $this->submissionManager->findOne($searchParams);
             if ($submission === null) {
                 $sources[] = [
                     'id' => $request->getContentId(),
@@ -270,14 +270,7 @@ class ContentRelationsDiscoveryService
             } else {
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
-                if ($batchUid === null) {
-                    $batchUid = $this->apiWrapper->createBatch(
-                        $profile,
-                        $jobInfo->getJobUid(),
-                        [$submission->getFileUri()],
-                        $job->isAuthorize(),
-                    );
-                }
+                $fileUris[] = $submission->getFileUri();
                 $queueIds[] = $submission->getId();
             }
 
@@ -299,16 +292,19 @@ class ContentRelationsDiscoveryService
                 try {
                     $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                     $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
-                    if ($batchUid === null) {
-                        $batchUid = $this->apiWrapper->createBatch($profile, $jobInfo->getJobUid(), [$submission->getFileUri()]);
-                    }
+                    $fileUris[] = $submission->getFileUri();
                     $queueIds[] = $submission->getId();
                 } catch (SmartlingInvalidFactoryArgumentException) {
                     $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");
                 }
             }
         }
-        $this->uploadQueueManager->enqueue($queueIds, $batchUid);
+        $this->uploadQueueManager->enqueue($queueIds, $this->apiWrapper->createBatch(
+            $profile,
+            $jobInfo->getJobUid(),
+            $fileUris,
+            $job->isAuthorize(),
+        ));
     }
 
     /**
@@ -665,7 +661,7 @@ class ContentRelationsDiscoveryService
         $sources = [];
 
         foreach ($request->getRelationsOrdered() as $relationSet) {
-            foreach ($relationSet[$targetBlogId] as $type => $ids) {
+            foreach (($relationSet[$targetBlogId] ?? []) as $type => $ids) {
                 foreach ($ids as $id) {
                     if ($id === $request->getContentId() && $type === $request->getContentType()) {
                         $this->getLogger()->info("Related list contains reference to root content, skip adding sourceId=$id, contentType=$type to sources list");
