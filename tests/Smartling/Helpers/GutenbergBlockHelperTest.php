@@ -468,7 +468,7 @@ namespace Smartling\Tests\Smartling\Helpers {
             ])
             ->onlyMethods([
                 'getReferencedTypeByKey',
-                'validateAcfStores'
+                'validateAcfStores',
             ])
             ->getMock();
         $acfDynamicSupport->method('getReferencedTypeByKey')->willReturnCallback(static function(string $key): string {
