@@ -532,8 +532,13 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         $hydrated = $this->getFieldsFilter()->structurizeArray($translatedAttributes);
         $replacements = [];
         foreach (array_keys($translatedAttributes) as $attribute) {
-            if ($this->acfDynamicSupport->isRelatedField($translatedAttributes, $attribute)) {
-                $this->rulesManager->addTemporaryRule(new GutenbergReplacementRule($blockName, '$.' . str_replace(FieldsFilterHelper::ARRAY_DIVIDER, '.', $attribute), ReplacerFactory::REPLACER_RELATED));
+            $replacerId = $this->acfDynamicSupport->getReplacerIdForField($translatedAttributes, $attribute);
+            if ($replacerId !== null) {
+                $this->rulesManager->addTemporaryRule(new GutenbergReplacementRule(
+                    $blockName,
+                    '$.' . str_replace(FieldsFilterHelper::ARRAY_DIVIDER, '.', $attribute),
+                    $replacerId,
+                ));
             }
         }
         foreach ($this->rulesManager->getGutenbergReplacementRules($blockName, $hydrated) as $rule) {

@@ -11,6 +11,7 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
@@ -482,12 +483,24 @@ class AcfDynamicSupport
         static::$acfReverseDefinitionAction = $rules;
     }
 
-    public function isRelatedField(array $attributes, string $key): bool
+    public function getReplacerIdForField(array $attributes, string $key): ?string
     {
+        if (count($this->rules['copy']) === 0) {
+            $this->run();
+        }
         $parts = array_reverse(explode(FieldsFilterHelper::ARRAY_DIVIDER, $key));
         $parts[0] = "_$parts[0]";
         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, array_reverse($parts));
-        return array_key_exists($key, $attributes) && $this->getReferencedTypeByKey($attributes[$key]) !== self::REFERENCED_TYPE_NONE;
+        if (array_key_exists($key, $attributes)) {
+            if (in_array($parts[0], $this->rules['localize'], true)) {
+                return ReplacerFactory::REPLACER_RELATED;
+            }
+            if (in_array($parts[0], $this->rules['copy'], true)) {
+                return ReplacerFactory::REPLACER_COPY;
+            }
+        }
+
+        return null;
     }
 
     public function getReferencedTypeByKey($key): string
@@ -568,6 +581,7 @@ class AcfDynamicSupport
                     $this->rules['skip'][] = $id;
                     break;
                 case 'image':
+                case 'image_aspect_ratio_crop':
                 case 'file':
                 case 'post_object':
                 case 'page_link':
