@@ -9,27 +9,25 @@ use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\SiteHelper;
-use Smartling\MonologWrapper\MonologWrapper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class AcfDynamicSupport
 {
+    use LoggerSafeTrait;
+
     public const REFERENCED_TYPE_NONE = 'none';
     public const REFERENCED_TYPE_MEDIA = 'media';
     public const REFERENCED_TYPE_POST = 'post';
     public const REFERENCED_TYPE_TAXONOMY = 'taxonomy';
 
-    private LoggerInterface $logger;
-
     public static array $acfReverseDefinitionAction = [];
 
-    private SettingsManager $settingsManager;
-    private SiteHelper $siteHelper;
-
-    private array $definitions = [];
+    private ?array $definitions = null;
 
     private array $rules = [
         'skip'      => [],
@@ -40,19 +38,13 @@ class AcfDynamicSupport
 
     public function getDefinitions(): array
     {
-        return $this->definitions;
-    }
-
-    public function getLogger(): LoggerInterface
-    {
-        return $this->logger;
+        return $this->definitions ?? [];
     }
 
     /**
-     * @return mixed
      * @throws SmartlingConfigException
      */
-    private function getAcf()
+    private function getAcf(): mixed
     {
         global $acf;
 
@@ -63,12 +55,12 @@ class AcfDynamicSupport
         return $acf;
     }
 
-    public function __construct(SettingsManager $settingsManager, SiteHelper $siteHelper)
-    {
-        $this->logger = MonologWrapper::getLogger(get_class($this));
-        $this->settingsManager = $settingsManager;
-        $this->siteHelper = $siteHelper;
-    }
+    public function __construct(
+        private SettingsManager $settingsManager,
+        private SiteHelper $siteHelper,
+        private WordpressFunctionProxyHelper $wpProxy,
+    )
+    {}
 
     /**
      * @throws SmartlingDirectRunRuntimeException
@@ -482,17 +474,29 @@ class AcfDynamicSupport
         static::$acfReverseDefinitionAction = $rules;
     }
 
-    public function isRelatedField(array $attributes, string $key): bool
+    public function getReplacerIdForField(array $attributes, string $key): ?string
     {
+        if ($this->definitions === null) {
+            $this->run();
+        }
         $parts = array_reverse(explode(FieldsFilterHelper::ARRAY_DIVIDER, $key));
         $parts[0] = "_$parts[0]";
         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, array_reverse($parts));
-        return array_key_exists($key, $attributes) && $this->getReferencedTypeByKey($attributes[$key]) !== self::REFERENCED_TYPE_NONE;
+        if (array_key_exists($key, $attributes)) {
+            if (in_array($attributes[$key], $this->rules['localize'], true)) {
+                return ReplacerFactory::REPLACER_RELATED;
+            }
+            if (in_array($attributes[$key], $this->rules['copy'], true)) {
+                return ReplacerFactory::REPLACER_COPY;
+            }
+        }
+
+        return null;
     }
 
     public function getReferencedTypeByKey($key): string
     {
-        if (count($this->definitions) === 0) {
+        if ($this->definitions === null) {
             $this->run();
         }
         $type = $this->definitions[$key]['type'] ?? '';
@@ -519,7 +523,7 @@ class AcfDynamicSupport
         if (!array_key_exists('meta', $data)) {
             return $data;
         }
-        if (count($this->rules['copy']) === 0) {
+        if ($this->definitions === null) {
             $this->run();
         }
 
@@ -568,6 +572,7 @@ class AcfDynamicSupport
                     $this->rules['skip'][] = $id;
                     break;
                 case 'image':
+                case 'image_aspect_ratio_crop':
                 case 'file':
                 case 'post_object':
                 case 'page_link':
@@ -591,7 +596,7 @@ class AcfDynamicSupport
 
     private function getPostTypes(): array
     {
-        return array_keys(get_post_types());
+        return array_keys($this->wpProxy->get_post_types());
     }
 
     private function checkAcfTypes(): bool
