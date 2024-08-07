@@ -4,7 +4,7 @@ Tags: translation, localization, localisation, translate, multilingual, smartlin
 Requires at least: 5.5
 Tested up to: 6.4.1
 Requires PHP: 8.0
-Stable tag: 3.9.4
+Stable tag: 3.9.5
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.9.5 =
+* Fixed submissions failing with "Batch is not suitable for adding files" error when uploading with related content
+* Fixed auto authorise flag ignored when submitting from widget (again)
+
 = 3.9.4 =
 * Added support for related attachment from Advanced Custom Fields: Image Aspect Ratio Crop plugin
 * Fixed import of fine-tuning lists failing to import partially

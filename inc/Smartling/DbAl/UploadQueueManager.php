@@ -42,11 +42,15 @@ class UploadQueueManager {
 
     public function dequeue(): ?UploadQueueItem
     {
-        while (($result = $this->db->getRowArray(QueryBuilder::buildSelectQuery($this->tableName, [
-            UploadQueueEntity::FIELD_ID,
-            UploadQueueEntity::FIELD_BATCH_UID,
-            UploadQueueEntity::FIELD_SUBMISSION_IDS,
-        ]))) !== null) {
+        while (($result = $this->db->getRowArray(QueryBuilder::buildSelectQuery(
+            tableName: $this->tableName,
+            fieldsList: [
+                UploadQueueEntity::FIELD_ID,
+                UploadQueueEntity::FIELD_BATCH_UID,
+                UploadQueueEntity::FIELD_SUBMISSION_IDS,
+            ],
+            sortOptions: [UploadQueueEntity::FIELD_ID => 'ASC'],
+        ))) !== null) {
             $this->delete($result[UploadQueueEntity::FIELD_ID]);
             $batchUid = $result[UploadQueueEntity::FIELD_BATCH_UID];
             $locales = new IntStringPairCollection();
