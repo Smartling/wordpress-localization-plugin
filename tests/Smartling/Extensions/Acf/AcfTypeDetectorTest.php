@@ -58,7 +58,11 @@ class AcfTypeDetectorTest extends TestCase
         $siteHelper = $this->createMock(SiteHelper::class);
         $siteHelper->method('listBlogs')->willReturn([]);
 
-        $ads = new AcfDynamicSupport($settingsManager, $siteHelper);
+        $ads = new AcfDynamicSupport(
+            $settingsManager,
+            $siteHelper,
+            new WordpressFunctionProxyHelper(),
+        );
         $ads->run();
 
         $fields = json_decode('{"entity\/post_content\/acf\/testimonial\/data\/media":"297",' .

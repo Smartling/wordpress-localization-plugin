@@ -231,4 +231,24 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
             $this->getTargetPost($this->getSiteHelper(), $translationHelper->reloadSubmission($submission))->post_content
         );
     }
+
+    /**
+     * ACF block with choice fields needs no translation
+     * @see https://bt.smartling.net/browse/WP-903
+     */
+    public function testAcfGutenbergCopyTranslation()
+    {
+        $submissionManager = $this->getSubmissionManager();
+        $translationHelper = $this->getTranslationHelper();
+        $sourceBlogId = 1;
+        $targetBlogId = 2;
+        $postId = $this->createPost(ContentTypeHelper::CONTENT_TYPE_POST, 'title', file_get_contents(DIR_TESTDATA . '/wp-903-source.html'));
+        $submission = $translationHelper->prepareSubmission('post', $sourceBlogId, $postId, $targetBlogId);
+        $submission = $submissionManager->storeEntity($submission);
+        $this->uploadDownload($submission);
+        $this->assertStringEqualsFile(
+            DIR_TESTDATA . '/wp-903-expected.html',
+            $this->getTargetPost($this->getSiteHelper(), $translationHelper->reloadSubmission($submission))->post_content
+        );
+    }
 }
