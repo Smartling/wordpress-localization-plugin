@@ -480,6 +480,9 @@ class AcfDynamicSupport
             $this->run();
         }
         $parts = array_reverse(explode(FieldsFilterHelper::ARRAY_DIVIDER, $key));
+        if (is_numeric($parts[0]) && count($parts) > 1) {
+            array_shift($parts);
+        }
         $parts[0] = "_$parts[0]";
         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, array_reverse($parts));
         if (array_key_exists($key, $attributes)) {
