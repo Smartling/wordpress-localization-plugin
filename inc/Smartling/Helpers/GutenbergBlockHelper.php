@@ -614,11 +614,15 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         return $attributes;
     }
 
-    private function addTemporaryRulesFromAcf(array $flatAttributes, string $blockName): void
+    private function addTemporaryRulesFromAcf(array $flatAttributes, ?string $blockName): void
     {
+        if ($blockName === null) {
+            return;
+        }
         foreach (array_keys($flatAttributes) as $attribute) {
             $replacerId = $this->acfDynamicSupport->getReplacerIdForField($flatAttributes, $attribute);
             if ($replacerId !== null) {
+                $this->getLogger()->debug("Adding temporary rule for blockName=$blockName, propertyPath=$attribute, replacerId=$replacerId");
                 $this->rulesManager->addTemporaryRule(new GutenbergReplacementRule(
                     $blockName,
                     '$.' . str_replace(FieldsFilterHelper::ARRAY_DIVIDER, '.', $attribute),
