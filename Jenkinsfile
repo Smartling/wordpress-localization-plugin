@@ -58,6 +58,7 @@ pipeline {
         stage('Release on WordPress.org?') {
             agent none
             steps {
+                echo "${currentBuild.result}"
                 timeout(time: 1, unit: 'HOURS') {
                     input "Release on WordPress.org?"
                 }
