@@ -652,6 +652,7 @@ XML;
 
     public function testReplacePostTranslateBlockContent(): void
     {
+        $this->fail(':(');
         $sourceId = 1;
         $targetId = 2;
         $sourceBlock = '<!-- wp:core/image {"id":' . $sourceId . ',"sizeSlug":"[l~árgé]","smartlingLockId":"[t~úzsc]"} -->

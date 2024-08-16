@@ -59,6 +59,7 @@ pipeline {
             agent none
             steps {
                 echo "${currentBuild.result}"
+                echo "${buildResult}"
                 timeout(time: 1, unit: 'HOURS') {
                     input "Release on WordPress.org?"
                 }
