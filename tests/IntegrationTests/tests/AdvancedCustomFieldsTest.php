@@ -222,7 +222,7 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $translationHelper = $this->getTranslationHelper();
         $sourceBlogId = 1;
         $targetBlogId = 2;
-        $postId = $this->createPost(ContentTypeHelper::CONTENT_TYPE_POST, 'title', file_get_contents(DIR_TESTDATA . '/wp-690-source.html'));
+        $postId = $this->createPost(ContentTypeHelper::CONTENT_TYPE_POST, 'WP-690', file_get_contents(DIR_TESTDATA . '/wp-690-source.html'));
         $submission = $translationHelper->prepareSubmission('post', $sourceBlogId, $postId, $targetBlogId);
         $submission = $submissionManager->storeEntity($submission);
         $this->uploadDownload($submission);

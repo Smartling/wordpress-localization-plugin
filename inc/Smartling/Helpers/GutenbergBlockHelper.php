@@ -92,6 +92,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         foreach ($block->getInnerBlocks() as $index => $innerBlock) {
             $block = $block->withInnerBlock($this->replacePreTranslateBlockContent($innerBlock), $index);
         }
+        $this->addTemporaryRulesFromAcf($this->getFieldsFilter()->flattenArray($attributes), $block->getBlockName());
         foreach ($this->rulesManager->getGutenbergReplacementRules($block->getBlockName(), $attributes) as $rule) {
             try {
                 $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
@@ -531,16 +532,7 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         $hydrated = $this->getFieldsFilter()->structurizeArray($translatedAttributes);
         $replacements = [];
-        foreach (array_keys($translatedAttributes) as $attribute) {
-            $replacerId = $this->acfDynamicSupport->getReplacerIdForField($translatedAttributes, $attribute);
-            if ($replacerId !== null) {
-                $this->rulesManager->addTemporaryRule(new GutenbergReplacementRule(
-                    $blockName,
-                    '$.' . str_replace(FieldsFilterHelper::ARRAY_DIVIDER, '.', $attribute),
-                    $replacerId,
-                ));
-            }
-        }
+        $this->addTemporaryRulesFromAcf($translatedAttributes, $blockName);
         foreach ($this->rulesManager->getGutenbergReplacementRules($blockName, $hydrated) as $rule) {
             try {
                 $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
@@ -620,5 +612,23 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
         }
 
         return $attributes;
+    }
+
+    private function addTemporaryRulesFromAcf(array $flatAttributes, ?string $blockName): void
+    {
+        if ($blockName === null) {
+            return;
+        }
+        foreach (array_keys($flatAttributes) as $attribute) {
+            $replacerId = $this->acfDynamicSupport->getReplacerIdForField($flatAttributes, $attribute);
+            if ($replacerId !== null) {
+                $this->getLogger()->debug("Adding temporary rule for blockName=$blockName, propertyPath=$attribute, replacerId=$replacerId");
+                $this->rulesManager->addTemporaryRule(new GutenbergReplacementRule(
+                    $blockName,
+                    '$.' . str_replace(FieldsFilterHelper::ARRAY_DIVIDER, '.', $attribute),
+                    $replacerId,
+                ));
+            }
+        }
     }
 }

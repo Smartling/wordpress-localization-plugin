@@ -909,7 +909,7 @@ some par 2
         ];
     }
 
-    private function getHelper($rulesManager = null, $replacerFactory = null)
+    private function getHelper($rulesManager = null, $replacerFactory = null): GutenbergBlockHelper
     {
         if ($rulesManager === null) {
             $rulesManager = $this->createMock(MediaAttachmentRulesManager::class);
@@ -917,7 +917,7 @@ some par 2
         if ($replacerFactory === null) {
             $replacerFactory = $this->createMock(ReplacerFactory::class);
         }
-        return new GutenbergBlockHelper(
+        $x = new GutenbergBlockHelper(
             $this->createMock(AcfDynamicSupport::class),
             $this->createMock(ContentSerializationHelper::class),
             $rulesManager,
@@ -926,6 +926,9 @@ some par 2
             $this->createMock(SettingsManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
         );
+        $x->setFieldsFilter($this->getFieldsFilterHelper());
+
+        return $x;
     }
 
     private function getFieldsFilterHelper(): FieldsFilterHelper
