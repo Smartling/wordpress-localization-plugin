@@ -55,4 +55,4 @@ if (is_admin() || (defined('DOING_CRON') && true === DOING_CRON)) {
 }
 
 require_once plugin_dir_path(__FILE__) . 'inc/autoload.php';
-//(new RestApi())->register_routes();
+(new RestApi())->register_routes();
