@@ -307,7 +307,12 @@ namespace Smartling\Tests\Smartling\Helpers {
      */
     public function testRenderGutenbergBlock(string $blockName, array $attributes, array $chunks, string $expected, int $level = 0)
     {
-        self::assertEquals($expected, $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks, $level));
+        $rendered = $this->helper->renderGutenbergBlock($blockName, $attributes, $chunks, $level);
+        $matches = [];
+        preg_match('~({.+}) /?-->~', $rendered, $matches);
+        self::assertEquals($expected, $rendered);
+        // Ensure json in attributes is valid
+        json_decode($matches[1], true, 512, JSON_THROW_ON_ERROR);
     }
 
     public function renderGutenbergBlockDataProvider(): array
@@ -375,7 +380,7 @@ namespace Smartling\Tests\Smartling\Helpers {
                 'wework-blocks/geo-location',
                 ['showList' => '[{&quot;value&quot;:&quot;united-states&quot;,&quot;label&quot;:&quot;United States&quot;}]'],
                 [],
-                '<!-- wp:wework-blocks/geo-location {"showList":"[{\\\\\\"value\\\\\\":\\\\\\"united-states\\\\\\",\\\\\\"label\\\\\\":\\\\\\"United States\\\\\\"}]"} /-->',
+                '<!-- wp:wework-blocks/geo-location {"showList":"[{\\"value\\":\\"united-states\\",\\"label\\":\\"United States\\"}]"} /-->',
             ],
             'nested attributes' => [
                 'acf/image-text-wrap',
