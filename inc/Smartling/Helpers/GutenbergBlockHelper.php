@@ -416,10 +416,10 @@ class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
     {
         /* Some user content might have JSON with \u0022 to escape quotes.
         After processing XML \u0022 turns into &quot;, which is correct for general content.
-        To properly encode the quotes in JSON again we replace &quot; with \" */
+        To properly encode the quotes in JSON again we replace &quot; with " */
         if ($depth === 0 && $this->isPossibleJson($attrs)) {
             array_walk_recursive($attrs, static function (&$value) {
-                $value = str_replace('&quot;', '\"', $value);
+                $value = str_replace('&quot;', '"', $value);
             });
         }
         $attributes = '';
