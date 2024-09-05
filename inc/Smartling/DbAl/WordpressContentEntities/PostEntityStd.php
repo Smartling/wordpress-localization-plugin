@@ -222,7 +222,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         $this->getLogger()->debug(sprintf(
             'Calling wp_insert_post with postArray="%s", addSlashes=%s, currentBlogId=%d',
             json_encode($array),
-            $addSlashes,
+            $addSlashes ? '1' : '0',
             $this->wordpressFunctionProxyHelper->get_current_blog_id(),
         ));
         $res = wp_insert_post($array, true);
