@@ -151,6 +151,70 @@ namespace Smartling\Tests\Services {
             ]));
         }
 
+        public function testCreateSubmissionsRelations()
+        {
+            $sourceBlogId = 1;
+            $sourceId = 48;
+            $contentType = 'post';
+            $targetBlogId = 2;
+            $jobName = 'Job Name';
+            $jobUid = 'abcdef123456';
+
+            $apiWrapper = $this->createMock(ApiWrapper::class);
+            $apiWrapper->expects($this->once())->method('createBatch')->willReturnCallback(
+                function (ConfigurationProfileEntity $profile, string $jobUid, array $fileUris): string {
+                    $arrayPointer = 0; // TODO replace with array_is_list() once php 8.1 is used
+                    foreach ($fileUris as $key => $value) {
+                        if ($key !== $arrayPointer++) {
+                            throw new \RuntimeException('FileUris expected to be list');
+                        }
+                    }
+
+                    return '';
+            });
+
+            $submission1 = $this->createMock(SubmissionEntity::class);
+            $submission1->method('getId')->willReturn(17);
+            $submission1->method('getFileUri')->willReturn('17');
+
+            $submission2 = $this->createMock(SubmissionEntity::class);
+            $submission2->method('getId')->willReturn(23);
+            $submission2->method('getFileUri')->willReturn('23');
+
+            $submissionFactory = $this->createMock(SubmissionFactory::class);
+            $submissionFactory->method('fromArray')->willReturn($submission1, $submission2);
+
+            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()
+                ->getMock();
+            $submissionManager->method('findOne')->willReturn($submission1, $submission1, $submission2);
+            $submissionManager->method('storeEntity')->willReturnArgument(0);
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
+            $this->getContentRelationDiscoveryService(
+                $apiWrapper,
+                submissionManager: $submissionManager,
+                submissionFactory: $submissionFactory,
+                wpProxy: $wpProxy
+            )->createSubmissions(UserTranslationRequest::fromArray([
+                'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
+                'job' =>
+                    [
+                        'id' => $jobUid,
+                        'name' => $jobName,
+                        'description' => '',
+                        'dueDate' => '',
+                        'timeZone' => 'Europe/Kiev',
+                        'authorize' => 'true',
+                    ],
+                'targetBlogIds' => $targetBlogId,
+                'relations' => [
+                    1 => [$targetBlogId => ['post' => [17]]],
+                    2 => [$targetBlogId => ['attachment' => [23]]],
+                ],
+            ]));
+        }
         public function testBulkSubmitHandler()
         {
             $sourceBlogId = 1;
