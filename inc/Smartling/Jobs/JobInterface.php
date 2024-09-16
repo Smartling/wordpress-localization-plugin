@@ -10,5 +10,5 @@ interface JobInterface
 
     public function getJobHookName(): string;
 
-    public function run(): void;
+    public function run(string $source): void;
 }

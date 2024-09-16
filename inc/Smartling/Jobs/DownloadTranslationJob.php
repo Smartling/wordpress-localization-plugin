@@ -32,7 +32,7 @@ class DownloadTranslationJob extends JobAbstract
         return self::JOB_HOOK_NAME;
     }
 
-    public function run(): void
+    public function run(string $source): void
     {
         $this->getLogger()->debug('Started Translation Download Job.');
 

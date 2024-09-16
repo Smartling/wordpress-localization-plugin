@@ -35,7 +35,7 @@ class LastModifiedCheckJob extends JobAbstract
         return self::JOB_HOOK_NAME;
     }
 
-    public function run(): void
+    public function run(string $source): void
     {
         $this->getLogger()->info('Started Last-Modified Check Job.');
 

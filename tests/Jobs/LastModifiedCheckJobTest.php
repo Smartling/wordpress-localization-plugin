@@ -154,7 +154,7 @@ class LastModifiedCheckJobTest extends TestCase
             ->method('storeSubmissions')
             ->will(self::returnArgument(0));
 
-        $worker->run();
+        $worker->run('test');
     }
 
     private function mockedResultToDequeueResult(array $mocked): array
@@ -423,7 +423,7 @@ class LastModifiedCheckJobTest extends TestCase
             ->expects(self::exactly($storeEntityCount))
             ->method('setErrorMessage');
 
-        $worker->run();
+        $worker->run('test');
     }
 
     public function failLastModifiedDataProvider(): array
@@ -547,6 +547,6 @@ class LastModifiedCheckJobTest extends TestCase
 
         $this->submissionManager->expects($this->exactly(2))->method('storeSubmissions')->withConsecutive([[$missingSubmission]], [['TestLocaleA' => $submissionList[0], 'TestLocaleB' => $submissionList[1]]]);
 
-        $this->lastModifiedWorker->run();
+        $this->lastModifiedWorker->run('test');
     }
 }

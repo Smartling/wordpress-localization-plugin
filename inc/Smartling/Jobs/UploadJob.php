@@ -34,15 +34,20 @@ class UploadJob extends JobAbstract
         return self::JOB_HOOK_NAME;
     }
 
-    public function run(): void
+    public function run(string $source): void
     {
-        $this->getLogger()->debug('Started UploadJob.');
+        $message = 'UploadJob';
+        if ($source !== '') {
+            $message .= ", source=\"$source\"";
+        }
+        $message .= '.';
+        $this->getLogger()->debug("Started $message");
 
         $this->processUploadQueue();
 
         $this->processCloning();
 
-        $this->getLogger()->debug('Finished UploadJob.');
+        $this->getLogger()->debug("Finished $message");
     }
 
     private function processUploadQueue(): void
