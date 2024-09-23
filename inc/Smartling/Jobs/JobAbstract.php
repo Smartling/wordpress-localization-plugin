@@ -191,7 +191,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
     {
         $this->placeLockFlag(source: $source);
         try {
-            $this->run();
+            $this->run($source);
         } finally {
             try {
                 $this->dropLockFlag();

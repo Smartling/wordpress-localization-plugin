@@ -437,7 +437,7 @@ class Bootstrap
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution
          */
-        add_action($action, static function () use ($di) {
+        add_action($action, static function () use ($action, $di) {
             // registering taxonomies first.
             $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, []);
             if (!is_iterable($dynTermDefinitions)) {
@@ -452,6 +452,9 @@ class Bootstrap
             if (!is_iterable($externalDefinitions)) {
                 self::$loggerInstance->critical('External definitions not iterable after filter ' . ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE . '. This is most likely due to an error outside of the plugins code.');
             }
+            $registeredTypes = array_column(array_column($externalDefinitions, 'type'), 'identifier');
+            self::$loggerInstance->debug('Registered custom post types: ' .
+                implode(', ', $registeredTypes) . ", action=$action, count=" . count($registeredTypes));
             foreach ($externalDefinitions as $externalDefinition) {
                 CustomPostType::registerCustomType($di, $externalDefinition);
             }
