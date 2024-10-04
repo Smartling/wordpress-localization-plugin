@@ -771,10 +771,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(ContentHelper::class),
                 $this->createMock(SettingsManager::class),
                 $this->createMock(SubmissionManager::class),
-                null,
-                null,
-                null,
-                $acfDynamicSupport
+                acfDynamicSupport: $acfDynamicSupport,
             );
 
             $this->assertEquals([$attachmentId], $x->getReferencesFromAcf(new GutenbergBlock('acf/gallery-carousel', [
@@ -799,10 +796,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(ContentHelper::class),
                 $this->createMock(SettingsManager::class),
                 $this->createMock(SubmissionManager::class),
-                null,
-                null,
-                null,
-                $acfDynamicSupport
+                acfDynamicSupport: $acfDynamicSupport,
             );
 
             $this->assertEquals([22892, 22893], $x->getReferencesFromAcf(new GutenbergBlock('acf/gallery-carousel', [
