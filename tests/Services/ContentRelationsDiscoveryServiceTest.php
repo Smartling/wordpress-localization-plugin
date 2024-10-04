@@ -800,7 +800,7 @@ namespace Smartling\Tests\Services {
             );
 
             $this->assertEquals([22892, 22893], $x->getReferencesFromAcf(new GutenbergBlock('acf/gallery-carousel', [
-                'name' => 'acf/gallery-carousel',
+                'name' => 'acf/testimonial-slider',
                 'data' => [
                     'testimonials_slider' => ["22892", "22893"],
                     '_testimonials_slider' => 'field_66c32d42be1aa',
