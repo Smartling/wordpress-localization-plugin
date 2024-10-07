@@ -711,7 +711,13 @@ class ContentRelationsDiscoveryService
                 AcfDynamicSupport::REFERENCED_TYPE_POST,
             ], true)) {
                 $referencedValue = $block->getAttributes()['data'][substr($attribute, 1)] ?? null;
-                if (is_numeric($referencedValue)) {
+                if (is_array($referencedValue)) {
+                    foreach ($referencedValue as $innerReferencedValue) {
+                        if (is_numeric($innerReferencedValue)) {
+                            $result[] = (int)$innerReferencedValue;
+                        }
+                    }
+                } elseif (is_numeric($referencedValue)) {
                     $result[] = (int)$referencedValue;
                 }
             }

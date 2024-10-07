@@ -67,7 +67,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Tuner\MediaAttachmentRulesManager;
     use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 
-    class ContentRelationDiscoveryServiceTest extends TestCase
+    class ContentRelationsDiscoveryServiceTest extends TestCase
     {
         private ?\Exception $exception = null;
         protected function setUp(): void
@@ -750,19 +750,28 @@ namespace Smartling\Tests\Services {
             $irrelevantKey = 'field_5d5db4597e812';
 
             $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
-            $acfDynamicSupport->expects($this->exactly(2))->method('getReferencedTypeByKey')
-                ->withConsecutive([$attachmentKey], [$irrelevantKey])
-                ->willReturnOnConsecutiveCalls(AcfDynamicSupport::REFERENCED_TYPE_MEDIA, AcfDynamicSupport::REFERENCED_TYPE_NONE);
+            $matcher = $this->exactly(2);
+            $acfDynamicSupport->expects($matcher)->method('getReferencedTypeByKey')
+                ->willReturnCallback(function ($key) use ($attachmentKey, $irrelevantKey, $matcher) {
+                    switch ($matcher->getInvocationCount()) {
+                        case 1:
+                            $this->assertEquals($attachmentKey, $key);
+
+                            return AcfDynamicSupport::REFERENCED_TYPE_MEDIA;
+                        case 2:
+                            $this->assertEquals($irrelevantKey, $key);
+
+                            return AcfDynamicSupport::REFERENCED_TYPE_NONE;
+                    }
+                    $this->fail('Expected two calls');
+                });
 
             $x = $this->getContentRelationDiscoveryService(
                 $this->createMock(ApiWrapper::class),
                 $this->createMock(ContentHelper::class),
                 $this->createMock(SettingsManager::class),
                 $this->createMock(SubmissionManager::class),
-                null,
-                null,
-                null,
-                $acfDynamicSupport
+                acfDynamicSupport: $acfDynamicSupport,
             );
 
             $this->assertEquals([$attachmentId], $x->getReferencesFromAcf(new GutenbergBlock('acf/gallery-carousel', [
@@ -773,6 +782,28 @@ namespace Smartling\Tests\Services {
                     '_media_0_image' => $attachmentKey,
                     'media' => 1,
                     '_media' => $irrelevantKey,
+                ]
+            ], [], '', [])));
+        }
+
+        public function testAcfReferencesArraysDetected() {
+            $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
+            $acfDynamicSupport->expects($this->once())->method('getReferencedTypeByKey')
+                ->willReturn(AcfDynamicSupport::REFERENCED_TYPE_POST);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $this->createMock(ApiWrapper::class),
+                $this->createMock(ContentHelper::class),
+                $this->createMock(SettingsManager::class),
+                $this->createMock(SubmissionManager::class),
+                acfDynamicSupport: $acfDynamicSupport,
+            );
+
+            $this->assertEquals([22892, 22893], $x->getReferencesFromAcf(new GutenbergBlock('acf/gallery-carousel', [
+                'name' => 'acf/testimonial-slider',
+                'data' => [
+                    'testimonials_slider' => ["22892", "22893"],
+                    '_testimonials_slider' => 'field_66c32d42be1aa',
                 ]
             ], [], '', [])));
         }
