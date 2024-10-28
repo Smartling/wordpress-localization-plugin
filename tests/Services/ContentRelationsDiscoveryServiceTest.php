@@ -418,7 +418,7 @@ namespace Smartling\Tests\Services {
                 $wpProxy,
             );
 
-            $x->bulkUpload(true, $sourceIds, $contentType, $sourceBlogId, new JobEntity($jobName, $jobUid, $projectUid), $profile, $targetBlogId, $sourceBlogId);
+            $x->bulkUpload(true, $sourceIds, $contentType, $sourceBlogId, new JobEntity($jobName, $jobUid, $projectUid), $profile, $targetBlogId);
             $this->assertCount(0, $unsavedSubmissionIds);
         }
 

@@ -85,7 +85,6 @@ class ContentRelationsDiscoveryService
         JobEntity $jobInfo,
         ConfigurationProfileEntity $profile,
         array $targetBlogIds,
-        string $batchUid = null,
         bool $enqueue = true,
     ): array {
         $this->getLogger()->debug("Bulk upload request, contentIds=" . implode(',', $contentIds));
@@ -97,16 +96,12 @@ class ContentRelationsDiscoveryService
                     $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
                 $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $fileUri = $this->fileUriHelper->generateFileUri($submission);
-                $submission->setFileUri($fileUri);
+                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $title = $this->getTitle($submission);
                 if ($title !== '') {
                     $submission->setSourceTitle($title);
                 }
                 $submission = $this->submissionManager->storeEntity($submission);
-                if ($batchUid === null) {
-                    $batchUid = $this->apiWrapper->createBatch($profile, $jobInfo->getJobUid(), [$fileUri], $authorize);
-                }
                 $queueIds[] = [$submission->getId()];
                 $this->logSubmissionCreated($submission, 'Bulk upload request', $jobInfo);
                 if ($submission->getContentType() === ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
@@ -119,7 +114,7 @@ class ContentRelationsDiscoveryService
                 $carry[] = $item->ID;
                 return $carry;
             }, []);
-            $queueIds = $this->bulkUpload(
+            $queueIds[] = array_merge(...$this->bulkUpload(
                 $authorize,
                 $menuItemIds,
                 ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
@@ -127,12 +122,19 @@ class ContentRelationsDiscoveryService
                 $jobInfo,
                 $profile,
                 $targetBlogIds,
-                $batchUid,
                 false,
-            );
+            ));
         }
         if ($enqueue) {
-            $this->uploadQueueManager->enqueue(new IntegerIterator(array_merge(...$queueIds)), $batchUid);
+            $submissionIds = array_merge(...$queueIds);
+            $this->uploadQueueManager->enqueue(new IntegerIterator($submissionIds), $this->apiWrapper->createBatch(
+                $profile,
+                $jobInfo->getJobUid(),
+                array_unique(array_map(static function (SubmissionEntity $submission) {
+                    return $submission->getFileUri();
+                }, $this->submissionManager->find([SubmissionEntity::FIELD_ID => $submissionIds]))),
+                $authorize,
+            ));
         }
 
         return $queueIds;
