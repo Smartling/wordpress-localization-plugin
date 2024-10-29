@@ -96,11 +96,11 @@ class ContentRelationsDiscoveryService
                     $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
                 $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $title = $this->getTitle($submission);
                 if ($title !== '') {
                     $submission->setSourceTitle($title);
                 }
+                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $submission = $this->submissionManager->storeEntity($submission);
                 $queueIds[] = [$submission->getId()];
                 $this->logSubmissionCreated($submission, 'Bulk upload request', $jobInfo);
