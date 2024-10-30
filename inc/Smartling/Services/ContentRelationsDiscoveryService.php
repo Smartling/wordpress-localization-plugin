@@ -55,6 +55,7 @@ class ContentRelationsDiscoveryService
 
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,
+        private ArrayHelper $arrayHelper,
         private ContentHelper $contentHelper,
         private ContentTypeManager $contentTypeManager,
         private FieldsFilterHelper $fieldFilterHelper,
@@ -85,7 +86,6 @@ class ContentRelationsDiscoveryService
         JobEntity $jobInfo,
         ConfigurationProfileEntity $profile,
         array $targetBlogIds,
-        string $batchUid = null,
         bool $enqueue = true,
     ): array {
         $this->getLogger()->debug("Bulk upload request, contentIds=" . implode(',', $contentIds));
@@ -93,21 +93,19 @@ class ContentRelationsDiscoveryService
         $menuIds = [];
         foreach ($targetBlogIds as $targetBlogId) {
             foreach ($contentIds as $id) {
-                $submission = $this->submissionManager->findTargetBlogSubmission($contentType, $currentBlogId, $id, $targetBlogId) ??
-                    $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
+                $submission = $this->submissionManager->findTargetBlogSubmission($contentType, $currentBlogId, $id, $targetBlogId);
+                if ($submission === null) {
+                    $submission = $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
+                    $title = $this->getTitle($submission);
+                    if ($title !== '') {
+                        $submission->setSourceTitle($title);
+                    }
+                    $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
+                }
                 $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $fileUri = $this->fileUriHelper->generateFileUri($submission);
-                $submission->setFileUri($fileUri);
-                $title = $this->getTitle($submission);
-                if ($title !== '') {
-                    $submission->setSourceTitle($title);
-                }
                 $submission = $this->submissionManager->storeEntity($submission);
-                if ($batchUid === null) {
-                    $batchUid = $this->apiWrapper->createBatch($profile, $jobInfo->getJobUid(), [$fileUri], $authorize);
-                }
-                $queueIds[] = [$submission->getId()];
+                $queueIds[] = $submission->getId();
                 $this->logSubmissionCreated($submission, 'Bulk upload request', $jobInfo);
                 if ($submission->getContentType() === ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
                     $menuIds[] = $submission->getSourceId();
@@ -119,7 +117,7 @@ class ContentRelationsDiscoveryService
                 $carry[] = $item->ID;
                 return $carry;
             }, []);
-            $queueIds = $this->bulkUpload(
+            $queueIds = $this->arrayHelper->add($queueIds, $this->bulkUpload(
                 $authorize,
                 $menuItemIds,
                 ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
@@ -127,12 +125,19 @@ class ContentRelationsDiscoveryService
                 $jobInfo,
                 $profile,
                 $targetBlogIds,
-                $batchUid,
                 false,
-            );
+            ));
         }
         if ($enqueue) {
-            $this->uploadQueueManager->enqueue(new IntegerIterator(array_merge(...$queueIds)), $batchUid);
+            $queueIds = array_unique($queueIds);
+            $this->uploadQueueManager->enqueue(new IntegerIterator($queueIds), $this->apiWrapper->createBatch(
+                $profile,
+                $jobInfo->getJobUid(),
+                array_unique(array_map(static function (SubmissionEntity $submission) {
+                    return $submission->getFileUri();
+                }, $this->submissionManager->find([SubmissionEntity::FIELD_ID => $queueIds]))),
+                $authorize,
+            ));
         }
 
         return $queueIds;

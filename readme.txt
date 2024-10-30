@@ -2,9 +2,9 @@
 Contributors: smartling
 Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
 Requires at least: 5.5
-Tested up to: 6.4.1
+Tested up to: 6.6.2
 Requires PHP: 8.0
-Stable tag: 3.9.11
+Stable tag: 3.9.12
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.9.12 =
+* Fixed Bulk Submit ingesting only one submission for translation when many were selected
+
 = 3.9.11 =
 * Added related content detection for ACF field groups with group type `relation`
 

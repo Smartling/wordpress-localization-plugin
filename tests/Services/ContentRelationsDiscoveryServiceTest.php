@@ -32,6 +32,7 @@ namespace Smartling\Tests\Services {
     use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
     use Smartling\Extensions\Acf\AcfDynamicSupport;
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
+    use Smartling\Helpers\ArrayHelper;
     use Smartling\Helpers\ContentHelper;
     use Smartling\Helpers\ContentSerializationHelper;
     use Smartling\Helpers\CustomMenuContentTypeHelper;
@@ -246,12 +247,12 @@ namespace Smartling\Tests\Services {
 
             $submission1 = $this->createMock(SubmissionEntity::class);
             $submission1->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
-            $submission1->expects($this->once())->method('setSourceTitle')->with($expectedTitles[0]);
+            $submission1->expects($this->never())->method('setSourceTitle');
             $submission1->method('getId')->willReturn(48);
 
             $submission2 = $this->createMock(SubmissionEntity::class);
             $submission2->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
-            $submission2->expects($this->once())->method('setSourceTitle')->with($expectedTitles[1]);
+            $submission2->expects($this->never())->method('setSourceTitle');
             $submission2->method('getId')->willReturn(49);
 
             $submissions = [$submission1, $submission2];
@@ -291,9 +292,7 @@ namespace Smartling\Tests\Services {
                 wpProxy: $wpProxy,
             );
 
-            $x->expects(self::exactly(count($sourceIds)))->method('getTitle')->willReturnCallback(static function (SubmissionEntity $submission) use ($titlePrefix) {
-                return $titlePrefix . $submission->getId();
-            });
+            $x->expects($this->never())->method('getTitle');
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [0]],
@@ -397,6 +396,7 @@ namespace Smartling\Tests\Services {
 
             $x = new ContentRelationsDiscoveryService(
                 $this->createMock(AcfDynamicSupport::class),
+                new ArrayHelper(),
                 $contentHelper,
                 $this->createMock(ContentTypeManager::class),
                 $this->createMock(FieldsFilterHelper::class),
@@ -418,7 +418,7 @@ namespace Smartling\Tests\Services {
                 $wpProxy,
             );
 
-            $x->bulkUpload(true, $sourceIds, $contentType, $sourceBlogId, new JobEntity($jobName, $jobUid, $projectUid), $profile, $targetBlogId, $sourceBlogId);
+            $x->bulkUpload(true, $sourceIds, $contentType, $sourceBlogId, new JobEntity($jobName, $jobUid, $projectUid), $profile, $targetBlogId);
             $this->assertCount(0, $unsavedSubmissionIds);
         }
 
@@ -942,6 +942,7 @@ namespace Smartling\Tests\Services {
 
             return $this->getMockBuilder(ContentRelationsDiscoveryService::class)->setConstructorArgs([
                 $acfDynamicSupport,
+                new ArrayHelper(),
                 $contentHelper,
                 $contentTypeManager,
                 $fieldsFilterHelper,

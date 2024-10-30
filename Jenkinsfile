@@ -24,7 +24,7 @@ pipeline {
             }
 
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
                     sh 'docker run --rm -w /plugin-dir -v $PWD:/plugin-dir wordpress-localization-plugin-php74:latest /releaseVersionCheck.sh'
                 }
             }
@@ -56,6 +56,13 @@ pipeline {
         }
 
         stage('Release on WordPress.org?') {
+            when {
+                anyOf {
+                    expression { currentBuild.result == null }
+                    expression { currentBuild.result == 'SUCCESS' }
+                    expression { currentBuild.result == 'UNSTABLE' }
+                }
+            }
             agent none
             steps {
                 timeout(time: 1, unit: 'HOURS') {
@@ -65,6 +72,12 @@ pipeline {
         }
 
         stage('WordPress.org SVN') {
+            when {
+                anyOf {
+                    expression { currentBuild.result == 'SUCCESS' }
+                    expression { currentBuild.result == 'UNSTABLE' }
+                }
+            }
             agent {
                 label 'master'
             }
