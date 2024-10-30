@@ -58,6 +58,7 @@ pipeline {
         stage('Release on WordPress.org?') {
             when {
                 anyOf {
+                    expression { currentBuild.result == null }
                     expression { currentBuild.result == 'SUCCESS' }
                     expression { currentBuild.result == 'UNSTABLE' }
                 }
