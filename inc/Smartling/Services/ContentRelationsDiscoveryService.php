@@ -55,6 +55,7 @@ class ContentRelationsDiscoveryService
 
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,
+        private ArrayHelper $arrayHelper,
         private ContentHelper $contentHelper,
         private ContentTypeManager $contentTypeManager,
         private FieldsFilterHelper $fieldFilterHelper,
@@ -92,17 +93,19 @@ class ContentRelationsDiscoveryService
         $menuIds = [];
         foreach ($targetBlogIds as $targetBlogId) {
             foreach ($contentIds as $id) {
-                $submission = $this->submissionManager->findTargetBlogSubmission($contentType, $currentBlogId, $id, $targetBlogId) ??
-                    $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
+                $submission = $this->submissionManager->findTargetBlogSubmission($contentType, $currentBlogId, $id, $targetBlogId);
+                if ($submission === null) {
+                    $submission = $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
+                    $title = $this->getTitle($submission);
+                    if ($title !== '') {
+                        $submission->setSourceTitle($title);
+                    }
+                    $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
+                }
                 $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                $title = $this->getTitle($submission);
-                if ($title !== '') {
-                    $submission->setSourceTitle($title);
-                }
-                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $submission = $this->submissionManager->storeEntity($submission);
-                $queueIds[] = [$submission->getId()];
+                $queueIds[] = $submission->getId();
                 $this->logSubmissionCreated($submission, 'Bulk upload request', $jobInfo);
                 if ($submission->getContentType() === ContentTypeNavigationMenu::WP_CONTENT_TYPE) {
                     $menuIds[] = $submission->getSourceId();
@@ -114,7 +117,7 @@ class ContentRelationsDiscoveryService
                 $carry[] = $item->ID;
                 return $carry;
             }, []);
-            $queueIds[] = array_merge(...$this->bulkUpload(
+            $queueIds = $this->arrayHelper->add($queueIds, $this->bulkUpload(
                 $authorize,
                 $menuItemIds,
                 ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
@@ -126,13 +129,13 @@ class ContentRelationsDiscoveryService
             ));
         }
         if ($enqueue) {
-            $submissionIds = array_merge(...$queueIds);
-            $this->uploadQueueManager->enqueue(new IntegerIterator($submissionIds), $this->apiWrapper->createBatch(
+            $queueIds = array_unique($queueIds);
+            $this->uploadQueueManager->enqueue(new IntegerIterator($queueIds), $this->apiWrapper->createBatch(
                 $profile,
                 $jobInfo->getJobUid(),
                 array_unique(array_map(static function (SubmissionEntity $submission) {
                     return $submission->getFileUri();
-                }, $this->submissionManager->find([SubmissionEntity::FIELD_ID => $submissionIds]))),
+                }, $this->submissionManager->find([SubmissionEntity::FIELD_ID => $queueIds]))),
                 $authorize,
             ));
         }

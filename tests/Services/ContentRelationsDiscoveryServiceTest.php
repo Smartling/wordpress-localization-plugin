@@ -32,6 +32,7 @@ namespace Smartling\Tests\Services {
     use Smartling\DbAl\WordpressContentEntities\WidgetEntity;
     use Smartling\Extensions\Acf\AcfDynamicSupport;
     use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
+    use Smartling\Helpers\ArrayHelper;
     use Smartling\Helpers\ContentHelper;
     use Smartling\Helpers\ContentSerializationHelper;
     use Smartling\Helpers\CustomMenuContentTypeHelper;
@@ -397,6 +398,7 @@ namespace Smartling\Tests\Services {
 
             $x = new ContentRelationsDiscoveryService(
                 $this->createMock(AcfDynamicSupport::class),
+                new ArrayHelper(),
                 $contentHelper,
                 $this->createMock(ContentTypeManager::class),
                 $this->createMock(FieldsFilterHelper::class),

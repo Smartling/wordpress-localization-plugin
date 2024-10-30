@@ -555,6 +555,7 @@ services:
     class: Smartling\Services\ContentRelationsDiscoveryService
     arguments:
       - "@acf.dynamic.support"
+      - "@helper.array"
       - "@content.helper"
       - "@content-type-descriptor-manager"
       - "@fields-filter.helper"
