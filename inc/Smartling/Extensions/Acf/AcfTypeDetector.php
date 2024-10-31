@@ -152,7 +152,7 @@ class AcfTypeDetector
         return false;
     }
 
-    private function getAcfProcessor($field, $key)
+    private function getAcfProcessor(string $field, string $key): MetaFieldProcessorInterface|bool
     {
         $matches = [];
         preg_match_all(self::ACF_FIELD_GROUP_REGEX, $key, $matches);
