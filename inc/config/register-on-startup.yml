@@ -1,5 +1,7 @@
 parameters:
 services:
+  service.post.type.debug:
+    class: Smartling\Services\CustomPostTypeDebugService
   manager.register:
     class: Smartling\StartupRegisterManager
     calls:
@@ -30,3 +32,4 @@ services:
       - [ "addService", [ "@content.relations.handler"]]
       - [ "addService", [ "@duplicate.submissions.cleaner"]]
       - [ "addService", [ "@service.filter-ui" ]]
+      - [ "addService", [ "@service.post.type.debug" ]]
