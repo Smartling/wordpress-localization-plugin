@@ -486,10 +486,13 @@ class AcfDynamicSupport
         $parts[0] = "_$parts[0]";
         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, array_reverse($parts));
         if (array_key_exists($key, $attributes)) {
-            if (in_array($attributes[$key], $this->rules['localize'], true)) {
+            $matches = [];
+            preg_match_all(AcfTypeDetector::ACF_FIELD_GROUP_REGEX, $attributes[$key], $matches);
+            $ruleId = array_pop($matches[0]) ?? $attributes[$key];
+            if (in_array($ruleId, $this->rules['localize'], true)) {
                 return ReplacerFactory::REPLACER_RELATED;
             }
-            if (in_array($attributes[$key], $this->rules['copy'], true)) {
+            if (in_array($ruleId, $this->rules['copy'], true)) {
                 return ReplacerFactory::REPLACER_COPY;
             }
         }
