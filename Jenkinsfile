@@ -74,6 +74,7 @@ pipeline {
         stage('WordPress.org SVN') {
             when {
                 anyOf {
+                    expression { currentBuild.result == null }
                     expression { currentBuild.result == 'SUCCESS' }
                     expression { currentBuild.result == 'UNSTABLE' }
                 }
