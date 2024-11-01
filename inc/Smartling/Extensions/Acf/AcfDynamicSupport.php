@@ -7,6 +7,7 @@ use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
@@ -56,11 +57,16 @@ class AcfDynamicSupport
     }
 
     public function __construct(
+        private ArrayHelper $arrayHelper,
         private SettingsManager $settingsManager,
         private SiteHelper $siteHelper,
         private WordpressFunctionProxyHelper $wpProxy,
     )
     {}
+
+    public function addCopyRules(array $rules) {
+        $this->rules['copy'] = $this->arrayHelper->add($this->rules['copy'], $rules);
+    }
 
     /**
      * @throws SmartlingDirectRunRuntimeException
@@ -486,10 +492,13 @@ class AcfDynamicSupport
         $parts[0] = "_$parts[0]";
         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, array_reverse($parts));
         if (array_key_exists($key, $attributes)) {
-            if (in_array($attributes[$key], $this->rules['localize'], true)) {
+            $matches = [];
+            preg_match_all(AcfTypeDetector::ACF_FIELD_GROUP_REGEX, $attributes[$key], $matches);
+            $ruleId = array_pop($matches[0]) ?? $attributes[$key];
+            if (in_array($ruleId, $this->rules['localize'], true)) {
                 return ReplacerFactory::REPLACER_RELATED;
             }
-            if (in_array($attributes[$key], $this->rules['copy'], true)) {
+            if (in_array($ruleId, $this->rules['copy'], true)) {
                 return ReplacerFactory::REPLACER_COPY;
             }
         }
