@@ -426,11 +426,9 @@ class Bootstrap
             /**
              * Initializing ACF and ACF Option Pages support.
              */
-            (new AcfDynamicSupport(
-                $this->fromContainer('manager.settings'),
-                $this->fromContainer('site.helper'),
-                $this->fromContainer('wp.proxy'),
-            ))->run();
+            $acf = $this->fromContainer('acf.dynamic.support');
+            assert($acf instanceof AcfDynamicSupport);
+            $acf->run();
         });
 
         /**
