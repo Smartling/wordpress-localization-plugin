@@ -7,6 +7,7 @@ use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
@@ -56,11 +57,16 @@ class AcfDynamicSupport
     }
 
     public function __construct(
+        private ArrayHelper $arrayHelper,
         private SettingsManager $settingsManager,
         private SiteHelper $siteHelper,
         private WordpressFunctionProxyHelper $wpProxy,
     )
     {}
+
+    public function addCopyRules(array $rules) {
+        $this->rules['copy'] = $this->arrayHelper->add($this->rules['copy'], $rules);
+    }
 
     /**
      * @throws SmartlingDirectRunRuntimeException

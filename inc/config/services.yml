@@ -522,6 +522,7 @@ services:
   acf.dynamic.support:
     class: Smartling\Extensions\Acf\AcfDynamicSupport
     arguments:
+      - "@helper.array"
       - "@manager.settings"
       - "@site.helper"
       - "@wp.proxy"
