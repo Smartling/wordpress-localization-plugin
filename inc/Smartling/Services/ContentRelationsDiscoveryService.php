@@ -133,9 +133,9 @@ class ContentRelationsDiscoveryService
             $this->uploadQueueManager->enqueue(new IntegerIterator($queueIds), $this->apiWrapper->createBatch(
                 $profile,
                 $jobInfo->getJobUid(),
-                array_unique(array_map(static function (SubmissionEntity $submission) {
+                array_values(array_unique(array_map(static function (SubmissionEntity $submission) {
                     return $submission->getFileUri();
-                }, $this->submissionManager->find([SubmissionEntity::FIELD_ID => $queueIds]))),
+                }, $this->submissionManager->find([SubmissionEntity::FIELD_ID => $queueIds])))),
                 $authorize,
             ));
         }

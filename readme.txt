@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 3.9.13 =
 * Improved handling of service strings inside nested ACF fields: they no longer should be sent for translation
+* Fixed Bulk Submit ingesting only one submission for translation when many were selected
 
 = 3.9.12 =
 * Fixed Bulk Submit ingesting only one submission for translation when many were selected
