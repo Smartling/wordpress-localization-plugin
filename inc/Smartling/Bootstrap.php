@@ -426,17 +426,16 @@ class Bootstrap
             /**
              * Initializing ACF and ACF Option Pages support.
              */
-            (new AcfDynamicSupport(
-                $this->fromContainer('manager.settings'),
-                $this->fromContainer('site.helper'),
-                $this->fromContainer('wp.proxy'),
-            ))->run();
+            $acf = $this->fromContainer('acf.dynamic.support');
+            assert($acf instanceof AcfDynamicSupport);
+            $acf->run();
         });
 
         /**
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution
          */
+        self::$loggerInstance->info('Smartling bootstrap, action: ' . current_action());
         add_action($action, static function () use ($action, $di) {
             // registering taxonomies first.
             $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, []);
