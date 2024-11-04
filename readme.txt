@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.9.13 =
+* Improved handling of service strings inside nested ACF fields: they no longer should be sent for translation
+
 = 3.9.12 =
 * Fixed Bulk Submit ingesting only one submission for translation when many were selected
 
