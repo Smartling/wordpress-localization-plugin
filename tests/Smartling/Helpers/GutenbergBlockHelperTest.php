@@ -60,6 +60,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     use PHPUnit\Framework\TestCase;
     use Smartling\Exception\EntityNotFoundException;
     use Smartling\Extensions\Acf\AcfDynamicSupport;
+    use Smartling\Helpers\ArrayHelper;
     use Smartling\Helpers\ContentSerializationHelper;
     use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
     use Smartling\Helpers\FieldsFilterHelper;
@@ -467,6 +468,7 @@ namespace Smartling\Tests\Smartling\Helpers {
         ]);
         $acfDynamicSupport = $this->getMockBuilder(AcfDynamicSupport::class)
             ->setConstructorArgs([
+                new ArrayHelper(),
                 $this->createMock(SettingsManager::class),
                 $this->createMock(SiteHelper::class),
                 $wpProxy,

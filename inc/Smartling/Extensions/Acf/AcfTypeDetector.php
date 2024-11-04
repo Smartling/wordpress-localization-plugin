@@ -12,6 +12,7 @@ use Smartling\Submissions\SubmissionEntity;
 
 class AcfTypeDetector
 {
+    public const ACF_FIELD_GROUP_REGEX = '#(field|group)_([0-9a-f]){13}#';
     /**
      * Default cache time (1 day)
      * @var int
@@ -153,12 +154,11 @@ class AcfTypeDetector
 
     private function getAcfProcessor($field, $key)
     {
-        $matches  = [];
-        $pattern = '#(field|group)_([0-9a-f]){13}#ius';
-        preg_match_all($pattern, $key, $matches);
-        $key = end($matches[0]);
-        if (false !== $key) {
-            return $this->getProcessorByFieldKey($key, $field);
+        $matches = [];
+        preg_match_all(self::ACF_FIELD_GROUP_REGEX, $key, $matches);
+        $fieldKey = array_pop($matches[0]);
+        if ($fieldKey !== null) {
+            return $this->getProcessorByFieldKey($fieldKey, $field);
         }
 
         return false;

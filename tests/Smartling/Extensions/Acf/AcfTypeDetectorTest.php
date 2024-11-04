@@ -5,6 +5,7 @@ namespace Smartling\Tests\Smartling\Extensions\Acf;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Extensions\Acf\AcfTypeDetector;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\MediaBasedProcessor;
 use Smartling\Helpers\SiteHelper;
@@ -59,6 +60,7 @@ class AcfTypeDetectorTest extends TestCase
         $siteHelper->method('listBlogs')->willReturn([]);
 
         $ads = new AcfDynamicSupport(
+            new ArrayHelper(),
             $settingsManager,
             $siteHelper,
             new WordpressFunctionProxyHelper(),
