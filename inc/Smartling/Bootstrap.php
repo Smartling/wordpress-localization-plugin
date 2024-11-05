@@ -435,7 +435,6 @@ class Bootstrap
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution
          */
-        self::$loggerInstance->info('Smartling bootstrap, action: ' . current_action());
         add_action($action, static function () use ($action, $di) {
             // registering taxonomies first.
             $dynTermDefinitions = apply_filters(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY, []);
