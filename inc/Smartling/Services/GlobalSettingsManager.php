@@ -205,6 +205,23 @@ class GlobalSettingsManager
         }
     }
 
+    public const SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER = 'smartling_remove_acf_parse_save_blocks_filter';
+    public const SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER_DEFAULT = "1";
+
+    public static function isRemoveAcfParseSaveBlocksFilter(): bool
+    {
+        return SimpleStorageHelper::get(self::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER, self::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER_DEFAULT) === "1";
+    }
+
+    public static function setRemoveAcfParseSaveBlocksFilter(string $value): void
+    {
+        if ($value === self::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER_DEFAULT) {
+            SimpleStorageHelper::drop(self::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER);
+        } else {
+            SimpleStorageHelper::set(self::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER, $value);
+        }
+    }
+
     public const SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT = 'smartling_add_slashes_before_saving_content';
     public const SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT_DEFAULT = "1";
 
