@@ -203,8 +203,14 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         }
         $array = $entity->toArray();
         $array['post_category'] = \wp_get_post_categories($entity->ID);
-        // ACF would replace our properly escaped content with its own escaping.
-        remove_action('content_save_pre', 'acf_parse_save_blocks', 5);
+
+        if (GlobalSettingsManager::isRemoveAcfParseSaveBlocksFilter()) {
+            // ACF would replace our properly escaped content with its own escaping.
+            $result = remove_action('content_save_pre', 'acf_parse_save_blocks', 5);
+            $this->getLogger()->debug("Remove ACF parse save blocks filter, result=" . ($result ? '1' : '0'));
+        } else {
+            $this->getLogger()->info("Skip remove ACF parse save blocks filter");
+        }
 
         /**
          * Content expected to be slashed for
@@ -225,6 +231,8 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
             $addSlashes ? '1' : '0',
             $this->wordpressFunctionProxyHelper->get_current_blog_id(),
         ));
+        $preSavePostContent = $array['post_content'];
+        $this->getLogger()->debug("Base64Encoded post content: " . base64_encode($array['post_content']));
         $res = wp_insert_post($array, true);
         if (is_wp_error($res) || 0 === $res) {
             $msg = vsprintf('An error had happened while saving post : \'%s\'', [\json_encode($array)]);
@@ -235,6 +243,11 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
             }
             $this->getLogger()->error($msg);
             throw new SmartlingDataUpdateException($msg);
+        }
+        $afterSavePostContent = get_post_field('post_content', $res, 'raw');
+        if (stripslashes($preSavePostContent) !== $afterSavePostContent) {
+            $this->getLogger()->warning("Retrieved post content after saving is not as expected: ")
+                . base64_encode($afterSavePostContent);
         }
 
         return (int)$res;

@@ -267,6 +267,26 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th><label for="<?= GlobalSettingsManager::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER?>"><?= __('Remove ACF parse save blocks filter')?></label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::isRemoveAcfParseSaveBlocksFilter() ? 1 : 0,
+                                    [
+                                        0 => 'No',
+                                        1 => 'Yes',
+                                    ]),
+                                [
+                                    'id' => GlobalSettingsManager::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER,
+                                    'name' => GlobalSettingsManager::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER,
+                                ]
+                            )
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><label for="<?= GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES?>"><a href="https://help.smartling.com/hc/en-us/articles/360008000893-XML#directives"><?= __('Custom directives')?></a><?= __('. The connector will wrap each line from this text area into inline directives') ?><pre>&lt;!-- smartling.%%line%% --&gt;</pre><br><?= __('Invalid directives WILL BREAK PROCESSING.')?></label></th>
                         <td>
                             <textarea id="<?= GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES?>"><?= GlobalSettingsManager::getCustomDirectives()?></textarea>
