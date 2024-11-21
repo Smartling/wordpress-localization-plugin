@@ -1,13 +1,31 @@
 parameters:
   known.attachment.rules: #built-in wordpress and Smartling-specific
+    - "@acf.editor.mode"
+    - "@acf.name"
     - "@image.id.related.attachment"
     - "@image.id.related.content"
     - "@media-text.media-id.related.attachment"
     - "@smartling.lock.id.copy"
-    - "@acf.name"
-    - "@wordpress.editor.mode"
+    - "@wordpress.background.color"
+    - "@wordpress.class.name"
+    - "@wordpress.font.size"
+    - "@wordpress.style"
 
 services:
+  acf.editor.mode:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "acf/.+"
+      - "mode"
+      - "copy"
+
+  acf.name:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "acf/.+"
+      - "name"
+      - "copy"
+
   image.id.related.attachment:
     class: Smartling\Helpers\GutenbergReplacementRule
     arguments:
@@ -36,16 +54,30 @@ services:
       - "smartlingLockId"
       - "copy"
 
-  acf.name:
+  wordpress.background.color:
     class: Smartling\Helpers\GutenbergReplacementRule
     arguments:
-      - "acf/.+"
-      - "name"
+      - "core/.+"
+      - "backgroundColor"
       - "copy"
 
-  wordpress.editor.mode:
+  wordpress.class.name:
     class: Smartling\Helpers\GutenbergReplacementRule
     arguments:
-      - "acf/.+"
-      - "mode"
+      - "core/.+"
+      - "className"
+      - "copy"
+
+  wordpress.font.size:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/.+"
+      - "fontSize"
+      - "copy"
+
+  wordpress.style:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/.+"
+      - "style"
       - "copy"
