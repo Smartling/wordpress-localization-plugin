@@ -33,23 +33,23 @@ class GutenbergBlocksTest extends SmartlingUnitTestCaseAbstract
         $postId = $this->createPost(title: 'Block attributes locking test', content: <<<HTML
 <!-- wp:columns {"smartlingLockId":"columns"} -->
 <div class="wp-block-columns"><!-- wp:column {"smartlingLockId":"leftcolumn"} -->
-<div class="wp-block-column"><!-- wp:paragraph {"fontsize":"large","smartlingLockId":"leftparagraph"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"someAttribute":"large","smartlingLockId":"leftparagraph"} -->
 <p class="has-large-font-size">a left paragraph</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column -->
 
 <!-- wp:column {"smartlingLockId":"rightcolumn"} -->
-<div class="wp-block-column"><!-- wp:paragraph {"fontsize":"large","smartlingLockId":"rightparagraph"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"someAttribute":"large","smartlingLockId":"rightparagraph"} -->
 <p>a right paragraph</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:html {"fontsize":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"} -->
+<!-- wp:html {"someAttribute":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"} -->
 <h1>:)</h1>
 <!-- /wp:html -->
 
-<!-- wp:paragraph {"fontsize":"large","smartlingLockId":"rootlocked"} -->
+<!-- wp:paragraph {"someAttribute":"large","smartlingLockId":"rootlocked"} -->
 <p class="has-large-font-size">Root level paragraph</p>
 <!-- /wp:paragraph -->
 HTML);
@@ -62,15 +62,15 @@ HTML);
             $this->assertInstanceOf(\WP_Post::class, $post);
             $count = 0;
             $replaced = str_replace([
-                '{"fontsize":"[l~árgé]","smartlingLockId":"leftparagraph"}',
-                '{"fontsize":"[l~árgé]","smartlingLockId":"rightparagraph"}',
-                '{"fontsize":"[l~árgé]","otherAttribute":"[ó~thé~rVá~lúé]","smartlingLockId":"rootunlocked"}',
-                '{"fontsize":"[l~árgé]","smartlingLockId":"rootlocked"}',
+                '{"someAttribute":"[l~árgé]","smartlingLockId":"leftparagraph"}',
+                '{"someAttribute":"[l~árgé]","smartlingLockId":"rightparagraph"}',
+                '{"someAttribute":"[l~árgé]","otherAttribute":"[ó~thé~rVá~lúé]","smartlingLockId":"rootunlocked"}',
+                '{"someAttribute":"[l~árgé]","smartlingLockId":"rootlocked"}',
             ], [
-                '{"fontsize":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"fontsize"}',
-                '{"fontsize":"large","smartlingLockId":"rightparagraph"}',
-                '{"fontsize":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"}',
-                '{"fontsize":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"fontsize"}',
+                '{"someAttribute":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"someAttribute"}',
+                '{"someAttribute":"large","smartlingLockId":"rightparagraph"}',
+                '{"someAttribute":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"}',
+                '{"someAttribute":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"someAttribute"}',
             ], $post->post_content, $count);
             $this->assertEquals(4, $count, 'Expected 4 replacements in ' . $post->post_content);
             $post->post_content = $replaced;
@@ -82,23 +82,23 @@ HTML);
         $this->assertEquals(<<<HTML
 <!-- wp:columns {"smartlingLockId":"columns"} -->
 <div class="wp-block-columns"><!-- wp:column {"smartlingLockId":"leftcolumn"} -->
-<div class="wp-block-column"><!-- wp:paragraph {"fontsize":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"fontsize"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"someAttribute":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"someAttribute"} -->
 <p class="has-large-font-size">[á ~léf~t pár~ágr~áph]</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column -->
 
 <!-- wp:column {"smartlingLockId":"rightcolumn"} -->
-<div class="wp-block-column"><!-- wp:paragraph {"fontsize":"[l~árgé]","smartlingLockId":"rightparagraph"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"someAttribute":"[l~árgé]","smartlingLockId":"rightparagraph"} -->
 <p>[á ~ríg~ht pá~rágr~áph]</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:html {"fontsize":"[l~árgé]","otherAttribute":"[ó~thé~rVá~lúé]","smartlingLockId":"rootunlocked"} -->
+<!-- wp:html {"someAttribute":"[l~árgé]","otherAttribute":"[ó~thé~rVá~lúé]","smartlingLockId":"rootunlocked"} -->
 <h1>[:~)]</h1>
 <!-- /wp:html -->
 
-<!-- wp:paragraph {"fontsize":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"fontsize"} -->
+<!-- wp:paragraph {"someAttribute":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"someAttribute"} -->
 <p class="has-large-font-size">[R~óót ~lévé~l pá~rágr~áph]</p>
 <!-- /wp:paragraph -->
 HTML
