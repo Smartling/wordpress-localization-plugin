@@ -18,6 +18,7 @@ parameters:
     - "@wordpress.font.size"
     - "@wordpress.layout"
     - "@wordpress.style"
+    - "@wordpress.width"
 
 services:
   acf.editor.mode:
@@ -144,4 +145,11 @@ services:
     arguments:
       - "core/.+"
       - "style"
+      - "copy"
+
+  wordpress.width:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/.+"
+      - "width"
       - "copy"

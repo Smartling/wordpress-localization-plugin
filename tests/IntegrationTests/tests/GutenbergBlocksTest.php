@@ -340,13 +340,13 @@ HTML;
         unset($submission);
         $attachmentTargetId = $submissions[0]->getTargetId();
         $expectedContent = <<<HTML
-<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"large"} -->
 <figure class="wp-block-image size-large"><img src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-$attachmentTargetId" /></figure>
 <!-- /wp:image -->
-<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"large"} -->
 <figure class="wp-block-image size-large"><img class="wp-image-$attachmentTargetId" src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" /></figure>
 <!-- /wp:image -->
-<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"large"} -->
 <figure class="wp-block-image size-large"><img src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" class="irrelevant wp-image-$attachmentTargetId someOtherClass" /></figure>
 <!-- /wp:image -->
 HTML;
