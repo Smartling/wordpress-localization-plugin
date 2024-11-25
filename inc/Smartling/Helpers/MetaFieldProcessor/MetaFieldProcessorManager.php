@@ -100,10 +100,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
     private function tryGetAcfProcessor($fieldName, SubmissionEntity $submission, MetaFieldProcessorInterface $processor): MetaFieldProcessorInterface
     {
         if (in_array(get_class($processor), [DefaultMetaFieldProcessor::class, PostContentProcessor::class], true)) {
-            $_processor = $this->getAcfTypeDetector()->getProcessor($fieldName, $submission);
-            if (false !== $_processor) {
-                return $_processor;
-            }
+            return $this->getAcfTypeDetector()->getProcessor($fieldName, $submission) ?? $processor;
         }
 
         return $processor;
