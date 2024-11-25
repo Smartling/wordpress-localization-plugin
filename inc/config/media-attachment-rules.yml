@@ -2,13 +2,21 @@ parameters:
   known.attachment.rules: #built-in wordpress and Smartling-specific
     - "@acf.editor.mode"
     - "@acf.name"
-    - "@image.id.related.attachment"
+    - "@image.align"
+    - "@image.height"
+    - "@image.id"
     - "@image.id.related.content"
-    - "@media-text.media-id.related.attachment"
-    - "@smartling.lock.id.copy"
+    - "@image.lightbox"
+    - "@image.link.destination"
+    - "@image.scale"
+    - "@image.size.slug"
+    - "@image.width"
+    - "@media-text.media-id"
+    - "@smartling.lock.id"
     - "@wordpress.background.color"
     - "@wordpress.class.name"
     - "@wordpress.font.size"
+    - "@wordpress.layout"
     - "@wordpress.style"
 
 services:
@@ -26,7 +34,21 @@ services:
       - "name"
       - "copy"
 
-  image.id.related.attachment:
+  image.align:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/image"
+      - "align"
+      - "copy"
+
+  image.height:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/image"
+      - "height"
+      - "copy"
+
+  image.id:
     class: Smartling\Helpers\GutenbergReplacementRule
     arguments:
       - "core/image"
@@ -40,14 +62,49 @@ services:
       - ""
       - "coreImage"
 
-  media-text.media-id.related.attachment:
+  image.lightbox:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/image"
+      - "lightbox"
+      - "copy"
+
+  image.link.destination:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/image"
+      - "linkDestination"
+      - "copy"
+
+  image.scale:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/image"
+      - "scale"
+      - "copy"
+
+  image.size.slug:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/image"
+      - "sizeSlug"
+      - "copy"
+
+  image.width:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/image"
+      - "width"
+      - "copy"
+
+  media-text.media-id:
     class: Smartling\Helpers\GutenbergReplacementRule
     arguments:
       - "core/media-text"
       - "mediaId"
       - "related|attachment"
 
-  smartling.lock.id.copy:
+  smartling.lock.id:
     class: Smartling\Helpers\GutenbergReplacementRule
     arguments:
       - ".+"
@@ -73,6 +130,13 @@ services:
     arguments:
       - "core/.+"
       - "fontSize"
+      - "copy"
+
+  wordpress.layout:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "core/.+"
+      - "layout"
       - "copy"
 
   wordpress.style:
