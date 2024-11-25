@@ -33,23 +33,23 @@ class GutenbergBlocksTest extends SmartlingUnitTestCaseAbstract
         $postId = $this->createPost(title: 'Block attributes locking test', content: <<<HTML
 <!-- wp:columns {"smartlingLockId":"columns"} -->
 <div class="wp-block-columns"><!-- wp:column {"smartlingLockId":"leftcolumn"} -->
-<div class="wp-block-column"><!-- wp:paragraph {"fontSize":"large","smartlingLockId":"leftparagraph"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"someAttribute":"large","smartlingLockId":"leftparagraph"} -->
 <p class="has-large-font-size">a left paragraph</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column -->
 
 <!-- wp:column {"smartlingLockId":"rightcolumn"} -->
-<div class="wp-block-column"><!-- wp:paragraph {"fontSize":"large","smartlingLockId":"rightparagraph"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"someAttribute":"large","smartlingLockId":"rightparagraph"} -->
 <p>a right paragraph</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:html {"fontSize":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"} -->
+<!-- wp:html {"someAttribute":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"} -->
 <h1>:)</h1>
 <!-- /wp:html -->
 
-<!-- wp:paragraph {"fontSize":"large","smartlingLockId":"rootlocked"} -->
+<!-- wp:paragraph {"someAttribute":"large","smartlingLockId":"rootlocked"} -->
 <p class="has-large-font-size">Root level paragraph</p>
 <!-- /wp:paragraph -->
 HTML);
@@ -62,15 +62,15 @@ HTML);
             $this->assertInstanceOf(\WP_Post::class, $post);
             $count = 0;
             $replaced = str_replace([
-                '{"fontSize":"[l~árgé]","smartlingLockId":"leftparagraph"}',
-                '{"fontSize":"[l~árgé]","smartlingLockId":"rightparagraph"}',
-                '{"fontSize":"[l~árgé]","otherAttribute":"[ó~thé~rVá~lúé]","smartlingLockId":"rootunlocked"}',
-                '{"fontSize":"[l~árgé]","smartlingLockId":"rootlocked"}',
+                '{"someAttribute":"[l~árgé]","smartlingLockId":"leftparagraph"}',
+                '{"someAttribute":"[l~árgé]","smartlingLockId":"rightparagraph"}',
+                '{"someAttribute":"[l~árgé]","otherAttribute":"[ó~thé~rVá~lúé]","smartlingLockId":"rootunlocked"}',
+                '{"someAttribute":"[l~árgé]","smartlingLockId":"rootlocked"}',
             ], [
-                '{"fontSize":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"fontSize"}',
-                '{"fontSize":"large","smartlingLockId":"rightparagraph"}',
-                '{"fontSize":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"}',
-                '{"fontSize":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"fontSize"}',
+                '{"someAttribute":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"someAttribute"}',
+                '{"someAttribute":"large","smartlingLockId":"rightparagraph"}',
+                '{"someAttribute":"large","otherAttribute":"otherValue","smartlingLockId":"rootunlocked"}',
+                '{"someAttribute":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"someAttribute"}',
             ], $post->post_content, $count);
             $this->assertEquals(4, $count, 'Expected 4 replacements in ' . $post->post_content);
             $post->post_content = $replaced;
@@ -82,23 +82,23 @@ HTML);
         $this->assertEquals(<<<HTML
 <!-- wp:columns {"smartlingLockId":"columns"} -->
 <div class="wp-block-columns"><!-- wp:column {"smartlingLockId":"leftcolumn"} -->
-<div class="wp-block-column"><!-- wp:paragraph {"fontSize":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"fontSize"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"someAttribute":"large","smartlingLockId":"leftparagraph","smartlingLockedAttributes":"someAttribute"} -->
 <p class="has-large-font-size">[á ~léf~t pár~ágr~áph]</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column -->
 
 <!-- wp:column {"smartlingLockId":"rightcolumn"} -->
-<div class="wp-block-column"><!-- wp:paragraph {"fontSize":"[l~árgé]","smartlingLockId":"rightparagraph"} -->
+<div class="wp-block-column"><!-- wp:paragraph {"someAttribute":"[l~árgé]","smartlingLockId":"rightparagraph"} -->
 <p>[á ~ríg~ht pá~rágr~áph]</p>
 <!-- /wp:paragraph --></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns -->
 
-<!-- wp:html {"fontSize":"[l~árgé]","otherAttribute":"[ó~thé~rVá~lúé]","smartlingLockId":"rootunlocked"} -->
+<!-- wp:html {"someAttribute":"[l~árgé]","otherAttribute":"[ó~thé~rVá~lúé]","smartlingLockId":"rootunlocked"} -->
 <h1>[:~)]</h1>
 <!-- /wp:html -->
 
-<!-- wp:paragraph {"fontSize":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"fontSize"} -->
+<!-- wp:paragraph {"someAttribute":"large","smartlingLockId":"rootlocked","smartlingLockedAttributes":"someAttribute"} -->
 <p class="has-large-font-size">[R~óót ~lévé~l pá~rágr~áph]</p>
 <!-- /wp:paragraph -->
 HTML
@@ -340,13 +340,13 @@ HTML;
         unset($submission);
         $attachmentTargetId = $submissions[0]->getTargetId();
         $expectedContent = <<<HTML
-<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"large"} -->
 <figure class="wp-block-image size-large"><img src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" class="wp-image-$attachmentTargetId" /></figure>
 <!-- /wp:image -->
-<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"large"} -->
 <figure class="wp-block-image size-large"><img class="wp-image-$attachmentTargetId" src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" /></figure>
 <!-- /wp:image -->
-<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"[l~árgé]"} -->
+<!-- wp:image {"id":$attachmentTargetId,"sizeSlug":"large"} -->
 <figure class="wp-block-image size-large"><img src="http://example.com/wp-content/uploads/2021/11/imageClass.png" alt="" class="irrelevant wp-image-$attachmentTargetId someOtherClass" /></figure>
 <!-- /wp:image -->
 HTML;

@@ -215,20 +215,17 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
 
     private function pseudoPseudoTranslate(string $content): string
     {
-        if (str_contains($content, 'level 3')) {
-            $result = str_replace(
+        return str_contains($content, 'level 3') ?
+            str_replace(
                 ['Child level', 'content for translation'],
                 ['[C~híld ~lévé~l', 'c~óñté~ñt fó~r trá~ñslá~tíóñ]'],
                 $content,
-            );
-        } else {
-            $result = str_replace(
+            ) :
+            str_replace(
                 ['Child level', 'content for translation'],
                 ['[C~híl~d lév~él', 'có~ñtéñ~t fór ~tráñ~slát~íóñ]'],
                 $content,
             );
-        }
-        return str_replace('"large"', '"[l~árgé]"', $result);
     }
 
     #[ArrayShape(['expectedImagesCloned' => 'int', 'expectedImagesTranslated' => 'int', 'expectedPostsCloned' => 'int', 'expectedPostsTranslated' => 'int'])]
