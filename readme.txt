@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 3.9.17 =
 * Added `smartling_filter_active_profiles` filter
+* Added `Manual` translation download mode
 
 = 3.9.16 =
 * Excluded WordPress built in style editor strings from translation
