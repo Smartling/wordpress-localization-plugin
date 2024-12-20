@@ -2,7 +2,10 @@
 
 namespace Smartling\Settings;
 
+use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\EntityManagerAbstract;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
@@ -11,11 +14,23 @@ use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\QueryBuilder\QueryBuilder;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TestRunHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 
 class SettingsManager extends EntityManagerAbstract
 {
+    public function __construct(
+        SmartlingToCMSDatabaseAccessWrapperInterface $dbal,
+        int $pageSize,
+        SiteHelper $siteHelper,
+        LocalizationPluginProxyInterface $localizationProxy,
+        private WordpressFunctionProxyHelper $wpProxy,
+    ) {
+        parent::__construct($dbal, $pageSize, $siteHelper, $localizationProxy);
+    }
+
     /**
      * @return ConfigurationProfileEntity[]
      */
@@ -44,7 +59,18 @@ class SettingsManager extends EntityManagerAbstract
     {
         $cnt = 0;
 
-        return $this->getEntities($cnt, true);
+        $profiles = $this->wpProxy->apply_filters(
+            ExportedAPI::FILTER_ACTIVE_PROFILES,
+            $this->getEntities($cnt, true),
+        );
+        foreach ($profiles as $profile) {
+            if (!$profile instanceof ConfigurationProfileEntity) {
+                throw new \RuntimeException('Expected instance of ' . ConfigurationProfileEntity::class . ', got ' .
+                    is_object($profile) ? get_class($profile) : gettype($profile));
+            }
+        }
+
+        return $profiles;
     }
 
     /**
