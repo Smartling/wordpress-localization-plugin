@@ -8,8 +8,8 @@ use Smartling\Helpers\EventParameters\ProcessRelatedContentParams;
 use Smartling\Helpers\EventParameters\SmartlingFileUriFilterParamater;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Models\NotificationParameters;
-use Smartling\Models\UploadQueueEntity;
 use Smartling\Models\UploadQueueItem;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -225,4 +225,9 @@ interface ExportedAPI
      * @param array items
      */
     public const FILTER_BULK_SUBMIT_PREPARE_ITEMS = 'smartling_filter_bulk_submit_prepare_items';
+
+    /**
+     * @param ConfigurationProfileEntity[]
+     */
+    public const FILTER_ACTIVE_PROFILES = 'smartling_filter_active_profiles';
 }

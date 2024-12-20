@@ -652,8 +652,9 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                         HtmlTagGeneratorHelper::renderSelectOptions(
                             $profile->getDownloadOnChange(),
                             [
-                                0 => __('Translation Completed', $domain),
-                                1 => __('Progress Changes', $domain),
+                                ConfigurationProfileEntity::TRANSLATION_DOWNLOAD_MODE_TRANSLATION_COMPLETED => __('Translation Completed', $domain),
+                                ConfigurationProfileEntity::TRANSLATION_DOWNLOAD_MODE_PROGRESS_CHANGES => __('Progress Changes', $domain),
+                                ConfigurationProfileEntity::TRANSLATION_DOWNLOAD_MODE_MANUAL => __('Manual', $domain),
                             ]
                         ),
                         ['name' => 'smartling_settings[download_on_change]'])

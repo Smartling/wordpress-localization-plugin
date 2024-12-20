@@ -261,8 +261,10 @@ class AcfDynamicSupport
         foreach ($groups as $group) {
             $defs[$group['key']] = [
                 'global_type' => 'group',
-                'active'      => $group['active'],
             ];
+            if (array_key_exists('active', $group)) {
+                $defs[$group['key']]['active'] = $group['active'];
+            }
         }
 
         return $defs;
