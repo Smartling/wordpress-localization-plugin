@@ -20,6 +20,11 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
 
     public const UPLOAD_ON_CHANGE_AUTO = 1;
 
+    public const TRANSLATION_DOWNLOAD_MODE_TRANSLATION_COMPLETED = 0;
+    public const TRANSLATION_DOWNLOAD_MODE_PROGRESS_CHANGES = 1;
+    public const TRANSLATION_DOWNLOAD_MODE_MANUAL = 2;
+
+
     public const TRANSLATION_PUBLISHING_MODE_NO_CHANGE = 0;
     public const TRANSLATION_PUBLISHING_MODE_PUBLISH = 1;
     public const TRANSLATION_PUBLISHING_MODE_DRAFT = 2;
@@ -353,7 +358,6 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     /**
      * Alias for $this->setChangeAssetStatusOnCompletedTranslation, required for EntityAbstract::fromArray();
      * @noinspection PhpUnused
-     * @noinspection UnknownInspectionInspection
      */
     public function setPublishCompleted(int $publishCompleted): void
     {

@@ -288,6 +288,7 @@ services:
       - "%submission.pagesize%"
       - "@site.helper"
       - "@multilang.proxy"
+      - "@wp.proxy"
 
   plugin.info:
       class: Smartling\Helpers\PluginInfo

@@ -62,14 +62,18 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.9.17 =
+* Added `smartling_filter_active_profiles` filter
+* Added `Manual` translation download mode
+
 = 3.9.16 =
-* Exclude WordPress built in style editor strings from translation
+* Excluded WordPress built in style editor strings from translation
 
 = 3.9.15 =
-* Add expert setting to skip ACF filter `acf_parse_save_blocks` removal. Defaults to on.
+* Added expert setting to skip ACF filter `acf_parse_save_blocks` removal. Defaults to on.
 
 = 3.9.14 =
-* Remove excessive logging
+* Removed excessive logging
 
 = 3.9.13 =
 * Improved handling of service strings inside nested ACF fields: they no longer should be sent for translation

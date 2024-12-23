@@ -115,10 +115,6 @@ class LastModifiedCheckJob extends JobAbstract
         return $submissions;
     }
 
-    /**
-     * @param array $serializedPair
-     * @return bool
-     */
     private function validateSerializedPair(array $serializedPair): bool
     {
         $result = false;
@@ -198,7 +194,7 @@ class LastModifiedCheckJob extends JobAbstract
         foreach ($submissions as $submission) {
             $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
 
-            if (($profile instanceof ConfigurationProfileEntity) && 1 === $profile->getDownloadOnChange()) {
+            if (ConfigurationProfileEntity::TRANSLATION_DOWNLOAD_MODE_PROGRESS_CHANGES === $profile->getDownloadOnChange()) {
                 $this->getLogger()
                     ->debug(vsprintf('Adding submission %s to Download queue as it was changed.', [$submission->getId()]));
                 $this->queue->enqueue([$submission->getId()], QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
@@ -240,15 +236,15 @@ class LastModifiedCheckJob extends JobAbstract
         $submissions = $this->submissionManager->storeSubmissions($statusCheckResult);
 
         foreach ($submissions as $submission) {
-            $this->checkEntityForDownload($submission);
+            $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+            if ($profile->getDownloadOnChange() !== ConfigurationProfileEntity::TRANSLATION_DOWNLOAD_MODE_MANUAL) {
+                $this->checkEntityForDownload($submission);
+            }
         }
 
         $this->getLogger()->debug('Processing status check finished.');
     }
 
-    /**
-     * @param SubmissionEntity $entity
-     */
     public function checkEntityForDownload(SubmissionEntity $entity): void
     {
         if (100 === $entity->getCompletionPercentage() && 1 !== $entity->getIsCloned()) {
@@ -271,10 +267,6 @@ class LastModifiedCheckJob extends JobAbstract
         }
     }
 
-    /**
-     * @param SubmissionEntity $submission
-     * @return string
-     */
     public function getSmartlingLocaleIdBySubmission(SubmissionEntity $submission): string
     {
         return $this->settingsManager
