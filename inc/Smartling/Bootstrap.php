@@ -190,7 +190,7 @@ class Bootstrap
 
         GlobalSettingsManager::setAddSlashesBeforeSavingContent($data[GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT]);
         GlobalSettingsManager::setAddSlashesBeforeSavingMeta($data[GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_META]);
-        GlobalSettingsManager::setCustomDirectives($data[GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES]);
+        GlobalSettingsManager::setCustomDirectives(stripslashes($data[GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES]));
         GlobalSettingsManager::setRemoveAcfParseSaveBlocksFilter($data[GlobalSettingsManager::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER]);
         GlobalSettingsManager::setSkipSelfCheck((int)$data['selfCheckDisabled']);
         GlobalSettingsManager::setDisableLogging((int)$data['disableLogging']);
