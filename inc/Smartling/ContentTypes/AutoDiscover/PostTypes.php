@@ -22,7 +22,7 @@ class PostTypes
         add_action(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, static function (array $definition) use ($postType) {
             global $wp_post_types;
 
-            if (true === $wp_post_types[$postType]->public) {
+            if (true === ($wp_post_types[$postType]->public ?? false)) {
                 return array_merge($definition, [
                     [
                         "type" =>

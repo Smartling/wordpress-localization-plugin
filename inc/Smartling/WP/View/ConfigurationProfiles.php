@@ -287,7 +287,7 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
-                        <th><label for="<?= GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES?>"><a href="https://help.smartling.com/hc/en-us/articles/360008000893-XML#directives"><?= __('Custom directives')?></a><?= __('. The connector will wrap each line from this text area into inline directives') ?><pre>&lt;!-- smartling.%%line%% --&gt;</pre><br><?= __('Invalid directives WILL BREAK PROCESSING.')?></label></th>
+                        <th><label for="<?= GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES?>"><a href="https://help.smartling.com/hc/en-us/articles/360008000893-XML#directives"><?= __('Custom directives')?></a><?= __('. The connector will wrap each line from this text area into inline directives') ?><pre>&lt;!-- %%line%% --&gt;</pre><br><?= __('Invalid directives WILL BREAK PROCESSING.')?></label></th>
                         <td>
                             <textarea id="<?= GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES?>"><?= GlobalSettingsManager::getCustomDirectives()?></textarea>
                         </td>
