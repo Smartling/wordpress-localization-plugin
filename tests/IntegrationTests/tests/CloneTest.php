@@ -2,13 +2,16 @@
 
 namespace IntegrationTests\tests;
 
+use Smartling\ApiWrapper;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\DateTimeHelper;
+use Smartling\Jobs\JobEntity;
 use Smartling\Models\UserCloneRequest;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
+use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
-class CloneTest extends SmartlingUnitTestCaseAbstract
-{
+class CloneTest extends SmartlingUnitTestCaseAbstract {
     public function testNoMediaDuplication(): void
     {
         $content = '<!-- wp:test/post {"id":%d} /-->';
@@ -21,7 +24,10 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
         $childPostId = $this->createPost('post', 'embedded post', 'embedded content');
         $imageId = $this->createAttachment();
         set_post_thumbnail($childPostId, $imageId);
-        wp_update_post(['ID' => $imageId, 'post_parent' => $childPostId]); // Force ReferencedStdBasedContentProcessorAbstract change that caused regression initially
+        wp_update_post([
+            'ID' => $imageId,
+            'post_parent' => $childPostId,
+        ]); // Force ReferencedStdBasedContentProcessorAbstract change that caused regression initially
 
         $relationsDiscoveryService = $this->getContentRelationsDiscoveryService();
         $rootPostId = $this->createPost('post', 'root post', sprintf($content, $childPostId));
@@ -51,9 +57,18 @@ class CloneTest extends SmartlingUnitTestCaseAbstract
 
         switch_to_blog($targetBlogId);
         $this->assertCount($attachmentCount + 1, $this->getAttachments(), 'Expected exactly one more attachment in target blog after cloning');
-        $rootSubmission = ArrayHelper::first($this->getSubmissionManager()->find([SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId, SubmissionEntity::FIELD_SOURCE_ID => $rootPostId]));
-        $childSubmission = ArrayHelper::first($this->getSubmissionManager()->find([SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId, SubmissionEntity::FIELD_SOURCE_ID => $childPostId]));
-        $imageSubmission = ArrayHelper::first($this->getSubmissionManager()->find([SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId, SubmissionEntity::FIELD_SOURCE_ID => $imageId]));
+        $rootSubmission = ArrayHelper::first($this->getSubmissionManager()->find([
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
+            SubmissionEntity::FIELD_SOURCE_ID => $rootPostId,
+        ]));
+        $childSubmission = ArrayHelper::first($this->getSubmissionManager()->find([
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
+            SubmissionEntity::FIELD_SOURCE_ID => $childPostId,
+        ]));
+        $imageSubmission = ArrayHelper::first($this->getSubmissionManager()->find([
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
+            SubmissionEntity::FIELD_SOURCE_ID => $imageId,
+        ]));
         $this->assertInstanceOf(SubmissionEntity::class, $rootSubmission);
         $this->assertInstanceOf(SubmissionEntity::class, $childSubmission);
         $this->assertInstanceOf(SubmissionEntity::class, $imageSubmission);
@@ -141,18 +156,69 @@ HTML;
         });
     }
 
+    public function testIsClonedClearedOnTranslation(): void
+    {
+        $currentBlogId = get_current_blog_id();
+        $targetBlogId = 2;
+        $this->assertNotEquals($currentBlogId, $targetBlogId);
+        $postId = $this->createPost(title: 'Clear cloned flag', content: 'Post content');
+        $contentType = 'post';
+        $submission = $this->createSubmission($contentType, $postId, $currentBlogId, $targetBlogId);
+        $submission->setIsCloned(1);
+        $submission = $this->getSubmissionManager()->storeEntity($submission);
+        $submission = $this->getSubmissionManager()->getEntityById($submission->getId());
+        $this->assertTrue($submission->isCloned());
+        $apiWrapper = $this->getApiWrapper();
+        $jobName = 'testIsClonedClearedOnTranslation';
+        $profile = $this->getProfileById(1);
+        $response = $apiWrapper->listJobs($profile, $jobName);
+        $jobUid = $response['items'][0]['translationJobUid'] ?? null;
+        $jobDescription = 'Test job';
+
+        if ($jobUid === null) {
+            try {
+                $result = $apiWrapper->createJob($profile, [
+                    'name' => $jobName,
+                    'description' => $jobDescription,
+                ]);
+            } catch (SmartlingApiException) {
+                $jobName = $jobName(' ' . date(DateTimeHelper::getWordpressTimeFormat()));
+                $result = $apiWrapper->createJob($profile, [
+                    'name' => $jobName,
+                    'description' => $jobDescription,
+                ]);
+            }
+
+            $jobUid = $result['translationJobUid'];
+        }
+
+        $this->getContentRelationsDiscoveryService()->bulkUpload(
+            false,
+            [$postId],
+            $contentType,
+            $currentBlogId,
+            new JobEntity($jobName, $jobUid, $profile->getProjectId()),
+            $profile,
+            [$targetBlogId],
+        );
+        $submission = $this->getSubmissionManager()->getEntityById($submission->getId());
+        $this->assertFalse($submission->isCloned());
+    }
+
     private function assertPostValues(string $expectedContent, string $expectedMetaKey, string $expectedMetaValue, string $expectedTitle, int $id): \WP_Post
     {
         $post = get_post($id);
         $this->assertEquals($expectedContent, $post->post_content);
         $this->assertEquals($expectedTitle, $post->post_title);
         $this->assertEquals(get_post_meta($id, $expectedMetaKey, true), $expectedMetaValue);
+
         return $post;
     }
 
     private function getAttachments(): array
     {
         self::flush_cache();
+
         return get_posts(['post_type' => 'attachment']);
     }
 }

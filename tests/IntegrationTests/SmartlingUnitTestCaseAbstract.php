@@ -3,6 +3,7 @@
 namespace Smartling\Tests\IntegrationTests;
 
 use Psr\Log\LoggerInterface;
+use Smartling\ApiWrapperInterface;
 use Smartling\Bootstrap;
 use Smartling\ContentTypes\CustomPostType;
 use Smartling\ContentTypes\CustomTaxonomyType;
@@ -135,6 +136,11 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
     private static function getWPInstallDirEnv(): string
     {
         return getenv('WP_INSTALL_DIR');
+    }
+
+    public function getApiWrapper(): ApiWrapperInterface
+    {
+        return $this->get('api.wrapper.with.retries');
     }
 
     public function getContentRelationsDiscoveryService(): ContentRelationsDiscoveryService
