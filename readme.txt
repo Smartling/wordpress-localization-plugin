@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 3.10.0 =
-* Changed submission cloned status, now set to false when translating a previously cloned submission
+* Remove a cloned status when the user requests translation of the previously cloned submission
 
 = 3.9.18 =
 * Updated yoast supported version to 24
