@@ -8,7 +8,7 @@ use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class CustomFieldFilterHandler
 {
-    public static $filters = [];
+    public static array $filters = [];
 
     private static function getLogger()
     {
@@ -19,7 +19,7 @@ class CustomFieldFilterHandler
      * @param ContainerBuilder $di
      * @param array            $config
      */
-    public static function registerFilter(ContainerBuilder $di, array $config)
+    public static function registerFilter(ContainerBuilder $di, array $config): void
     {
         self::getLogger()->debug(vsprintf('Registering filter for config: %s', [var_export($config, true)]));
         $parser = new FieldFilterConfigParser($config, $di);
@@ -32,7 +32,7 @@ class CustomFieldFilterHandler
         }
     }
 
-    public static function getProcessor(ContainerBuilder $di, array $config)
+    public static function getProcessor(ContainerBuilder $di, array $config): ?MetaFieldProcessorInterface
     {
         $parser = new FieldFilterConfigParser($config, $di);
         self::getLogger()->debug(vsprintf('looking for processor for config: %s', [var_export($config, true)]));
@@ -40,7 +40,7 @@ class CustomFieldFilterHandler
             return $parser->getFilter();
         }
 
-        return false;
+        return null;
     }
 
 }
