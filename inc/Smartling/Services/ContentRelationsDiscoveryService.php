@@ -104,6 +104,7 @@ class ContentRelationsDiscoveryService
                 }
                 $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                $submission->setIsCloned(0);
                 $submission = $this->submissionManager->storeEntity($submission);
                 $queueIds[] = $submission->getId();
                 $this->logSubmissionCreated($submission, 'Bulk upload request', $jobInfo);
