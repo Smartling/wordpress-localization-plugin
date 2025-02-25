@@ -60,10 +60,10 @@ class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookIn
             $submission = $this->submissionManager->getEntityById((int)$_REQUEST['id']);
             if ($submission !== null) {
                 foreach ($this->getDuplicatesAndCache(false) as $details) {
-                    if ($details->getContentType() === $submission->getContentType() &&
-                        $details->getSourceBlogId() === $submission->getSourceBlogId() &&
-                        $details->getSourceId() === $submission->getSourceId() &&
-                        $details->getTargetBlogId() === $submission->getTargetBlogId()
+                    if ($details->contentType === $submission->getContentType() &&
+                        $details->sourceBlogId === $submission->getSourceBlogId() &&
+                        $details->sourceId === $submission->getSourceId() &&
+                        $details->targetBlogId === $submission->getTargetBlogId()
                     ) {
                         $this->submissionManager->delete($submission);
                         break;

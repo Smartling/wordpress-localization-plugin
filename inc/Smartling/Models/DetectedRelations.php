@@ -4,14 +4,12 @@ namespace Smartling\Models;
 
 class DetectedRelations
 {
-    public const ORIGINAL_REFERENCES_KEY = 'originalReferences';
-    public const MISSING_TRANSLATED_REFERENCES_KEY = 'missingTranslatedReferences';
-    private array $originalReferences;
+    public const string ORIGINAL_REFERENCES_KEY = 'originalReferences';
+    public const string MISSING_TRANSLATED_REFERENCES_KEY = 'missingTranslatedReferences';
     private array $missingReferences = [];
 
-    public function __construct(array $originalReferences)
+    public function __construct(private readonly array $originalReferences)
     {
-        $this->originalReferences = $originalReferences;
     }
 
     public function addMissingReference(int $targetBlogId, string $contentType, int $id): void

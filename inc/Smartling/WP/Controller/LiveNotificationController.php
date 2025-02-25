@@ -237,13 +237,13 @@ EOF;
     {
         try {
             $this->apiWrapper->setNotificationRecord(
-                $this->settingsManager->getActiveProfileByProjectId($params->getProjectId()),
+                $this->settingsManager->getActiveProfileByProjectId($params->projectId),
                 static::FIREBASE_SPACE_ID,
                 static::FIREBASE_OBJECT_ID,
-                $params->getContentId(),
+                $params->contentId,
                 [
-                    'message' => $params->getMessage(),
-                    'severity' => $params->getSeverity(),
+                    'message' => $params->message,
+                    'severity' => $params->severity,
                 ]
             );
         } catch (\Exception $e) {

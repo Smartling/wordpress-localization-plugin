@@ -2,8 +2,9 @@
 
 namespace Smartling\Models;
 
-class IntegerIterator extends \ArrayIterator {
-    private const SEPARATOR = ',';
+class IntegerIterator extends \ArrayIterator
+{
+    private const string SEPARATOR = ',';
 
     public function __construct(array $items = [])
     {

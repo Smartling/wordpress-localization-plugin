@@ -135,7 +135,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
             SimpleStorageHelper::drop(TestRunHelper::TEST_RUN_BLOG_ID_SETTING_NAME);
         }
         $viewData = $this->buildViewData();
-        if ($viewData->getNew() + $viewData->getInProgress() + $viewData->getCompleted() + $viewData->getFailed() === 0) {
+        if ($viewData->new + $viewData->inProgress + $viewData->completed + $viewData->failed === 0) {
             $this->getLogger()->notice('A blog was selected for test run, but no entries uploaded, clearing test run blog');
             SimpleStorageHelper::drop(TestRunHelper::TEST_RUN_BLOG_ID_SETTING_NAME);
             $viewData = $this->buildViewData();

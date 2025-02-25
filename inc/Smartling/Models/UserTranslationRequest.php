@@ -6,13 +6,18 @@ use Smartling\Helpers\ArrayHelper;
 
 class UserTranslationRequest extends UserCloneRequest
 {
-    private JobInformation $jobInformation;
     private array $ids;
 
-    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, JobInformation $jobInformation, array $ids = [], string $description = '')
-    {
+    public function __construct(
+        int $contentId,
+        string $contentType,
+        array $relations,
+        array $targetBlogIds,
+        private readonly JobInformation $jobInformation,
+        array $ids = [],
+        string $description = '',
+    ) {
         parent::__construct($contentId, $contentType, $relations, $targetBlogIds, $description);
-        $this->jobInformation = $jobInformation;
         $this->ids = self::toIntegerArray($ids);
     }
 
@@ -47,7 +52,7 @@ class UserTranslationRequest extends UserCloneRequest
         return count($this->ids) > 0;
     }
 
-    private static function validate(array $array)
+    private static function validate(array $array): void
     {
         if (!array_key_exists('source', $array)) {
             throw new \InvalidArgumentException('Source array required');

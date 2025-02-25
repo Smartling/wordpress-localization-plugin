@@ -4,7 +4,8 @@ namespace Smartling\Models;
 
 use Smartling\Helpers\ArrayHelper;
 
-class RelatedContentInfo {
+class RelatedContentInfo
+{
     private ArrayHelper $arrayHelper;
     private array $info;
 
@@ -49,10 +50,10 @@ class RelatedContentInfo {
         $return = [];
         foreach ($flat as $item) {
             assert($item instanceof Content);
-            if (!array_key_exists($item->getType(), $return)) {
-                $return[$item->getType()] = [];
+            if (!array_key_exists($item->contentType, $return)) {
+                $return[($item->contentType)] = [];
             }
-            $return[$item->getType()][] = $item->getId();
+            $return[($item->contentType)][] = $item->contentId;
         }
         foreach ($return as $key => $value) {
             $return[$key] = array_unique($value);

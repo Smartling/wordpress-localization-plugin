@@ -29,7 +29,7 @@ class ContentProvider {
 
     public function getAsset(Content $content): array
     {
-        return $this->mapAssetDetails($this->wordpressProxy->get_post($content->getId()));
+        return $this->mapAssetDetails($this->wordpressProxy->get_post($content->contentId));
     }
 
     public function getAssets(
@@ -64,16 +64,16 @@ class ContentProvider {
     {
         $this->addHandlersForRegisteredTypes();
         return $this->core->getXMLFiltered($this->submissionManager->findOne([
-            SubmissionEntity::FIELD_CONTENT_TYPE => $assetUid->getType(),
+            SubmissionEntity::FIELD_CONTENT_TYPE => $assetUid->contentType,
             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->wordpressProxy->get_current_blog_id(),
-            SubmissionEntity::FIELD_SOURCE_ID => $assetUid->getId(),
+            SubmissionEntity::FIELD_SOURCE_ID => $assetUid->contentId,
         ]));
     }
 
     public function getRawContent(Content $assetUid): array
     {
         $this->addHandlersForRegisteredTypes();
-        $entity = $this->contentHelper->getWrapper($assetUid->getType())->get($assetUid->getId());
+        $entity = $this->contentHelper->getWrapper($assetUid->contentType)->get($assetUid->contentId);
         $result = [
             'entity' => $entity->toArray(),
         ];
@@ -94,7 +94,7 @@ class ContentProvider {
     ) {
         $arguments = [
             'numberposts' => $limit,
-            'parent_id' => $assetUid->getId(),
+            'parent_id' => $assetUid->contentId,
         ];
         $children = null;
         while ($childDepth > 0) {

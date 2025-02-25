@@ -25,6 +25,7 @@ use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\XmlHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Models\IntStringPairCollection;
 use Smartling\Models\UploadQueueItem;
 use Smartling\Replacers\ContentIdReplacer;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -418,11 +419,11 @@ trait SmartlingCoreUploadTrait
      */
     public function bulkSubmit(UploadQueueItem $item): void
     {
-        if (count($item->getSubmissions()) === 0) {
+        if (count($item->submissions) === 0) {
             return;
         }
-        $submission = $item->getSubmissions()[0];
-        $locales = $item->getSmartlingLocales()->getList();
+        $submission = ($item->submissions)[0];
+        $locales = $item->smartlingLocales->getList();
         $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
         try {
             $xml = $this->getXMLFiltered($submission);
@@ -430,7 +431,7 @@ trait SmartlingCoreUploadTrait
                 $this->getLogger()->debug('Skip upload of empty xml');
                 return;
             }
-            foreach ($item->getSubmissions() as $submission) {
+            foreach ($item->submissions as $submission) {
                 $submission = $this->prepareUpload($submission);
                 $fileUri = $this->fileUriHelper->generateFileUri($submission);
                 $submission->setFileUri($fileUri);
@@ -458,7 +459,7 @@ trait SmartlingCoreUploadTrait
                 implode(',', $locales),
             ));
 
-            if ($this->getApiWrapper()->uploadContent($submission, $xml, $item->getBatchUid(), $locales)) {
+            if ($this->getApiWrapper()->uploadContent($submission, $xml, $item->batchUid, $locales)) {
                 LiveNotificationController::pushNotification(
                     $profile->getProjectId(),
                     LiveNotificationController::getContentId($submission),
@@ -490,11 +491,11 @@ trait SmartlingCoreUploadTrait
             } while ($e !== null);
             $e = $caught;
             $this->getLogger()->error($e->getMessage());
-            foreach ($item->getSubmissions() as $submission) {
+            foreach ($item->submissions as $submission) {
                 $this->getSubmissionManager()
                     ->setErrorMessage($submission, vsprintf('Could not submit because: %s', [$e->getMessage()]));
             }
-            $submission = $item->getSubmissions()[0];
+            $submission = ($item->submissions)[0];
 
             LiveNotificationController::pushNotification(
                 $profile->getProjectId(),
@@ -509,7 +510,7 @@ trait SmartlingCoreUploadTrait
 
     public function sendForTranslation(UploadQueueItem $item): void
     {
-        foreach ($item->getSubmissions() as $submission) {
+        foreach ($item->submissions as $submission) {
             if (1 === $submission->getIsLocked()) {
                 $this->getLogger()
                     ->notice(sprintf('Requested upload of locked submissionId=%s, skipping.', $submission->getId()));
@@ -524,16 +525,16 @@ trait SmartlingCoreUploadTrait
             }
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         }
-        if (count($item->getSubmissions()) === 0) {
+        if (count($item->submissions) === 0) {
             $this->getLogger()->debug('No items to send after removing locked submissions');
             return;
         }
 
-        $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile($item->getSubmissions()[0]->getSourceBlogId());
+        $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile(($item->submissions)[0]->getSourceBlogId());
 
         // Mark attachment submission as "Cloned" if there is "Clone attachment"
         // option is enabled in configuration profile.
-        foreach ($item->getSubmissions() as $submission) {
+        foreach ($item->submissions as $submission) {
             if (1 === $configurationProfile->getCloneAttachment() && $submission->getContentType() === 'attachment') {
                 $submission->setIsCloned(1);
                 $this->getSubmissionManager()->storeEntity($submission);
@@ -545,28 +546,28 @@ trait SmartlingCoreUploadTrait
                         $submission->getSourceBlogId(),
                         $submission->getSourceId(),
                         $submission->getContentType(),
-                        $item->getBatchUid(),
+                        $item->batchUid,
                     )
                 );
                 $item = $item->removeSubmission($submission);
             }
         }
-        if (count($item->getSubmissions()) === 0) {
+        if (count($item->submissions) === 0) {
             $this->getLogger()->debug('No items to send after removing attachments for cloning');
             return;
         }
 
-        $submission = $item->getSubmissions()[0];
+        $submission = ($item->submissions)[0];
         $this->getLogger()->debug(
             sprintf(
                 'Preparing to send submissionIds="%s" (sourceBlogId="%s", sourceId="%s", contentType="%s", batchUid="%s").',
                     implode(', ', array_map(static function (SubmissionEntity $submission) {
                         return $submission->getId();
-                    }, $item->getSubmissions())),
+                    }, $item->submissions)),
                     $submission->getSourceBlogId(),
                     $submission->getSourceId(),
                     $submission->getContentType(),
-                    $item->getBatchUid(),
+                $item->batchUid,
             )
         );
 

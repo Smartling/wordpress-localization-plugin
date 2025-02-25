@@ -3,6 +3,7 @@
 namespace Smartling\Tests\Models;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\Models\JobInformation;
 use Smartling\Models\UserTranslationRequest;
 use Smartling\Services\ContentRelationsHandler;
 
@@ -39,11 +40,17 @@ class TranslationRequestTest extends TestCase
         $this->assertEquals($sourceId, $x->getContentId());
         $this->assertEquals($sourceContentType, $x->getContentType());
         $this->assertEquals([1 => [$targetBlogId => ['post' => [3]]], 2 => [$targetBlogId => ['attachment' => [5]]]], $x->getRelationsOrdered());
-        $this->assertFalse($x->getJobInformation()->isAuthorize());
-        $this->assertEquals($jobDescription, $x->getJobInformation()->getDescription());
-        $this->assertEquals($jobDueDate, $x->getJobInformation()->getDueDate());
-        $this->assertEquals($jobName, $x->getJobInformation()->getName());
-        $this->assertEquals($jobTimeZone, $x->getJobInformation()->getTimeZone());
-        $this->assertEquals($jobUid, $x->getJobInformation()->getId());
+        $jobInformation1 = $x->getJobInformation();
+        $this->assertFalse($jobInformation1->authorize);
+        $jobInformation3 = $x->getJobInformation();
+        $this->assertEquals($jobDescription, $jobInformation3->description);
+        $jobInformation4 = $x->getJobInformation();
+        $this->assertEquals($jobDueDate, $jobInformation4->dueDate);
+        $jobInformation2 = $x->getJobInformation();
+        $this->assertEquals($jobName, $jobInformation2->name);
+        $jobInformation5 = $x->getJobInformation();
+        $this->assertEquals($jobTimeZone, $jobInformation5->timeZone);
+        $jobInformation = $x->getJobInformation();
+        $this->assertEquals($jobUid, $jobInformation->id);
     }
 }

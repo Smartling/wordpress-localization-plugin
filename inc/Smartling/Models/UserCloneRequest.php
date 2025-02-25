@@ -7,17 +7,16 @@ use Smartling\Helpers\ArrayHelper;
 
 class UserCloneRequest
 {
-    private int $contentId;
-    private string $contentType;
-    private string $description;
     private array $relations;
     private array $targetBlogIds;
 
-    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, string $description = '')
-    {
-        $this->contentId = $contentId;
-        $this->contentType = $contentType;
-        $this->description = $description;
+    public function __construct(
+        private readonly int $contentId,
+        private readonly string $contentType,
+        array $relations,
+        array $targetBlogIds,
+        private readonly string $description = '',
+    ) {
         krsort($relations);
         $this->relations = $relations;
         $this->targetBlogIds = ArrayHelper::toArrayOfIntegers($targetBlogIds, 'Target blog id expected to be numeric');
@@ -63,6 +62,7 @@ class UserCloneRequest
         if ($id === null) {
             throw new SmartlingHumanReadableException('Source content id is empty, please save content prior to uploading', 'source.id.empty', 400);
         }
+
         return (int)$id;
     }
 }

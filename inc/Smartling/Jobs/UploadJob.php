@@ -8,7 +8,9 @@ use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\FileUriHelper;
+use Smartling\Models\UploadQueueItem;
 use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
 class UploadJob extends JobAbstract
@@ -54,7 +56,7 @@ class UploadJob extends JobAbstract
     {
         $profiles = [];
         while (($item = $this->uploadQueueManager->dequeue()) !== null) {
-            $submission = $item->getSubmissions()[0];
+            $submission = ($item->submissions)[0];
             if ($submission->getFileUri() === '') {
                 $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $this->submissionManager->storeEntity($submission);
@@ -68,7 +70,7 @@ class UploadJob extends JobAbstract
                 }
             }
             $profile = $profiles[$submission->getSourceBlogId()];
-            if ($item->getBatchUid() === '') {
+            if ($item->batchUid === '') {
                 $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());
             }
 
@@ -81,13 +83,13 @@ class UploadJob extends JobAbstract
                 $submission->getSourceId(),
                 $submission->getTargetBlogId(),
                 $submission->getTargetLocale(),
-                $item->getBatchUid(),
+                $item->batchUid,
             ));
 
             try {
                 do_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, $item);
             } catch (\Exception $e) {
-                foreach ($item->getSubmissions() as $submission) {
+                foreach ($item->submissions as $submission) {
                     $this->getLogger()->notice(sprintf('Failing submissionId=%s: %s', $submission->getId(), $e->getMessage()));
                     $this->submissionManager->setErrorMessage($submission, $e->getMessage());
                 }
