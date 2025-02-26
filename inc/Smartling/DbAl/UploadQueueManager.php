@@ -21,14 +21,14 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
-readonly class UploadQueueManager {
+class UploadQueueManager {
     use LoggerSafeTrait;
     private string $tableName;
     public function __construct(
-        private ApiWrapperInterface $api,
-        private SettingsManager $settingsManager,
-        private SmartlingToCMSDatabaseAccessWrapperInterface $db,
-        private SubmissionManager $submissionManager,
+        private readonly ApiWrapperInterface $api,
+        private readonly SettingsManager $settingsManager,
+        private readonly SmartlingToCMSDatabaseAccessWrapperInterface $db,
+        private readonly SubmissionManager $submissionManager,
     ) {
         $this->tableName = $db->completeTableName(UploadQueueEntity::TABLE_NAME);
     }
