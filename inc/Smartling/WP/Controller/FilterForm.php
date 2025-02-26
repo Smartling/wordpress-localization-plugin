@@ -8,8 +8,8 @@ use Smartling\WP\WPHookInterface;
 
 class FilterForm extends ControllerAbstract implements WPHookInterface
 {
-    public const SLUG = AdminPage::SLUG . '_filter_form';
-    public const ACTION_SAVE = self::SLUG . '_save';
+    public const string SLUG = AdminPage::SLUG . '_filter_form';
+    public const string ACTION_SAVE = self::SLUG . '_save';
 
     public function register(): void
     {

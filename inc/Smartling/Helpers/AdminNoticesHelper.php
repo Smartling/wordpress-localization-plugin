@@ -6,7 +6,7 @@ use Smartling\WP\WPHookInterface;
 
 class AdminNoticesHelper implements WPHookInterface
 {
-    public const OPTION_NAME = 'smartling_notices';
+    public const string OPTION_NAME = 'smartling_notices';
 
     public function register(): void
     {

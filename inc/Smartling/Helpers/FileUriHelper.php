@@ -16,9 +16,9 @@ class FileUriHelper
 {
     use LoggerSafeTrait;
 
-    private const FILE_URI_FORMAT = '%s_%s_%s_%s.xml';
-    private const MAX_PERMALINK_LENGTH = 210;
-    private const UNTITLED = 'UNTITLED';
+    private const string FILE_URI_FORMAT = '%s_%s_%s_%s.xml';
+    private const int MAX_PERMALINK_LENGTH = 210;
+    private const string UNTITLED = 'UNTITLED';
 
     public function __construct(
         private ContentEntitiesIOFactory $ioFactory,

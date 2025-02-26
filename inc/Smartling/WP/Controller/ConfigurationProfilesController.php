@@ -22,10 +22,10 @@ use Smartling\WP\WPHookInterface;
 class ConfigurationProfilesController extends WPAbstract implements WPHookInterface
 {
 
-    public const ACTION_QUEUE_PURGE = 'queue_purge';
-    public const ACTION_QUEUE_FORCE = 'queue_force';
+    public const string ACTION_QUEUE_PURGE = 'queue_purge';
+    public const string ACTION_QUEUE_FORCE = 'queue_force';
 
-    public const MENU_SLUG = 'smartling_configuration_profile_list';
+    public const string MENU_SLUG = 'smartling_configuration_profile_list';
 
     public function __construct(
         LocalizationPluginProxyInterface $connector,

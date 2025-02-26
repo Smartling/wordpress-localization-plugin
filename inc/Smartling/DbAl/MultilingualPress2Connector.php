@@ -17,11 +17,11 @@ class MultilingualPress2Connector extends MultilingualPressConnector implements 
 {
     use LoggerSafeTrait;
 
-    public const MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME = 'inpsyde_multilingual';
+    public const string MULTILINGUAL_PRESS_PRO_SITE_OPTION_KEY_NAME = 'inpsyde_multilingual';
 
-    private const ML_SITE_LINK_TABLE_NAME = 'mlp_site_relations';
-    private const ML_CONTENT_LINK_TABLE_NAME = 'multilingual_linked';
-    private const UNKNOWN_LOCALE = '';
+    private const string ML_SITE_LINK_TABLE_NAME = 'mlp_site_relations';
+    private const string ML_CONTENT_LINK_TABLE_NAME = 'multilingual_linked';
+    private const string UNKNOWN_LOCALE = '';
 
     /**
      * @var wpdb

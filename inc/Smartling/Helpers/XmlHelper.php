@@ -26,11 +26,11 @@ class XmlHelper
     ) {
     }
 
-    const XML_ROOT_NODE_NAME = 'data';
+    const string XML_ROOT_NODE_NAME = 'data';
 
-    private const XML_STRING_NODE_NAME = 'string';
+    private const string XML_STRING_NODE_NAME = 'string';
 
-    private const XML_SOURCE_NODE_NAME = 'source';
+    private const string XML_SOURCE_NODE_NAME = 'source';
 
     private function initXml(): DOMDocument
     {

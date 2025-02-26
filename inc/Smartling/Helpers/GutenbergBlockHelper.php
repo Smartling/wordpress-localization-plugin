@@ -22,11 +22,11 @@ use Smartling\Vendor\JsonPath\JsonObject;
 
 class GutenbergBlockHelper extends SubstringProcessorHelperAbstract
 {
-    protected const BLOCK_NODE_NAME = 'gutenbergBlock';
-    protected const CHUNK_NODE_NAME = 'contentChunk';
-    protected const ATTRIBUTE_NODE_NAME = 'blockAttribute';
-    private const CDATA_SECTION_NODE_NAME = '#cdata-section';
-    private const MAX_NODE_DEPTH = 10;
+    protected const string BLOCK_NODE_NAME = 'gutenbergBlock';
+    protected const string CHUNK_NODE_NAME = 'contentChunk';
+    protected const string ATTRIBUTE_NODE_NAME = 'blockAttribute';
+    private const string CDATA_SECTION_NODE_NAME = '#cdata-section';
+    private const int MAX_NODE_DEPTH = 10;
 
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,

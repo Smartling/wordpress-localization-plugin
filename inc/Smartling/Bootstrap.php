@@ -36,7 +36,7 @@ class Bootstrap
     use DebugTrait;
     use DITrait;
 
-    private const WORDPRESS_ORG_PLUGIN_NAME = 'smartling-connector';
+    private const string WORDPRESS_ORG_PLUGIN_NAME = 'smartling-connector';
 
     public static LoggerInterface $loggerInstance;
 

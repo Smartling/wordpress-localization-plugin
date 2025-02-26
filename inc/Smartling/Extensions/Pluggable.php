@@ -5,9 +5,9 @@ namespace Smartling\Extensions;
 use JetBrains\PhpStorm\ExpectedValues;
 
 interface Pluggable {
-    public const NOT_SUPPORTED = 'not_supported';
-    public const SUPPORTED = 'supported';
-    public const VERSION_NOT_SUPPORTED = 'version_not_supported';
+    public const string NOT_SUPPORTED = 'not_supported';
+    public const string SUPPORTED = 'supported';
+    public const string VERSION_NOT_SUPPORTED = 'version_not_supported';
 
     public function getMaxVersion(): string;
 

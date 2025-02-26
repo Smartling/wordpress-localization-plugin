@@ -9,7 +9,7 @@ use Smartling\Helpers\StringHelper;
  */
 class AcfOptionHelper
 {
-    const ACF_OPTION_KEY_MAP = 'smartling_acf_option_key_map';
+    const string ACF_OPTION_KEY_MAP = 'smartling_acf_option_key_map';
 
     /**
      * @var int

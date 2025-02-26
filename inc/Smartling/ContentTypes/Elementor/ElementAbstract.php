@@ -12,8 +12,8 @@ use Smartling\Submissions\SubmissionEntity;
 
 abstract class ElementAbstract implements Element {
     use LoggerSafeTrait;
-    protected const SETTING_KEY_DYNAMIC = '__dynamic__';
-    protected const SETTING_KEY_POPUP = 'popup';
+    protected const string SETTING_KEY_DYNAMIC = '__dynamic__';
+    protected const string SETTING_KEY_POPUP = 'popup';
 
     protected array $elements;
     protected string $id;

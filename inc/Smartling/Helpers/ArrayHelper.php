@@ -6,7 +6,7 @@ use Smartling\Settings\Locale;
 
 class ArrayHelper
 {
-    private const NESTED_KEY_SEPARATOR = '.';
+    private const string NESTED_KEY_SEPARATOR = '.';
 
     /**
      * Retrieves the value of an array element or object property with the given key or property name.

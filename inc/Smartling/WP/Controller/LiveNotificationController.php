@@ -17,20 +17,20 @@ class LiveNotificationController implements WPHookInterface
 {
     use LoggerSafeTrait;
 
-    private const DELETE_NOTIFICATION_ACTION_NAME = 'smartling_delete_live_notification';
+    private const string DELETE_NOTIFICATION_ACTION_NAME = 'smartling_delete_live_notification';
 
-    private const FIREBASE_SPACE_ID = 'wordpress-connector';
-    private const FIREBASE_OBJECT_ID = 'notifications';
+    private const string FIREBASE_SPACE_ID = 'wordpress-connector';
+    private const string FIREBASE_OBJECT_ID = 'notifications';
 
-    private const CONFIG_CACHE_KEY = 'progress_tracker_config_cache_key';
-    private const CONFIG_CACHE_TIME_SEC = 3600;
+    private const string CONFIG_CACHE_KEY = 'progress_tracker_config_cache_key';
+    private const int CONFIG_CACHE_TIME_SEC = 3600;
 
-    private const UI_NOTIFICATION_IDENTIFIER_CLASS = 'smartling-notification-wrapper';
-    private const UI_NOTIFICATION_IDENTIFIER_CLASS_GENERAL = 'smartling-notification-wrapper-general';
+    private const string UI_NOTIFICATION_IDENTIFIER_CLASS = 'smartling-notification-wrapper';
+    private const string UI_NOTIFICATION_IDENTIFIER_CLASS_GENERAL = 'smartling-notification-wrapper-general';
 
-    public const SEVERITY_WARNING = 'notification-warning';
-    public const SEVERITY_SUCCESS = 'notification-success';
-    public const SEVERITY_ERROR = 'notification-error';
+    public const string SEVERITY_WARNING = 'notification-warning';
+    public const string SEVERITY_SUCCESS = 'notification-success';
+    public const string SEVERITY_ERROR = 'notification-error';
 
     private ApiWrapperInterface $apiWrapper;
     private SettingsManager $settingsManager;

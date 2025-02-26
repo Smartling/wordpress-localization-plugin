@@ -4,8 +4,8 @@ namespace Smartling\Helpers;
 
 class UiMessageHelper
 {
-    private const CACHE_KEY_PREFIX = 'smartling.ui.message.';
-    public const DISMISS_MESSAGE_ACTION = 'smartling_dismiss_message';
+    private const string CACHE_KEY_PREFIX = 'smartling.ui.message.';
+    public const string DISMISS_MESSAGE_ACTION = 'smartling_dismiss_message';
 
     public static function dismissMessage(): void
     {

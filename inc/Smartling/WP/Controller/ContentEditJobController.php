@@ -17,7 +17,7 @@ use Smartling\WP\WPHookInterface;
 
 class ContentEditJobController extends WPAbstract implements WPHookInterface
 {
-    public const SMARTLING_JOB_API_PROXY = 'smartling_job_api_proxy';
+    public const string SMARTLING_JOB_API_PROXY = 'smartling_job_api_proxy';
     /**
      * @var string
      */

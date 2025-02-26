@@ -18,7 +18,7 @@ use Smartling\Submissions\SubmissionManager;
 class ExternalContentGravityForms extends ExternalContentAbstract implements ContentTypeModifyingInterface {
     use LoggerSafeTrait;
 
-    public const CONTENT_TYPE = 'gravityforms-form';
+    public const string CONTENT_TYPE = 'gravityforms-form';
     private ContentTypeHelper $contentTypeHelper;
     private GravityFormsFormHandler $handler;
     private GutenbergBlockHelper $gutenbergBlockHelper;

@@ -10,8 +10,8 @@ use Smartling\WP\WPHookInterface;
 
 class MediaRuleForm extends ControllerAbstract implements WPHookInterface
 {
-    public const SLUG = AdminPage::SLUG . '_media_form';
-    public const ACTION_SAVE = self::SLUG . '_save';
+    public const string SLUG = AdminPage::SLUG . '_media_form';
+    public const string ACTION_SAVE = self::SLUG . '_save';
 
     protected MediaAttachmentRulesManager $mediaAttachmentRulesManager;
     protected ReplacerFactory $replacerFactory;

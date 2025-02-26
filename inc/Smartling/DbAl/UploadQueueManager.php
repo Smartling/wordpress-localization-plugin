@@ -21,7 +21,7 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
-class UploadQueueManager {
+readonly class UploadQueueManager {
     use LoggerSafeTrait;
     private string $tableName;
     public function __construct(

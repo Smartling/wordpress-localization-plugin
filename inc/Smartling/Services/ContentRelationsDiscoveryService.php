@@ -51,8 +51,8 @@ use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 class ContentRelationsDiscoveryService
 {
     use LoggerSafeTrait;
-    public const POST_BASED_PROCESSOR = 'PostBasedProcessor';
-    public const TERM_BASED_PROCESSOR = 'TermBasedProcessor';
+    public const string POST_BASED_PROCESSOR = 'PostBasedProcessor';
+    public const string TERM_BASED_PROCESSOR = 'TermBasedProcessor';
 
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,

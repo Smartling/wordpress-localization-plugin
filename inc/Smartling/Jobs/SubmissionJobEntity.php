@@ -7,11 +7,11 @@ use Smartling\SmartlingTableDefinitionInterface;
 
 class SubmissionJobEntity implements SmartlingTableDefinitionInterface
 {
-    public const FIELD_CREATED = 'created';
-    public const FIELD_ID = 'id';
-    public const FIELD_JOB_ID = 'job_id';
-    public const FIELD_MODIFIED = 'modified';
-    public const FIELD_SUBMISSION_ID = 'submission_id';
+    public const string FIELD_CREATED = 'created';
+    public const string FIELD_ID = 'id';
+    public const string FIELD_JOB_ID = 'job_id';
+    public const string FIELD_MODIFIED = 'modified';
+    public const string FIELD_SUBMISSION_ID = 'submission_id';
 
     private \DateTime $created;
     private ?int $id;

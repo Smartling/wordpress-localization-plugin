@@ -4,7 +4,7 @@ namespace Smartling\Helpers;
 
 class StringHelper
 {
-    private const EMPTY_STRING = '';
+    private const string EMPTY_STRING = '';
 
     /**
      * @param mixed $value

@@ -15,8 +15,8 @@ use Smartling\Submissions\SubmissionManager;
 class RestApi extends \WP_REST_Controller {
     use DITrait;
 
-    private const ASSET_UID_REGEX = '(?P<id>[a-z-_]+-\d+)';
-    private const NAMESPACE = 'smartling-connector/v2';
+    private const string ASSET_UID_REGEX = '(?P<id>[a-z-_]+-\d+)';
+    private const string NAMESPACE = 'smartling-connector/v2';
 
     private ContentHelper $contentHelper;
     private FileUriHelper $fileUriHelper;

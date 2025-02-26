@@ -20,11 +20,11 @@ class FieldsFilterHelper
 {
     use LoggerSafeTrait;
 
-    public const ARRAY_DIVIDER = '/';
+    public const string ARRAY_DIVIDER = '/';
 
-    private const FILTER_STRATEGY_UPLOAD = 'upload';
+    private const string FILTER_STRATEGY_UPLOAD = 'upload';
 
-    private const FILTER_STRATEGY_DOWNLOAD = 'download';
+    private const string FILTER_STRATEGY_DOWNLOAD = 'download';
 
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,

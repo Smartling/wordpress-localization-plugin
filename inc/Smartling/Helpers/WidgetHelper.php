@@ -12,7 +12,7 @@ class WidgetHelper
     /**
      * key for generated IDs
      */
-    const SMARTLING_IDENTITY_FIELD_NAME = 'smartlingId';
+    const string SMARTLING_IDENTITY_FIELD_NAME = 'smartlingId';
 
     /**
      * @var integer

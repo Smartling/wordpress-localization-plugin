@@ -11,23 +11,23 @@ use Smartling\WP\Controller\ConfigurationProfileFormController as Form;
  */
 class ConfigurationProfileEntity extends SmartlingEntityAbstract
 {
-    private const REGEX_PROJECT_ID = '([0-9a-f]){9}';
+    private const string REGEX_PROJECT_ID = '([0-9a-f]){9}';
 
-    public const RETRIEVAL_TYPE_PSEUDO = 'pseudo';
-    public const RETRIEVAL_TYPE_PUBLISHED = 'published';
+    public const string RETRIEVAL_TYPE_PSEUDO = 'pseudo';
+    public const string RETRIEVAL_TYPE_PUBLISHED = 'published';
 
-    public const UPLOAD_ON_CHANGE_MANUAL = 0;
+    public const int UPLOAD_ON_CHANGE_MANUAL = 0;
 
-    public const UPLOAD_ON_CHANGE_AUTO = 1;
+    public const int UPLOAD_ON_CHANGE_AUTO = 1;
 
-    public const TRANSLATION_DOWNLOAD_MODE_TRANSLATION_COMPLETED = 0;
-    public const TRANSLATION_DOWNLOAD_MODE_PROGRESS_CHANGES = 1;
-    public const TRANSLATION_DOWNLOAD_MODE_MANUAL = 2;
+    public const int TRANSLATION_DOWNLOAD_MODE_TRANSLATION_COMPLETED = 0;
+    public const int TRANSLATION_DOWNLOAD_MODE_PROGRESS_CHANGES = 1;
+    public const int TRANSLATION_DOWNLOAD_MODE_MANUAL = 2;
 
 
-    public const TRANSLATION_PUBLISHING_MODE_NO_CHANGE = 0;
-    public const TRANSLATION_PUBLISHING_MODE_PUBLISH = 1;
-    public const TRANSLATION_PUBLISHING_MODE_DRAFT = 2;
+    public const int TRANSLATION_PUBLISHING_MODE_NO_CHANGE = 0;
+    public const int TRANSLATION_PUBLISHING_MODE_PUBLISH = 1;
+    public const int TRANSLATION_PUBLISHING_MODE_DRAFT = 2;
 
     protected static function getInstance(): ConfigurationProfileEntity
     {

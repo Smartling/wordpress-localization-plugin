@@ -12,7 +12,7 @@ use Smartling\Submissions\SubmissionManager;
 
 class DownloadTranslationJob extends JobAbstract
 {
-    public const JOB_HOOK_NAME = 'smartling-download-task';
+    public const string JOB_HOOK_NAME = 'smartling-download-task';
 
     public function __construct(
         ApiWrapperInterface $api,

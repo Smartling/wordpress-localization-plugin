@@ -12,10 +12,10 @@ use Smartling\WP\Table\DuplicateSubmissions;
 use Smartling\WP\WPHookInterface;
 
 class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookInterface {
-    public const SLUG = 'smartling_duplicate_submission_cleaner';
+    public const string SLUG = 'smartling_duplicate_submission_cleaner';
 
-    private const CACHE_KEY = 'submissions-has-duplicate';
-    private const NONCE_ACTION = "duplicate-submission-cleaner";
+    private const string CACHE_KEY = 'submissions-has-duplicate';
+    private const string NONCE_ACTION = "duplicate-submission-cleaner";
 
     public function __construct(
         private Cache $cache,

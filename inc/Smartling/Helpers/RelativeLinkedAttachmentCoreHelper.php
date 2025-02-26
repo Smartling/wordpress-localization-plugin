@@ -17,15 +17,15 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 {
     use LoggerSafeTrait;
 
-    private const ACF_GUTENBERG_BLOCK = '<!-- wp:acf/.+ ({.+}) /-->';
+    private const string ACF_GUTENBERG_BLOCK = '<!-- wp:acf/.+ ({.+}) /-->';
     /**
      * RegEx to catch images from the string
      */
-    protected const PATTERN_IMAGE_GENERAL = '<img[^>]+>';
+    protected const string PATTERN_IMAGE_GENERAL = '<img[^>]+>';
 
     private const PATTERN_LINK_GENERAL = '<a[^>]+>';
 
-    protected const PATTERN_THUMBNAIL_IDENTITY = '-\d+x\d+$';
+    protected const string PATTERN_THUMBNAIL_IDENTITY = '-\d+x\d+$';
 
     private array $acfDefinitions = [];
     private AfterDeserializeContentEventParameters $params;

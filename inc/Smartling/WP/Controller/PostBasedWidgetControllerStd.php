@@ -29,36 +29,36 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 {
     use DetectContentChangeTrait;
 
-    private const WIDGET_NAME = 'smartling_connector_widget';
-    public const WIDGET_DATA_NAME = 'smartling';
-    private const CONNECTOR_NONCE = 'smartling_connector_nonce';
+    private const string WIDGET_NAME = 'smartling_connector_widget';
+    public const string WIDGET_DATA_NAME = 'smartling';
+    private const string CONNECTOR_NONCE = 'smartling_connector_nonce';
 
     protected string $servedContentType = 'undefined';
     protected string $needSave = 'Need to have title';
     protected string $noOriginalFound = 'No original post found';
     protected string $abilityNeeded = 'edit_post';
 
-    private const RESPONSE_AJAX_STATUS_FAIL = 'FAIL';
-    private const RESPONSE_AJAX_STATUS_SUCCESS = 'SUCCESS';
+    private const string RESPONSE_AJAX_STATUS_FAIL = 'FAIL';
+    private const string RESPONSE_AJAX_STATUS_SUCCESS = 'SUCCESS';
 
-    private const ERROR_KEY_FIELD_MISSING = 'field.missing';
-    private const ERROR_MSG_FIELD_MISSING = 'Required field \'%s\' is missing.';
+    private const string ERROR_KEY_FIELD_MISSING = 'field.missing';
+    private const string ERROR_MSG_FIELD_MISSING = 'Required field \'%s\' is missing.';
 
-    private const ERROR_KEY_NO_PROFILE_FOUND = 'profile.not.found';
-    private const ERROR_MSG_NO_PROFILE_FOUND = 'No suitable configuration profile found.';
+    private const string ERROR_KEY_NO_PROFILE_FOUND = 'profile.not.found';
+    private const string ERROR_MSG_NO_PROFILE_FOUND = 'No suitable configuration profile found.';
 
-    private const ERROR_KEY_TARGET_BLOG_EMPTY = 'no.target';
-    private const ERROR_MSG_TARGET_BLOG_EMPTY = 'No target blog selected.';
+    private const string ERROR_KEY_TARGET_BLOG_EMPTY = 'no.target';
+    private const string ERROR_MSG_TARGET_BLOG_EMPTY = 'No target blog selected.';
 
-    private const ERROR_KEY_NO_CONTENT = 'no.content';
-    private const ERROR_MSG_NO_CONTENT = 'No source content selected.';
+    private const string ERROR_KEY_NO_CONTENT = 'no.content';
+    private const string ERROR_MSG_NO_CONTENT = 'No source content selected.';
 
 
-    private const ERROR_KEY_INVALID_BLOG = 'invalid.blog';
-    private const ERROR_MSG_INVALID_BLOG = 'Invalid blog value.';
+    private const string ERROR_KEY_INVALID_BLOG = 'invalid.blog';
+    private const string ERROR_MSG_INVALID_BLOG = 'Invalid blog value.';
 
-    private const ERROR_KEY_TYPE_MISSING = 'content.type.missing';
-    private const ERROR_MSG_TYPE_MISSING = 'Source content-type missing.';
+    private const string ERROR_KEY_TYPE_MISSING = 'content.type.missing';
+    private const string ERROR_MSG_TYPE_MISSING = 'Source content-type missing.';
 
     private array $mutedTypes = [
         'attachment',

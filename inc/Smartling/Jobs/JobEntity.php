@@ -7,12 +7,12 @@ use Smartling\SmartlingTableDefinitionInterface;
 
 class JobEntity implements SmartlingTableDefinitionInterface
 {
-    public const FIELD_CREATED = 'created';
-    public const FIELD_ID = 'id';
-    public const FIELD_JOB_NAME = 'job_name';
-    public const FIELD_JOB_UID = 'job_uid';
-    public const FIELD_MODIFIED = 'modified';
-    public const FIELD_PROJECT_UID = 'project_uid';
+    public const string FIELD_CREATED = 'created';
+    public const string FIELD_ID = 'id';
+    public const string FIELD_JOB_NAME = 'job_name';
+    public const string FIELD_JOB_UID = 'job_uid';
+    public const string FIELD_MODIFIED = 'modified';
+    public const string FIELD_PROJECT_UID = 'project_uid';
 
     private \DateTime $created;
     private ?int $id;

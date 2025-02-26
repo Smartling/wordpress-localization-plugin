@@ -29,7 +29,7 @@ class ContentTypeWidget extends ContentTypeAbstract
     /**
      * The system name of Wordpress content type to make references safe.
      */
-    const WP_CONTENT_TYPE = 'theme_widget';
+    const string WP_CONTENT_TYPE = 'theme_widget';
 
     /**
      * Wordpress name of content-type, e.g.: post, page, post-tag

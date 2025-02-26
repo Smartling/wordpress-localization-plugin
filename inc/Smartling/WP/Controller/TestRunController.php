@@ -33,10 +33,10 @@ use Smartling\WP\WPHookInterface;
 
 class TestRunController extends WPAbstract implements WPHookInterface
 {
-    private const TEST_RUN_JOB_NAME = 'Test Run Job';
+    private const string TEST_RUN_JOB_NAME = 'Test Run Job';
 
-    public const ACTION_CLEAR_FLAG = 'clear_flag';
-    public const SLUG = 'smartling_test_run';
+    public const string ACTION_CLEAR_FLAG = 'clear_flag';
+    public const string SLUG = 'smartling_test_run';
 
     private ContentRelationsDiscoveryService $contentRelationDiscoveryService;
     private ApiWrapperInterface $apiWrapper;

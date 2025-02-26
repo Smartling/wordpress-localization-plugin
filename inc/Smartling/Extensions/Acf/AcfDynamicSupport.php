@@ -21,10 +21,10 @@ class AcfDynamicSupport
 {
     use LoggerSafeTrait;
 
-    public const REFERENCED_TYPE_NONE = 'none';
-    public const REFERENCED_TYPE_MEDIA = 'media';
-    public const REFERENCED_TYPE_POST = 'post';
-    public const REFERENCED_TYPE_TAXONOMY = 'taxonomy';
+    public const string REFERENCED_TYPE_NONE = 'none';
+    public const string REFERENCED_TYPE_MEDIA = 'media';
+    public const string REFERENCED_TYPE_POST = 'post';
+    public const string REFERENCED_TYPE_TAXONOMY = 'taxonomy';
 
     public static array $acfReverseDefinitionAction = [];
 

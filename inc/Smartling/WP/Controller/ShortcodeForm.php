@@ -8,8 +8,8 @@ use Smartling\WP\WPHookInterface;
 
 class ShortcodeForm extends ControllerAbstract implements WPHookInterface
 {
-    public const SLUG = AdminPage::SLUG . '_shortcode_form';
-    public const ACTION_SAVE = self::SLUG . '_save';
+    public const string SLUG = AdminPage::SLUG . '_shortcode_form';
+    public const string ACTION_SAVE = self::SLUG . '_save';
 
     public function register(): void
     {

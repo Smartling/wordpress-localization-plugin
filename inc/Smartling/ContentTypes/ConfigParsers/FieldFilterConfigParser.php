@@ -22,12 +22,12 @@ class FieldFilterConfigParser
     /**
      * Valid actions
      */
-    private const ACTION_COPY     = 'copy';
-    private const ACTION_SKIP     = 'skip';
-    private const ACTION_LOCALIZE = 'localize';
+    private const string ACTION_COPY     = 'copy';
+    private const string ACTION_SKIP     = 'skip';
+    private const string ACTION_LOCALIZE = 'localize';
 
-    private const VALUE_TYPE_REFERENCE = 'reference';
-    private const VALUE_TYPE_URL       = 'url';
+    private const string VALUE_TYPE_REFERENCE = 'reference';
+    private const string VALUE_TYPE_URL       = 'url';
 
     private array $actions = [
         self::ACTION_COPY,

@@ -33,17 +33,17 @@ class BulkSubmitTableWidget extends SmartlingListTable
     use CommonLogMessagesTrait;
     use LoggerSafeTrait;
 
-    private const CUSTOM_CONTROLS_NAMESPACE = 'smartling-bulk-submit-page';
+    private const string CUSTOM_CONTROLS_NAMESPACE = 'smartling-bulk-submit-page';
 
     /**
      * base name of Content-type filtering select
      */
-    private const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
-    private const SUBMISSION_STATUS_SELECT_ELEMENT_NAME = 'submission-status';
+    private const string CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
+    private const string SUBMISSION_STATUS_SELECT_ELEMENT_NAME = 'submission-status';
     /**
      * base name of title search textbox
      */
-    private const TITLE_SEARCH_TEXTBOX_ELEMENT_NAME = 'title-search';
+    private const string TITLE_SEARCH_TEXTBOX_ELEMENT_NAME = 'title-search';
 
     private array $defaultValues = [
         self::CONTENT_TYPE_SELECT_ELEMENT_NAME  => 'post',

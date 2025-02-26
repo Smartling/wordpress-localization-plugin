@@ -11,7 +11,7 @@ use Smartling\Submissions\SubmissionEntity;
 
 class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHelper
 {
-    private const PATTERN_LINK_GENERAL = '<a[^>]+>';
+    private const string PATTERN_LINK_GENERAL = '<a[^>]+>';
 
     private function isAbsoluteUrl(string $url): bool
     {

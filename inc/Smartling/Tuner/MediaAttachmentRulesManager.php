@@ -10,7 +10,7 @@ class MediaAttachmentRulesManager extends CustomizationManagerAbstract
 {
     use LoggerSafeTrait;
 
-    private const STORAGE_KEY = 'CUSTOM_MEDIA_RULES';
+    private const string STORAGE_KEY = 'CUSTOM_MEDIA_RULES';
     private array $preconfiguredRules;
     private array $temporaryRules = [];
 

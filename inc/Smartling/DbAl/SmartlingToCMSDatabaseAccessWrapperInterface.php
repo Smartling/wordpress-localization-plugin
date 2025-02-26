@@ -4,8 +4,8 @@ namespace Smartling\DbAl;
 
 interface SmartlingToCMSDatabaseAccessWrapperInterface
 {
-    public const SORT_OPTION_ASC = 'ASC';
-    public const SORT_OPTION_DESC = 'DESC';
+    public const string SORT_OPTION_ASC = 'ASC';
+    public const string SORT_OPTION_DESC = 'DESC';
 
     /**
      * @return bool|int

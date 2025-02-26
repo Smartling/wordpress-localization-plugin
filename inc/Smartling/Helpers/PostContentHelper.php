@@ -9,9 +9,9 @@ class PostContentHelper
 {
     use LoggerSafeTrait;
 
-    public const SMARTLING_LOCK_ID = 'smartlingLockId';
-    public const SMARTLING_LOCKED = 'smartlingLocked';
-    public const SMARTLING_LOCKED_ATTRIBUTES = 'smartlingLockedAttributes';
+    public const string SMARTLING_LOCK_ID = 'smartlingLockId';
+    public const string SMARTLING_LOCKED = 'smartlingLocked';
+    public const string SMARTLING_LOCKED_ATTRIBUTES = 'smartlingLockedAttributes';
 
     public function __construct(private ArrayHelper $arrayHelper, private GutenbergBlockHelper $blockHelper)
     {

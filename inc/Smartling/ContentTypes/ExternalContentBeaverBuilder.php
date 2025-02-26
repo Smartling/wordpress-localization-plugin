@@ -15,11 +15,11 @@ class ExternalContentBeaverBuilder extends ExternalContentAbstract implements Co
 {
     use LoggerSafeTrait;
 
-    protected const META_FIELD_NAME = '_fl_builder_data';
-    private const META_NODE_PATH_NAME_REGEX = '[0-9a-f]{13}/';
-    private const META_NODE_SETTINGS_CHILD_NODE_REGEX = self::META_NODE_SETTINGS_NAME_REGEX . '.+/';
-    public const META_NODE_SETTINGS_NAME_REGEX = self::META_NODE_PATH_NAME_REGEX . 'settings/';
-    private const META_SETTINGS_NAME = '_fl_builder_data_settings';
+    protected const string META_FIELD_NAME = '_fl_builder_data';
+    private const string META_NODE_PATH_NAME_REGEX = '[0-9a-f]{13}/';
+    private const string META_NODE_SETTINGS_CHILD_NODE_REGEX = self::META_NODE_SETTINGS_NAME_REGEX . '.+/';
+    public const string META_NODE_SETTINGS_NAME_REGEX = self::META_NODE_PATH_NAME_REGEX . 'settings/';
+    private const string META_SETTINGS_NAME = '_fl_builder_data_settings';
 
     private ContentTypeHelper $contentTypeHelper;
 

@@ -15,7 +15,7 @@ use Smartling\Submissions\SubmissionManager;
 
 class UploadJob extends JobAbstract
 {
-    public const JOB_HOOK_NAME = 'smartling-upload-task';
+    public const string JOB_HOOK_NAME = 'smartling-upload-task';
 
     public function __construct(
         ApiWrapperInterface $api,

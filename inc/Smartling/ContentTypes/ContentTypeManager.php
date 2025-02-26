@@ -8,7 +8,7 @@ use Smartling\Processors\SmartlingFactoryAbstract;
 
 class ContentTypeManager extends SmartlingFactoryAbstract
 {
-    public const VIRTUAL = 'virtual';
+    public const string VIRTUAL = 'virtual';
     private static array $baseTypes = ['post', 'taxonomy', self::VIRTUAL];
 
     public function __construct(bool $allowDefault = false, ?object $defaultHandler = null)

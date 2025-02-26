@@ -4,18 +4,15 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 
-class ContentTypeHelper {
+readonly class ContentTypeHelper
+{
+    public const string POST_TYPE_ATTACHMENT = 'attachment';
+    public const string CONTENT_TYPE_POST = 'post';
+    public const string CONTENT_TYPE_TAXONOMY = 'taxonomy';
+    public const string CONTENT_TYPE_UNKNOWN = 'unknown';
 
-    public const POST_TYPE_ATTACHMENT = 'attachment';
-    public const CONTENT_TYPE_POST = 'post';
-    public const CONTENT_TYPE_TAXONOMY = 'taxonomy';
-    public const CONTENT_TYPE_UNKNOWN = 'unknown';
-
-    private WordpressFunctionProxyHelper $wpProxy;
-
-    public function __construct(WordpressFunctionProxyHelper $wpProxy)
+    public function __construct(private WordpressFunctionProxyHelper $wpProxy)
     {
-        $this->wpProxy = $wpProxy;
     }
 
     public function getContentType(string $contentType): string
