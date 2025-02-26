@@ -171,7 +171,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         return (string)$this->stateFields['secret_key'];
     }
 
-    public function setSecretKey(string $secret_key): void
+    public function setSecretKey(#[\SensitiveParameter] string $secret_key): void
     {
         $this->stateFields['secret_key'] = $secret_key;
     }
