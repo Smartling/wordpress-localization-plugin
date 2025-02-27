@@ -7,10 +7,10 @@ use Smartling\Submissions\SubmissionManager;
 
 class ReplacerFactory
 {
-    public const REPLACER_COPY = 'copy';
-    private const REPLACER_EXCLUDE = 'exclude';
-    public const REPLACER_RELATED = 'related';
-    private const REPLACER_WP_CORE_IMAGE_INNER_HTML = 'coreImage';
+    public const string REPLACER_COPY = 'copy';
+    private const string REPLACER_EXCLUDE = 'exclude';
+    public const string REPLACER_RELATED = 'related';
+    private const string REPLACER_WP_CORE_IMAGE_INNER_HTML = 'coreImage';
 
     /**
      * @var ReplacerInterface[] $replacers

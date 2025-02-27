@@ -4,7 +4,7 @@ namespace Smartling\Helpers;
 
 class GutenbergReplacementRule
 {
-    private const STRING_FORMAT = 'blockType="%s", propertyPath="%s", replacerId="%s"';
+    private const string STRING_FORMAT = 'blockType="%s", propertyPath="%s", replacerId="%s"';
     private string $blockType;
     private string $propertyPath;
     private string $replacerId;

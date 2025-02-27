@@ -12,8 +12,8 @@ use Smartling\Submissions\SubmissionEntity;
 
 abstract class ElementAbstract implements Element {
     use LoggerSafeTrait;
-    protected const SETTING_KEY_DYNAMIC = '__dynamic__';
-    protected const SETTING_KEY_POPUP = 'popup';
+    protected const string SETTING_KEY_DYNAMIC = '__dynamic__';
+    protected const string SETTING_KEY_POPUP = 'popup';
 
     protected array $elements;
     protected string $id;
@@ -94,9 +94,9 @@ abstract class ElementAbstract implements Element {
         $result = clone $this;
         $targetId = $externalContentElementor->getTargetId(
             $submission->getSourceBlogId(),
-            $content->getId(),
+            $content->contentId,
             $submission->getTargetBlogId(),
-            $content->getType(),
+            $content->contentType,
         );
         if ($targetId !== null) {
             $result->raw = array_replace_recursive(

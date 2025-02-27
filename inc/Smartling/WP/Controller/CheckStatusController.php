@@ -17,9 +17,9 @@ use Smartling\WP\WPHookInterface;
  */
 class CheckStatusController extends WPAbstract implements WPHookInterface
 {
-    const SUBMISSION_CHECKED_KEY = "smartling-page-checked-items";
-    const CACHE_SLIDE_EXPIRATION = "PT1H";
-    const CACHE_EXPIRATION       = 7200;
+    const string SUBMISSION_CHECKED_KEY = "smartling-page-checked-items";
+    const string CACHE_SLIDE_EXPIRATION = "PT1H";
+    const int CACHE_EXPIRATION       = 7200;
 
     public function wp_enqueue()
     {

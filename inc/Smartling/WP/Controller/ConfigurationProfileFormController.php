@@ -14,8 +14,8 @@ use Smartling\WP\WPHookInterface;
 
 class ConfigurationProfileFormController extends WPAbstract implements WPHookInterface
 {
-    public const FILTER_FIELD_NAME_REGEXP = 'filter_field_name_regexp';
-    public const ERROR_TARGET_LOCALES = 'tl';
+    public const string FILTER_FIELD_NAME_REGEXP = 'filter_field_name_regexp';
+    public const string ERROR_TARGET_LOCALES = 'tl';
 
     public function wp_enqueue(): void
     {

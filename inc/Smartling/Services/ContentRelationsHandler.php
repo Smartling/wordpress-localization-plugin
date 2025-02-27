@@ -43,12 +43,12 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
 {
     use LoggerSafeTrait;
 
-    public const ACTION_NAME = 'smartling-get-relations';
+    public const string ACTION_NAME = 'smartling-get-relations';
 
-    public const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
+    public const string ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
 
-    public const FORM_ACTION_CLONE = 'clone';
-    public const FORM_ACTION_UPLOAD = 'upload';
+    public const string FORM_ACTION_CLONE = 'clone';
+    public const string FORM_ACTION_UPLOAD = 'upload';
 
     private ContentRelationsDiscoveryService $service;
     public function __construct(ContentRelationsDiscoveryService $service)

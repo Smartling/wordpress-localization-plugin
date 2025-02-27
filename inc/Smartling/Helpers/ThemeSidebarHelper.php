@@ -10,7 +10,7 @@ namespace Smartling\Helpers;
 class ThemeSidebarHelper
 {
 
-    const INACTIVE_BAR_ID = 'wp_inactive_widgets';
+    const string INACTIVE_BAR_ID = 'wp_inactive_widgets';
 
     /**
      * @return array

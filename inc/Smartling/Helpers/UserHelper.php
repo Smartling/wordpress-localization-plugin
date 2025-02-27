@@ -9,8 +9,8 @@ use Smartling\Exception\SmartlingImpersonationFailedException;
 class UserHelper {
     use LoggerSafeTrait;
 
-    private const ADMINISTRATOR = 'administrator';
-    private const EDITOR = 'editor';
+    private const string ADMINISTRATOR = 'administrator';
+    private const string EDITOR = 'editor';
 
     public function __construct(
         private SmartlingToCMSDatabaseAccessWrapperInterface $db,

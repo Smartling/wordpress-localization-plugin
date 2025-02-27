@@ -33,6 +33,7 @@ use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Models\IntegerIterator;
+use Smartling\Models\JobInformation;
 use Smartling\Models\UserCloneRequest;
 use Smartling\Models\DetectedRelations;
 use Smartling\Models\GutenbergBlock;
@@ -50,8 +51,8 @@ use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 class ContentRelationsDiscoveryService
 {
     use LoggerSafeTrait;
-    public const POST_BASED_PROCESSOR = 'PostBasedProcessor';
-    public const TERM_BASED_PROCESSOR = 'TermBasedProcessor';
+    public const string POST_BASED_PROCESSOR = 'PostBasedProcessor';
+    public const string TERM_BASED_PROCESSOR = 'TermBasedProcessor';
 
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,
@@ -199,10 +200,11 @@ class ContentRelationsDiscoveryService
         $curBlogId = $this->wordpressProxy->get_current_blog_id();
         $profile = $this->settingsManager->getSingleSettingsProfile($curBlogId);
         $job = $request->getJobInformation();
-        $jobInfo = new JobEntity($job->getName(), $job->getId(), $profile->getProjectId());
+        $jobInfo = new JobEntity($job->name, $job->id, $profile->getProjectId());
 
         if ($request->isBulk()) {
-            $this->bulkUpload($request->getJobInformation()->isAuthorize(),
+            $jobInformation = $request->getJobInformation();
+            $this->bulkUpload($jobInformation->authorize,
                 $request->getIds(),
                 $request->getContentType(),
                 $curBlogId,
@@ -237,7 +239,7 @@ class ContentRelationsDiscoveryService
                 'sourceBlogId' => $curBlogId,
                 'sourceId' => $request->getContentId(),
                 'targetBlogIds' => $request->getTargetBlogIds(),
-            ], $jobInfo, $job->isAuthorize());
+            ], $jobInfo, $job->authorize);
         } catch (\Exception $e) {
             $this->getLogger()->error(sprintf(
                 'Failed to create audit log record actionType=%s, requestDescription="%s", sourceId=%d, sourceBlogId=%d, errorMessage="%s"',
@@ -309,7 +311,7 @@ class ContentRelationsDiscoveryService
             $profile,
             $jobInfo->getJobUid(),
             array_values(array_unique($fileUris)),
-            $job->isAuthorize(),
+            $job->authorize,
         ));
     }
 

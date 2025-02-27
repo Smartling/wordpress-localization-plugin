@@ -16,7 +16,7 @@ class CustomMenuContentTypeHelper
     /**
      * Wordpress meta_key name for nav_menu_item content type.
      */
-    public const META_KEY_MENU_ITEM_PARENT = '_menu_item_menu_item_parent';
+    public const string META_KEY_MENU_ITEM_PARENT = '_menu_item_menu_item_parent';
 
     private ContentEntitiesIOFactory $contentIoFactory;
     private SiteHelper $siteHelper;
@@ -24,7 +24,7 @@ class CustomMenuContentTypeHelper
     public function __construct(ContentEntitiesIOFactory $contentIoFactory, SiteHelper $siteHelper)
     {
         $this->contentIoFactory = $contentIoFactory;
-        $this->siteHelper = $siteHelper; 
+        $this->siteHelper = $siteHelper;
     }
 
     /**

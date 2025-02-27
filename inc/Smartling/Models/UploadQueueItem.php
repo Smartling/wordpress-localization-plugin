@@ -2,15 +2,18 @@
 
 namespace Smartling\Models;
 
-use JetBrains\PhpStorm\Pure;
 use Smartling\Submissions\SubmissionEntity;
 
-class UploadQueueItem {
+readonly class UploadQueueItem
+{
     /**
      * @param SubmissionEntity[] $submissions
      */
-    public function __construct(private array $submissions, private string $batchUid, private IntStringPairCollection $smartlingLocales)
-    {
+    public function __construct(
+        public array $submissions,
+        public string $batchUid,
+        public IntStringPairCollection $smartlingLocales,
+    ) {
         $contentTypes = [];
         $sourceBlogIds = [];
         $sourceIds = [];
@@ -37,42 +40,20 @@ class UploadQueueItem {
         }
     }
 
-    public function getBatchUid(): string
-    {
-        return $this->batchUid;
-    }
-
-    public function getSmartlingLocales(): IntStringPairCollection
-    {
-        return $this->smartlingLocales;
-    }
-
-    /**
-     * @return SubmissionEntity[];
-     */
-    public function getSubmissions(): array
-    {
-        return $this->submissions;
-    }
-
     public function removeSubmission(SubmissionEntity $submission): self
     {
         $submissions = array_values(array_filter($this->submissions, static function (SubmissionEntity $item) use ($submission) {
             return $item->getId() !== $submission->getId();
         }));
         $locales = new IntStringPairCollection(array_values(array_filter($this->smartlingLocales->getArray(), static function (IntStringPair $item) use ($submission) {
-            return $item->getKey() !== $submission->getId();
+            return $item->key !== $submission->getId();
         })));
 
         return new self($submissions, $this->batchUid, $locales);
     }
 
-    #[Pure]
     public function setBatchUid(string $batchUid): self
     {
-        $result = clone $this;
-        $result->batchUid = $batchUid;
-
-        return $result;
+        return new self($this->submissions, $batchUid, $this->smartlingLocales);
     }
 }

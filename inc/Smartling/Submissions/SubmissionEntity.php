@@ -37,17 +37,17 @@ use Smartling\Vendor\Psr\Log\LoggerInterface;
  */
 class SubmissionEntity extends SmartlingEntityAbstract implements Submission
 {
-    public const FLAG_CONTENT_IS_OUT_OF_DATE = 1;
+    public const int FLAG_CONTENT_IS_OUT_OF_DATE = 1;
 
-    public const FLAG_CONTENT_IS_UP_TO_DATE = 0;
+    public const int FLAG_CONTENT_IS_UP_TO_DATE = 0;
 
-    public const DATETIME_FORMAT = 'Y-m-d H:i:s';
+    public const string DATETIME_FORMAT = 'Y-m-d H:i:s';
 
-    public const SUBMISSION_STATUS_NEW = 'New';
-    public const SUBMISSION_STATUS_IN_PROGRESS = 'In Progress';
-    public const SUBMISSION_STATUS_COMPLETED = 'Completed';
-    public const SUBMISSION_STATUS_FAILED = 'Failed';
-    public const SUBMISSION_STATUS_CANCELLED = 'Cancelled';
+    public const string SUBMISSION_STATUS_NEW = 'New';
+    public const string SUBMISSION_STATUS_IN_PROGRESS = 'In Progress';
+    public const string SUBMISSION_STATUS_COMPLETED = 'Completed';
+    public const string SUBMISSION_STATUS_FAILED = 'Failed';
+    public const string SUBMISSION_STATUS_CANCELLED = 'Cancelled';
 
     public static array $submissionStatuses = [
         self::SUBMISSION_STATUS_NEW,
@@ -57,34 +57,34 @@ class SubmissionEntity extends SmartlingEntityAbstract implements Submission
         self::SUBMISSION_STATUS_CANCELLED,
     ];
 
-    public const FIELD_ID = 'id';
-    public const FIELD_SOURCE_TITLE = 'source_title';
-    public const FIELD_SOURCE_BLOG_ID = 'source_blog_id';
-    public const FIELD_SOURCE_CONTENT_HASH = 'source_content_hash';
-    public const FIELD_CONTENT_TYPE = 'content_type';
-    public const FIELD_SOURCE_ID = 'source_id';
-    public const FIELD_FILE_URI = 'file_uri';
-    public const FIELD_TARGET_LOCALE = 'target_locale';
-    public const FIELD_TARGET_BLOG_ID = 'target_blog_id';
-    public const FIELD_TARGET_ID = 'target_id';
-    public const FIELD_SUBMITTER = 'submitter';
-    public const FIELD_SUBMISSION_DATE = 'submission_date';
-    public const FIELD_APPLIED_DATE = 'applied_date';
-    public const FIELD_APPROVED_STRING_COUNT = 'approved_string_count';
-    public const FIELD_COMPLETED_STRING_COUNT = 'completed_string_count';
-    public const FIELD_EXCLUDED_STRING_COUNT = 'excluded_string_count';
-    public const FIELD_TOTAL_STRING_COUNT = 'total_string_count';
-    public const FIELD_WORD_COUNT = 'word_count';
-    public const FIELD_STATUS = 'status';
-    public const FIELD_IS_LOCKED = 'is_locked';
-    public const FIELD_IS_CLONED = 'is_cloned';
-    public const FIELD_LAST_MODIFIED = 'last_modified';
-    public const FIELD_OUTDATED = 'outdated';
-    public const FIELD_LAST_ERROR = 'last_error';
-    public const FIELD_LOCKED_FIELDS = 'locked_fields';
-    public const FIELD_CREATED_AT = 'created_at';
+    public const string FIELD_ID = 'id';
+    public const string FIELD_SOURCE_TITLE = 'source_title';
+    public const string FIELD_SOURCE_BLOG_ID = 'source_blog_id';
+    public const string FIELD_SOURCE_CONTENT_HASH = 'source_content_hash';
+    public const string FIELD_CONTENT_TYPE = 'content_type';
+    public const string FIELD_SOURCE_ID = 'source_id';
+    public const string FIELD_FILE_URI = 'file_uri';
+    public const string FIELD_TARGET_LOCALE = 'target_locale';
+    public const string FIELD_TARGET_BLOG_ID = 'target_blog_id';
+    public const string FIELD_TARGET_ID = 'target_id';
+    public const string FIELD_SUBMITTER = 'submitter';
+    public const string FIELD_SUBMISSION_DATE = 'submission_date';
+    public const string FIELD_APPLIED_DATE = 'applied_date';
+    public const string FIELD_APPROVED_STRING_COUNT = 'approved_string_count';
+    public const string FIELD_COMPLETED_STRING_COUNT = 'completed_string_count';
+    public const string FIELD_EXCLUDED_STRING_COUNT = 'excluded_string_count';
+    public const string FIELD_TOTAL_STRING_COUNT = 'total_string_count';
+    public const string FIELD_WORD_COUNT = 'word_count';
+    public const string FIELD_STATUS = 'status';
+    public const string FIELD_IS_LOCKED = 'is_locked';
+    public const string FIELD_IS_CLONED = 'is_cloned';
+    public const string FIELD_LAST_MODIFIED = 'last_modified';
+    public const string FIELD_OUTDATED = 'outdated';
+    public const string FIELD_LAST_ERROR = 'last_error';
+    public const string FIELD_LOCKED_FIELDS = 'locked_fields';
+    public const string FIELD_CREATED_AT = 'created_at';
 
-    public const VIRTUAL_FIELD_JOB_LINK = 'job_link';
+    public const string VIRTUAL_FIELD_JOB_LINK = 'job_link';
 
     private ?JobEntity $jobInformation = null;
 

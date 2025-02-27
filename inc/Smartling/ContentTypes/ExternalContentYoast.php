@@ -13,7 +13,7 @@ use Smartling\Submissions\SubmissionManager;
 class ExternalContentYoast extends ExternalContentAbstract implements ContentTypeModifyingInterface {
     use LoggerSafeTrait;
 
-    public const handledFields = [
+    public const array handledFields = [
         '_yoast_wpseo_focuskeywords',
         '_yoast_wpseo_keywordsynonyms',
     ];

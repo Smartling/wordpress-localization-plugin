@@ -10,8 +10,8 @@ use Smartling\Settings\SettingsManager;
 
 class ShortcodeHelper extends SubstringProcessorHelperAbstract
 {
-    private const SMARTLING_SHORTCODE_MASK_OLD = '##';
-    private const SHORTCODE_SUBSTRING_NODE_NAME = 'shortcodeattribute';
+    private const string SMARTLING_SHORTCODE_MASK_OLD = '##';
+    private const string SHORTCODE_SUBSTRING_NODE_NAME = 'shortcodeattribute';
 
     public function __construct(
         ContentSerializationHelper $contentSerializationHelper,

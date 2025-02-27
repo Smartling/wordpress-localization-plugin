@@ -10,10 +10,10 @@ use Smartling\Bootstrap;
  */
 class AttachmentHelper
 {
-    const FILE_NOT_COPIED                = 'Cannot copy source file.';
-    const CANNOT_ACCESS_SOURCE_FILE      = 'Cannot access source file.';
-    const CANNOT_PREPARE_TARGET_PATH     = 'Cannot prepare target path.';
-    const CANNOT_OVERWRITE_EXISTING_FILE = 'Cannot overwrite existing file.';
+    const string FILE_NOT_COPIED                = 'Cannot copy source file.';
+    const string CANNOT_ACCESS_SOURCE_FILE      = 'Cannot access source file.';
+    const string CANNOT_PREPARE_TARGET_PATH     = 'Cannot prepare target path.';
+    const string CANNOT_OVERWRITE_EXISTING_FILE = 'Cannot overwrite existing file.';
 
     public static function checkIfTargetFileExists($originalFile, $targetPath) {
         $targetFileName = pathinfo($originalFile, PATHINFO_BASENAME);

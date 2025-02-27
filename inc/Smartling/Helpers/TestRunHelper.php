@@ -8,7 +8,7 @@ use Smartling\Submissions\SubmissionEntity;
 
 class TestRunHelper
 {
-    public const TEST_RUN_BLOG_ID_SETTING_NAME = 'smartling_TestRunBlogId';
+    public const string TEST_RUN_BLOG_ID_SETTING_NAME = 'smartling_TestRunBlogId';
     private SiteHelper $siteHelper;
     private GutenbergBlockHelper $gutenbergBlockHelper;
 

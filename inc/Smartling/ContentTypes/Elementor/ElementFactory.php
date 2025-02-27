@@ -3,8 +3,8 @@
 namespace Smartling\ContentTypes\Elementor;
 
 class ElementFactory {
-    public const UNKNOWN_ELEMENT = 'unknown';
-    private const ELEMENTS = 'Elements';
+    public const string UNKNOWN_ELEMENT = 'unknown';
+    private const string ELEMENTS = 'Elements';
     /**
      * @var Element[]
      */

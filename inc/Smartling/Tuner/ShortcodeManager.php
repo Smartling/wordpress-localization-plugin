@@ -6,7 +6,7 @@ use Smartling\WP\WPHookInterface;
 
 class ShortcodeManager extends CustomizationManagerAbstract implements WPHookInterface
 {
-    private const STORAGE_KEY = 'CUSTOM_SHORTCODES';
+    private const string STORAGE_KEY = 'CUSTOM_SHORTCODES';
 
     public function __construct()
     {

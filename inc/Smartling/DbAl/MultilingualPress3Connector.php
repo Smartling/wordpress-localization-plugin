@@ -69,7 +69,7 @@ class MultilingualPress3Connector extends MultilingualPressConnector implements 
 
     public function processSubmissions(UploadQueueItem $item): void
     {
-        foreach ($item->getSubmissions() as $submission) {
+        foreach ($item->submissions as $submission) {
             $this->linkObjects($submission);
         }
     }

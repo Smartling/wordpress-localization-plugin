@@ -16,8 +16,8 @@ use Smartling\Vendor\Jralph\Retry\RetryException;
 class ApiWrapperWithRetries implements ApiWrapperInterface {
     use LoggerSafeTrait;
 
-    public const RETRY_ATTEMPTS = 4;
-    private const RETRY_WAIT_SECONDS = 1;
+    public const int RETRY_ATTEMPTS = 4;
+    private const int RETRY_WAIT_SECONDS = 1;
 
     public function __construct(private ApiWrapperInterface $base, private int $retryWaitSeconds = 1)
     {

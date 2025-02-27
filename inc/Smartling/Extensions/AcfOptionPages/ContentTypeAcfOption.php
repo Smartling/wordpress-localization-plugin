@@ -9,7 +9,7 @@ use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class ContentTypeAcfOption extends ContentTypeAbstract
 {
-    public const WP_CONTENT_TYPE = 'acf_options';
+    public const string WP_CONTENT_TYPE = 'acf_options';
 
     public function getSystemName(): string
     {

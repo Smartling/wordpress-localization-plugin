@@ -14,72 +14,72 @@ class ConditionBuilder
     /**
      * const for '='
      */
-    const CONDITION_SIGN_EQ = '%s = \'%s\'';
+    const string CONDITION_SIGN_EQ = '%s = \'%s\'';
 
     /**
      * const for '<>'
      */
-    const CONDITION_SIGN_NOT_EQ = '%s <> \'%s\'';
+    const string CONDITION_SIGN_NOT_EQ = '%s <> \'%s\'';
 
     /**
      * const for '>'
      */
-    const CONDITION_SIGN_MORE = '%s > \'%s\'';
+    const string CONDITION_SIGN_MORE = '%s > \'%s\'';
 
     /**
      * const for '>='
      */
-    const CONDITION_SIGN_MORE_OR_EQ = '%s >= \'%s\'';
+    const string CONDITION_SIGN_MORE_OR_EQ = '%s >= \'%s\'';
 
     /**
      * const for '<'
      */
-    const CONDITION_SIGN_LESS = '%s < \'%s\'';
+    const string CONDITION_SIGN_LESS = '%s < \'%s\'';
 
     /**
      * const for '<='
      */
-    const CONDITION_SIGN_LESS_OR_EQ = '%s <= \'%s\'';
+    const string CONDITION_SIGN_LESS_OR_EQ = '%s <= \'%s\'';
 
     /**
      * const for 'BETWEEN
      */
-    const CONDITION_SIGN_BETWEEN = '%s BETWEEN \'%s\' AND \'%s\'';
+    const string CONDITION_SIGN_BETWEEN = '%s BETWEEN \'%s\' AND \'%s\'';
 
     /**
      * const for 'LIKE'
      */
-    const CONDITION_SIGN_LIKE = '%s LIKE \'%s\'';
+    const string CONDITION_SIGN_LIKE = '%s LIKE \'%s\'';
 
     /**
      * const for 'IN'
      */
-    const CONDITION_SIGN_IN = '%s IN(%s)';
+    const string CONDITION_SIGN_IN = '%s IN(%s)';
 
     /**
      * const for 'NOT IN'
      */
-    const CONDITION_SIGN_NOT_IN = '%s NOT IN(%s)';
+    const string CONDITION_SIGN_NOT_IN = '%s NOT IN(%s)';
 
     /**
      * const for 'IS NULL'
      */
-    const CONDITION_IS_NULL = '%s IS NULL';
+    const string CONDITION_IS_NULL = '%s IS NULL';
 
     /**
      * const for 'NOT IS NULL'
      */
-    const CONDITION_IS_NOT_NULL = '%s IS NOT NULL';
+    const string CONDITION_IS_NOT_NULL = '%s IS NOT NULL';
 
     /**
      * const for 'AND'
      */
-    const CONDITION_BLOCK_LEVEL_OPERATOR_AND = 'AND';
+    const string CONDITION_BLOCK_LEVEL_OPERATOR_AND = 'AND';
 
     /**
      * const for 'OR'
      */
-    const CONDITION_BLOCK_LEVEL_OPERATOR_OR = 'OR';
+    const string CONDITION_BLOCK_LEVEL_OPERATOR_OR = 'OR';
 
     /**
      * @param $condition

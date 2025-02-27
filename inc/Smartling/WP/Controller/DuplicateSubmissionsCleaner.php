@@ -12,10 +12,10 @@ use Smartling\WP\Table\DuplicateSubmissions;
 use Smartling\WP\WPHookInterface;
 
 class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookInterface {
-    public const SLUG = 'smartling_duplicate_submission_cleaner';
+    public const string SLUG = 'smartling_duplicate_submission_cleaner';
 
-    private const CACHE_KEY = 'submissions-has-duplicate';
-    private const NONCE_ACTION = "duplicate-submission-cleaner";
+    private const string CACHE_KEY = 'submissions-has-duplicate';
+    private const string NONCE_ACTION = "duplicate-submission-cleaner";
 
     public function __construct(
         private Cache $cache,
@@ -60,10 +60,10 @@ class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookIn
             $submission = $this->submissionManager->getEntityById((int)$_REQUEST['id']);
             if ($submission !== null) {
                 foreach ($this->getDuplicatesAndCache(false) as $details) {
-                    if ($details->getContentType() === $submission->getContentType() &&
-                        $details->getSourceBlogId() === $submission->getSourceBlogId() &&
-                        $details->getSourceId() === $submission->getSourceId() &&
-                        $details->getTargetBlogId() === $submission->getTargetBlogId()
+                    if ($details->contentType === $submission->getContentType() &&
+                        $details->sourceBlogId === $submission->getSourceBlogId() &&
+                        $details->sourceId === $submission->getSourceId() &&
+                        $details->targetBlogId === $submission->getTargetBlogId()
                     ) {
                         $this->submissionManager->delete($submission);
                         break;

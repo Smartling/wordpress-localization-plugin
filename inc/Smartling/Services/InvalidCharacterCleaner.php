@@ -8,7 +8,7 @@ use Smartling\WP\WPHookInterface;
 
 class InvalidCharacterCleaner implements WPHookInterface
 {
-    private const ILLEGAL_CHAR_REGEXP = '#[^\x{0009}\x{000A}\x{000D}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+#us';
+    private const string ILLEGAL_CHAR_REGEXP = '#[^\x{0009}\x{000A}\x{000D}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+#us';
 
     /**
      * Registers wp hook handlers. Invoked by wordpress.

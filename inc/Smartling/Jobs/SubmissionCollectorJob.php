@@ -13,7 +13,7 @@ use Smartling\Submissions\SubmissionManager;
 
 class SubmissionCollectorJob extends JobAbstract
 {
-    public const JOB_HOOK_NAME = 'smartling-submission-collector-task';
+    public const string JOB_HOOK_NAME = 'smartling-submission-collector-task';
 
     public function __construct(
         ApiWrapperInterface $api,

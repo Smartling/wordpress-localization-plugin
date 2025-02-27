@@ -2,19 +2,17 @@
 
 namespace Smartling\Models;
 
-class ExternalData {
-    private RelatedContentInfo $relatedContentInfo;
-
+class ExternalData
+{
     public function __construct(
         private array $strings = [],
         private array $related = [],
-        RelatedContentInfo $relatedContentInfo = null,
+        private ?RelatedContentInfo $relatedContentInfo = null,
     ) {
         if ($relatedContentInfo === null) {
             $this->relatedContentInfo = new RelatedContentInfo();
         } else {
             $this->related = $relatedContentInfo->getRelatedContentList();
-            $this->relatedContentInfo = $relatedContentInfo;
         }
     }
 

@@ -21,7 +21,7 @@ class DB implements SmartlingToCMSDatabaseAccessWrapperInterface, WPInstallableI
 {
     use LoggerSafeTrait;
 
-    private const SMARTLING_DB_SCHEMA_VERSION = 'smartling_db_ver';
+    private const string SMARTLING_DB_SCHEMA_VERSION = 'smartling_db_ver';
 
     /**
      * @var \wpdb

@@ -31,26 +31,26 @@ class SubmissionTableWidget extends SmartlingListTable
     use CommonLogMessagesTrait;
     use LoggerSafeTrait;
 
-    private const ACTION_CHECK_STATUS = 'checkStatus';
-    public const ACTION_DOWNLOAD = 'download';
-    private const ACTION_LOCK = 'lock';
-    private const ACTION_UNLOCK = 'unlock';
-    private const ACTION_UPLOAD = 'upload';
+    private const string ACTION_CHECK_STATUS = 'checkStatus';
+    public const string ACTION_DOWNLOAD = 'download';
+    private const string ACTION_LOCK = 'lock';
+    private const string ACTION_UNLOCK = 'unlock';
+    private const string ACTION_UPLOAD = 'upload';
 
     /**
      * base name of Content-type filtering select
      */
-    private const CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
+    private const string CONTENT_TYPE_SELECT_ELEMENT_NAME = 'content-type';
 
     /**
      * base name of status filtering select
      */
-    private const SUBMISSION_STATUS_SELECT_ELEMENT_NAME = 'status';
+    private const string SUBMISSION_STATUS_SELECT_ELEMENT_NAME = 'status';
 
-    private const SUBMISSION_OUTDATED_STATE = 'state_outdated';
-    private const SUBMISSION_LOCKED_STATE = 'state_locked';
-    private const SUBMISSION_CLONED_STATE = 'state_cloned';
-    private const SUBMISSION_TARGET_LOCALE = 'target-locale';
+    private const string SUBMISSION_OUTDATED_STATE = 'state_outdated';
+    private const string SUBMISSION_LOCKED_STATE = 'state_locked';
+    private const string SUBMISSION_CLONED_STATE = 'state_cloned';
+    private const string SUBMISSION_TARGET_LOCALE = 'target-locale';
 
     private string $_custom_controls_namespace = 'smartling-submissions-page';
 

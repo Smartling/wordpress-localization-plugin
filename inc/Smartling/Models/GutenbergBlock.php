@@ -7,22 +7,16 @@ use Smartling\Helpers\PostContentHelper;
 
 class GutenbergBlock
 {
-    private ?string $blockName; // null for non-Gutenberg blocks. This happens when WP serializes/unserializes content
-    private array $attributes;
-    private array $innerBlocks;
-    private string $innerHtml;
-    private array $innerContent;
-
     /**
      * @param GutenbergBlock[] $innerBlocks
      */
-    public function __construct(?string $blockName, array $attributes, array $innerBlocks, string $innerHtml, array $innerContent)
-    {
-        $this->blockName = $blockName;
-        $this->attributes = $attributes;
-        $this->innerBlocks = $innerBlocks;
-        $this->innerHtml = $innerHtml;
-        $this->innerContent = $innerContent;
+    public function __construct(
+        private ?string $blockName, // null for non-Gutenberg blocks. This happens when WP serializes/unserializes content
+        private array $attributes,
+        private array $innerBlocks,
+        private readonly string $innerHtml,
+        private array $innerContent,
+    ) {
     }
 
     public function __toString()
@@ -106,10 +100,11 @@ class GutenbergBlock
     {
         $innerBlocks = [];
         if (array_key_exists('innerBlocks', $array)) {
-            $innerBlocks = array_map(static function($block) {
+            $innerBlocks = array_map(static function ($block) {
                 return GutenbergBlock::fromArray($block);
             }, $array['innerBlocks']);
         }
+
         return new GutenbergBlock(
             $array['blockName'],
             $array['attrs'] ?? [],
@@ -119,7 +114,13 @@ class GutenbergBlock
         );
     }
 
-    #[ArrayShape(['blockName' => 'string', 'attrs' => 'array', 'innerBlocks' => 'array', 'innerHTML' => 'string', 'innerContent' => 'array'])]
+    #[ArrayShape([
+        'blockName' => 'string',
+        'attrs' => 'array',
+        'innerBlocks' => 'array',
+        'innerHTML' => 'string',
+        'innerContent' => 'array',
+    ])]
     public function toArray(): array
     {
         return [
@@ -177,9 +178,10 @@ class GutenbergBlock
     private function stripCoreBlockNamespace(string $name): string
     {
         $prefix = 'core/';
-        if (0 === strpos($name, $prefix)) {
+        if (str_starts_with($name, $prefix)) {
             return substr($name, strlen($prefix));
         }
+
         return $name;
     }
 }

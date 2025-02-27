@@ -7,24 +7,14 @@ use Smartling\SmartlingTableDefinitionInterface;
 
 class UploadQueueEntity implements SmartlingTableDefinitionInterface
 {
-    public const FIELD_ID = 'id';
-    public const FIELD_BATCH_UID = 'batch_uid';
-    public const FIELD_CREATED = 'created';
-    public const FIELD_SUBMISSION_IDS = 'submission_ids';
-    public const TABLE_NAME = 'smartling_upload_queue';
+    public const string FIELD_ID = 'id';
+    public const string FIELD_BATCH_UID = 'batch_uid';
+    public const string FIELD_CREATED = 'created';
+    public const string FIELD_SUBMISSION_IDS = 'submission_ids';
+    public const string TABLE_NAME = 'smartling_upload_queue';
 
-    public function __construct(private  $submissionId, private string $batchUid)
+    public function __construct(public readonly int $submissionId, public readonly string $batchUid)
     {
-    }
-
-    public function getBatchUid(): string
-    {
-        return $this->batchUid;
-    }
-
-    public function getSubmissionId(): int
-    {
-        return $this->submissionId;
     }
 
     public static function getFieldLabels(): array

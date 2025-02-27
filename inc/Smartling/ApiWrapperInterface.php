@@ -19,7 +19,7 @@ use Smartling\Vendor\Smartling\Jobs\JobStatus;
 
 interface ApiWrapperInterface
 {
-    public const CREATE_JOB_RESPONSE = [
+    public const array CREATE_JOB_RESPONSE = [
         'translationJobUid' => 'string',
         'jobName' => 'string',
         'jobNumber' => 'string',
@@ -38,8 +38,8 @@ interface ApiWrapperInterface
         'referenceNumber' => 'string',
         'customFields' => [],
     ];
-    public const DAILY_BUCKET_JOB_NAME_PREFIX = "Daily Bucket Job";
-    public const JOB_STATUSES_FOR_DAILY_BUCKET_JOB = [
+    public const string DAILY_BUCKET_JOB_NAME_PREFIX = "Daily Bucket Job";
+    public const array JOB_STATUSES_FOR_DAILY_BUCKET_JOB = [
         JobStatus::AWAITING_AUTHORIZATION,
         JobStatus::IN_PROGRESS,
         JobStatus::COMPLETED,

@@ -7,7 +7,7 @@ use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class ContentTypeNavigationMenu extends TermBasedContentTypeAbstract
 {
-    public const WP_CONTENT_TYPE = 'nav_menu';
+    public const string WP_CONTENT_TYPE = 'nav_menu';
 
     public function __construct(ContainerBuilder $di)
     {

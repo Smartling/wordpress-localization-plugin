@@ -3,7 +3,7 @@
 namespace Smartling\Helpers;
 
 class WpTransientCache implements Cache {
-    private const DEFAULT_EXPIRATION = 86400;
+    private const int DEFAULT_EXPIRATION = 86400;
 
     public function delete(string $key): bool
     {

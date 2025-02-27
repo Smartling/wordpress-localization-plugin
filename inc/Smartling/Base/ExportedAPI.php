@@ -24,7 +24,7 @@ interface ExportedAPI
      * An action that is executed just after DI initialization
      * @param ContainerBuilder
      */
-    public const ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT = 'smartling_before_init';
+    public const string ACTION_SMARTLING_BEFORE_INITIALIZE_EVENT = 'smartling_before_init';
 
     /**
      * Is raised just before encoding to XML
@@ -39,7 +39,7 @@ interface ExportedAPI
      *  Only update of values is allowed.
      *  Will be changed to ArrayAccess implementation.
      */
-    public const EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT = 'smartling_before_serialize_content';
+    public const string EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT = 'smartling_before_serialize_content';
 
     /**
      * Is raised just after decoding from XML
@@ -54,55 +54,55 @@ interface ExportedAPI
      *  Only update of values is allowed.
      *  Will be changed to ArrayAccess implementation.
      */
-    public const EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT = 'smartling_after_deserialize_content';
+    public const string EVENT_SMARTLING_AFTER_DESERIALIZE_CONTENT = 'smartling_after_deserialize_content';
 
     /**
      * Action that prepares submission for upload and creates target placeholders
      * @param SubmissionEntity
      */
-    public const ACTION_SMARTLING_PREPARE_SUBMISSION_UPLOAD = 'smartling_prepare_submission_upload';
+    public const string ACTION_SMARTLING_PREPARE_SUBMISSION_UPLOAD = 'smartling_prepare_submission_upload';
 
     /**
      * Action that sends given SubmissionEntity to smartling for translation
      * @param UploadQueueItem
      */
-    public const ACTION_SMARTLING_SEND_FOR_TRANSLATION = 'smartling_send_for_translation';
+    public const string ACTION_SMARTLING_SEND_FOR_TRANSLATION = 'smartling_send_for_translation';
 
     /**
      * Action that clones content of given SubmissionEntity without translation
      * @param SubmissionEntity
      */
-    public const ACTION_SMARTLING_CLONE_CONTENT = 'smartling_clone_content';
+    public const string ACTION_SMARTLING_CLONE_CONTENT = 'smartling_clone_content';
 
     /**
      * Action that downloads translation for given SubmissionEntity
      * @param SubmissionEntity
      */
-    public const ACTION_SMARTLING_DOWNLOAD_TRANSLATION = 'smartling_download_translation';
+    public const string ACTION_SMARTLING_DOWNLOAD_TRANSLATION = 'smartling_download_translation';
 
     /**
      * Action regenerates thumbnails for translation by submission
      * @param SubmissionEntity
      */
-    public const ACTION_SMARTLING_REGENERATE_THUMBNAILS = 'smartling_regenerate_thumbnails';
+    public const string ACTION_SMARTLING_REGENERATE_THUMBNAILS = 'smartling_regenerate_thumbnails';
 
     /**
      * Action for registration a content-type. Only one param is given:
      * @param ContainerBuilder
      */
-    public const ACTION_SMARTLING_REGISTER_CONTENT_TYPE = 'smartling_register_content_type';
+    public const string ACTION_SMARTLING_REGISTER_CONTENT_TYPE = 'smartling_register_content_type';
 
     /**
      * Action for processing terms related to term / post-based content
      * @param ProcessRelatedContentParams
      */
-    public const ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT = 'smartling_processor_related_content';
+    public const string ACTION_SMARTLING_PROCESSOR_RELATED_CONTENT = 'smartling_processor_related_content';
 
     /**
      * Action that syncs attachment by submission
      * @param SubmissionEntity
      */
-    public const ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT = 'smartling_sync_media_attachment';
+    public const string ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT = 'smartling_sync_media_attachment';
 
     /**
      * Filter to modify FileURI.
@@ -113,21 +113,21 @@ interface ExportedAPI
      * Filter should return fileUri with length > 0
      * otherwise generated fileURI is taken
      */
-    public const FILTER_SMARTLING_FILE_URI = 'smartling_file_uri';
+    public const string FILTER_SMARTLING_FILE_URI = 'smartling_file_uri';
 
     /**
      * Filter to modify the XML node that is going to be sent to smartling.
      * @param TranslationStringFilterParameters
      * @return TranslationStringFilterParameters
      */
-    public const FILTER_SMARTLING_TRANSLATION_STRING = 'smartling_translation_string_before_send';
+    public const string FILTER_SMARTLING_TRANSLATION_STRING = 'smartling_translation_string_before_send';
 
     /**
      * Filter to modify the translated XML node that is received from smartling.
      * @param TranslationStringFilterParameters
      * @return TranslationStringFilterParameters
      */
-    public const FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED = 'smartling_translation_string_received';
+    public const string FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED = 'smartling_translation_string_received';
 
     /**
      * Filter to modify meta value on translation
@@ -135,7 +135,7 @@ interface ExportedAPI
      * @param mixed metadata field value
      * @param SubmissionEntity
      */
-    public const FILTER_SMARTLING_METADATA_FIELD_PROCESS = 'smartling_metadata_string_process';
+    public const string FILTER_SMARTLING_METADATA_FIELD_PROCESS = 'smartling_metadata_string_process';
 
     /**
      * Filter to modify meta value on translation
@@ -144,7 +144,7 @@ interface ExportedAPI
      * @param mixed field value
      * @param array collected values
      */
-    public const FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION = 'smartling_metadata_process_before_translation';
+    public const string FILTER_SMARTLING_METADATA_PROCESS_BEFORE_TRANSLATION = 'smartling_metadata_process_before_translation';
 
     /**
      * Filter processes given SubmissionEntity and creates corresponding target entity if it does not exist.
@@ -152,7 +152,7 @@ interface ExportedAPI
      * @param SubmissionEntity
      * @return SubmissionEntity
      */
-    public const FILTER_SMARTLING_PREPARE_TARGET_CONTENT = 'smartling_prepare_target_content';
+    public const string FILTER_SMARTLING_PREPARE_TARGET_CONTENT = 'smartling_prepare_target_content';
 
     /**
      * Filter allows to let smartling-connector know about shortcodes that are not registered
@@ -160,74 +160,74 @@ interface ExportedAPI
      * @param array
      * @return array
      */
-    public const FILTER_SMARTLING_INJECT_SHORTCODE = 'smartling_inject_shortcode';
+    public const string FILTER_SMARTLING_INJECT_SHORTCODE = 'smartling_inject_shortcode';
 
     /**
      * Handler should add an array that defines a post type.
      * @param array
      * @return array
      */
-    public const FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE = 'smartling_register_custom_type';
+    public const string FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE = 'smartling_register_custom_type';
 
     /**
      * Handler should add an array that defines a taxonomy type.
      * @param array
      * @return array
      */
-    public const FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY = 'smartling_register_custom_taxonomy';
+    public const string FILTER_SMARTLING_REGISTER_CUSTOM_TAXONOMY = 'smartling_register_custom_taxonomy';
 
     /**
      * Handler should add an array that defines a filter.
      * @param array
      * @return array
      */
-    public const FILTER_SMARTLING_REGISTER_FIELD_FILTER = 'smartling_register_field_filter';
+    public const string FILTER_SMARTLING_REGISTER_FIELD_FILTER = 'smartling_register_field_filter';
 
     /**
      * Filter fires for notifications
      * @param NotificationParameters
      */
-    public const ACTION_SMARTLING_PUSH_LIVE_NOTIFICATION = 'smartling_push_notification';
+    public const string ACTION_SMARTLING_PUSH_LIVE_NOTIFICATION = 'smartling_push_notification';
 
     /**
      * Filter prepares contentId to later use with push live notification (Firebase specific)
      * @param SubmissionEntity
      */
-    public const ACTION_SMARTLING_PLACE_RECORD_ID = 'smartling_place_record_id';
+    public const string ACTION_SMARTLING_PLACE_RECORD_ID = 'smartling_place_record_id';
 
     /**
      * @param SubmissionEntity
      */
-    public const ACTION_AFTER_TARGET_CONTENT_WRITTEN = 'smartling_action_after_target_content_written';
+    public const string ACTION_AFTER_TARGET_CONTENT_WRITTEN = 'smartling_action_after_target_content_written';
 
-    public const ACTION_AFTER_TARGET_METADATA_WRITTEN = 'smartling_action_after_target_metadata_written';
+    public const string ACTION_AFTER_TARGET_METADATA_WRITTEN = 'smartling_action_after_target_metadata_written';
 
     /**
      * @param SubmissionEntity
      */
-    public const ACTION_AFTER_TRANSLATION_APPLIED = 'smartling_action_after_translation_applied';
+    public const string ACTION_AFTER_TRANSLATION_APPLIED = 'smartling_action_after_translation_applied';
 
     /**
      * @param array content
      * @param SubmissionEntity
      * @return array content
      */
-    public const FILTER_BEFORE_CLONE_CONTENT_WRITTEN = 'smartling_filter_before_clone_content_written';
+    public const string FILTER_BEFORE_CLONE_CONTENT_WRITTEN = 'smartling_filter_before_clone_content_written';
     /**
      * @param array translation
      * @param array lockedData
      * @param SubmissionEntity
      * @return array translation
      */
-    public const FILTER_BEFORE_TRANSLATION_APPLIED = 'smartling_filter_before_translation_applied';
+    public const string FILTER_BEFORE_TRANSLATION_APPLIED = 'smartling_filter_before_translation_applied';
 
     /**
      * @param array items
      */
-    public const FILTER_BULK_SUBMIT_PREPARE_ITEMS = 'smartling_filter_bulk_submit_prepare_items';
+    public const string FILTER_BULK_SUBMIT_PREPARE_ITEMS = 'smartling_filter_bulk_submit_prepare_items';
 
     /**
      * @param ConfigurationProfileEntity[]
      */
-    public const FILTER_ACTIVE_PROFILES = 'smartling_filter_active_profiles';
+    public const string FILTER_ACTIVE_PROFILES = 'smartling_filter_active_profiles';
 }

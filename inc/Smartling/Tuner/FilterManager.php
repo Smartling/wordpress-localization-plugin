@@ -6,7 +6,7 @@ use Smartling\WP\WPHookInterface;
 
 class FilterManager extends CustomizationManagerAbstract implements WPHookInterface
 {
-    private const STORAGE_KEY = 'CUSTOM_FILTERS';
+    private const string STORAGE_KEY = 'CUSTOM_FILTERS';
 
     public function __construct()
     {

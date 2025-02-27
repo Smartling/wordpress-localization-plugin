@@ -2,11 +2,13 @@
 
 namespace Smartling\Models;
 
-class IntStringPairCollection {
+class IntStringPairCollection
+{
     /**
      * @var IntStringPair[]
      */
     private array $array;
+
     /**
      * @param IntStringPair[]|string[] $items
      */
@@ -35,6 +37,7 @@ class IntStringPairCollection {
                 throw new \InvalidArgumentException("Items expected to be array of " . IntStringPair::class);
             }
         }
+
         return new self(array_merge($this->array, $items));
     }
 
@@ -50,7 +53,7 @@ class IntStringPairCollection {
     {
         $result = [];
         foreach ($this->array as $intStringPair) {
-            $result[] = $intStringPair->getValue();
+            $result[] = $intStringPair->value;
         }
 
         return $result;

@@ -16,7 +16,7 @@ class DateTimeHelper
     /**
      * UTC Timezone
      */
-    const TIMEZONE_UTC = 'UTC';
+    const string TIMEZONE_UTC = 'UTC';
 
     /**
      * @var DateTimeZone
@@ -41,9 +41,9 @@ class DateTimeHelper
     /**
      * Default format string for DateTime
      */
-    const DATE_TIME_FORMAT_STANDARD = 'Y-m-d H:i:s';
+    const string DATE_TIME_FORMAT_STANDARD = 'Y-m-d H:i:s';
 
-    const DATE_TIME_FORMAT_JOB = 'Y-m-d H:i';
+    const string DATE_TIME_FORMAT_JOB = 'Y-m-d H:i';
 
     /**
      * Sets default timezone for conversion operations

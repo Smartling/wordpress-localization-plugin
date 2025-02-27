@@ -15,7 +15,7 @@ use Smartling\Submissions\SubmissionManager;
 
 class LastModifiedCheckJob extends JobAbstract
 {
-    public const JOB_HOOK_NAME = 'smartling-last-modified-check-task';
+    public const string JOB_HOOK_NAME = 'smartling-last-modified-check-task';
 
     public function __construct(
         ApiWrapperInterface $api,

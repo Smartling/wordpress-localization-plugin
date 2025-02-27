@@ -7,6 +7,7 @@ use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Models\IntegerIterator;
 use Smartling\Models\JobInformation;
+use Smartling\Models\UploadQueueItem;
 use Smartling\Models\UserTranslationRequest;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Submissions\SubmissionEntity;
@@ -101,8 +102,8 @@ HTML);
         $submissionsToUpload = 0;
         do {
             $uploadQueueItem = $uploadQueueManager->dequeue();
-            $submissionsToUpload += count($uploadQueueItem->getSubmissions());
-            $batchUid = $uploadQueueItem->getBatchUid();
+            $submissionsToUpload += count($uploadQueueItem->submissions);
+            $batchUid = $uploadQueueItem->batchUid;
             $this->assertNotEquals('', $batchUid);
         } while ($uploadQueueManager->count() > 0);
         $this->assertEquals(2, $submissionsToUpload);

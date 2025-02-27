@@ -3,7 +3,7 @@
 namespace Smartling\Helpers;
 
 class WpObjectCache implements Cache {
-    private const GROUP = "smartling";
+    private const string GROUP = "smartling";
 
     public function delete(string $key): bool
     {

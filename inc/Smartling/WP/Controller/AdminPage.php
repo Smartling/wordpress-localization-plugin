@@ -16,9 +16,9 @@ use Smartling\WP\WPHookInterface;
 
 class AdminPage extends ControllerAbstract implements WPHookInterface
 {
-    public const SLUG = 'smartling_customization_tuning';
-    public const ACTION_EXPORT_GUTENBERG_RULES = 'smartling_export_gutenberg_rules';
-    public const ACTION_IMPORT_GUTENBERG_RULES = 'smartling_import_gutenberg_rules';
+    public const string SLUG = 'smartling_customization_tuning';
+    public const string ACTION_EXPORT_GUTENBERG_RULES = 'smartling_export_gutenberg_rules';
+    public const string ACTION_IMPORT_GUTENBERG_RULES = 'smartling_import_gutenberg_rules';
     private MediaAttachmentRulesManager $mediaAttachmentRulesManager;
     private ReplacerFactory $replacerFactory;
 

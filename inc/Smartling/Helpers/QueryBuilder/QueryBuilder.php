@@ -11,7 +11,7 @@ class QueryBuilder
     /**
      * Exception code for empty field list
      */
-    const EXCEPTION_CODE_EMPTY_FIELD_LIST = 4;
+    const int EXCEPTION_CODE_EMPTY_FIELD_LIST = 4;
 
 
     /**

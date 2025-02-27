@@ -21,9 +21,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
 {
     use LoggerSafeTrait;
 
-    public const LAST_FINISH_SUFFIX = '-last-run';
-    public const SOURCE_USER = 'user';
-    private const THROTTLED_MESSAGE = "Throttled";
+    public const string LAST_FINISH_SUFFIX = '-last-run';
+    public const string SOURCE_USER = 'user';
+    private const string THROTTLED_MESSAGE = "Throttled";
 
     public function __construct(
         protected ApiWrapperInterface $api,

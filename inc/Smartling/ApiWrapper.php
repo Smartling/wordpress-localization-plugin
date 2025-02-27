@@ -45,7 +45,7 @@ class ApiWrapper implements ApiWrapperInterface
 {
     use LoggerSafeTrait;
 
-    private const ADDITIONAL_HEADERS = ['X-SL-UseSecondaryDB' => 'true'];
+    private const array ADDITIONAL_HEADERS = ['X-SL-UseSecondaryDB' => 'true'];
 
     private SettingsManager $settings;
     private string $pluginName;

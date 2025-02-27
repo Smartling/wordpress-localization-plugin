@@ -18,7 +18,7 @@ use Smartling\WP\WPHookInterface;
 
 class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
 {
-    public const WIDGET_DATA_NAME = 'smartling';
+    public const string WIDGET_DATA_NAME = 'smartling';
 
     use CommonLogMessagesTrait;
     use DetectContentChangeTrait;

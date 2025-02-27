@@ -62,27 +62,33 @@ class DuplicateSubmissions extends \WP_List_Table {
     {
         $data = [];
         $this->_column_headers = [$this->get_columns(), [], []];
-        $contentType = $this->duplicateSubmissionDetails->getContentType();
-        $sourceId = $this->duplicateSubmissionDetails->getSourceId();
+        $duplicateSubmissionDetails = $this->duplicateSubmissionDetails;
+        $contentType = $duplicateSubmissionDetails->contentType;
+        $duplicateSubmissionDetails1 = $this->duplicateSubmissionDetails;
+        $sourceId = $duplicateSubmissionDetails1->sourceId;
 
+        $duplicateSubmissionDetails2 = $this->duplicateSubmissionDetails;
         $data[] = $this->siteHelper->withBlog(
-            $this->duplicateSubmissionDetails->getTargetBlogId(),
+            $duplicateSubmissionDetails2->targetBlogId,
             function () use ($contentType, $sourceId) {
                 $data = [];
+                $duplicateSubmissionDetails1 = $this->duplicateSubmissionDetails;
+                $duplicateSubmissionDetails2 = $this->duplicateSubmissionDetails;
                 foreach (
                     $this->submissionManager->find([
                         SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
-                        SubmissionEntity::FIELD_SOURCE_BLOG_ID => $this->duplicateSubmissionDetails->getSourceBlogId(),
+                        SubmissionEntity::FIELD_SOURCE_BLOG_ID => $duplicateSubmissionDetails1->sourceBlogId,
                         SubmissionEntity::FIELD_SOURCE_ID => $sourceId,
-                        SubmissionEntity::FIELD_TARGET_BLOG_ID => $this->duplicateSubmissionDetails->getTargetBlogId(),
+                        SubmissionEntity::FIELD_TARGET_BLOG_ID => $duplicateSubmissionDetails2->targetBlogId,
                     ]) as $target
                 ) {
                     $editLink = $this->getEditLink($contentType, $target->getTargetId());
+                    $duplicateSubmissionDetails = $this->duplicateSubmissionDetails;
                     $data[] = [
                         'targetId' => $target->getTargetId(),
                         'targetEdit' => $editLink === null ? '' : "<a href='$editLink'>Edit</a>",
                         'action' => '<a href="' . get_admin_url(
-                                $this->duplicateSubmissionDetails->getSourceBlogId(),
+                                $duplicateSubmissionDetails->sourceBlogId,
                                 'admin.php?page=' . DuplicateSubmissionsCleaner::SLUG .
                                 "&action=delete&id={$target->getId()}&_wpnonce={$this->nonce}" . '">Delete</a>'
                             ),

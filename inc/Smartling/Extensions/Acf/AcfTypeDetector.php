@@ -12,7 +12,7 @@ use Smartling\Submissions\SubmissionEntity;
 
 class AcfTypeDetector
 {
-    public const ACF_FIELD_GROUP_REGEX = '#(field|group)_([0-9a-f]){13}#';
+    public const string ACF_FIELD_GROUP_REGEX = '#(field|group)_([0-9a-f]){13}#';
     /**
      * Default cache time (1 day)
      * @var int

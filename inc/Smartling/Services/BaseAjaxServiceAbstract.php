@@ -12,8 +12,8 @@ abstract class BaseAjaxServiceAbstract implements WPHookInterface
      */
     const ACTION_NAME = 'service-id';
 
-    public const RESPONSE_FAILED = 'FAILED';
-    public const RESPONSE_SUCCESS = 'SUCCESS';
+    public const string RESPONSE_FAILED = 'FAILED';
+    public const string RESPONSE_SUCCESS = 'SUCCESS';
 
     protected array $requestData;
 

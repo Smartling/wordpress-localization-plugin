@@ -14,8 +14,8 @@ class GlobalSettingsManager
     /**
      * Disable on-boot self-diagnostics (not recommended)
      */
-    private const SELF_CHECK_IDENTIFIER = 'smartling_static_check_disabled';
-    private const SELF_CHECK_IDENTIFIER_DEFAULT = 0;
+    private const string SELF_CHECK_IDENTIFIER = 'smartling_static_check_disabled';
+    private const int SELF_CHECK_IDENTIFIER_DEFAULT = 0;
 
     public static function getSkipSelfCheck()
     {
@@ -34,8 +34,8 @@ class GlobalSettingsManager
     /**
      * Disable logging (not recommended)
      */
-    private const DISABLE_LOGGING = 'smartling_disable_logging';
-    private const DISABLE_LOGGING_DEFAULT = 0;
+    private const string DISABLE_LOGGING = 'smartling_disable_logging';
+    private const int DISABLE_LOGGING_DEFAULT = 0;
 
     public static function getDisableLogging()
     {
@@ -54,7 +54,7 @@ class GlobalSettingsManager
     /**
      * Log file name customization
      */
-    private const SMARTLING_CUSTOM_LOG_FILE = 'smartling_log_file';
+    private const string SMARTLING_CUSTOM_LOG_FILE = 'smartling_log_file';
 
     public static function getLogFileSpecDefault(): string
     {
@@ -78,7 +78,7 @@ class GlobalSettingsManager
     /**
      * Logging configuration customization
      */
-    private const LOGGING_CUSTOMIZATION = 'smartling_logging_customization';
+    private const string LOGGING_CUSTOMIZATION = 'smartling_logging_customization';
 
     public static function getLoggingCustomizationDefault()
     {
@@ -125,7 +125,7 @@ class GlobalSettingsManager
     /**
      * UI settings Table View Page Size, default = 20 (configured via yaml file)
      */
-    private const SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
+    private const string SMARTLING_CUSTOM_PAGE_SIZE = 'smartling_ui_page_size';
 
     public static function getPageSizeDefault()
     {
@@ -151,8 +151,8 @@ class GlobalSettingsManager
         return Bootstrap::getContainer()->getParameter('submission.pagesize');
     }
 
-    public const SMARTLING_FRONTEND_GENERATE_LOCK_IDS = 'smartling_frontend_generate_lock_ids';
-    public const SMARTLING_GENERATE_LOCK_IDS_DEFAULT = "0";
+    public const string SMARTLING_FRONTEND_GENERATE_LOCK_IDS = 'smartling_frontend_generate_lock_ids';
+    public const string SMARTLING_GENERATE_LOCK_IDS_DEFAULT = "0";
 
     public static function isGenerateLockIdsEnabled(): bool
     {
@@ -168,8 +168,8 @@ class GlobalSettingsManager
         }
     }
 
-    public const SMARTLING_RELATED_CONTENT_SELECT_STATE = 'smartling_related_content_select_state';
-    public const SMARTLING_RELATED_CHECKBOX_STATE_DEFAULT = 0;
+    public const string SMARTLING_RELATED_CONTENT_SELECT_STATE = 'smartling_related_content_select_state';
+    public const int SMARTLING_RELATED_CHECKBOX_STATE_DEFAULT = 0;
 
     public static function getRelatedContentSelectState(): int
     {
@@ -188,8 +188,8 @@ class GlobalSettingsManager
         }
     }
 
-    private const SMARTLING_FILTER_UI_VISIBLE = 'smartling_filter_ui_visible';
-    private const SMARTLING_FILTER_UI_VISIBLE_DEFAULT = 0;
+    private const string SMARTLING_FILTER_UI_VISIBLE = 'smartling_filter_ui_visible';
+    private const int SMARTLING_FILTER_UI_VISIBLE_DEFAULT = 0;
 
     public static function getFilterUiVisible(): int
     {
@@ -205,8 +205,8 @@ class GlobalSettingsManager
         }
     }
 
-    public const SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER = 'smartling_remove_acf_parse_save_blocks_filter';
-    public const SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER_DEFAULT = "1";
+    public const string SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER = 'smartling_remove_acf_parse_save_blocks_filter';
+    public const string SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER_DEFAULT = "1";
 
     public static function isRemoveAcfParseSaveBlocksFilter(): bool
     {
@@ -222,8 +222,8 @@ class GlobalSettingsManager
         }
     }
 
-    public const SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT = 'smartling_add_slashes_before_saving_content';
-    public const SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT_DEFAULT = "1";
+    public const string SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT = 'smartling_add_slashes_before_saving_content';
+    public const string SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT_DEFAULT = "1";
 
     public static function isAddSlashesBeforeSavingPostContent(): bool
     {
@@ -239,8 +239,8 @@ class GlobalSettingsManager
         }
     }
 
-    public const SETTING_ADD_SLASHES_BEFORE_SAVING_META = 'smartling_add_slashes_before_saving_meta';
-    public const SETTING_ADD_SLASHES_BEFORE_SAVING_META_DEFAULT = "1";
+    public const string SETTING_ADD_SLASHES_BEFORE_SAVING_META = 'smartling_add_slashes_before_saving_meta';
+    public const string SETTING_ADD_SLASHES_BEFORE_SAVING_META_DEFAULT = "1";
 
     public static function isAddSlashesBeforeSavingPostMeta(): bool
     {
@@ -256,8 +256,8 @@ class GlobalSettingsManager
         }
     }
 
-    public const SETTING_CUSTOM_DIRECTIVES = 'smartling_custom_directives';
-    public const SETTING_CUSTOM_DIRECTIVES_DEFAULT = '';
+    public const string SETTING_CUSTOM_DIRECTIVES = 'smartling_custom_directives';
+    public const string SETTING_CUSTOM_DIRECTIVES_DEFAULT = '';
 
     public static function getCustomDirectives(): string
     {

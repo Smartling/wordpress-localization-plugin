@@ -15,16 +15,16 @@ use Smartling\WP\Table\DuplicateSubmissions;
     foreach ($duplicates as $set) {
         assert($set instanceof DuplicateSubmissions);
         $details = $set->getDuplicateSubmissionDetails();
-        $editLink = $set->getEditLink($details->getContentType(), $details->getSourceId());
+        $editLink = $set->getEditLink($details->contentType, $details->sourceId);
         echo '<h4>Duplicate submissions for ';
         if ($editLink !== null) {
             echo "<a href='$editLink'>";
         }
-        echo "{$details->getContentType()} id {$details->getSourceId()}";
+        echo "{$details->contentType} id {$details->sourceId}";
         if ($editLink !== null) {
             echo '</a>';
         }
-        echo " in target blog {$details->getTargetBlogId()}</h4>";
+        echo " in target blog {$details->targetBlogId}</h4>";
         $set->prepare_items();
         $set->display();
     }

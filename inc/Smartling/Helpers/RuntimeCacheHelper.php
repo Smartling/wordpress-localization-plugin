@@ -9,7 +9,7 @@ namespace Smartling\Helpers;
  */
 class RuntimeCacheHelper
 {
-    const DEFAULT_SCOPE = 'default';
+    const string DEFAULT_SCOPE = 'default';
 
     /**
      * @var RuntimeCacheHelper
