@@ -13,39 +13,39 @@ class PostTypes
         $this->ignoredTypes = $ignoredTypes;
     }
 
-    public function hookHandler($postType): void
+    public function hookHandler(): void
     {
-        if (in_array($postType, $this->ignoredTypes, true)) {
-            return;
-        }
-
-        add_action(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, static function (array $definition) use ($postType) {
-            global $wp_post_types;
-
-            if (true === ($wp_post_types[$postType]->public ?? false)) {
-                return array_merge($definition, [
-                    [
-                        "type" =>
-                            [
-                                'identifier' => $postType,
-                                'widget'     => [
-                                    'visible' => true,
-                                ],
-                                'visibility' => [
-                                    'submissionBoard' => true,
-                                    'bulkSubmit'      => true,
-                                ],
-                            ],
-                    ],
-                ]);
+        global $wp_post_types;
+        foreach ($wp_post_types as $postTypeName => $postType) {
+            if (in_array($postTypeName, $this->ignoredTypes, true)) {
+                continue;
             }
+            add_action(ExportedAPI::FILTER_SMARTLING_REGISTER_CUSTOM_POST_TYPE, static function (array $definition) use ($postType, $postTypeName) {
+                if ($postType->public ?? false) {
+                    return array_merge($definition, [
+                        [
+                            "type" =>
+                                [
+                                    'identifier' => $postTypeName,
+                                    'widget' => [
+                                        'visible' => true,
+                                    ],
+                                    'visibility' => [
+                                        'submissionBoard' => true,
+                                        'bulkSubmit' => true,
+                                    ],
+                                ],
+                        ],
+                    ]);
+                }
 
-            return $definition;
-        }, 0, 1);
+                return $definition;
+            }, 0);
+        }
     }
 
     public function registerHookHandler(): void
     {
-        add_action('registered_post_type', [$this, 'hookHandler']);
+        add_action('wp_loaded', [$this, 'hookHandler']);
     }
 }
