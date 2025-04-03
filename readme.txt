@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 3.11.0 =
-* Change registered post types handling to occur when WordPress is loaded to avoid issues when a content type entity wrapper is not registered
+* Moved custom post type registration from `registered_post_type` to `wp_loaded` hook to avoid issues when the content type entity wrapper is not registered
 
 = 3.10.0 =
 * Remove a cloned status when the user requests translation of the previously cloned submission
