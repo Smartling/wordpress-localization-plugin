@@ -203,6 +203,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         }
         $array = $entity->toArray();
         $array['post_category'] = \wp_get_post_categories($entity->ID);
+        $array['meta_input'] = [];
 
         if (GlobalSettingsManager::isRemoveAcfParseSaveBlocksFilter()) {
             // ACF would replace our properly escaped content with its own escaping.
