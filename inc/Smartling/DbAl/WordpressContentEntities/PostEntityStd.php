@@ -203,7 +203,6 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         }
         $array = $entity->toArray();
         $array['post_category'] = \wp_get_post_categories($entity->ID);
-        $array['meta_input'] = [];
 
         if (GlobalSettingsManager::isRemoveAcfParseSaveBlocksFilter()) {
             // ACF would replace our properly escaped content with its own escaping.
@@ -234,7 +233,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         ));
         $preSavePostContent = $array['post_content'];
         $this->getLogger()->debug("Base64Encoded post content: " . base64_encode($array['post_content']));
-        $res = wp_insert_post($array, true);
+        $res = wp_insert_post($array, true, false);
         if (is_wp_error($res) || 0 === $res) {
             $msg = vsprintf('An error had happened while saving post : \'%s\'', [\json_encode($array)]);
             if (is_wp_error($res)) {
