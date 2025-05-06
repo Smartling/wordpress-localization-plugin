@@ -272,4 +272,21 @@ class GlobalSettingsManager
             SimpleStorageHelper::set(self::SETTING_CUSTOM_DIRECTIVES, $value);
         }
     }
+
+    public const SETTING_TARGET_POST_FIRE_AFTER_HOOKS = 'smartling_target_post_fire_after_hooks';
+    public const SETTING_TARGET_POST_FIRE_AFTER_HOOKS_DEFAULT = '1';
+
+    public static function isTargetPostFireAfterHooks(): bool
+    {
+        return SimpleStorageHelper::get(self::SETTING_TARGET_POST_FIRE_AFTER_HOOKS, self::SETTING_TARGET_POST_FIRE_AFTER_HOOKS_DEFAULT) === '1';
+    }
+
+    public static function setTargetPostFireAfterHooks(string $value): void
+    {
+        if ($value === self::SETTING_TARGET_POST_FIRE_AFTER_HOOKS_DEFAULT) {
+            SimpleStorageHelper::drop(self::SETTING_TARGET_POST_FIRE_AFTER_HOOKS);
+        } else {
+            SimpleStorageHelper::set(self::SETTING_TARGET_POST_FIRE_AFTER_HOOKS, $value);
+        }
+    }
 }

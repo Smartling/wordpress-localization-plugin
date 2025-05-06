@@ -267,6 +267,26 @@ $data = $this->getViewData();
                         </td>
                     </tr>
                     <tr>
+                        <th><label for="<?= GlobalSettingsManager::SETTING_TARGET_POST_FIRE_AFTER_HOOKS?>"><?= __('Fire "wp_after_insert_post" hooks after target post creation')?></label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag(
+                                'select',
+                                HtmlTagGeneratorHelper::renderSelectOptions(
+                                    GlobalSettingsManager::isTargetPostFireAfterHooks() ? 1 : 0,
+                                    [
+                                        0 => 'No',
+                                        1 => 'Yes',
+                                    ]),
+                                [
+                                    'id' => GlobalSettingsManager::SETTING_TARGET_POST_FIRE_AFTER_HOOKS,
+                                    'name' => GlobalSettingsManager::SETTING_TARGET_POST_FIRE_AFTER_HOOKS,
+                                ]
+                            )
+                            ?>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><label for="<?= GlobalSettingsManager::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER?>"><?= __('Remove ACF parse save blocks filter')?></label></th>
                         <td>
                             <?=
