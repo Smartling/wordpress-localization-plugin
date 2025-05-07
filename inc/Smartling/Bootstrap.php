@@ -193,6 +193,7 @@ class Bootstrap
         GlobalSettingsManager::setCustomDirectives(stripslashes($data[GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES]));
         GlobalSettingsManager::setRemoveAcfParseSaveBlocksFilter($data[GlobalSettingsManager::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER]);
         GlobalSettingsManager::setSkipSelfCheck((int)$data['selfCheckDisabled']);
+        GlobalSettingsManager::setTargetPostFireAfterHooks($data[GlobalSettingsManager::SETTING_TARGET_POST_FIRE_AFTER_HOOKS]);
         GlobalSettingsManager::setDisableLogging((int)$data['disableLogging']);
         GlobalSettingsManager::setLogFileSpec($data['loggingPath']);
         GlobalSettingsManager::setPageSize($pageSize);

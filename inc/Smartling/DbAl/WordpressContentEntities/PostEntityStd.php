@@ -233,7 +233,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         ));
         $preSavePostContent = $array['post_content'];
         $this->getLogger()->debug("Base64Encoded post content: " . base64_encode($array['post_content']));
-        $res = wp_insert_post($array, true);
+        $res = wp_insert_post($array, true, GlobalSettingsManager::isTargetPostFireAfterHooks());
         if (is_wp_error($res) || 0 === $res) {
             $msg = vsprintf('An error had happened while saving post : \'%s\'', [\json_encode($array)]);
             if (is_wp_error($res)) {
