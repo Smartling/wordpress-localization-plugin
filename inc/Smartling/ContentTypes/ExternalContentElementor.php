@@ -42,6 +42,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         ],
         'meta' => [
             self::META_FIELD_NAME,
+            '_elementor_element_cache',
         ]
     ];
 

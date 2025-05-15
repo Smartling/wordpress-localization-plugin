@@ -50,7 +50,7 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
 
     public function getMaxVersion(): string
     {
-        return '24';
+        return '25';
     }
 
     public function getMinVersion(): string
