@@ -275,6 +275,7 @@ class ContentRelationsDiscoveryService
                 ];
             } else {
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
+                $submission->setIsCloned(0);
                 $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
                 $fileUris[] = $submission->getFileUri();
                 $queueIds[] = $submission->getId();
