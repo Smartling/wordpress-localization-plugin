@@ -62,6 +62,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
             [
                 'cron_name'   => __('Upload'),
                 'run_cron'    => 0 === $newSubmissionsCount
+                    && $this->submissionManager->findSubmissionForCloning() === null
                     ? __('Nothing to do')
                     : vsprintf(
                         '%s (%s submissions waiting)',
@@ -110,7 +111,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                 'run_cron'    => 0 === $collectorQueueSize
                     ? __('Nothing to do')
                     : vsprintf(
-                        '%s (%s submissions waiting)',
+                        '%s (%s submissions)',
                         [
                             HtmlTagGeneratorHelper::tag(
                                 'a',
