@@ -69,11 +69,12 @@ class ApiWrapper implements ApiWrapperInterface
     private function getConfigurationProfile(SubmissionEntity $submission): ConfigurationProfileEntity
     {
         $profile = $this->settings->getSingleSettingsProfile($submission->getSourceBlogId());
+        LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
+
         if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
+            $this->getLogger()->debug("Setting retrieval type to " . ConfigurationProfileEntity::RETRIEVAL_TYPE_PSEUDO . ' for test run blog blogId=' . $submission->getTargetBlogId());
             $profile->setRetrievalType(ConfigurationProfileEntity::RETRIEVAL_TYPE_PSEUDO);
         }
-
-        LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
 
         return $profile;
     }
