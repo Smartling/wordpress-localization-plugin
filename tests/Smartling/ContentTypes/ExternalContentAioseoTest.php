@@ -65,23 +65,46 @@ class ExternalContentAioseoTest extends TestCase {
             )
         );
     }
-    
-    public function testSplitTagField()
+
+    /**
+     * @dataProvider dataProviderSplitTagField
+     */
+    public function testSplitTagField(?string $expected, ?string $actual)
     {
-        $x = $this->getExternalContentAioseo();
-        $this->assertEquals(null, $x->addPlaceholders(null));
-        $this->assertEquals('', $x->addPlaceholders(''));
-        $this->assertEquals('Content', $x->addPlaceholders('Content'));
-        $this->assertEquals(PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#Content' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END, $x->addPlaceholders('#Content'));
-        $this->assertEquals(PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_title' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . ' ' .
-            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#separator_sa' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . ' ' .
-            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#site_title' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END .
-            ' Post title edited',
-            $x->addPlaceholders('#post_title #separator_sa #site_title Post title edited'));
-        $this->assertEquals(PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_excerpt' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END .
-            ' Translation content in the middle ' .
-            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#separator_sa' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
-        $x->addPlaceholders('#post_excerpt Translation content in the middle #separator_sa'));
+        $this->assertEquals(
+            $expected,
+            $this->getExternalContentAioseo()->replaceContentPlaceholdersWithSmartlingPlaceholders(
+                $actual,
+                ExternalContentAioseo::PLACEHOLDER_PATTERN,
+                $this->placeholderHelper,
+            )
+        );
+    }
+
+    public function dataProviderSplitTagField(): array
+    {
+        return [
+            [null, null],
+            ['', ''],
+            ['Content', 'Content'],
+            [
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#Content' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
+                '#Content',
+            ],
+            [
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_title' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . ' ' .
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#separator_sa' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . ' ' .
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#site_title' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END .
+                ' Post title edited',
+                '#post_title #separator_sa #site_title Post title edited',
+            ],
+            [
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#post_excerpt' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END .
+                ' Translation content in the middle ' .
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '#separator_sa' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
+                '#post_excerpt Translation content in the middle #separator_sa',
+            ],
+        ];
     }
 
     private function getExternalContentAioseo(): ExternalContentAioseo

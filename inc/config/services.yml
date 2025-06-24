@@ -157,6 +157,7 @@ services:
     arguments:
       - "@content.type.helper"
       - "@fields-filter.helper"
+      - "@helper.placeholders"
       - "@helper.plugins"
       - "@manager.submission"
       - "@wp.proxy"

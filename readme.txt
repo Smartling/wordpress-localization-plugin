@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 3.11.4 =
 * Fixed cloning not working when reference fields contain strings instead of expected integer ids
+* Fixed Yoast SEO variables ingested for translation
 
 = 3.11.3 =
 * Fixed issue where submitting a previously cloned content for translation from the post widget did not send content for translation

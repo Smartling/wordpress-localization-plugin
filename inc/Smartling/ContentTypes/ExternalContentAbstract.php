@@ -4,6 +4,7 @@ namespace Smartling\ContentTypes;
 
 use Smartling\Extensions\PluggableAbstract;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -72,5 +73,14 @@ abstract class ExternalContentAbstract extends PluggableAbstract implements Cont
     protected function getDataFromPostMeta(int $id)
     {
         return $this->wpProxy->getPostMeta($id, static::META_FIELD_NAME, true);
+    }
+
+    public function replaceContentPlaceholdersWithSmartlingPlaceholders(?string $string, string $pattern, PlaceholderHelper $placeholderHelper): ?string
+    {
+        if ($string === null) {
+            return null;
+        }
+
+        return preg_replace($pattern, $placeholderHelper->addPlaceholders('$1'), $string);
     }
 }
