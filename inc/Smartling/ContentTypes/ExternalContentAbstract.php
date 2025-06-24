@@ -77,10 +77,7 @@ abstract class ExternalContentAbstract extends PluggableAbstract implements Cont
 
     public function replaceContentPlaceholdersWithSmartlingPlaceholders(?string $string, string $pattern, PlaceholderHelper $placeholderHelper): ?string
     {
-        if ($string === null) {
-            return null;
-        }
+        return $string === null ? null : preg_replace($pattern, $placeholderHelper->addPlaceholders('$1'), $string);
 
-        return preg_replace($pattern, $placeholderHelper->addPlaceholders('$1'), $string);
     }
 }
