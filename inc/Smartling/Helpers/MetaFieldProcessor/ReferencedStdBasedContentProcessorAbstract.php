@@ -62,12 +62,12 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
             $value = ArrayHelper::first($value);
         }
 
-        if (!$submission->isCloned() && !IntegerParser::tryParseString($value, $value)) {
+        if (!IntegerParser::tryParseString($value, $value)) {
             $message = vsprintf(
-                'Got bad reference number for submission id=%s metadata field=\'%s\' with value=\'%s\', expected integer > 0. Skipping.',
+                'Got unexpected value for submission id=%s metadata field=\'%s\' with value=\'%s\', expected integer > 0. Skipping.',
                 [$submission->getId(), $fieldName, var_export($originalValue, true),]
             );
-            $this->getLogger()->warning($message);
+            $this->getLogger()->debug($message);
 
             return $originalValue;
         }
@@ -76,15 +76,12 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
             return $value;
         }
 
-        $attachment = null;
-        if (is_int($value)) {
-            $attachment = $this->submissionManager->findOne([
-                SubmissionEntity::FIELD_CONTENT_TYPE => $this->detectRealContentType($submission->getSourceBlogId(), $value),
-                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
-                SubmissionEntity::FIELD_SOURCE_ID => (int)$value,
-                SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
-            ]);
-        }
+        $attachment = $this->submissionManager->findOne([
+            SubmissionEntity::FIELD_CONTENT_TYPE => $this->detectRealContentType($submission->getSourceBlogId(), $value),
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+            SubmissionEntity::FIELD_SOURCE_ID => (int)$value,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+        ]);
         if ($attachment !== null) {
             return $attachment->getTargetId();
         }
