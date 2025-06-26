@@ -62,7 +62,7 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
             $value = ArrayHelper::first($value);
         }
 
-        if (!IntegerParser::tryParseString($value, $value)) {
+        if (!$submission->isCloned() && !IntegerParser::tryParseString($value, $value)) {
             $message = vsprintf(
                 'Got unexpected value for submission id=%s metadata field=\'%s\' with value=\'%s\', expected integer > 0. Skipping.',
                 [$submission->getId(), $fieldName, var_export($originalValue, true),]
@@ -74,6 +74,9 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
 
         if (0 === $value) {
             return $value;
+        }
+        if (!is_int($value)) {
+            return $originalValue;
         }
 
         $attachment = $this->submissionManager->findOne([
