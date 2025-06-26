@@ -18,6 +18,7 @@ use Smartling\Submissions\SubmissionManager;
 
 class ExternalContentAioseo extends ExternalContentAbstract
 {
+    public const PLACEHOLDER_PATTERN = '~(#[a-z_]+)~i';
     private FieldsFilterHelper $fieldsFilterHelper;
     private PlaceholderHelper $placeholderHelper;
     private SiteHelper $siteHelper;
@@ -158,22 +159,13 @@ class ExternalContentAioseo extends ExternalContentAbstract
         return null;
     }
 
-    public function addPlaceholders(?string $string): ?string
-    {
-        if ($string === null) {
-            return null;
-        }
-
-        return preg_replace('~(#[a-z_]+)~i', $this->placeholderHelper->addPlaceholders('$1'), $string);
-    }
-
     public function transformContentForUpload(array $content): array
     {
         foreach ($this->removeFields as $field) {
             unset($content[$field]);
         }
         foreach ($this->tagFields as $field) {
-            $content[$field] = $this->addPlaceholders($content[$field]);
+            $content[$field] = $this->replaceContentPlaceholdersWithSmartlingPlaceholders($content[$field], self::PLACEHOLDER_PATTERN, $this->placeholderHelper);
         }
         foreach ($this->jsonFields as $field) {
             try {

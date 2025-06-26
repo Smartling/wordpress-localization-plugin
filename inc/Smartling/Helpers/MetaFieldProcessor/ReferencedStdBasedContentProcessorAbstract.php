@@ -64,16 +64,19 @@ abstract class ReferencedStdBasedContentProcessorAbstract extends MetaFieldProce
 
         if (!$submission->isCloned() && !IntegerParser::tryParseString($value, $value)) {
             $message = vsprintf(
-                'Got bad reference number for submission id=%s metadata field=\'%s\' with value=\'%s\', expected integer > 0. Skipping.',
+                'Got unexpected value for submission id=%s metadata field=\'%s\' with value=\'%s\', expected integer > 0. Skipping.',
                 [$submission->getId(), $fieldName, var_export($originalValue, true),]
             );
-            $this->getLogger()->warning($message);
+            $this->getLogger()->debug($message);
 
             return $originalValue;
         }
 
         if (0 === $value) {
             return $value;
+        }
+        if (!is_int($value)) {
+            return $originalValue;
         }
 
         $attachment = $this->submissionManager->findOne([

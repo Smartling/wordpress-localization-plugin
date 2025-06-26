@@ -5,6 +5,7 @@ namespace Smartling\ContentTypes;
 use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -13,14 +14,20 @@ use Smartling\Submissions\SubmissionManager;
 class ExternalContentYoast extends ExternalContentAbstract implements ContentTypeModifyingInterface {
     use LoggerSafeTrait;
 
-    public const handledFields = [
+    public const decodedFields = [
         '_yoast_wpseo_focuskeywords',
         '_yoast_wpseo_keywordsynonyms',
+    ];
+
+    public const placeholderFields = [
+        '_yoast_wpseo_metadesc',
+        '_yoast_wpseo_title',
     ];
 
     public function __construct(
         private ContentTypeHelper $contentTypeHelper,
         private FieldsFilterHelper $fieldsFilterHelper,
+        private PlaceholderHelper $placeholderHelper,
         PluginHelper $pluginHelper,
         SubmissionManager $submissionManager,
         WordpressFunctionProxyHelper $wpProxy,
@@ -31,7 +38,7 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
         $result = [];
-        foreach (self::handledFields as $field) {
+        foreach (self::decodedFields as $field) {
             $meta = $this->wpProxy->getPostMeta($submission->getSourceId(), $field, true);
             if (is_string($meta)) {
                 try {
@@ -42,6 +49,12 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
                 } catch (\JsonException) {
                     // Not json, skip processing
                 }
+            }
+        }
+        foreach (self::placeholderFields as $field) {
+            $meta = $this->wpProxy->getPostMeta($submission->getSourceId(), $field, true);
+            if (is_string($meta) && $meta !== '') {
+                $result[$field] = $this->replaceContentPlaceholdersWithSmartlingPlaceholders($meta, "~(%%.+?%%)~", $this->placeholderHelper);
             }
         }
 
@@ -80,7 +93,7 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
 
     public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
     {
-        foreach (self::handledFields as $field) {
+        foreach (self::decodedFields as $field) {
             $meta = $this->wpProxy->getPostMeta($submission->getSourceId(), $field, true);
             if (is_string($meta)) {
                 try {
@@ -91,6 +104,9 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
                     // Not json, skip processing
                 }
             }
+        }
+        foreach (self::placeholderFields as $field) {
+            unset($source['meta'][$field]);
         }
 
         return $source;
@@ -104,15 +120,20 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
             || count($translation[$this->getPluginId()]) === 0) {
             return null;
         }
-        foreach ($translation[$this->getPluginId()] as $key => $value) {
-            if (array_key_exists($key, $original['meta'])) {
+        foreach (self::decodedFields as $key) {
+            if (array_key_exists($key, $original['meta']) && array_key_exists($key, $translation[$this->getPluginId()])) {
                 $translation['meta'][$key] = json_encode(
                     array_replace_recursive(
                         json_decode($original['meta'][$key], true, 512, JSON_THROW_ON_ERROR),
-                        $value,
+                        $translation[$this->getPluginId()][$key],
                     ),
                     JSON_THROW_ON_ERROR
                 );
+            }
+        }
+        foreach (self::placeholderFields as $field) {
+            if (array_key_exists($field, $original['meta']) && array_key_exists($field, $translation[$this->getPluginId()])) {
+                $translation['meta'][$field] = $this->placeholderHelper->removePlaceholders($translation[$this->getPluginId()][$field]);
             }
         }
 

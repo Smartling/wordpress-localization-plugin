@@ -5,8 +5,10 @@ namespace Smartling\ContentTypes;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Settings\SettingsManager;
@@ -19,12 +21,14 @@ class ExternalContentYoastTest extends TestCase {
         'meta' => [
             '_yoast_wpseo_focuskeywords' => '[{"keyword":"Ryan Test","score":33},{"keyword":"TEST 2 JARON","score":33},{"keyword":"FRIDAY","score":47}]',
             '_yoast_wpseo_keywordsynonyms' => '["","","",""]',
+            '_yoast_wpseo_title' => '%%title%% %%page%% %%sep%% %%sitename%%',
             'preservedfield' => 'value',
         ],
     ];
     private array $originalMeta = [
         'meta' => [
             '_yoast_wpseo_focuskeywords' => 'Some plain keyword string',
+            '_yoast_wpseo_title' => '%%title%% %%page%% %%sep%% %%sitename%%',
             'preservedfield' => 'value',
         ],
     ];
@@ -39,6 +43,10 @@ class ExternalContentYoastTest extends TestCase {
         '_yoast_wpseo_keywordsynonyms/1' => '',
         '_yoast_wpseo_keywordsynonyms/2' => '',
         '_yoast_wpseo_keywordsynonyms/3' => '',
+        '_yoast_wpseo_title' => PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '%%title%%' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . ' ' .
+            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '%%page%%' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . ' ' .
+            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '%%sep%%' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . ' ' .
+            PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '%%sitename%%' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END,
     ];
 
     public function testGetContentFieldsProcessed()
@@ -49,7 +57,12 @@ class ExternalContentYoastTest extends TestCase {
 
     public function testGetContentFields()
     {
-        $this->assertEquals([], $this->getExternalContentYoast($this->getWpProxy())
+        $this->assertEquals([
+            '_yoast_wpseo_title' => PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '%%title%%' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . ' ' .
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '%%page%%' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . ' ' .
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '%%sep%%' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END . ' ' .
+                PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_START . '%%sitename%%' . PlaceholderHelper::SMARTLING_PLACEHOLDER_MASK_END
+        ], $this->getExternalContentYoast($this->getWpProxy())
             ->getContentFields($this->getSubmission(), true));
     }
 
@@ -64,8 +77,10 @@ class ExternalContentYoastTest extends TestCase {
 
     public function testRemoveUntranslatableFieldsForUpload()
     {
+        $expected = $this->originalMeta;
+        unset($expected['meta']['_yoast_wpseo_title']);
         $this->assertEquals(
-            $this->originalMeta,
+            $expected,
             $this->getExternalContentYoast($this->getWpProxy())
                 ->removeUntranslatableFieldsForUpload($this->originalMeta, $this->getSubmission()),
         );
@@ -78,7 +93,7 @@ class ExternalContentYoastTest extends TestCase {
                 '_yoast_wpseo_focuskeywords' => '[{"keyword":"Ryan Test Translated","score":33},{"keyword":"TEST 2 JARON Translated","score":33},{"keyword":"FRIDAY Translated","score":47}]',
             ],
         ], $this->getExternalContentYoast($this->createMock(WordpressFunctionProxyHelper::class))
-            ->setContentFields(array_merge($this->originalMetaForProcessing, $this->getFieldsFilterHelper()->structurizeArray(['yoast' => $this->expectedProcessedMeta])), [
+            ->setContentFields(array_merge($this->originalMetaForProcessing, (new ArrayHelper())->structurize(['yoast' => $this->expectedProcessedMeta])), [
                 'yoast' => [
                     '_yoast_wpseo_focuskeywords' => [
                         ['keyword' => 'Ryan Test Translated'],
@@ -94,6 +109,7 @@ class ExternalContentYoastTest extends TestCase {
         return new ExternalContentYoast(
             $this->createMock(ContentTypeHelper::class),
             $this->getFieldsFilterHelper(),
+            new PlaceholderHelper(),
             $this->createMock(PluginHelper::class),
             $this->createMock(SubmissionManager::class),
             $wpProxy,
@@ -103,10 +119,10 @@ class ExternalContentYoastTest extends TestCase {
     private function getWpProxyForProcessedStrings(): WordpressFunctionProxyHelper|MockObject
     {
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $wpProxy->expects($this->exactly(count(ExternalContentYoast::handledFields)))->method('getPostMeta')
+        $wpProxy->method('getPostMeta')
             ->willReturnCallback(function (int $id, string $field) {
                 $this->assertEquals($this->sourcePostId, $id);
-                $this->assertContains($field, ExternalContentYoast::handledFields);
+                $this->assertContains($field, array_merge(ExternalContentYoast::decodedFields, ExternalContentYoast::placeholderFields));
 
                 return $this->originalMetaForProcessing['meta'][$field] ?? ''; // WordPress returns empty string on unknown key
             });
@@ -117,10 +133,10 @@ class ExternalContentYoastTest extends TestCase {
     private function getWpProxy(): WordpressFunctionProxyHelper|MockObject
     {
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $wpProxy->expects($this->exactly(count(ExternalContentYoast::handledFields)))->method('getPostMeta')
+        $wpProxy->method('getPostMeta')
             ->willReturnCallback(function (int $id, string $field) {
                 $this->assertEquals($this->sourcePostId, $id);
-                $this->assertContains($field, ExternalContentYoast::handledFields);
+                $this->assertContains($field, array_merge(ExternalContentYoast::decodedFields, ExternalContentYoast::placeholderFields));
 
                 return $this->originalMeta['meta'][$field] ?? '';
             });
