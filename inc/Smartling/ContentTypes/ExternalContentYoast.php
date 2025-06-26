@@ -53,7 +53,7 @@ class ExternalContentYoast extends ExternalContentAbstract implements ContentTyp
         }
         foreach (self::placeholderFields as $field) {
             $meta = $this->wpProxy->getPostMeta($submission->getSourceId(), $field, true);
-            if (is_string($meta)) {
+            if (is_string($meta) && $meta !== '') {
                 $result[$field] = $this->replaceContentPlaceholdersWithSmartlingPlaceholders($meta, "~(%%.+?%%)~", $this->placeholderHelper);
             }
         }
