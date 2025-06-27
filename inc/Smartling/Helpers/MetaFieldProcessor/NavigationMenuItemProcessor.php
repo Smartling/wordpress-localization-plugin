@@ -4,6 +4,7 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Submissions\SubmissionEntity;
 
 class NavigationMenuItemProcessor extends ReferencedContentProcessor
@@ -60,8 +61,8 @@ class NavigationMenuItemProcessor extends ReferencedContentProcessor
                         $sourceBlogId,
                         $value,
                         $targetBlogId,
-                        $submission->getJobInfoWithBatchUid(),
-                        (1 === $submission->getIsCloned())
+                        JobEntityWithBatchUid::fromJob($submission->getJobInfo(), ''),
+                        $submission->isCloned(),
                     )->getTargetId();
                 }
 
