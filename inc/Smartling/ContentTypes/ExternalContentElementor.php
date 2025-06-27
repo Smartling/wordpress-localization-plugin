@@ -71,13 +71,13 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         }
         $sourceLocalPath = WP_PLUGIN_DIR . '/elementor/includes/template-library/sources/local.php';
         $terms = [];
-        $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
         if (file_exists($sourceLocalPath)) {
             $terms = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
                 return $this->wpProxy->wp_get_object_terms($submission->getSourceId(), Source_Local::TAXONOMY_TYPE_SLUG);
             });
         }
-        $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($sourceLocalPath, $submission, $supportLevel, $terms) {
+        $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($sourceLocalPath, $submission, $terms) {
+            $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
             $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
             $documentsManagerPath = WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
             if ($supportLevel !== Pluggable::NOT_SUPPORTED && file_exists($documentsManagerPath)) {
