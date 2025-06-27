@@ -117,6 +117,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                 }
             }
         });
+        $this->getLogger()->info("Done processing Elementor after content written hook");
     }
 
     public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
