@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 3.11.5 =
 * Fixed Elementor Templates type mismatch after translation or cloning
+* Fixed error when sending related submissions to custom post types
 
 = 3.11.4 =
 * Fixed cloning not working when reference fields contain strings instead of expected integer ids

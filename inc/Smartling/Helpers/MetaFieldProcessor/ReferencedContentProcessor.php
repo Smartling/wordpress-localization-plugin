@@ -7,6 +7,7 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\TranslationHelper;
+use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Submissions\SubmissionEntity;
 
 class ReferencedContentProcessor extends MetaFieldProcessorAbstract
@@ -109,8 +110,8 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
                     $sourceBlogId,
                     $value,
                     $targetBlogId,
-                    $submission->getJobInfoWithBatchUid(),
-                    (1 === $submission->getIsCloned())
+                    JobEntityWithBatchUid::fromJob($submission->getJobInfo(), ''),
+                    $submission->isCloned(),
                 )->getTargetId();
             }
 
