@@ -233,7 +233,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                     $type = $this->getContentTypeFilterValue();
                     $curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
-                        $queueIds[] = $this->core->prepareForUpload(
+                        $submissionId =  $this->core->prepareForUpload(
                             $type,
                             $curBlogId,
                             $id,
@@ -241,6 +241,9 @@ class BulkSubmitTableWidget extends SmartlingListTable
                             new JobEntityWithBatchUid($batchUid, $jobName, $clone ? '' : $smartlingData['jobId'], $profile->getProjectId()),
                             $clone,
                         )->getId();
+                        if (!$clone) {
+                            $queueIds[] = $submissionId;
+                        }
                     }
 
                 }

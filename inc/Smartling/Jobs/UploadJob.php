@@ -55,6 +55,9 @@ class UploadJob extends JobAbstract
         $profiles = [];
         while (($item = $this->uploadQueueManager->dequeue()) !== null) {
             $submission = $item->getSubmissions()[0];
+            if ($submission->isCloned()) {
+                $this->getLogger()->debug("Skipping processing queue for submissionId={$submission->getId()}: was cloned");
+            }
             if ($submission->getFileUri() === '') {
                 $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $this->submissionManager->storeEntity($submission);

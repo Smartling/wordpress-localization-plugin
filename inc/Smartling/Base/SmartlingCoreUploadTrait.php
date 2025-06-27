@@ -8,6 +8,7 @@ use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
 use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\EntityWithPostStatus;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
+use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\InvalidXMLException;
@@ -657,6 +658,10 @@ trait SmartlingCoreUploadTrait
     }
 
     private function setObjectTerms(SubmissionEntity $submission): void {
+        $wrapper = $this->getContentHelper()->getWrapper($submission->getContentType());
+        if ($wrapper instanceof TaxonomyEntityStd) { // Taxonomies have no terms
+            return;
+        }
         $result = [];
         $terms = $this->wpProxy->getObjectTerms($submission->getSourceId());
         if ($terms instanceof \WP_Error) {
