@@ -3,7 +3,7 @@
 namespace Smartling\ContentTypes;
 
 use Elementor\Core\Documents_Manager;
-use Elementor\TemplateLibrary\Source_Local;
+use ElementorPro\Plugin;
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\Extensions\Pluggable;
@@ -69,25 +69,18 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             $this->getLogger()->debug('Processing Elementor after meta written hook skipped, targetId=0');
             return;
         }
-        $sourceLocalPath = WP_PLUGIN_DIR . '/elementor/includes/template-library/sources/local.php';
-        $terms = [];
-        $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
-        if (file_exists($sourceLocalPath)) {
-            $terms = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
-                return $this->wpProxy->wp_get_object_terms($submission->getSourceId(), Source_Local::TAXONOMY_TYPE_SLUG);
-            });
-        }
-        $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($sourceLocalPath, $submission, $supportLevel, $terms) {
-            $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
-            $documentsManagerPath = WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
-            if ($supportLevel !== Pluggable::NOT_SUPPORTED && file_exists($documentsManagerPath)) {
-                $this->userHelper->asAdministratorOrEditor(function () use ($documentsManagerPath, $submission) {
+        $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
+            $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
+            $documentsManager = $this->getDocumentsManager();
+            if ($supportLevel !== Pluggable::NOT_SUPPORTED && $documentsManager !== null) {
+                $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
+                $this->userHelper->asAdministratorOrEditor(function () use ($documentsManager, $submission) {
                     try {
-                        require_once $documentsManagerPath;
-                        $manager = new Documents_Manager();
-                        do_action('elementor/documents/register', $manager);
+                        if (!did_action('elementor/documents/register')) {
+                            do_action('elementor/documents/register', $documentsManager);
+                        }
                         /** @noinspection PhpParamsInspection */
-                        $manager->ajax_save([
+                        $documentsManager->ajax_save([
                             'editor_post_id' => $submission->getTargetId(),
                             'elements' => json_decode($this->getDataFromPostMeta($submission->getTargetId()),
                                 true,
@@ -100,23 +93,8 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     }
                 });
             }
-            if (file_exists($sourceLocalPath)) {
-                try {
-                    $newTerms = [];
-                    foreach ($terms as $term) {
-                        $add = $term->term_id;
-                        $related = $this->ensureSubmissionForRelatedTerm($submission, $term);
-                        if ($related !== null) {
-                            $add = $related->getTargetId();
-                        }
-                        $newTerms[] = $add;
-                    }
-                    $this->wpProxy->setObjectTerms($submission->getTargetId(), $newTerms, Source_Local::TAXONOMY_TYPE_SLUG);
-                } catch (\Throwable $e) {
-                    $this->getLogger()->notice(sprintf("Unable to check object terms in Elementor contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s (%s)", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage(), $e->getTraceAsString()));
-                }
-            }
         });
+        $this->getLogger()->info("Done processing Elementor after content written hook");
     }
 
     public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
@@ -196,26 +174,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return $this->getData($this->readMeta($contentId))->getRelatedContentInfo()->getRelatedContentList();
     }
 
-    public function ensureSubmissionForRelatedTerm(SubmissionEntity $submission, \WP_Term $term): ?SubmissionEntity
-    {
-        $result = $this->submissionManager->findOne([
-            SubmissionEntity::FIELD_CONTENT_TYPE => $term->taxonomy,
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
-            SubmissionEntity::FIELD_SOURCE_ID => $term->term_id,
-            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
-        ]);
-        if ($result === null) {
-            $this->getLogger()->debug("Creating submission for termId=$term->term_id, taxonomy=$term->taxonomy, slug=$term->slug, name=$term->name");
-            $entity = $this->submissionManager->getSubmissionEntity($term->taxonomy, $submission->getSourceBlogId(), $term->term_id, $submission->getTargetBlogId());
-            $entity->setSourceTitle($term->name);
-            $entity->setIsCloned(1);
-            $stored = $this->submissionManager->storeEntity($entity);
-            do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $stored);
-            $result = $this->submissionManager->getEntityById($stored->getId());
-        }
-        return $result;
-    }
-
     private function mergeElementorData(array $original, array $strings, SubmissionEntity $submission): array
     {
         $result = [];
@@ -249,5 +207,27 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         ), JSON_THROW_ON_ERROR);
         unset($translation[$this->getPluginId()]);
         return $translation;
+    }
+
+    private function getDocumentsManager(): ?Documents_Manager
+    {
+        if (class_exists(Plugin::class)) {
+            return Plugin::elementor()->documents;
+        }
+        if (class_exists(Documents_Manager::class)) {
+            return new Documents_Manager();
+        }
+        $documentsManagerPath = WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
+        if (file_exists($documentsManagerPath)) {
+            try {
+                require_once $documentsManagerPath;
+
+                return new Documents_Manager();
+            } catch (\Throwable) {
+                // No documents manager available
+            }
+        }
+
+        return null;
     }
 }
