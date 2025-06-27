@@ -3,6 +3,7 @@
 namespace Smartling\ContentTypes;
 
 use Elementor\Core\Documents_Manager;
+use Elementor\TemplateLibrary\Source_Local;
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\Extensions\Pluggable;
@@ -68,8 +69,15 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             $this->getLogger()->debug('Processing Elementor after meta written hook skipped, targetId=0');
             return;
         }
-        $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
-            $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
+        $sourceLocalPath = WP_PLUGIN_DIR . '/elementor/includes/template-library/sources/local.php';
+        $terms = [];
+        $supportLevel = $this->getSupportLevel($submission->getContentType(), $submission->getTargetId());
+        if (file_exists($sourceLocalPath)) {
+            $terms = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
+                return $this->wpProxy->wp_get_object_terms($submission->getSourceId(), Source_Local::TAXONOMY_TYPE_SLUG);
+            });
+        }
+        $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($sourceLocalPath, $submission, $supportLevel, $terms) {
             $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
             $documentsManagerPath = WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
             if ($supportLevel !== Pluggable::NOT_SUPPORTED && file_exists($documentsManagerPath)) {
@@ -91,6 +99,22 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                         $this->getLogger()->notice(sprintf("Unable to do Elementor save actions for contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s (%s)", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage(), $e->getTraceAsString()));
                     }
                 });
+            }
+            if (file_exists($sourceLocalPath)) {
+                try {
+                    $newTerms = [];
+                    foreach ($terms as $term) {
+                        $add = $term->term_id;
+                        $related = $this->ensureSubmissionForRelatedTerm($submission, $term);
+                        if ($related !== null) {
+                            $add = $related->getTargetId();
+                        }
+                        $newTerms[] = $add;
+                    }
+                    $this->wpProxy->setObjectTerms($submission->getTargetId(), $newTerms, Source_Local::TAXONOMY_TYPE_SLUG);
+                } catch (\Throwable $e) {
+                    $this->getLogger()->notice(sprintf("Unable to check object terms in Elementor contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s (%s)", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage(), $e->getTraceAsString()));
+                }
             }
         });
     }
@@ -170,6 +194,26 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     public function getRelatedContent(string $contentType, int $contentId): array
     {
         return $this->getData($this->readMeta($contentId))->getRelatedContentInfo()->getRelatedContentList();
+    }
+
+    public function ensureSubmissionForRelatedTerm(SubmissionEntity $submission, \WP_Term $term): ?SubmissionEntity
+    {
+        $result = $this->submissionManager->findOne([
+            SubmissionEntity::FIELD_CONTENT_TYPE => $term->taxonomy,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+            SubmissionEntity::FIELD_SOURCE_ID => $term->term_id,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+        ]);
+        if ($result === null) {
+            $this->getLogger()->debug("Creating submission for termId=$term->term_id, taxonomy=$term->taxonomy, slug=$term->slug, name=$term->name");
+            $entity = $this->submissionManager->getSubmissionEntity($term->taxonomy, $submission->getSourceBlogId(), $term->term_id, $submission->getTargetBlogId());
+            $entity->setSourceTitle($term->name);
+            $entity->setIsCloned(1);
+            $stored = $this->submissionManager->storeEntity($entity);
+            do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $stored);
+            $result = $this->submissionManager->getEntityById($stored->getId());
+        }
+        return $result;
     }
 
     private function mergeElementorData(array $original, array $strings, SubmissionEntity $submission): array

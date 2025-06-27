@@ -106,6 +106,11 @@ class WordpressFunctionProxyHelper
         return wp_get_object_terms($objectId, get_taxonomies());
     }
 
+    public function wp_get_object_terms()
+    {
+        return wp_get_object_terms(...func_get_args());
+    }
+
     public function get_permalink()
     {
         return get_permalink(...func_get_args());
