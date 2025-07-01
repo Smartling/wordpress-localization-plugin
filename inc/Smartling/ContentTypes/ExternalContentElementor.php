@@ -76,9 +76,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                 $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
                 $this->userHelper->asAdministratorOrEditor(function () use ($documentsManager, $submission) {
                     try {
-                        if (!did_action('elementor/documents/register')) {
-                            do_action('elementor/documents/register', $documentsManager);
-                        }
                         /** @noinspection PhpParamsInspection */
                         $documentsManager->ajax_save([
                             'editor_post_id' => $submission->getTargetId(),
@@ -214,18 +211,20 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         if (class_exists(Plugin::class)) {
             return Plugin::elementor()->documents;
         }
-        if (class_exists(Documents_Manager::class)) {
-            return new Documents_Manager();
-        }
         $documentsManagerPath = WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
         if (file_exists($documentsManagerPath)) {
             try {
                 require_once $documentsManagerPath;
 
-                return new Documents_Manager();
+                $manager = new Documents_Manager();
+                do_action('elementor/documents/register', $manager);
+                return $manager;
             } catch (\Throwable) {
                 // No documents manager available
             }
+        }
+        if (class_exists(Documents_Manager::class)) {
+            return new Documents_Manager();
         }
 
         return null;
