@@ -61,7 +61,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
         if ($contentType === self::CONTENT_TYPE
             || ($this->contentTypeHelper->isPost($contentType)
                 && str_contains(
-                    $this->wpProxy->get_post($contentId)->post_content,
+                    $this->wpProxy->get_post($contentId)->post_content ?? '',
                     'gravityforms',
                 ))) {
             return parent::getSupportLevel($contentType, $contentId);
