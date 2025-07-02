@@ -4,13 +4,12 @@ namespace Smartling\Jobs;
 
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\EntityNotFoundException;
-use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\OptionHelper;
 use Smartling\Helpers\SimpleStorageHelper;
-use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
@@ -21,9 +20,12 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
 {
     use LoggerSafeTrait;
 
+    public const CRON_FLAG_PREFIX = 'wordpress_smartling_cron_flag_';
     public const LAST_FINISH_SUFFIX = '-last-run';
     public const SOURCE_USER = 'user';
     private const THROTTLED_MESSAGE = "Throttled";
+
+    private int $cronLockTtl;
 
     public function __construct(
         protected ApiWrapperInterface $api,
@@ -32,8 +34,8 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         protected SubmissionManager $submissionManager,
         private int $throttleIntervalSeconds,
         private string $jobRunInterval,
-        private int $workerTTL,
     ) {
+        $this->cronLockTtl = GlobalSettingsManager::getCronLockTtl();
     }
 
     private function getInstalledCrons(): array
@@ -80,7 +82,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
 
     protected function getCronFlagName(): string
     {
-        return 'wordpress_smartling_cron_flag_' . $this->getJobHookName();
+        return self::CRON_FLAG_PREFIX . $this->getJobHookName();
     }
 
     /**
@@ -89,9 +91,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      */
     public function placeLockFlag(bool $renew = false, string $source = ''): void
     {
-        $profile = $this->getActiveProfile();
+        $profile = $this->settingsManager->getActiveProfile();
         $flagName = $this->getCronFlagName();
-        $newFlagValue = time() + $this->workerTTL;
+        $newFlagValue = time() + $this->cronLockTtl;
 
         if (true === $renew) {
             $msgTemplate = 'Renewing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)';
@@ -108,7 +110,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                 $flagName,
                 $this->getJobHookName(),
                 $newFlagValue,
-                $this->workerTTL,
+                $this->cronLockTtl,
             ]
         ));
 
@@ -116,9 +118,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             $this->cache->set($flagName, 1, $this->throttleIntervalSeconds);
         }
         if ($renew) {
-            $this->api->renewLock($profile, $flagName, $this->workerTTL);
+            $this->api->renewLock($profile, $flagName, $this->cronLockTtl);
         } else {
-            $this->api->acquireLock($profile, $flagName, $this->workerTTL);
+            $this->api->acquireLock($profile, $flagName, $this->cronLockTtl);
         }
     }
 
@@ -128,7 +130,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      */
     public function dropLockFlag(): void
     {
-        $profile = $this->getActiveProfile();
+        $profile = $this->settingsManager->getActiveProfile();
         $flagName = $this->getCronFlagName();
         $this->getLogger()->debug(
             vsprintf(
@@ -149,7 +151,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
                 'Checking if allowed to run \'%s\' cron (TTL=%s)',
                 [
                     $this->getJobHookName(),
-                    $this->workerTTL,
+                    $this->cronLockTtl,
                 ]
             )
         );
@@ -162,7 +164,11 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             $this->getLogger()->debug($message);
         } catch (SmartlingApiException $e) {
             $errorMessage = $e->getErrors()[0]['message'] ?? $e->getMessage();
-            $message = "Failed to place lock flag for {$this->getJobHookName()}: $errorMessage";
+            if (count($e->getErrorsByKey('resource.locked')) > 0) {
+                $message = "Unable to start cron, cron job already working, try again later";
+            } else {
+                $message = "Failed to place lock flag for {$this->getJobHookName()}: $errorMessage";
+            }
             $this->getLogger()->debug($message);
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === self::THROTTLED_MESSAGE) {
@@ -203,15 +209,6 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
             }
             SimpleStorageHelper::set($this->getJobHookName() . self::LAST_FINISH_SUFFIX, time());
         }
-    }
-
-    private function getActiveProfile(): ConfigurationProfileEntity
-    {
-        $profile = ArrayHelper::first($this->settingsManager->getActiveProfiles());
-        if ($profile === false) {
-            throw new EntityNotFoundException('No active profiles');
-        }
-        return $profile;
     }
 
     public function register(): void

@@ -24,9 +24,8 @@ class UploadJob extends JobAbstract
         private UploadQueueManager $uploadQueueManager,
         int $throttleIntervalSeconds,
         string $jobRunInterval,
-        int $workerTTL,
     ) {
-        parent::__construct($api, $cache, $settingsManager, $submissionManager, $throttleIntervalSeconds, $jobRunInterval, $workerTTL);
+        parent::__construct($api, $cache, $settingsManager, $submissionManager, $throttleIntervalSeconds, $jobRunInterval);
     }
 
     public function getJobHookName(): string
@@ -103,6 +102,7 @@ class UploadJob extends JobAbstract
     {
         while (($submission = $this->submissionManager->findSubmissionForCloning()) !== null) {
             do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
+            $this->placeLockFlag(true);
         }
     }
 }

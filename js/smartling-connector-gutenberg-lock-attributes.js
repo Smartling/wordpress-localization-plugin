@@ -3,7 +3,7 @@ let added = false;
 const addSmartlingGutenbergLockAttributes = function () {
     const registerBlockTypeHookName = 'blocks.registerBlockType';
     const namespace = 'smartling/connector/lockAttributes';
-    if (wp.hooks.hasFilter(registerBlockTypeHookName, namespace)) {
+    if (wp && wp.hasOwnProperty('hooks') && wp.hooks.hasOwnProperty('hasFilter') && wp.hooks.hasFilter(registerBlockTypeHookName, namespace)) {
         added = true;
         return;
     }

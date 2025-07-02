@@ -338,6 +338,7 @@ services:
   wp.settings:
     class: Smartling\WP\Controller\ConfigurationProfilesController
     arguments:
+      - "@api.wrapper.with.retries"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@manager.settings"

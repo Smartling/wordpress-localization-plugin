@@ -190,6 +190,10 @@ class Bootstrap
 
         GlobalSettingsManager::setAddSlashesBeforeSavingContent($data[GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT]);
         GlobalSettingsManager::setAddSlashesBeforeSavingMeta($data[GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_META]);
+        $desiredCronTtl = (int)$data[GlobalSettingsManager::SETTING_CRON_LOCK_TTL];
+        if ($desiredCronTtl >= GlobalSettingsManager::SETTING_CRON_LOCK_TTL_MIN && $desiredCronTtl <= GlobalSettingsManager::SETTING_CRON_LOCK_TTL_MAX) {
+            GlobalSettingsManager::setCronLockTtl($desiredCronTtl);
+        }
         GlobalSettingsManager::setCustomDirectives(stripslashes($data[GlobalSettingsManager::SETTING_CUSTOM_DIRECTIVES]));
         GlobalSettingsManager::setRemoveAcfParseSaveBlocksFilter($data[GlobalSettingsManager::SETTING_REMOVE_ACF_PARSE_SAVE_BLOCKS_FILTER]);
         GlobalSettingsManager::setSkipSelfCheck((int)$data['selfCheckDisabled']);
