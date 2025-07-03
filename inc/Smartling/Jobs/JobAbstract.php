@@ -98,7 +98,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         if (true === $renew) {
             $msgTemplate = 'Renewing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)';
         } else {
-            if ($source !== self::SOURCE_USER && $this->cache->get($flagName)) {
+            if ($source !== self::SOURCE_USER && $this->cache->get($flagName, false)) {
                 throw new \RuntimeException(self::THROTTLED_MESSAGE);
             }
             $msgTemplate = 'Placing flag \'%s\' for cron job \'%s\' with value \'%s\' (TTL=%s)';

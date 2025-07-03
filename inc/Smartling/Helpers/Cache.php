@@ -6,7 +6,7 @@ interface Cache {
 
     public function delete(string $key): bool;
 
-    public function get(string $key): mixed;
+    public function get(string $key, mixed $default = null): mixed;
 
     public function set(string $key, mixed $data, ?int $expire = null): bool;
 }

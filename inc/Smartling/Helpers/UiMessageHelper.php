@@ -23,7 +23,7 @@ class UiMessageHelper
         if (0 < count($messages)) {
             $msg = '';
             foreach ($messages as $message) {
-                if (!$cache->get(self::getCacheKey($message))) {
+                if (!$cache->get(self::getCacheKey($message), false)) {
                     $msg .= sprintf(
                         '<div class="%s"><h4 style="margin-bottom: 0; padding-bottom: 0">Smartling connector:</h4><p>%s</p></div>',
                         $type,

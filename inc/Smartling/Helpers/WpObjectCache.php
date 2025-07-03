@@ -15,9 +15,11 @@ class WpObjectCache implements Cache {
         return wp_cache_flush();
     }
 
-    public function get(string $key): mixed
+    public function get(string $key, mixed $default = null): mixed
     {
-        return wp_cache_get($key, self::GROUP);
+        $found = null;
+        $result = wp_cache_get($key, self::GROUP, false, $found);
+        return $found ? $result : $default;
     }
 
     public function set(string $key, mixed $data, ?int $expire = null): bool

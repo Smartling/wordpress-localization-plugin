@@ -56,7 +56,7 @@ class LiveNotificationController implements WPHookInterface
 
     public function getAvailableConfigs(): array
     {
-        $configs = $this->cache->get(static::CONFIG_CACHE_KEY);
+        $configs = $this->cache->get(static::CONFIG_CACHE_KEY, false);
 
         if (false === $configs) {
             $configs = [];

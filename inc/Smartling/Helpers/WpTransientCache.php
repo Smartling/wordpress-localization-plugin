@@ -10,9 +10,11 @@ class WpTransientCache implements Cache {
         return delete_transient($key);
     }
 
-    public function get(string $key): mixed
+    public function get(string $key, mixed $default = null): mixed
     {
-        return get_transient($key);
+        $result = get_transient($key); // returns boolean false if key doesn't exist
+
+        return $result === false ? $default : $result;
     }
 
     public function set(string $key, mixed $data, ?int $expire = self::DEFAULT_EXPIRATION): bool

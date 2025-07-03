@@ -255,7 +255,7 @@ class SmartlingCore extends SmartlingCoreAbstract
     public function getProjectLocales(ConfigurationProfileEntity $profile)
     {
         $cacheKey = 'profile.locales.' . $profile->getId();
-        $cached = $this->getCache()->get($cacheKey);
+        $cached = $this->getCache()->get($cacheKey, false);
 
         if (false === $cached) {
             $cached = $this->getApiWrapper()->getSupportedLocales($profile);

@@ -86,7 +86,7 @@ class AcfTypeDetector
      */
     private function getFieldKeyFieldName($fieldName, SubmissionEntity $submission)
     {
-        if (false === $fieldKey = $this->getCache()->get($this->getCacheKeyByFieldName($fieldName))) {
+        if (false === $fieldKey = $this->getCache()->get($this->getCacheKeyByFieldName($fieldName), false)) {
             $sourceMeta = $this->getContentHelper()->readSourceMetadata($submission);
             return $this->getFieldKeyFieldNameByMetaFields($fieldName, $sourceMeta);
         }
@@ -95,7 +95,7 @@ class AcfTypeDetector
 
     private function getFieldKeyFieldNameByMetaFields($fieldName, array $metadata)
     {
-        if (false === $fieldKey = $this->getCache()->get($this->getCacheKeyByFieldName($fieldName))) {
+        if (false === $fieldKey = $this->getCache()->get($this->getCacheKeyByFieldName($fieldName), false)) {
             $_realFieldName = preg_replace('#^meta\/#ius', '', $fieldName);
             if (array_key_exists('_' . $_realFieldName, $metadata)) {
                 $fieldKey = $metadata['_' . $_realFieldName];

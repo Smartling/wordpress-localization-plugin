@@ -76,7 +76,7 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
         $result = [];
         $cache = $this->getCache();
 
-        $cachedItems = $cache->get(self::SUBMISSION_CHECKED_KEY);
+        $cachedItems = $cache->get(self::SUBMISSION_CHECKED_KEY, false);
 
         $now = new \DateTime("now");
         $slide = new \DateTime("now");

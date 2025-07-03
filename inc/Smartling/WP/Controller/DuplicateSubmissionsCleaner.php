@@ -97,7 +97,7 @@ class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookIn
     {
         $duplicates = false;
         if ($getFromCacheFirst) {
-            $duplicates = $this->cache->get(self::CACHE_KEY);
+            $duplicates = $this->cache->get(self::CACHE_KEY, false);
         }
         if (!is_array($duplicates)) {
             $duplicates = $this->submissionManager->getDuplicateSubmissionDetails();
