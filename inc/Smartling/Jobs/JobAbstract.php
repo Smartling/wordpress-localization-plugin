@@ -165,7 +165,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         } catch (SmartlingApiException $e) {
             $errorMessage = $e->getErrors()[0]['message'] ?? $e->getMessage();
             if (count($e->getErrorsByKey('resource.locked')) > 0) {
-                $message = "Unable to start cron, cron job already working, try again later";
+                $message = "Unable to start {$this->getJobHookName()} cron, cron job already working, try again later";
             } else {
                 $message = "Failed to place lock flag for {$this->getJobHookName()}: $errorMessage";
             }
