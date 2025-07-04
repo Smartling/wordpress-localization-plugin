@@ -299,13 +299,13 @@ trait SmartlingCoreUploadTrait
                 }
 
                 $this->getContentHelper()->writeTargetMetadata($submission, $metaFields);
-                $this->setPostStatus($configurationProfile, $targetContent, $submission);
                 do_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, $submission);
             }
             if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
                 $this->testRunHelper->checkDownloadedSubmission($submission);
             }
             $submission = $this->getSubmissionManager()->storeEntity($submission);
+            $this->setPostStatus($configurationProfile, $targetContent, $submission);
             do_action(ExportedAPI::ACTION_AFTER_TRANSLATION_APPLIED, $submission);
         } catch (InvalidXMLException $e) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
