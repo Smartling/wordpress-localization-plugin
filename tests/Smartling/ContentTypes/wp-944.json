@@ -1,0 +1,245 @@
+[
+  {
+    "id": "3e7fafc9",
+    "elType": "widget",
+    "settings": {
+      "multisource_rss_url": "https:\/\/wired.com\/feed\/rss",
+      "multisource_rss_date_format": "d\/m\/Y, H:i",
+      "multisource_rss_items_limit": "0",
+      "multisource_api_google_events_limit": "250",
+      "multisource_api_google_events_cache_time": "10",
+      "multisource_api_google_reviews_cache_time": "10",
+      "multisource_api_google_sheets_cache_time": "10",
+      "multisource_api_youtube_playlist_limit": "5",
+      "multisource_api_youtube_playlist_cache_time": "10",
+      "multisource_api_currency_exchange_cache_time": "60",
+      "multisource_api_weather_forecast_country": "GB",
+      "multisource_api_weather_forecast_city": "London",
+      "multisource_api_weather_forecast_cache_time": "60",
+      "number_of_items": "7",
+      "number_of_items_tablet": "4.1",
+      "autoplay_hover_pause": "true",
+      "margin_between_items_desktop": "40",
+      "margin_between_items_tablet": "20",
+      "margin_between_items_mobile": "8",
+      "transition_speed": "10000",
+      "direction": "right",
+      "item_image_size_size": "large",
+      "item_image": {
+        "unit": "px",
+        "size": "146",
+        "sizes": [],
+        "value": "100"
+      },
+      "item_image_mobile": {
+        "unit": "px",
+        "size": "122",
+        "sizes": []
+      },
+      "item_height_type": "auto",
+      "box_height": {
+        "unit": "px",
+        "size": "192",
+        "sizes": [],
+        "value": "200"
+      },
+      "box_background": "",
+      "item_padding": {
+        "unit": "px",
+        "top": "0",
+        "right": "0",
+        "bottom": "0",
+        "left": "0",
+        "isLinked": "1"
+      },
+      "item_border_border": "none",
+      "multisource_posts_include_date_meta_format": "Ymd",
+      "multisource_posts_maxitems": "10",
+      "multisource_items": [
+        {
+          "item_type": "image",
+          "image": {
+            "id": "0",
+            "url": "https:\/\/test.com\/wp-content\/plugins\/unlimited-elements-for-elementor-premium\/images\/gallery1.jpg"
+          },
+          "_id": "ccd7f5a"
+        },
+        {
+          "item_type": "image",
+          "image": {
+            "id": "0",
+            "url": "https:\/\/test.com\/wp-content\/plugins\/unlimited-elements-for-elementor-premium\/images\/gallery2.jpg"
+          },
+          "_id": "2455f2e"
+        },
+        {
+          "item_type": "youtube",
+          "image": {
+            "id": "0",
+            "url": "https:\/\/test.com\/wp-content\/plugins\/unlimited-elements-for-elementor-premium\/images\/gallery3.jpg"
+          },
+          "url_youtube": "qrO4YZeyl0I",
+          "_id": "6035691"
+        },
+        {
+          "item_type": "image",
+          "image": {
+            "id": "0",
+            "url": "https:\/\/test.com\/wp-content\/plugins\/unlimited-elements-for-elementor-premium\/images\/gallery5.jpg"
+          },
+          "_id": "5f93743"
+        },
+        {
+          "item_type": "vimeo",
+          "image": {
+            "id": "0",
+            "url": "https:\/\/test.com\/wp-content\/plugins\/unlimited-elements-for-elementor-premium\/images\/gallery4.jpg"
+          },
+          "vimeo_id": "581014653",
+          "_id": "bdb6c30"
+        },
+        {
+          "item_type": "html5",
+          "image": {
+            "id": "0",
+            "url": "https:\/\/test.com\/wp-content\/plugins\/unlimited-elements-for-elementor-premium\/images\/gallery6.jpg"
+          },
+          "url_html5": "http:\/\/commondatastorage.googleapis.com\/gtv-videos-bucket\/sample\/BigBuckBunny.mp4",
+          "_id": "18f2d1f"
+        },
+        {
+          "item_type": "image",
+          "image": {
+            "id": "0",
+            "url": "https:\/\/test.com\/wp-content\/plugins\/unlimited-elements-for-elementor-premium\/images\/gallery1.jpg"
+          },
+          "_id": "2c64d91"
+        }
+      ],
+      "multisource_instagram": "@gianlucavacchi",
+      "multisource_instagram_num_items": "12",
+      "uc_items": [
+        {
+          "title": "Item 1",
+          "image": {
+            "url": "https:\/\/test.com\/wp-content\/uploads\/2025\/05\/image-6-1.webp",
+            "id": "2674",
+            "alt": "",
+            "source": "library",
+            "size": ""
+          },
+          "image_attributes_nosize": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo1.png\"",
+          "image_attributes": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo1.png\"",
+          "image_thumb": "https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo1.png",
+          "link": {
+            "url": "#"
+          },
+          "_generated_id": "yzisu",
+          "item_repeater_class": "elementor-repeater-item-yzisu",
+          "_id": "57b8eec"
+        },
+        {
+          "title": "Item 2",
+          "image": {
+            "url": "https:\/\/test.com\/wp-content\/uploads\/2025\/05\/image-9-1.webp",
+            "id": "2675",
+            "alt": "",
+            "source": "library",
+            "size": ""
+          },
+          "image_attributes_nosize": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo2.png\"",
+          "image_attributes": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo2.png\"",
+          "image_thumb": "https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo2.png",
+          "link": {
+            "url": "#"
+          },
+          "_generated_id": "92ths",
+          "item_repeater_class": "elementor-repeater-item-92ths",
+          "_id": "ed86b92"
+        },
+        {
+          "title": "Item 3",
+          "image": {
+            "url": "https:\/\/test.com\/wp-content\/uploads\/2025\/05\/image-1-1.webp",
+            "id": "2676",
+            "alt": "",
+            "source": "library",
+            "size": ""
+          },
+          "image_attributes_nosize": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo3.png\"",
+          "image_attributes": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo3.png\"",
+          "image_thumb": "https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo3.png",
+          "link": {
+            "url": "#"
+          },
+          "_generated_id": "053fg",
+          "item_repeater_class": "elementor-repeater-item-053fg",
+          "_id": "2f49a12"
+        },
+        {
+          "title": "Item 4",
+          "image": {
+            "url": "https:\/\/test.com\/wp-content\/uploads\/2025\/05\/image-5-1.webp",
+            "id": "2677",
+            "alt": "",
+            "source": "library",
+            "size": ""
+          },
+          "image_attributes_nosize": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo4.png\"",
+          "image_attributes": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo4.png\"",
+          "image_thumb": "https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo4.png",
+          "link": {
+            "url": "#"
+          },
+          "_generated_id": "gx3pw",
+          "item_repeater_class": "elementor-repeater-item-gx3pw",
+          "_id": "50768f2"
+        },
+        {
+          "title": "Item 5",
+          "image": {
+            "url": "https:\/\/test.com\/wp-content\/uploads\/2025\/05\/image-4-1.webp",
+            "id": "2678",
+            "alt": "",
+            "source": "library",
+            "size": ""
+          },
+          "image_attributes_nosize": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo6.png\"",
+          "image_attributes": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo6.png\"",
+          "image_thumb": "https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo6.png",
+          "link": {
+            "url": "#"
+          },
+          "_generated_id": "07m9f",
+          "item_repeater_class": "elementor-repeater-item-07m9f",
+          "_id": "1bc5bcc"
+        },
+        {
+          "title": "Item 6",
+          "image": {
+            "url": "https:\/\/test.com\/wp-content\/uploads\/2025\/05\/image-2-1.webp",
+            "id": "2680",
+            "alt": "",
+            "source": "library",
+            "size": ""
+          },
+          "image_attributes_nosize": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo6.png\"",
+          "image_attributes": " src=\"https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo6.png\"",
+          "image_thumb": "https:\/\/test.com\/wp-content\/uploads\/ac_assets\/logo_marquee\/logo6.png",
+          "link": {
+            "url": "#"
+          },
+          "_generated_id": "1j0xk",
+          "item_repeater_class": "elementor-repeater-item-1j0xk",
+          "_id": "6017f65"
+        }
+      ],
+      "__globals__": {
+        "box_background": ""
+      },
+      "number_of_items_mobile": "2.5"
+    },
+    "elements": [],
+    "widgetType": "ucaddon_logo_marquee"
+  }
+]
