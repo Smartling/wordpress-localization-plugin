@@ -89,7 +89,6 @@ class LastModifiedCheckJobTest extends TestCase
                 $submissionManager,
                 0,
                 '20m',
-                1200,
                 $queue,
             ])
             ->getMock();
@@ -509,7 +508,6 @@ class LastModifiedCheckJobTest extends TestCase
                 $this->submissionManager,
                 0,
                 '20m',
-                1200,
                 $this->queue,
             ])
             ->getMock();
