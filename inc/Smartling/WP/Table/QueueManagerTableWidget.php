@@ -148,7 +148,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
             $this->testLock($profile, $jobName);
             return sprintf(
                 '%s (%s submissions waiting)',
-                $this->getTag($jobName),
+                $this->getLockTag($jobName),
                 $count,
             );
         } catch (SmartlingApiException $e) {
@@ -167,7 +167,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
             $this->testLock($profile, $jobName);
             return sprintf(
                 '%s (%s submissions)',
-                $this->getTag($jobName),
+                $this->getLockTag($jobName),
                 $count,
             );
         } catch (SmartlingApiException $e) {
@@ -187,7 +187,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
 
             return sprintf(
                 '%s (%s submissions waiting)',
-                $this->getTag($jobName),
+                $this->getLockTag($jobName),
                 $count,
             );
         } catch (SmartlingApiException $e) {
@@ -206,7 +206,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
             $this->testLock($profile, $jobName);
             return sprintf(
             '%s (%s submissions waiting)',
-                $this->getTag($jobName),
+                $this->getLockTag($jobName),
                 $count,
             );
         } catch (SmartlingApiException $e) {
@@ -271,11 +271,11 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
     private function testLock(?ConfigurationProfileEntity $profile, string $jobName): void
     {
         if ($profile !== null) {
-            $this->api->acquireLock($profile, JobAbstract::CRON_FLAG_PREFIX . $jobName, 0);
+            $this->api->acquireLock($profile, JobAbstract::CRON_FLAG_PREFIX . $jobName, 0.001);
         }
     }
 
-    private function getTag(string $jobName): string
+    private function getLockTag(string $jobName): string
     {
         return HtmlTagGeneratorHelper::tag(
             'a',
