@@ -24,6 +24,7 @@
                 'params': {
                     'smartling_add_slashes_before_saving_content': $('#smartling_add_slashes_before_saving_content').val(),
                     'smartling_add_slashes_before_saving_meta': $('#smartling_add_slashes_before_saving_meta').val(),
+                    'smartling_cron_lock_ttl': $('#smartling_cron_lock_ttl').val(),
                     'smartling_custom_directives': $('#smartling_custom_directives').val(),
                     'smartling_remove_acf_parse_save_blocks_filter': $('#smartling_remove_acf_parse_save_blocks_filter').val(),
                     'smartling_target_post_fire_after_hooks': $('#smartling_target_post_fire_after_hooks').val(),

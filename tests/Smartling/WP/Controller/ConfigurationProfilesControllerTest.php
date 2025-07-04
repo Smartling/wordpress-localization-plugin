@@ -3,6 +3,7 @@
 namespace Smartling\Tests\WP\Controller;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Helpers\WpObjectCache;
@@ -10,7 +11,6 @@ use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\SettingsManager;
-use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Controller\ConfigurationProfilesController;
 
@@ -38,6 +38,7 @@ class ConfigurationProfilesControllerTest extends TestCase {
         $uploadQueueManager->expects($this->once())->method('purge');
 
         $x = new ConfigurationProfilesController(
+            $this->createMock(ApiWrapperInterface::class),
             $this->createMock(LocalizationPluginProxyInterface::class),
             $this->createMock(PluginInfo::class),
             $this->createMock(SettingsManager::class),

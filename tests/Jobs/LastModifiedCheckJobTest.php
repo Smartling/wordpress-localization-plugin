@@ -89,7 +89,6 @@ class LastModifiedCheckJobTest extends TestCase
                 $submissionManager,
                 0,
                 '20m',
-                1200,
                 $queue,
             ])
             ->getMock();
@@ -104,15 +103,17 @@ class LastModifiedCheckJobTest extends TestCase
 
         $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
         $dequeueResult[] = false;
+        $matcher = $this->exactly(count($groupedSubmissions) + 1);
         $this->queue
-            ->expects($this->exactly(count($groupedSubmissions) + 1))
+            ->expects($matcher)
             ->method('dequeue')
-            ->withConsecutive(
-                ...array_merge(
-                array_fill(0, count($groupedSubmissions), [QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]),
-                [[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE]],
-            ))
-            ->willReturnOnConsecutiveCalls(...$dequeueResult);
+            ->willReturnCallback(function (string $queue) use ($dequeueResult, $groupedSubmissions, $matcher) {
+                $this->assertEquals(array_merge(
+                    array_fill(0, count($groupedSubmissions), [QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]),
+                    [[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE]]
+                )[$matcher->getInvocationCount() - 1][0], $queue);
+                return [...$dequeueResult][$matcher->getInvocationCount() - 1];
+            });
 
         foreach ($groupedSubmissions as $index => $mockedResult) {
             if (false !== $mockedResult) {
@@ -146,13 +147,12 @@ class LastModifiedCheckJobTest extends TestCase
         $this->apiWrapper
             ->expects(self::exactly($expectedStatusCheckRequests))
             ->method('getStatusForAllLocales')
-            ->withAnyParameters()
-            ->will(self::returnArgument(0));
+            ->willReturnArgument(0);
 
         // emulate Saving
         $this->submissionManager
             ->method('storeSubmissions')
-            ->will(self::returnArgument(0));
+            ->willReturnArgument(0);
 
         $worker->run('test');
     }
@@ -370,14 +370,17 @@ class LastModifiedCheckJobTest extends TestCase
 
         $dequeueResult = $this->mockedResultToDequeueResult($groupedSubmissions);
         $dequeueResult[] = false;
+        $matcher = $this->exactly(count($groupedSubmissions) + 1);
         $this->queue
-            ->expects($this->exactly(count($groupedSubmissions) + 1))
+            ->expects($matcher)
             ->method('dequeue')
-            ->withConsecutive(...array_merge(
-                array_fill(0, count($groupedSubmissions), [QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]),
-                [[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE]],
-            ))
-            ->willReturnOnConsecutiveCalls(...$dequeueResult);
+            ->willReturnCallback(function (string $queue) use ($dequeueResult, $groupedSubmissions, $matcher) {
+                $this->assertEquals(array_merge(
+                    array_fill(0, count($groupedSubmissions), [QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]),
+                    [[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE]]
+                )[$matcher->getInvocationCount() - 1][0], $queue);
+                return [...$dequeueResult][$matcher->getInvocationCount() - 1];
+            });
 
         foreach ($groupedSubmissions as $index => $mockedResult) {
             if (false !== $mockedResult) {
@@ -509,19 +512,22 @@ class LastModifiedCheckJobTest extends TestCase
                 $this->submissionManager,
                 0,
                 '20m',
-                1200,
                 $this->queue,
             ])
             ->getMock();
         $this->lastModifiedWorker->method('getSmartlingLocaleIdBySubmission')->willReturn($missingSubmission->getTargetLocale());
 
         $dequeueResult = $this->mockedResultToDequeueResult($submissions);
-        $this->queue->expects($this->exactly(count($submissions) + 2))->method('dequeue')
-            ->withConsecutive(...array_merge(
-                [[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]],
-                array_fill(0, count($submissions) + 2, [QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE]),
-            ))
-            ->willReturnOnConsecutiveCalls(...array_merge([false], $dequeueResult, [false]));
+        $matcher = $this->exactly(count($submissions) + 2);
+        $this->queue->expects($matcher)->method('dequeue')
+            ->willReturnCallback(function (string $queue) use ($matcher, $submissions, $dequeueResult) {
+                $this->assertEquals(array_merge(
+                    [[QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE]],
+                    array_fill(0, count($submissions) + 2, [QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE]),
+                )[$matcher->getInvocationCount() - 1][0], $queue);
+                return array_merge([false], $dequeueResult, [false])[$matcher->getInvocationCount() - 1];
+            });
+        $submissionList = [];
         foreach ($submissions as $index => $result) {
             if (is_array($result)) {
                 foreach ($result as $fileUri => $submissionList) {
@@ -545,7 +551,18 @@ class LastModifiedCheckJobTest extends TestCase
         $missingSubmission->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_FAILED);
         $missingSubmission->expects($this->once())->method('setLastError')->with('File submitted for locales TestLocaleA, TestLocaleB. This submission is for locale ' . $missingSubmission->getTargetLocale());
 
-        $this->submissionManager->expects($this->exactly(2))->method('storeSubmissions')->withConsecutive([[$missingSubmission]], [['TestLocaleA' => $submissionList[0], 'TestLocaleB' => $submissionList[1]]]);
+        $matcher = $this->exactly(2);
+        $this->submissionManager->expects($matcher)->method('storeSubmissions')->willReturnCallback(function ($x) use ($matcher, $missingSubmission, $submissionList) {
+            switch ($matcher->getInvocationCount()) {
+                case 1:
+                    $this->assertEquals($x, [$missingSubmission]);
+                    break;
+                case 2:
+                    $this->assertEquals($x, ['TestLocaleA' => $submissionList[0], 'TestLocaleB' => $submissionList[1]]);
+                    break;
+            }
+            return [];
+        });
 
         $this->lastModifiedWorker->run('test');
     }

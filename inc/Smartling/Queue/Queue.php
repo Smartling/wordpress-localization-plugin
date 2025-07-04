@@ -241,6 +241,9 @@ class Queue extends SmartlingEntityAbstract implements QueueInterface
         }
     }
 
+    /**
+     * @return int[]
+     */
     public function stats(): array
     {
         $query = QueryBuilder::buildSelectQuery(

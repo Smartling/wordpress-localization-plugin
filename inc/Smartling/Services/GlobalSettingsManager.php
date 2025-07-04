@@ -222,6 +222,28 @@ class GlobalSettingsManager
         }
     }
 
+    public const SETTING_CRON_LOCK_TTL = 'smartling_cron_lock_ttl';
+
+    public const SETTING_CRON_LOCK_TTL_DEFAULT = 180;
+    public const SETTING_CRON_LOCK_TTL_MAX = 600;
+    public const SETTING_CRON_LOCK_TTL_MIN = 180;
+
+    public static function getCronLockTtl(): int
+    {
+        return (int)SimpleStorageHelper::get(self::SETTING_CRON_LOCK_TTL, self::SETTING_CRON_LOCK_TTL_DEFAULT);
+    }
+
+    public static function setCronLockTtl(string $value): void
+    {
+        $seconds = (int)$value;
+        if ($seconds === self::SETTING_CRON_LOCK_TTL_DEFAULT) {
+            SimpleStorageHelper::drop(self::SETTING_CRON_LOCK_TTL);
+        } else {
+            SimpleStorageHelper::set(self::SETTING_CRON_LOCK_TTL, $value);
+        }
+    }
+
+
     public const SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT = 'smartling_add_slashes_before_saving_content';
     public const SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT_DEFAULT = "1";
 

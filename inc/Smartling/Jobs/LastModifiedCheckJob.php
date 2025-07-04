@@ -24,10 +24,9 @@ class LastModifiedCheckJob extends JobAbstract
         SubmissionManager $submissionManager,
         int $throttleIntervalSeconds,
         string $jobRunInterval,
-        int $workerTTL,
         private QueueInterface $queue,
     ) {
-        parent::__construct($api, $cache, $settingsManager, $submissionManager, $throttleIntervalSeconds, $jobRunInterval, $workerTTL);
+        parent::__construct($api, $cache, $settingsManager, $submissionManager, $throttleIntervalSeconds, $jobRunInterval);
     }
 
     public function getJobHookName(): string

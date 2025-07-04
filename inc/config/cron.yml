@@ -29,7 +29,6 @@ services:
       - "@manager.upload.queue"
       - "%cron.interval.throttle%"
       - "%cron.interval.upload%"
-      - "%cron.job.default_ttl%"
 
   #
   # Cron collects info about submissions in statuses 'In Progress' and 'Completed'
@@ -45,7 +44,6 @@ services:
       - "@manager.submission"
       - "%cron.interval.throttle%"
       - "%cron.interval.group.submission%"
-      - "%cron.job.default_ttl%"
       - "@queue.db"
 
   #
@@ -61,7 +59,6 @@ services:
       - "@manager.submission"
       - "%cron.interval.throttle%"
       - "%cron.interval.last-modified-check%"
-      - "%cron.job.default_ttl%"
       - "@queue.db"
 
   #
@@ -77,5 +74,4 @@ services:
       - "@manager.submission"
       - "%cron.interval.throttle%"
       - "%cron.interval.download%"
-      - "%cron.job.default_ttl%"
       - "@queue.db"

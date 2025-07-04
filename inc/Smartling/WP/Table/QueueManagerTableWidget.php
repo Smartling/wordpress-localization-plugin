@@ -2,26 +2,38 @@
 
 namespace Smartling\WP\Table;
 
+use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\UploadQueueManager;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Jobs\DownloadTranslationJob;
+use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\LastModifiedCheckJob;
 use Smartling\Jobs\SubmissionCollectorJob;
 use Smartling\Jobs\UploadJob;
 use Smartling\Queue\QueueInterface;
+use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 use Smartling\WP\Controller\ConfigurationProfilesController;
 use Smartling\WP\Controller\SmartlingListTable;
 use Smartling\WP\WPHookInterface;
 
 class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterface
 {
+    private const MESSAGE_NOTHING_TO_DO = 'Nothing to do';
+    private const MESSAGE_PROCESS = 'Process';
+    private const MESSAGE_RUNNING = '<strong>Running, please wait...</strong>';
+
     public function register(): void
     {
     }
 
     public function __construct(
+        private ApiWrapperInterface $api,
         private QueueInterface $queue,
+        private SettingsManager $settingsManager,
         private SubmissionManager $submissionManager,
         private UploadQueueManager $uploadQueueManager,
     )
@@ -52,6 +64,11 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
 
     public function prepare_items(): void
     {
+        try {
+            $profile = $this->settingsManager->getActiveProfile();
+        } catch (EntityNotFoundException) {
+            $profile = null;
+        }
         $curStats = $this->queue->stats();
         $newSubmissionsCount = $this->uploadQueueManager->count();
         $collectorQueueSize = $this->submissionManager->getTotalInCheckStatusHelperQueue();
@@ -61,30 +78,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         $data = [
             [
                 'cron_name'   => __('Upload'),
-                'run_cron'    => 0 === $newSubmissionsCount
-                    && $this->submissionManager->findSubmissionForCloning() === null
-                    ? __('Nothing to do')
-                    : vsprintf(
-                        '%s (%s submissions waiting)',
-                        [
-                            HtmlTagGeneratorHelper::tag(
-                                'a',
-                                __('Process'),
-                                [
-                                    'href'  => vsprintf(
-                                        '%s?action=cnq&_c_action=%s&argument=%s',
-                                        [
-                                            admin_url('admin-post.php'),
-                                            ConfigurationProfilesController::ACTION_QUEUE_FORCE,
-                                            UploadJob::JOB_HOOK_NAME,
-                                        ]
-                                    ),
-                                    'class' => 'ajaxcall',
-                                ]
-                            ),
-                            $newSubmissionsCount,
-                        ]
-                    ),
+                'run_cron' => $this->getUploadCronActionCell($profile, $newSubmissionsCount),
                 'queue_name'  => __('&nbsp;'),
                 'queue_purge' => 0 === $newSubmissionsCount
                     ? __('Nothing to purge')
@@ -108,85 +102,19 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
             ],
             [
                 'cron_name'   => __('Check Status Helper'),
-                'run_cron'    => 0 === $collectorQueueSize
-                    ? __('Nothing to do')
-                    : vsprintf(
-                        '%s (%s submissions)',
-                        [
-                            HtmlTagGeneratorHelper::tag(
-                                'a',
-                                __('Process'),
-                                [
-                                    'href'  => vsprintf(
-                                        '%s?action=cnq&_c_action=%s&argument=%s',
-                                        [
-                                            admin_url('admin-post.php'),
-                                            ConfigurationProfilesController::ACTION_QUEUE_FORCE,
-                                            SubmissionCollectorJob::JOB_HOOK_NAME,
-                                        ]
-                                    ),
-                                    'class' => 'ajaxcall',
-                                ]
-                            ),
-                            $collectorQueueSize,
-                        ]
-                    ),
+                'run_cron' => $this->getCheckStatusHelperCronActionCell($profile, $collectorQueueSize),
                 'queue_name'  => __('&nbsp;'),
                 'queue_purge' => __('&nbsp;'),
             ],
             [
                 'cron_name'   => __('Check Status'),
-                'run_cron'    => 0 === $checkStatusPoolSize
-                    ? __('Nothing to do')
-                    : vsprintf(
-                        '%s (%s submissions waiting)',
-                        [
-                            HtmlTagGeneratorHelper::tag(
-                                'a',
-                                __('Process'),
-                                [
-                                    'href'  => vsprintf(
-                                        '%s?action=cnq&_c_action=%s&argument=%s',
-                                        [
-                                            admin_url('admin-post.php'),
-                                            ConfigurationProfilesController::ACTION_QUEUE_FORCE,
-                                            LastModifiedCheckJob::JOB_HOOK_NAME,
-                                        ]
-                                    ),
-                                    'class' => 'ajaxcall',
-                                ]
-                            ),
-                            $checkStatusPoolSize,
-                        ]
-                    ),
+                'run_cron' => $this->getCheckStatusCronActionCell($profile, $checkStatusPoolSize),
                 'queue_name' => QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE,
                 'queue_purge' => $this->queuePurgeLink($checkStatusPoolSize === 0, QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE),
             ],
             [
                 'cron_name'   => __('Download'),
-                'run_cron'    => 0 === $downloadPoolSize
-                    ? __('Nothing to do')
-                    : vsprintf(
-                        '%s (%s submissions waiting)',
-                        [
-                            HtmlTagGeneratorHelper::tag(
-                                'a',
-                                __('Process'),
-                                [
-                                    'href'  => vsprintf(
-                                        '%s?action=cnq&_c_action=%s&argument=%s',
-                                        [
-                                            admin_url('admin-post.php'),
-                                            ConfigurationProfilesController::ACTION_QUEUE_FORCE,
-                                            DownloadTranslationJob::JOB_HOOK_NAME,
-                                        ]
-                                    ),
-                                    'class' => 'ajaxcall',
-                                ]
-                            ),
-                            $downloadPoolSize,
-                        ]
-                    ),
+                'run_cron' => $this->getDownloadCronActionCell($profile, $downloadPoolSize),
                 'queue_name' => QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE,
                 'queue_purge' => $this->queuePurgeLink($downloadPoolSize === 0, QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE),
             ],
@@ -196,23 +124,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
             $queueName = QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_AND_FAIL_QUEUE;
             $data[] = [
                 'cron_name' => __('Manual Check Status'),
-                'run_cron' => sprintf(
-                    '%s (%s submissions waiting)',
-                    HtmlTagGeneratorHelper::tag(
-                        'a',
-                        __('Process'),
-                        [
-                            'href' => sprintf(
-                                '%s?action=cnq&_c_action=%s&argument=%s',
-                                admin_url('admin-post.php'),
-                                ConfigurationProfilesController::ACTION_QUEUE_FORCE,
-                                LastModifiedCheckJob::JOB_HOOK_NAME,
-                            ),
-                            'class' => 'ajaxcall',
-                        ]
-                    ),
-                    $curStats[$queueName],
-                ),
+                'run_cron' => $this->getManualCheckStatusActionCell($profile, $curStats[$queueName]),
                 'queue_name' => $queueName,
                 'queue_purge' => $this->queuePurgeLink(false, $queueName)
             ];
@@ -223,6 +135,111 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         $sortable = array();
         $this->_column_headers = array($columns, $hidden, $sortable);
         $this->items = $data;
+    }
+
+    private function getUploadCronActionCell(?ConfigurationProfileEntity $profile, int $count): string
+    {
+        if ($count === 0 && $this->submissionManager->findSubmissionForCloning() === null) {
+            return self::MESSAGE_NOTHING_TO_DO;
+        }
+
+        $jobName = UploadJob::JOB_HOOK_NAME;
+        try {
+            $this->testLock($profile, $jobName);
+            return sprintf(
+                '%s (%s submissions waiting)',
+                $this->getLockTag($jobName),
+                $count,
+            );
+        } catch (SmartlingApiException $e) {
+            return sprintf('%s (%s submissions queued)', $this->getRunningMessage($e), $count);
+        }
+    }
+
+    private function getCheckStatusHelperCronActionCell(?ConfigurationProfileEntity $profile, int $count): string
+    {
+        if ($count === 0) {
+            return __(self::MESSAGE_NOTHING_TO_DO);
+        }
+
+        $jobName = SubmissionCollectorJob::JOB_HOOK_NAME;
+        try {
+            $this->testLock($profile, $jobName);
+            return sprintf(
+                '%s (%s submissions)',
+                $this->getLockTag($jobName),
+                $count,
+            );
+        } catch (SmartlingApiException $e) {
+            return $this->getRunningMessage($e);
+        }
+    }
+
+    private function getCheckStatusCronActionCell(ConfigurationProfileEntity $profile, int $count): string
+    {
+        if ($count === 0) {
+            return __(self::MESSAGE_NOTHING_TO_DO);
+        }
+
+        $jobName = LastModifiedCheckJob::JOB_HOOK_NAME;
+        try {
+            $this->testLock($profile, $jobName);
+
+            return sprintf(
+                '%s (%s submissions waiting)',
+                $this->getLockTag($jobName),
+                $count,
+            );
+        } catch (SmartlingApiException $e) {
+            return sprintf('%s (%s submissions queued)', $this->getRunningMessage($e), $count);
+        }
+    }
+
+    private function getDownloadCronActionCell(?ConfigurationProfileEntity $profile, int $count): string
+    {
+        if ($count === 0) {
+            return __(self::MESSAGE_NOTHING_TO_DO);
+        }
+
+        $jobName = DownloadTranslationJob::JOB_HOOK_NAME;
+        try {
+            $this->testLock($profile, $jobName);
+            return sprintf(
+            '%s (%s submissions waiting)',
+                $this->getLockTag($jobName),
+                $count,
+            );
+        } catch (SmartlingApiException $e) {
+            return sprintf('%s (%s submissions queued)', $this->getRunningMessage($e), $count);
+        }
+    }
+
+    private function getManualCheckStatusActionCell(?ConfigurationProfileEntity $profile, int $count): string
+    {
+        $jobName = LastModifiedCheckJob::JOB_HOOK_NAME;
+        try {
+            $this->testLock($profile, $jobName);
+
+            return sprintf(
+                '%s (%s submissions waiting)',
+                HtmlTagGeneratorHelper::tag(
+                    'a',
+                    __(self::MESSAGE_PROCESS),
+                    [
+                        'href' => sprintf(
+                            '%s?action=cnq&_c_action=%s&argument=%s',
+                            admin_url('admin-post.php'),
+                            ConfigurationProfilesController::ACTION_QUEUE_FORCE,
+                            $jobName,
+                        ),
+                        'class' => 'ajaxcall',
+                    ]
+                ),
+                $count,
+            );
+        } catch (SmartlingApiException $e) {
+            return sprintf('%s (%s submissions queued)', $this->getRunningMessage($e), $count);
+        }
     }
 
     private function queuePurgeLink(bool $isQueueEmpty, string $queueName): string
@@ -237,5 +254,43 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
                     'class' => 'ajaxcall',
                 ]
             );
+    }
+
+    private function getRunningMessage(SmartlingApiException $e): string
+    {
+        if (count($e->getErrorsByKey('resource.locked')) > 0) {
+            return self::MESSAGE_RUNNING;
+        }
+
+        throw $e;
+    }
+
+    /**
+     * @throws SmartlingApiException
+     */
+    private function testLock(?ConfigurationProfileEntity $profile, string $jobName): void
+    {
+        if ($profile !== null) {
+            $this->api->acquireLock($profile, JobAbstract::CRON_FLAG_PREFIX . $jobName, 0.001);
+        }
+    }
+
+    private function getLockTag(string $jobName): string
+    {
+        return HtmlTagGeneratorHelper::tag(
+            'a',
+            __(self::MESSAGE_PROCESS),
+            [
+                'href' => vsprintf(
+                    '%s?action=cnq&_c_action=%s&argument=%s',
+                    [
+                        admin_url('admin-post.php'),
+                        ConfigurationProfilesController::ACTION_QUEUE_FORCE,
+                        $jobName,
+                    ]
+                ),
+                'class' => 'ajaxcall',
+            ]
+        );
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\ApiWrapperInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\UploadQueueManager;
@@ -28,6 +29,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
     public const MENU_SLUG = 'smartling_configuration_profile_list';
 
     public function __construct(
+        private ApiWrapperInterface $api,
         LocalizationPluginProxyInterface $connector,
         PluginInfo $pluginInfo,
         SettingsManager $settingsManager,
@@ -191,7 +193,13 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
     {
         $this->view([
             'profilesTable' => new ConfigurationProfilesWidget($this->getPluginInfo()->getSettingsManager()),
-            'cnqTable' => new QueueManagerTableWidget($this->queue, $this->getManager(), $this->uploadQueueManager),
+            'cnqTable' => new QueueManagerTableWidget(
+                $this->api,
+                $this->queue,
+                $this->settingsManager,
+                $this->getManager(),
+                $this->uploadQueueManager,
+            ),
         ]);
     }
 

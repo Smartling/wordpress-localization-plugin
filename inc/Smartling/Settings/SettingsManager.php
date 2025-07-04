@@ -7,6 +7,7 @@ use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\BlogNotFoundException;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\ArrayHelper;
@@ -50,6 +51,18 @@ class SettingsManager extends EntityManagerAbstract
         }
 
         return $this->fetchData($dataQuery);
+    }
+
+    /**
+     * @throws EntityNotFoundException
+     */
+    public function getActiveProfile(): ConfigurationProfileEntity
+    {
+        $profile = ArrayHelper::first($this->getActiveProfiles());
+        if ($profile === false) {
+            throw new EntityNotFoundException('No active profiles');
+        }
+        return $profile;
     }
 
     /**

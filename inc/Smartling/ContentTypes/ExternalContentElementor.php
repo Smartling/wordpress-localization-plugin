@@ -25,6 +25,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     use LoggerSafeTrait;
 
     protected const META_FIELD_NAME = '_elementor_data';
+    private const META_CONDITIONS_NAME = '_elementor_conditions';
 
     private array $copyFields = [
         '_elementor_controls_usage',
@@ -98,7 +99,10 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     {
         if (array_key_exists(self::META_FIELD_NAME, $source['meta'] ?? [])) {
             $this->getLogger()->info('Detected elementor data, removing post content and elementor related meta fields');
-            foreach (array_merge_recursive(['meta' => $this->copyFields], $this->removeOnUploadFields) as $key => $value) {
+            foreach (array_merge_recursive(
+                ['meta' => array_merge($this->copyFields, [self::META_CONDITIONS_NAME])],
+                $this->removeOnUploadFields,
+            ) as $key => $value) {
                 if (array_key_exists($key, $source)) {
                     foreach ($value as $field) {
                         unset($source[$key][$field]);
@@ -196,6 +200,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                     $translation['meta'][$field] = is_string($value) ? $this->wpProxy->maybe_unserialize($value) : $value;
                 }
             }
+            if (array_key_exists(self::META_CONDITIONS_NAME, $original['meta'])) {
+                $value = $original['meta'][self::META_CONDITIONS_NAME];
+                if (is_string($value)) {
+                    $translation['meta'][self::META_CONDITIONS_NAME] = $this->rebuildConditionsField($value, $submission);
+                }
+            }
         }
         $translation['meta'][self::META_FIELD_NAME] = json_encode($this->mergeElementorData(
             json_decode($original['meta'][self::META_FIELD_NAME] ?? '[]', true, 512, JSON_THROW_ON_ERROR),
@@ -204,6 +214,31 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         ), JSON_THROW_ON_ERROR);
         unset($translation[$this->getPluginId()]);
         return $translation;
+    }
+
+    private function rebuildConditionsField(string $conditions, SubmissionEntity $submission): string
+    {
+        $value = $this->wpProxy->maybe_unserialize($conditions);
+        if (is_array($value)) {
+            foreach ($value as $index => $condition) {
+                $matches = [];
+                preg_match('~(\d+)$~', $condition, $matches);
+                $id = $matches[0] ?? null;
+                if ($id === null) {
+                    continue;
+                }
+                $related = $this->submissionManager->findOne([
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                    SubmissionEntity::FIELD_SOURCE_ID => $id,
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+                ]);
+                if ($related !== null) {
+                    $value[$index] = str_replace($id, $related->getTargetId(), $condition);
+                }
+            }
+            return serialize($value);
+        }
+        return $value;
     }
 
     private function getDocumentsManager(): ?Documents_Manager

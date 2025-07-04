@@ -227,6 +227,23 @@ $data = $this->getViewData();
                         <th colspan="2" class="center">Other Customizations</th>
                     </tr>
                     <tr>
+                        <th><label for="<?= GlobalSettingsManager::SETTING_CRON_LOCK_TTL?>">Cron lock TTL, seconds</label></th>
+                        <td>
+                            <?=
+                            HtmlTagGeneratorHelper::tag('input', '', [
+                                'type' => 'number',
+                                'value' => GlobalSettingsManager::getCronLockTTL(),
+                                'id' => GlobalSettingsManager::SETTING_CRON_LOCK_TTL,
+                                'name' => GlobalSettingsManager::SETTING_CRON_LOCK_TTL,
+                                'min' => 180,
+                                'max' => 600,
+                                'step' => 1,
+                            ])
+                            ?>
+                            <a href="javascript:void(0)" id="reset_<?= GlobalSettingsManager::SETTING_CRON_LOCK_TTL?>" data-default="<?= GlobalSettingsManager::SETTING_CRON_LOCK_TTL_DEFAULT?>">reset to default</a>
+                        </td>
+                    </tr>
+                    <tr>
                         <th><label for="<?= GlobalSettingsManager::SETTING_ADD_SLASHES_BEFORE_SAVING_CONTENT?>"><?= __('Add slashes before saving post content')?></label></th>
                         <td>
                             <?=
