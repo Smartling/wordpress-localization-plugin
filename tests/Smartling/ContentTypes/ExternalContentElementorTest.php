@@ -238,6 +238,20 @@ and management of:',
                     ],
                 ],
             ],
+            'Unlimited Elements addon Logo Marquee' => [
+                file_get_contents(__DIR__ . '/wp-944.json'),
+                [],
+                [
+                    'attachment' => [
+                        2674,
+                        2675,
+                        2676,
+                        2677,
+                        2678,
+                        2680,
+                    ]
+                ],
+            ]
         ];
     }
 
