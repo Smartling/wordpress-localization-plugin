@@ -279,6 +279,31 @@ trait SmartlingCoreUploadTrait
                     )
                 );
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
+                $translationPublishingMode = $configurationProfile->getTranslationPublishingMode();
+                if (ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_NO_CHANGE !== $translationPublishingMode && $targetContent instanceof EntityWithPostStatus) {
+                    $this->getLogger()->debug(
+                        vsprintf(
+                            'Submission id=%s (blog=%s, item=%s, content-type=%s) setting status %s for translation',
+                            [
+                                $submission->getId(),
+                                $submission->getSourceBlogId(),
+                                $submission->getSourceId(),
+                                $submission->getContentType(),
+                                $translationPublishingMode === ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_PUBLISH ? 'publish' : 'draft',
+                            ]
+                        )
+                    );
+                    switch ($translationPublishingMode) {
+                        case ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_PUBLISH:
+                            $targetContent->translationCompleted();
+                            break;
+                        case ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_DRAFT:
+                            $targetContent->translationDrafted();
+                            break;
+                        default:
+                            throw new \RuntimeException("Unexpected value $translationPublishingMode in profile setting \"translation publishing mode\"");
+                    }
+                }
                 $submission->setAppliedDate(DateTimeHelper::nowAsString());
             }
             $this->getContentHelper()->writeTargetContent($submission, $targetContent);
@@ -305,7 +330,6 @@ trait SmartlingCoreUploadTrait
                 $this->testRunHelper->checkDownloadedSubmission($submission);
             }
             $submission = $this->getSubmissionManager()->storeEntity($submission);
-            $this->setPostStatus($configurationProfile, $targetContent, $submission);
             do_action(ExportedAPI::ACTION_AFTER_TRANSLATION_APPLIED, $submission);
         } catch (InvalidXMLException $e) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
@@ -741,38 +765,5 @@ trait SmartlingCoreUploadTrait
         }
 
         return $this->xmlHelper->xmlEncode($filteredValues, $submission, $params->getPreparedFields());
-    }
-
-    private function setPostStatus(
-        ConfigurationProfileEntity $configurationProfile,
-        Entity $targetContent,
-        SubmissionEntity $submission,
-    ): void
-    {
-        $translationPublishingMode = $configurationProfile->getTranslationPublishingMode();
-        if (ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_NO_CHANGE !== $translationPublishingMode && $targetContent instanceof EntityWithPostStatus) {
-            $this->getLogger()->debug(
-                vsprintf(
-                    'Submission id=%s (blog=%s, item=%s, content-type=%s) setting status %s for translation',
-                    [
-                        $submission->getId(),
-                        $submission->getSourceBlogId(),
-                        $submission->getSourceId(),
-                        $submission->getContentType(),
-                        $translationPublishingMode === ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_PUBLISH ? 'publish' : 'draft',
-                    ]
-                )
-            );
-            switch ($translationPublishingMode) {
-                case ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_PUBLISH:
-                    $targetContent->translationCompleted();
-                    break;
-                case ConfigurationProfileEntity::TRANSLATION_PUBLISHING_MODE_DRAFT:
-                    $targetContent->translationDrafted();
-                    break;
-                default:
-                    throw new \RuntimeException("Unexpected value $translationPublishingMode in profile setting \"translation publishing mode\"");
-            }
-        }
     }
 }

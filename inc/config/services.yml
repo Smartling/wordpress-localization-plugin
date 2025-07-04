@@ -120,6 +120,7 @@ services:
       - "@elementor.factory"
       - "@fields-filter.helper"
       - "@helper.plugins"
+      - "@manager.settings"
       - "@site.helper"
       - "@manager.submission"
       - "@helper.user"

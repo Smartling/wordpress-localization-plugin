@@ -65,7 +65,6 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 3.11.7 =
 * Added expert global setting to control cron lock ttl
 * Added support for Elementor conditionals
-* Fixed Elementor submissions always delivered in draft status
 * Added support of Unlimited Elements for Elementor Logo Marquee Widget
 
 = 3.11.6 =
