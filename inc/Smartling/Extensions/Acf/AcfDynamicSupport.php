@@ -207,7 +207,7 @@ class AcfDynamicSupport
     {
         $posts = (new \WP_Query(
             [
-                'post_type' => 'acf-field',
+                'post_type'        => 'acf-field',
                 'suppress_filters' => true,
                 'posts_per_page'   => -1,
                 'post_status'      => 'publish',
@@ -437,10 +437,14 @@ class AcfDynamicSupport
             $array = $this->wpProxy->maybe_unserialize($post['post_content']);
             if (!is_array($array)) {
                 $this->getLogger()->error("Trying to sync ACF field group, post content could not be unserialized, content=\"$post->post_content\"");
+
+                return;
             }
 
             if (!array_key_exists('location', $array)) {
                 $this->getLogger()->debug("Sync of ACF field group skipped: no location fields");
+
+                return;
             }
 
             foreach ($array['location'] as &$rules) {
@@ -461,6 +465,7 @@ class AcfDynamicSupport
                 unset($rule);
             }
             unset($rules);
+
             $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($array, $submission): void {
                 $result = $this->wpProxy->wp_update_post([
                     'ID' => $submission->getTargetId(),
@@ -470,7 +475,6 @@ class AcfDynamicSupport
                     $this->getLogger()->error("Sync of ACF field group failed to update post: " . implode(', ', $result->get_error_messages()));
                 }
             });
-
         } finally {
             foreach (array_keys($context) as $key) {
                 LogContextMixinHelper::removeFromContext($key);
