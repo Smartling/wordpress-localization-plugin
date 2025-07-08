@@ -114,7 +114,6 @@ class AcfDynamicSupportTest extends TestCase
         $expectedContent = $source;
         $expectedContent['location'][9][0]['value'] = (string)$pageTargetId;
 
-
         $wpProxy->method('get_post')->willReturn([
             'post_content' => serialize($source),
         ]);
