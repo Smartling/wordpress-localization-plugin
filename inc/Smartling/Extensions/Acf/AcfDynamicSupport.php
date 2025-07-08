@@ -454,6 +454,7 @@ class AcfDynamicSupport
                             SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
                             SubmissionEntity::FIELD_SOURCE_ID => $rule['value'],
                             SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+                            SubmissionEntity::FIELD_CONTENT_TYPE => $this->wpProxy->get_post_types(),
                         ]);
                         if ($targetSubmission === null) {
                             $this->getLogger()->debug("Skip change location page {$rule['operator']} {$rule['value']}: no target submission exists");

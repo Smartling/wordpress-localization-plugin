@@ -107,6 +107,12 @@ class DetectChangesHelper
         $submissions = $this->getSubmissions($blogId, $contentId, $contentType);
 
         if (0 === count($submissions)) {
+            $submissions = $this->getSubmissions($blogId, $contentId, AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP);
+            foreach ($submissions as $submission) {
+                $this->getLogger()->debug("Sync field group submissionId={$submission->getId()}");
+                $this->acfDynamicSupport->syncFieldGroup($submission);
+            }
+
             $this->getLogger()->debug(
                 vsprintf('No submissions found for %s blog=%s, id=%s', [$contentType, $blogId, $contentId])
             );
@@ -117,13 +123,6 @@ class DetectChangesHelper
         $this->getLogger()->debug(vsprintf('Found %s submissions to check.', [count($submissions)]));
 
         try {
-            if ($contentType === AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP) {
-                foreach ($submissions as $submission) {
-                    $this->acfDynamicSupport->syncFieldGroup($submission);
-                }
-
-                return;
-            }
             $profiles = $this->getProfiles($blogId);
 
             if (0 < count($profiles)) {
