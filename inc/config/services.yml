@@ -268,6 +268,7 @@ services:
   detect-changes.helper:
     class: Smartling\Helpers\DetectChangesHelper
     arguments:
+      - "@acf.dynamic.support"
       - "@content-serialization.helper"
       - "@manager.upload.queue"
       - "@manager.settings"
@@ -528,6 +529,7 @@ services:
       - "@helper.array"
       - "@manager.settings"
       - "@site.helper"
+      - "@manager.submission"
       - "@wp.proxy"
 
   acf.type.detector:
