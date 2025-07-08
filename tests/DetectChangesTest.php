@@ -4,6 +4,7 @@ namespace Smartling\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\UploadQueueManager;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\DetectChangesHelper;
 use Smartling\Settings\SettingsManager;
@@ -27,6 +28,7 @@ class DetectChangesTest extends TestCase
     protected function setUp(): void
     {
         $this->detectChangesHelperMock = new DetectChangesHelper(
+            $this->createMock(AcfDynamicSupport::class),
             $this->createMock(ContentSerializationHelper::class),
             $this->createMock(UploadQueueManager::class),
             $this->createMock(SettingsManager::class),
