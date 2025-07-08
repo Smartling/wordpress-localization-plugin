@@ -13,6 +13,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WpObjectCache;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 
 class AcfTypeDetectorTest extends TestCase
@@ -63,6 +64,7 @@ class AcfTypeDetectorTest extends TestCase
             new ArrayHelper(),
             $settingsManager,
             $siteHelper,
+            $this->createMock(SubmissionManager::class),
             new WordpressFunctionProxyHelper(),
         );
         $ads->run();

@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 use Smartling\DbAl\UploadQueueManager;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Models\IntegerIterator;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -15,6 +16,7 @@ class DetectChangesHelper
     use LoggerSafeTrait;
 
     public function __construct(
+        private AcfDynamicSupport $acfDynamicSupport,
         private ContentSerializationHelper $contentSerializationHelper,
         private UploadQueueManager $uploadQueueManager,
         private SettingsManager $settingsManager,
@@ -115,6 +117,13 @@ class DetectChangesHelper
         $this->getLogger()->debug(vsprintf('Found %s submissions to check.', [count($submissions)]));
 
         try {
+            if ($contentType === AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP) {
+                foreach ($submissions as $submission) {
+                    $this->acfDynamicSupport->syncFieldGroup($submission);
+                }
+
+                return;
+            }
             $profiles = $this->getProfiles($blogId);
 
             if (0 < count($profiles)) {

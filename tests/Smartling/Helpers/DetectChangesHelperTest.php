@@ -5,6 +5,7 @@ namespace Smartling\Tests\Smartling\Helpers;
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\DetectChangesHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -90,11 +91,43 @@ class DetectChangesHelperTest extends TestCase
         self::assertEquals([], $this->invokeMethod($helper, 'getSubmissions', [2, 5, 'page']));
     }
 
+    public function testSubmissionStatusChange()
+    {
+        $profile = $this->createMock(ConfigurationProfileEntity::class);
+        $profile->method('getUploadOnUpdate')->willReturn(ConfigurationProfileEntity::UPLOAD_ON_CHANGE_AUTO);
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('findEntityByMainLocale')->willReturn([$profile]);
+
+        $submission = $this->createMock(SubmissionEntity::class);
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('find')->willReturn([$submission]);
+        $submissionManager->expects($this->once())->method('storeSubmissions')->with([$submission]);
+
+        $this->getHelper($settingsManager, $submissionManager)
+            ->detectChanges(1, 2, AcfDynamicSupport::REFERENCED_TYPE_POST);
+    }
+
+    public function testAcfFieldGroupNoSubmissionStatusChange()
+    {
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->expects($this->never())->method('findEntityByMainLocale');
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('find')->willReturn([$this->createMock(SubmissionEntity::class)]);
+        $submissionManager->expects($this->never())->method('storeSubmissions');
+
+        $this->getHelper($settingsManager, $submissionManager)
+            ->detectChanges(1, 2, AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP);
+    }
+
     private function getHelper(
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager,
     ): DetectChangesHelper {
         return new DetectChangesHelper(
+            $this->createMock(AcfDynamicSupport::class),
             $this->createMock(ContentSerializationHelper::class),
             $this->createMock(UploadQueueManager::class),
             $settingsManager,

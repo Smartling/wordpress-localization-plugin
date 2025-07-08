@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 3.12.0 =
+* Added ACF field group synchronization between configured sites on save.
+
 = 3.11.7 =
 * Added expert global setting to control cron lock ttl
 * Added support for Elementor conditionals
