@@ -165,6 +165,9 @@ abstract class ElementAbstract implements Element {
         if (class_exists(Manager::class)) {
             return new Manager();
         }
+        if (!defined('WP_PLUGIN_DIR')) {
+            return null;
+        }
         $managerPath = WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
         if (file_exists($managerPath)) {
             try {
