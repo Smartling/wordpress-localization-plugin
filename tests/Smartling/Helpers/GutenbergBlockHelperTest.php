@@ -471,6 +471,7 @@ namespace Smartling\Tests\Smartling\Helpers {
                 new ArrayHelper(),
                 $this->createMock(SettingsManager::class),
                 $this->createMock(SiteHelper::class),
+                $this->createMock(SubmissionManager::class),
                 $wpProxy,
             ])
             ->onlyMethods([

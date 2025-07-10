@@ -8,6 +8,7 @@ use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\CommonLogMessagesTrait;
@@ -16,7 +17,6 @@ use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
-use Smartling\Jobs\JobEntity;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -568,8 +568,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             return;
         }
 
-        if ($this->servedContentType === $_POST['post_type']) {
-
+        if ($this->canHandle($_POST['post_type'])) {
             $this->getLogger()->debug(
                 vsprintf('Entering post save hook. post_id = \'%s\', blog_id = \'%s\'',
                     [
@@ -607,5 +606,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
             add_action('save_post', [$this, 'save']);
         }
+    }
+
+    private function canHandle($postType): bool
+    {
+        return $this->servedContentType === $postType
+            // acf field groups are a private post type that needs to be handled
+            || $postType === AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP;
     }
 }

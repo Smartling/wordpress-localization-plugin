@@ -3,6 +3,7 @@
 namespace Smartling\Helpers;
 
 use Smartling\DbAl\UploadQueueManager;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Models\IntegerIterator;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -15,6 +16,7 @@ class DetectChangesHelper
     use LoggerSafeTrait;
 
     public function __construct(
+        private AcfDynamicSupport $acfDynamicSupport,
         private ContentSerializationHelper $contentSerializationHelper,
         private UploadQueueManager $uploadQueueManager,
         private SettingsManager $settingsManager,
@@ -105,6 +107,12 @@ class DetectChangesHelper
         $submissions = $this->getSubmissions($blogId, $contentId, $contentType);
 
         if (0 === count($submissions)) {
+            $submissions = $this->getSubmissions($blogId, $contentId, AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP);
+            foreach ($submissions as $submission) {
+                $this->getLogger()->debug("Sync field group submissionId={$submission->getId()}");
+                $this->acfDynamicSupport->syncFieldGroup($submission);
+            }
+
             $this->getLogger()->debug(
                 vsprintf('No submissions found for %s blog=%s, id=%s', [$contentType, $blogId, $contentId])
             );

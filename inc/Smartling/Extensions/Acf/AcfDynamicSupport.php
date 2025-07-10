@@ -10,17 +10,21 @@ use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\FieldsFilterHelper;
+use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Replacers\ReplacerFactory;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 class AcfDynamicSupport
 {
     use LoggerSafeTrait;
 
+    public const POST_TYPE_ACF_FIELD_GROUP = 'acf-field-group';
     public const REFERENCED_TYPE_NONE = 'none';
     public const REFERENCED_TYPE_MEDIA = 'media';
     public const REFERENCED_TYPE_POST = 'post';
@@ -60,6 +64,7 @@ class AcfDynamicSupport
         private ArrayHelper $arrayHelper,
         private SettingsManager $settingsManager,
         private SiteHelper $siteHelper,
+        private SubmissionManager $submissionManager,
         private WordpressFunctionProxyHelper $wpProxy,
     )
     {}
@@ -180,7 +185,7 @@ class AcfDynamicSupport
     {
         $posts = (new \WP_Query(
             [
-                'post_type'        => 'acf-field-group',
+                'post_type' => self::POST_TYPE_ACF_FIELD_GROUP,
                 'suppress_filters' => true,
                 'posts_per_page'   => -1,
                 'post_status'      => 'publish',
@@ -405,6 +410,79 @@ class AcfDynamicSupport
         }
     }
 
+    public function syncFieldGroup(SubmissionEntity $submission): void
+    {
+        $context = [
+            'submissionId' => $submission->getId(),
+            'contentType' => $submission->getContentType(),
+            'sourceId' => $submission->getSourceId(),
+        ];
+        try {
+            foreach ($context as $key => $value) {
+                LogContextMixinHelper::addToContext($key, $value);
+            }
+            if ($submission->getContentType() !== self::POST_TYPE_ACF_FIELD_GROUP) {
+                $this->getLogger()->error("Trying to sync ACF field group, expected content type: " . self::POST_TYPE_ACF_FIELD_GROUP);
+
+                return;
+            }
+
+            $post = $this->wpProxy->get_post($submission->getSourceId(), ARRAY_A);
+            if ($post === null) {
+                $this->getLogger()->error("Trying to sync ACF field group, source post not found");
+
+                return;
+            }
+
+            $array = $this->wpProxy->maybe_unserialize($post['post_content']);
+            if (!is_array($array)) {
+                $this->getLogger()->error("Trying to sync ACF field group, post content could not be unserialized, content=\"$post->post_content\"");
+
+                return;
+            }
+
+            if (!array_key_exists('location', $array)) {
+                $this->getLogger()->debug("Sync of ACF field group skipped: no location fields");
+
+                return;
+            }
+
+            foreach ($array['location'] as &$rules) {
+                foreach ($rules as &$rule) {
+                    if ($rule['param'] === 'page') {
+                        $targetSubmission = $this->submissionManager->findOne([
+                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                            SubmissionEntity::FIELD_SOURCE_ID => $rule['value'],
+                            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+                            SubmissionEntity::FIELD_CONTENT_TYPE => $this->wpProxy->get_post_types(),
+                        ]);
+                        if ($targetSubmission === null) {
+                            $this->getLogger()->debug("Skip change location page {$rule['operator']} {$rule['value']}: no target submission exists");
+                            continue;
+                        }
+                        $rule['value'] = (string)$targetSubmission->getTargetId();
+                    }
+                }
+                unset($rule);
+            }
+            unset($rules);
+
+            $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($array, $submission): void {
+                $result = $this->wpProxy->wp_update_post([
+                    'ID' => $submission->getTargetId(),
+                    'post_content' => serialize($array),
+                ], true);
+                if ($result instanceof \WP_Error) {
+                    $this->getLogger()->error("Sync of ACF field group failed to update post: " . implode(', ', $result->get_error_messages()));
+                }
+            });
+        } finally {
+            foreach (array_keys($context) as $key) {
+                LogContextMixinHelper::removeFromContext($key);
+            }
+        }
+    }
+
     private function tryRegisterACF(): void
     {
         $this->getLogger()->debug('Checking if ACF presents...');
@@ -617,7 +695,7 @@ class AcfDynamicSupport
     {
         $postTypes = $this->getPostTypes();
 
-        return in_array('acf-field', $postTypes, true) && in_array('acf-field-group', $postTypes, true);
+        return in_array('acf-field', $postTypes, true) && in_array(self::POST_TYPE_ACF_FIELD_GROUP, $postTypes, true);
     }
 
     /**

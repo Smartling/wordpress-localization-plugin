@@ -159,6 +159,11 @@ class WordpressFunctionProxyHelper
         return wp_set_object_terms($objectId, $termIds, $taxonomy);
     }
 
+    public function wp_update_post(): int|\WP_Error
+    {
+        return wp_update_post(...func_get_args());
+    }
+
     public function url_to_postid(string $url): int
     {
         return url_to_postid($url);
