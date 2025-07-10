@@ -1,0 +1,36 @@
+[
+  {
+    "id": "66bb7f43",
+    "elType": "widget",
+    "settings": {
+      "selected_icon": {
+        "value": {
+          "url": "https:\/\/test.com\/wp-content\/uploads\/2025\/05\/play_icon.svg",
+          "id": "1033"
+        },
+        "library": "svg"
+      },
+      "view": "stacked",
+      "primary_color": "#4935BA",
+      "size": {
+        "unit": "px",
+        "size": "26",
+        "sizes": []
+      },
+      "size_mobile": {
+        "unit": "px",
+        "size": "19",
+        "sizes": []
+      },
+      "icon_padding": {
+        "unit": "px",
+        "size": "20",
+        "sizes": []
+      },
+      "_title": "Play Icon",
+      "__dynamic__": []
+    },
+    "elements": [],
+    "widgetType": "icon"
+  }
+]
