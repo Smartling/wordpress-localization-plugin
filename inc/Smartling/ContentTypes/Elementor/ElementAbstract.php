@@ -43,8 +43,14 @@ abstract class ElementAbstract implements Element {
     protected function getIntSettingByKey(string $key, array $settings): ?int
     {
         $setting = $this->getSettingByKey($key, $settings);
+        if (is_int($setting)) {
+            return $setting;
+        }
+        if (is_string($setting)) {
+            return ctype_digit($setting) ? (int)$setting : null;
+        }
 
-        return is_int($setting) ? $setting : null;
+        return null;
     }
 
     protected function getSettingByKey(string $key, array $settings): mixed
