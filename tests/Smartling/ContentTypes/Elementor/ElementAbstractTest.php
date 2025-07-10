@@ -2,30 +2,14 @@
 
 namespace Smartling\ContentTypes\Elementor;
 
-use Smartling\ContentTypes\Elementor\ElementAbstract;
 use PHPUnit\Framework\TestCase;
-use Smartling\Models\RelatedContentInfo;
+use Smartling\ContentTypes\Elementor\Elements\Unknown;
 
-class TestableElementAbstract extends ElementAbstract
+class TestableElementAbstract extends Unknown
 {
     public function publicGetIntSettingByKey(string $key, array $settings): ?int
     {
         return $this->getIntSettingByKey($key, $settings);
-    }
-
-    public function getRelated(): RelatedContentInfo
-    {
-        return new RelatedContentInfo();
-    }
-
-    public function getTranslatableStrings(): array
-    {
-        return [];
-    }
-
-    public function getType(): string
-    {
-        return 'test';
     }
 }
 
