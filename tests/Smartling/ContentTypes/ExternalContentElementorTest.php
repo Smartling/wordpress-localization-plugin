@@ -259,8 +259,8 @@ and management of:',
             ],
             'Unlimited Elements addon Listing Grid' => [
                 file_get_contents(__DIR__ . '/ucaddon_ue_listing_grid.json'),
-                [],
-                [ContentTypeHelper::POST_TYPE_ATTACHMENT => [1531]],
+                ['7bb0b763/no_posts_found' => 'No posts found'],
+                [ContentTypeHelper::CONTENT_TYPE_UNKNOWN => [1531]],
             ],
         ];
     }

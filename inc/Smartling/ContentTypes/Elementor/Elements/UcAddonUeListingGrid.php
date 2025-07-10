@@ -19,11 +19,9 @@ class UcAddonUeListingGrid extends Unknown
     public function getRelated(): RelatedContentInfo
     {
         $return = parent::getRelated();
-        $this->getLogger()->debug('Processing listing grid');
         $key = 'listing_template_templateid';
-        if (is_numeric($this->settings[$key] ?? '')) {
-            $id = (int)$this->settings[$key];
-            $this->getLogger()->debug('Got numeric id: ' . $id);
+        $id = $this->getIntSettingByKey($key, $this->settings);
+        if ($id !== null) {
             $return->addContent(new Content($id, ContentTypeHelper::CONTENT_TYPE_UNKNOWN), $this->id, "settings/$key");
         }
 

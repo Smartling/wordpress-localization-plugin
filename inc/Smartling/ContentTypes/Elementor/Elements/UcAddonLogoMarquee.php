@@ -21,8 +21,8 @@ class UcAddonLogoMarquee extends Unknown
                 continue;
             }
             $key = "uc_items/$index/image/id";
-            $id = $this->getSettingByKey($key, $this->settings);
-            if (is_numeric($id)) {
+            $id = $this->getIntSettingByKey($key, $this->settings);
+            if ($id !== null) {
                 $return->addContent(new Content((int)$id, ContentTypeHelper::POST_TYPE_ATTACHMENT), $this->id, "settings/$key");
             }
         }
