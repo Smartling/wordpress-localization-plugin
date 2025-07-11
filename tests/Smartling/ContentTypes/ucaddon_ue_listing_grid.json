@@ -1,0 +1,84 @@
+[
+  {
+    "id": "7bb0b763",
+    "elType": "widget",
+    "settings": {
+      "listing_template_templateid": "1531",
+      "no_posts_found": "No posts found",
+      "remote_parent_enable": "true",
+      "item_padding": {
+        "unit": "px",
+        "top": "",
+        "right": "",
+        "bottom": "",
+        "left": "",
+        "isLinked": true
+      },
+      "item_border_border": "none",
+      "item_box_shadow_box_shadow_type": "yes",
+      "item_box_shadow_box_shadow": {
+        "horizontal": 5,
+        "vertical": 0,
+        "blur": 25,
+        "spread": 0,
+        "color": "rgba(0, 0, 0, 0.15)"
+      },
+      "item_border_hover_border": "none",
+      "item_box_shadow_hover_box_shadow_type": "yes",
+      "item_box_shadow_hover_box_shadow": {
+        "horizontal": 5,
+        "vertical": 0,
+        "blur": 25,
+        "spread": 0,
+        "color": "rgba(0, 0, 0, 0.35)"
+      },
+      "item_border_active_border": "none",
+      "listing_posts_posttype": [
+        "blog",
+        "case-study",
+        "ebook",
+        "report",
+        "solution-guide",
+        "video",
+        "webinar-replay",
+        "whitepaper"
+      ],
+      "listing_posts_include_date_meta_format": "Ymd",
+      "listing_posts_category": [],
+      "listing_posts_offset": 1,
+      "listing_posts_maxitems": "9",
+      "listing_isajax": "true",
+      "_element_width": "initial",
+      "_element_custom_width": {
+        "unit": "px",
+        "size": 1200,
+        "sizes": []
+      },
+      "__globals__": {
+        "item_background_hover": "globals\/colors?id=accent",
+        "item_background": "globals\/colors?id=accent"
+      },
+      "grid_gap": {
+        "unit": "px",
+        "size": 30,
+        "sizes": [],
+        "value": "20"
+      },
+      "listing_posts_includeby": [
+        "meta"
+      ],
+      "listing_posts_includeby_metakey": "featured_post_resources",
+      "listing_posts_includeby_metavalue": "1",
+      "listing_posts_category_relation": "OR",
+      "listing_posts_terms_include_children": "",
+      "listing_posts_posttype_current": "acf-ui-options-page",
+      "__dynamic__": [],
+      "listing_posts_includeby_metacompare": "!=",
+      "_element_id": "all-resources",
+      "listing_posts_queryid": "todos_posttypes_loop",
+      "listing_filtering_group": "group2"
+    },
+    "elements": [],
+    "widgetType": "ucaddon_ue_listing_grid"
+  }
+]

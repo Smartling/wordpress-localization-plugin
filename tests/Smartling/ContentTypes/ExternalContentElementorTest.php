@@ -58,6 +58,11 @@ class ExternalContentElementorTest extends TestCase {
                 ],
                 [ContentTypeHelper::POST_TYPE_ATTACHMENT => [597]],
             ],
+            'icon' => [
+                file_get_contents(__DIR__ . '/icon.json'),
+                [],
+                [ContentTypeHelper::POST_TYPE_ATTACHMENT => [1033]],
+            ],
             'background overlay' => [
                 '[{"id":"b809dba","elType":"section","settings":{"background_background":"classic","background_image":{"url":"https:\/\/test.com\/wp-content\/uploads\/2023\/08\/gradient-circle-mask.png","id":15546,"size":"","alt":"Alt text in a background","source":"library"}},"elements":[]}]',
                 ['b809dba/background_image/alt' => 'Alt text in a background'],
@@ -251,7 +256,12 @@ and management of:',
                         2680,
                     ]
                 ],
-            ]
+            ],
+            'Unlimited Elements addon Listing Grid' => [
+                file_get_contents(__DIR__ . '/ucaddon_ue_listing_grid.json'),
+                ['7bb0b763/no_posts_found' => 'No posts found'],
+                [ContentTypeHelper::CONTENT_TYPE_UNKNOWN => [1531]],
+            ],
         ];
     }
 
