@@ -42,29 +42,11 @@ class UploadQueueManager {
 
     public function dequeue(int $blogId): ?UploadQueueItem
     {
-        $conditionBlock = null;
-        while (($result = $this->db->getRowArray(QueryBuilder::buildSelectQuery(
-                tableName: $this->tableName,
-                fieldsList: [
-                    UploadQueueEntity::FIELD_ID,
-                    UploadQueueEntity::FIELD_BATCH_UID,
-                    UploadQueueEntity::FIELD_SUBMISSION_IDS,
-                ],
-                conditions: $conditionBlock,
-                sortOptions: [UploadQueueEntity::FIELD_ID => 'ASC'],
-            ))) !== null) {
-            $conditionBlock = ConditionBlock::getConditionBlock();
-            $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_MORE, UploadQueueEntity::FIELD_ID, $result[UploadQueueEntity::FIELD_ID]));
-            $submissionIds = $result[UploadQueueEntity::FIELD_SUBMISSION_IDS];
-            $sourceBlogId = $this->submissionManager->getEntityById(explode(',', $submissionIds)[0])?->getSourceBlogId();
-            if ($sourceBlogId !== $blogId) {
-                continue;
-            }
-            $this->delete($result[UploadQueueEntity::FIELD_ID]);
-            $batchUid = $result[UploadQueueEntity::FIELD_BATCH_UID];
+        while (($row = $this->getRow($blogId)) !== null) {
+            $this->delete($row[UploadQueueEntity::FIELD_ID]);
             $locales = new IntStringPairCollection();
             $submissions = [];
-            foreach (IntegerIterator::fromString($submissionIds) as $submissionId) {
+            foreach (IntegerIterator::fromString($row[UploadQueueEntity::FIELD_SUBMISSION_IDS]) as $submissionId) {
                 $submission = $this->submissionManager->getEntityById($submissionId);
                 if ($submission === null) {
                     continue 2;
@@ -79,7 +61,7 @@ class UploadQueueManager {
                 $submissions[] = $submission;
             }
 
-            return new UploadQueueItem($submissions, $batchUid, $locales);
+            return new UploadQueueItem($submissions, $row[UploadQueueEntity::FIELD_BATCH_UID], $locales);
         }
 
         return null;
@@ -174,5 +156,35 @@ class UploadQueueManager {
         $block->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, UploadQueueEntity::FIELD_ID, $id));
 
         $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $block));
+    }
+
+    private function getRow(int $blogId): ?array
+    {
+        $conditionBlock = null;
+        while (($item = $this->db->getRowArray(QueryBuilder::buildSelectQuery(
+                tableName: $this->tableName,
+                fieldsList: [
+                    UploadQueueEntity::FIELD_ID,
+                    UploadQueueEntity::FIELD_BATCH_UID,
+                    UploadQueueEntity::FIELD_SUBMISSION_IDS,
+                ],
+                conditions: $conditionBlock,
+                sortOptions: [UploadQueueEntity::FIELD_ID => 'ASC'],
+            ))) !== null) {
+            $conditionBlock = $this->getStartIdCondition((int)$item[UploadQueueEntity::FIELD_ID]);
+            if ($this->submissionManager->getEntityById(explode(',', $item[UploadQueueEntity::FIELD_SUBMISSION_IDS])[0])?->getSourceBlogId() === $blogId) {
+                return $item;
+            }
+        }
+
+        return null;
+    }
+
+    private function getStartIdCondition(int $id): ConditionBlock
+    {
+        $conditionBlock = ConditionBlock::getConditionBlock();
+        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_MORE, UploadQueueEntity::FIELD_ID, $id));
+
+        return $conditionBlock;
     }
 }
