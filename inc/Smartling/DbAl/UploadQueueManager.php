@@ -160,7 +160,7 @@ class UploadQueueManager {
 
     private function getRow(int $blogId): ?array
     {
-        $conditionBlock = null;
+        $conditionBlock = null; // get first item from table ordered by id ascending
         while (($item = $this->db->getRowArray(QueryBuilder::buildSelectQuery(
                 tableName: $this->tableName,
                 fieldsList: [
@@ -171,7 +171,8 @@ class UploadQueueManager {
                 conditions: $conditionBlock,
                 sortOptions: [UploadQueueEntity::FIELD_ID => 'ASC'],
             ))) !== null) {
-            $conditionBlock = $this->getStartIdCondition((int)$item[UploadQueueEntity::FIELD_ID]);
+            // get next items from table ordered by id ascending having id greater than that of current row
+            $conditionBlock = $this->getStartIdConditionBlock((int)$item[UploadQueueEntity::FIELD_ID]);
             if ($this->submissionManager->getEntityById(explode(',', $item[UploadQueueEntity::FIELD_SUBMISSION_IDS])[0])?->getSourceBlogId() === $blogId) {
                 return $item;
             }
@@ -180,10 +181,10 @@ class UploadQueueManager {
         return null;
     }
 
-    private function getStartIdCondition(int $id): ConditionBlock
+    private function getStartIdConditionBlock(int $startId): ConditionBlock
     {
         $conditionBlock = ConditionBlock::getConditionBlock();
-        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_MORE, UploadQueueEntity::FIELD_ID, $id));
+        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_MORE, UploadQueueEntity::FIELD_ID, $startId));
 
         return $conditionBlock;
     }
