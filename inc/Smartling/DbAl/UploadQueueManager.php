@@ -40,22 +40,31 @@ class UploadQueueManager {
         )['cnt'];
     }
 
-    public function dequeue(): ?UploadQueueItem
+    public function dequeue(int $blogId): ?UploadQueueItem
     {
+        $conditionBlock = null;
         while (($result = $this->db->getRowArray(QueryBuilder::buildSelectQuery(
-            tableName: $this->tableName,
-            fieldsList: [
-                UploadQueueEntity::FIELD_ID,
-                UploadQueueEntity::FIELD_BATCH_UID,
-                UploadQueueEntity::FIELD_SUBMISSION_IDS,
-            ],
-            sortOptions: [UploadQueueEntity::FIELD_ID => 'ASC'],
-        ))) !== null) {
+                tableName: $this->tableName,
+                fieldsList: [
+                    UploadQueueEntity::FIELD_ID,
+                    UploadQueueEntity::FIELD_BATCH_UID,
+                    UploadQueueEntity::FIELD_SUBMISSION_IDS,
+                ],
+                conditions: $conditionBlock,
+                sortOptions: [UploadQueueEntity::FIELD_ID => 'ASC'],
+            ))) !== null) {
+            $conditionBlock = ConditionBlock::getConditionBlock();
+            $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_MORE, UploadQueueEntity::FIELD_ID, $result[UploadQueueEntity::FIELD_ID]));
+            $submissionIds = $result[UploadQueueEntity::FIELD_SUBMISSION_IDS];
+            $sourceBlogId = $this->submissionManager->getEntityById(explode(',', $submissionIds)[0])?->getSourceBlogId();
+            if ($sourceBlogId !== $blogId) {
+                continue;
+            }
             $this->delete($result[UploadQueueEntity::FIELD_ID]);
             $batchUid = $result[UploadQueueEntity::FIELD_BATCH_UID];
             $locales = new IntStringPairCollection();
             $submissions = [];
-            foreach(IntegerIterator::fromString($result[UploadQueueEntity::FIELD_SUBMISSION_IDS]) as $submissionId) {
+            foreach (IntegerIterator::fromString($submissionIds) as $submissionId) {
                 $submission = $this->submissionManager->getEntityById($submissionId);
                 if ($submission === null) {
                     continue 2;
@@ -103,6 +112,11 @@ class UploadQueueManager {
                 $ids = array_values(array_diff($ids, $sameSourceIds));
             }
         });
+    }
+
+    public function length(): int
+    {
+        return (int)$this->db->getRowArray("SELECT COUNT(*) cnt FROM $this->tableName")['cnt'];
     }
 
     public function purge(): void
