@@ -45,7 +45,8 @@ class DownloadTranslationJob extends JobAbstract
     private function processDownloadQueue(int $blogId): void
     {
         $processed = 0;
-        while ($processed++ < ($this->queue->stats()[QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE] ?? 0)) {
+        $queueLength = $this->queue->stats()[QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE] ?? 0;
+        while ($processed++ < $queueLength) {
             $queueItem = $this->queue->dequeue(QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
             if ($queueItem === null) {
                 break;
