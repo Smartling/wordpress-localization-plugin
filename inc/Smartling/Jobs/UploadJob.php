@@ -44,16 +44,15 @@ class UploadJob extends JobAbstract
         $message .= '.';
         $this->getLogger()->debug("Started $message");
 
-        $this->processUploadQueue();
+        $this->processUploadQueue($this->wpProxy->get_current_blog_id());
 
         $this->processCloning();
 
         $this->getLogger()->debug("Finished $message");
     }
 
-    private function processUploadQueue(): void
+    private function processUploadQueue(int $blogId): void
     {
-        $blogId = $this->wpProxy->get_current_blog_id();
         $processed = 0;
         $profiles = [];
         $max = $this->uploadQueueManager->length();
