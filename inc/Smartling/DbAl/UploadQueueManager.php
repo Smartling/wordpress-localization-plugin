@@ -43,7 +43,7 @@ class UploadQueueManager {
     public function dequeue(int $blogId): ?UploadQueueItem
     {
         $query = sprintf(<<<'SQL'
-select q.%1$s, q.%2$s, q.%3$s from wp_smartling_upload_queue q left join wp_smartling_submissions s
+select q.%1$s, q.%2$s, q.%3$s from %7$s q left join %8$s s
     on if(locate(',', q.%2$s), left(%2$s, locate(',', %2$s) - 1), %2$s) = s.%4$s
     where s.%5$s = %6$d
 SQL,
@@ -53,6 +53,8 @@ SQL,
             SubmissionEntity::FIELD_ID,
             SubmissionEntity::FIELD_SOURCE_BLOG_ID,
             $blogId,
+            UploadQueueEntity::getTableName(),
+            SubmissionEntity::getTableName(),
         );
         while (($row = $this->db->getRowArray($query)) !== null) {
             $this->delete($row[UploadQueueEntity::FIELD_ID]);

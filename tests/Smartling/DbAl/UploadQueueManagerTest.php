@@ -148,7 +148,7 @@ class UploadQueueManagerTest extends TestCase {
         $matcherGetRowArray = $this->exactly(3);
         $db->expects($matcherGetRowArray)->method('getRowArray')->willReturnCallback(function ($query) use ($matcherGetRowArray) {
             $this->assertEquals(<<<SQL
-select q.id, q.submission_ids, q.batch_uid from wp_smartling_upload_queue q left join wp_smartling_submissions s
+select q.id, q.submission_ids, q.batch_uid from smartling_upload_queue q left join smartling_submissions s
     on if(locate(',', q.submission_ids), left(submission_ids, locate(',', submission_ids) - 1), submission_ids) = s.id
     where s.source_blog_id = 1
 SQL, $query);
