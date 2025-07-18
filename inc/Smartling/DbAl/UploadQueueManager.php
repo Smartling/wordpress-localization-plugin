@@ -42,7 +42,19 @@ class UploadQueueManager {
 
     public function dequeue(int $blogId): ?UploadQueueItem
     {
-        while (($row = $this->getRow($blogId)) !== null) {
+        $query = sprintf(<<<'SQL'
+select q.%1$s, q.%2$s, q.%3$s from wp_smartling_upload_queue q left join wp_smartling_submissions s
+    on if(locate(',', q.%2$s), left(%2$s, locate(',', %2$s) - 1), %2$s) = s.%4$s
+    where s.%5$s = %6$d
+SQL,
+            UploadQueueEntity::FIELD_ID,
+            UploadQueueEntity::FIELD_SUBMISSION_IDS,
+            UploadQueueEntity::FIELD_BATCH_UID,
+            SubmissionEntity::FIELD_ID,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID,
+            $blogId,
+        );
+        while (($row = $this->db->getRowArray($query)) !== null) {
             $this->delete($row[UploadQueueEntity::FIELD_ID]);
             $locales = new IntStringPairCollection();
             $submissions = [];
@@ -158,34 +170,4 @@ class UploadQueueManager {
         $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $block));
     }
 
-    private function getRow(int $blogId): ?array
-    {
-        $conditionBlock = null; // get first item from table ordered by id ascending
-        while (($item = $this->db->getRowArray(QueryBuilder::buildSelectQuery(
-                tableName: $this->tableName,
-                fieldsList: [
-                    UploadQueueEntity::FIELD_ID,
-                    UploadQueueEntity::FIELD_BATCH_UID,
-                    UploadQueueEntity::FIELD_SUBMISSION_IDS,
-                ],
-                conditions: $conditionBlock,
-                sortOptions: [UploadQueueEntity::FIELD_ID => 'ASC'],
-            ))) !== null) {
-            // get next items from table ordered by id ascending having id greater than that of current row
-            $conditionBlock = $this->getStartIdConditionBlock((int)$item[UploadQueueEntity::FIELD_ID]);
-            if ($this->submissionManager->getEntityById(explode(',', $item[UploadQueueEntity::FIELD_SUBMISSION_IDS])[0])?->getSourceBlogId() === $blogId) {
-                return $item;
-            }
-        }
-
-        return null;
-    }
-
-    private function getStartIdConditionBlock(int $startId): ConditionBlock
-    {
-        $conditionBlock = ConditionBlock::getConditionBlock();
-        $conditionBlock->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_MORE, UploadQueueEntity::FIELD_ID, $startId));
-
-        return $conditionBlock;
-    }
 }

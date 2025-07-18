@@ -145,25 +145,19 @@ class UploadQueueManagerTest extends TestCase {
             ->onlyMethods(['getRowArray', 'query'])
             ->getMock();
 
-        $matcherGetRowArray = $this->exactly(5);
+        $matcherGetRowArray = $this->exactly(3);
         $db->expects($matcherGetRowArray)->method('getRowArray')->willReturnCallback(function ($query) use ($matcherGetRowArray) {
-            switch ($matcherGetRowArray->getInvocationCount()) {
-                case 1: // first dequeue call gets an item
-                    $this->assertEquals('SELECT `id`, `batch_uid`, `submission_ids` FROM `smartling_upload_queue` ORDER BY `id` ASC', $query);
-                    return ['id' => 1, 'batch_uid' => '', 'submission_ids' => '1,2'];
-                case 2: // second dequeue call gets a submission from other blog
-                    $this->assertEquals('SELECT `id`, `batch_uid`, `submission_ids` FROM `smartling_upload_queue` ORDER BY `id` ASC', $query);
-                    return ['id' => 2, 'batch_uid' => '', 'submission_ids' => '3'];
-                case 3: // second dequeue call gets an item
-                    $this->assertEquals("SELECT `id`, `batch_uid`, `submission_ids` FROM `smartling_upload_queue` WHERE ( `id` > '2' ) ORDER BY `id` ASC", $query);
-                    return ['id' => 4, 'batch_uid' => '', 'submission_ids' => '4'];
-                case 4: // third dequeue call gets a submission from other blog
-                    $this->assertEquals('SELECT `id`, `batch_uid`, `submission_ids` FROM `smartling_upload_queue` ORDER BY `id` ASC', $query);
-                    return ['id' => 2, 'batch_uid' => '', 'submission_ids' => '3'];
-                case 5: // third dequeue call gets no items
-                    $this->assertEquals("SELECT `id`, `batch_uid`, `submission_ids` FROM `smartling_upload_queue` WHERE ( `id` > '2' ) ORDER BY `id` ASC", $query);
-                    return null;
-            }
+            $this->assertEquals(<<<SQL
+select q.id, q.submission_ids, q.batch_uid from wp_smartling_upload_queue q left join wp_smartling_submissions s
+    on if(locate(',', q.submission_ids), left(submission_ids, locate(',', submission_ids) - 1), submission_ids) = s.id
+    where s.source_blog_id = 1
+SQL, $query);
+
+            return match ($matcherGetRowArray->getInvocationCount()) {
+                1 => ['id' => 1, 'batch_uid' => '', 'submission_ids' => '1,2'],
+                2 => ['id' => 4, 'batch_uid' => '', 'submission_ids' => '4'],
+                3 => null,
+            };
         });
         $db->expects($this->exactly(2))->method('query')->willReturnCallback(function ($query) {
             $this->assertStringStartsWith('DELETE', $query);
