@@ -42,6 +42,9 @@ class UploadQueueManager {
 
     public function dequeue(int $blogId): ?UploadQueueItem
     {
+        // Get queue items with first submission having its source blog id = $blogId.
+        // It's impossible to create a single queue item with submissions from multiple source blog ids,
+        // so only checking one is enough.
         $query = sprintf(<<<'SQL'
 select q.%1$s, q.%2$s, q.%3$s from %7$s q left join %8$s s
     on if(locate(',', q.%2$s), left(%2$s, locate(',', %2$s) - 1), %2$s) = s.%4$s
