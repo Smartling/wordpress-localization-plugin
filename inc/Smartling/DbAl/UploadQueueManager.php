@@ -53,8 +53,8 @@ SQL,
             SubmissionEntity::FIELD_ID,
             SubmissionEntity::FIELD_SOURCE_BLOG_ID,
             $blogId,
-            UploadQueueEntity::getTableName(),
-            SubmissionEntity::getTableName(),
+            $this->db->completeTableName(UploadQueueEntity::getTableName()),
+            $this->db->completeTableName(SubmissionEntity::getTableName()),
         );
         while (($row = $this->db->getRowArray($query)) !== null) {
             $this->delete($row[UploadQueueEntity::FIELD_ID]);
