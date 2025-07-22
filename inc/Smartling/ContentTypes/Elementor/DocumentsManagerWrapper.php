@@ -9,9 +9,9 @@ class DocumentsManagerWrapper extends Documents_Manager
     /**
      * @noinspection MagicMethodsValidityInspection
      * @noinspection PhpMissingParentConstructorInspection
-     * Parent constructor not called intentionally
      */
     public function __construct(private Documents_Manager $documentsManager) {
+        // Parent constructor not called intentionally
     }
 
     public function getManagerWithoutDocuments(): Documents_Manager
