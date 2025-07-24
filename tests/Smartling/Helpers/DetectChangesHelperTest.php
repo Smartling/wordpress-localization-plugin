@@ -3,6 +3,7 @@
 namespace Smartling\Tests\Smartling\Helpers;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
@@ -115,11 +116,17 @@ class DetectChangesHelperTest extends TestCase
         $settingsManager->expects($this->never())->method('findEntityByMainLocale');
 
         $submissionManager = $this->createMock(SubmissionManager::class);
-        $submissionManager->method('find')->willReturn([$this->createMock(SubmissionEntity::class)]);
+        $submissionManager->method('find')->willReturnCallback(function (array $params) {
+            if (($params[SubmissionEntity::FIELD_CONTENT_TYPE] ?? '') === AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP) {
+                return [$this->createMock(SubmissionEntity::class)];
+            }
+
+            return [];
+        });
         $submissionManager->expects($this->never())->method('storeSubmissions');
 
         $this->getHelper($settingsManager, $submissionManager)
-            ->detectChanges(1, 2, AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP);
+            ->detectChanges(1, 2, ContentTypeHelper::CONTENT_TYPE_POST);
     }
 
     private function getHelper(
