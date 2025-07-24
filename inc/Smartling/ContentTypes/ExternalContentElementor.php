@@ -5,6 +5,7 @@ namespace Smartling\ContentTypes;
 use Elementor\Core\Documents_Manager;
 use ElementorPro\Plugin;
 use Smartling\Base\ExportedAPI;
+use Smartling\ContentTypes\Elementor\DocumentsManagerWrapper;
 use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\ArrayHelper;
@@ -97,7 +98,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
     {
-        if (array_key_exists(self::META_FIELD_NAME, $source['meta'] ?? [])) {
+        if ($this->getSupportLevel($submission->getContentType(), $submission->getSourceId()) !== Pluggable::NOT_SUPPORTED) {
             $this->getLogger()->info('Detected elementor data, removing post content and elementor related meta fields');
             foreach (array_merge_recursive(
                 ['meta' => array_merge($this->copyFields, [self::META_CONDITIONS_NAME])],
@@ -244,7 +245,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     private function getDocumentsManager(): ?Documents_Manager
     {
         if (class_exists(Plugin::class)) {
-            return Plugin::elementor()->documents;
+            return (new DocumentsManagerWrapper(Plugin::elementor()->documents))->getManagerWithoutDocuments();
         }
         $documentsManagerPath = WP_PLUGIN_DIR . '/elementor/core/documents-manager.php';
         if (file_exists($documentsManagerPath)) {
