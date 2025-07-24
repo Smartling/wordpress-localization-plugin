@@ -109,4 +109,89 @@ class UploadQueueManagerTest extends TestCase {
             $submissionManager,
         ))->enqueue(new IntegerIterator([1, 2, 3, 4, 7]), ''); // Submission with id 7 does not exist, and should not be stored
     }
+
+    public function testDequeue()
+    {
+        $submission1 = $this->createMock(SubmissionEntity::class);
+        $submission1->method('getId')->willReturn(1);
+        $submission1->method('getSourceId')->willReturn(1);
+        $submission1->method('getSourceBlogId')->willReturn(1);
+        $submission2 = $this->createMock(SubmissionEntity::class);
+        $submission2->method('getId')->willReturn(2);
+        $submission2->method('getSourceId')->willReturn(1);
+        $submission2->method('getSourceBlogId')->willReturn(1);
+        $submission3 = $this->createMock(SubmissionEntity::class);
+        $submission3->method('getId')->willReturn(3);
+        $submission3->method('getSourceId')->willReturn(2);
+        $submission3->method('getSourceBlogId')->willReturn(2);
+        $submission4 = $this->createMock(SubmissionEntity::class);
+        $submission4->method('getId')->willReturn(4);
+        $submission4->method('getSourceId')->willReturn(3);
+        $submission4->method('getSourceBlogId')->willReturn(1);
+        $stored = [
+            $submission1,
+            $submission2,
+            $submission3,
+            $submission4,
+        ];
+
+        $this->mockDbAl();
+        $db = $this->getMockBuilder(DB::class)
+            ->setConstructorArgs([new class {
+                public string $base_prefix = '';
+                public function getRowArray() {}
+                public function query() {}
+            }])
+            ->onlyMethods(['getRowArray', 'query'])
+            ->getMock();
+
+        $matcherGetRowArray = $this->exactly(3);
+        $db->expects($matcherGetRowArray)->method('getRowArray')->willReturnCallback(function ($query) use ($matcherGetRowArray) {
+            $this->assertEquals(<<<SQL
+select q.id, q.submission_ids, q.batch_uid from smartling_upload_queue q left join smartling_submissions s
+    on if(locate(',', q.submission_ids), left(submission_ids, locate(',', submission_ids) - 1), submission_ids) = s.id
+    where s.source_blog_id = 1
+SQL, $query);
+
+            return match ($matcherGetRowArray->getInvocationCount()) {
+                1 => ['id' => 1, 'batch_uid' => '', 'submission_ids' => '1,2'],
+                2 => ['id' => 4, 'batch_uid' => '', 'submission_ids' => '4'],
+                3 => null,
+            };
+        });
+        $db->expects($this->exactly(2))->method('query')->willReturnCallback(function ($query) {
+            $this->assertStringStartsWith('DELETE', $query);
+            return true;
+        });
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('getEntityById')->willReturnCallback(function ($id) use ($stored) {
+            foreach ($stored as $submission) {
+                if ($submission->getId() === $id) {
+                    return $submission;
+                }
+            }
+            return null;
+        });
+
+        $uploadQueueManager = new UploadQueueManager(
+            $this->createMock(ApiWrapperInterface::class),
+            $this->createMock(SettingsManager::class),
+            $db,
+            $submissionManager,
+        );
+
+        $item = $uploadQueueManager->dequeue(1);
+        $submissions = $item->getSubmissions();
+        $this->assertCount(2, $submissions);
+        $this->assertEquals(1, $submissions[0]->getId());
+        $this->assertEquals(2, $submissions[1]->getId());
+
+        $item = $uploadQueueManager->dequeue(1);
+        $submissions = $item->getSubmissions();
+        $this->assertCount(1, $submissions);
+        $this->assertEquals(4, $submissions[0]->getId());
+
+        $this->assertNull($uploadQueueManager->dequeue(1));
+    }
 }

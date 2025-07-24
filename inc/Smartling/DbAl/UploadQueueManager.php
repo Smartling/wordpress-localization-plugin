@@ -40,22 +40,30 @@ class UploadQueueManager {
         )['cnt'];
     }
 
-    public function dequeue(): ?UploadQueueItem
+    public function dequeue(int $blogId): ?UploadQueueItem
     {
-        while (($result = $this->db->getRowArray(QueryBuilder::buildSelectQuery(
-            tableName: $this->tableName,
-            fieldsList: [
-                UploadQueueEntity::FIELD_ID,
-                UploadQueueEntity::FIELD_BATCH_UID,
-                UploadQueueEntity::FIELD_SUBMISSION_IDS,
-            ],
-            sortOptions: [UploadQueueEntity::FIELD_ID => 'ASC'],
-        ))) !== null) {
-            $this->delete($result[UploadQueueEntity::FIELD_ID]);
-            $batchUid = $result[UploadQueueEntity::FIELD_BATCH_UID];
+        // Get queue items with first submission having its source blog id = $blogId.
+        // It's impossible to create a single queue item with submissions from multiple source blog ids,
+        // so only checking one is enough.
+        $query = sprintf(<<<'SQL'
+select q.%1$s, q.%2$s, q.%3$s from %7$s q left join %8$s s
+    on if(locate(',', q.%2$s), left(%2$s, locate(',', %2$s) - 1), %2$s) = s.%4$s
+    where s.%5$s = %6$d
+SQL,
+            UploadQueueEntity::FIELD_ID,
+            UploadQueueEntity::FIELD_SUBMISSION_IDS,
+            UploadQueueEntity::FIELD_BATCH_UID,
+            SubmissionEntity::FIELD_ID,
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID,
+            $blogId,
+            $this->db->completeTableName(UploadQueueEntity::getTableName()),
+            $this->db->completeTableName(SubmissionEntity::getTableName()),
+        );
+        while (($row = $this->db->getRowArray($query)) !== null) {
+            $this->delete($row[UploadQueueEntity::FIELD_ID]);
             $locales = new IntStringPairCollection();
             $submissions = [];
-            foreach(IntegerIterator::fromString($result[UploadQueueEntity::FIELD_SUBMISSION_IDS]) as $submissionId) {
+            foreach (IntegerIterator::fromString($row[UploadQueueEntity::FIELD_SUBMISSION_IDS]) as $submissionId) {
                 $submission = $this->submissionManager->getEntityById($submissionId);
                 if ($submission === null) {
                     continue 2;
@@ -70,7 +78,7 @@ class UploadQueueManager {
                 $submissions[] = $submission;
             }
 
-            return new UploadQueueItem($submissions, $batchUid, $locales);
+            return new UploadQueueItem($submissions, $row[UploadQueueEntity::FIELD_BATCH_UID], $locales);
         }
 
         return null;
@@ -103,6 +111,11 @@ class UploadQueueManager {
                 $ids = array_values(array_diff($ids, $sameSourceIds));
             }
         });
+    }
+
+    public function length(): int
+    {
+        return (int)$this->db->getRowArray("SELECT COUNT(*) cnt FROM $this->tableName")['cnt'];
     }
 
     public function purge(): void
@@ -161,4 +174,5 @@ class UploadQueueManager {
 
         $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $block));
     }
+
 }

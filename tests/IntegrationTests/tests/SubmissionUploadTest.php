@@ -100,7 +100,7 @@ HTML);
         $this->assertNotEquals(0, $uploadQueueManager->count());
         $submissionsToUpload = 0;
         do {
-            $uploadQueueItem = $uploadQueueManager->dequeue();
+            $uploadQueueItem = $uploadQueueManager->dequeue(get_current_blog_id());
             $submissionsToUpload += count($uploadQueueItem->getSubmissions());
             $batchUid = $uploadQueueItem->getBatchUid();
             $this->assertNotEquals('', $batchUid);

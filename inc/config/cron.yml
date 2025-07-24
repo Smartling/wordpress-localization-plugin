@@ -27,6 +27,7 @@ services:
       - "@manager.settings"
       - "@manager.submission"
       - "@manager.upload.queue"
+      - "@wp.proxy"
       - "%cron.interval.throttle%"
       - "%cron.interval.upload%"
 
@@ -72,6 +73,7 @@ services:
       - "@transient.cache"
       - "@manager.settings"
       - "@manager.submission"
+      - "@wp.proxy"
       - "%cron.interval.throttle%"
       - "%cron.interval.download%"
       - "@queue.db"

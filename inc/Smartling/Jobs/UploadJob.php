@@ -8,6 +8,7 @@ use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\FileUriHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 
@@ -22,6 +23,7 @@ class UploadJob extends JobAbstract
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager,
         private UploadQueueManager $uploadQueueManager,
+        private WordpressFunctionProxyHelper $wpProxy,
         int $throttleIntervalSeconds,
         string $jobRunInterval,
     ) {
@@ -42,17 +44,23 @@ class UploadJob extends JobAbstract
         $message .= '.';
         $this->getLogger()->debug("Started $message");
 
-        $this->processUploadQueue();
+        $this->processUploadQueue($this->wpProxy->get_current_blog_id());
 
         $this->processCloning();
 
         $this->getLogger()->debug("Finished $message");
     }
 
-    private function processUploadQueue(): void
+    private function processUploadQueue(int $blogId): void
     {
+        $processed = 0;
         $profiles = [];
-        while (($item = $this->uploadQueueManager->dequeue()) !== null) {
+        $max = $this->uploadQueueManager->length();
+        while ($processed++ < $max) {
+            $item = $this->uploadQueueManager->dequeue($blogId);
+            if ($item === null) {
+                break;
+            }
             $submission = $item->getSubmissions()[0];
             if ($submission->isCloned()) {
                 $this->getLogger()->debug("Skipping processing queue for submissionId={$submission->getId()}: was cloned");

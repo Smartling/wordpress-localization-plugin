@@ -6,6 +6,7 @@ use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
@@ -19,6 +20,7 @@ class DownloadTranslationJob extends JobAbstract
         Cache $cache,
         SettingsManager $settingsManager,
         SubmissionManager $submissionManager,
+        private WordpressFunctionProxyHelper $wpProxy,
         int $throttleIntervalSeconds,
         string $jobRunInterval,
         private QueueInterface $queue
@@ -35,22 +37,30 @@ class DownloadTranslationJob extends JobAbstract
     {
         $this->getLogger()->debug('Started Translation Download Job.');
 
-        $this->processDownloadQueue();
+        $this->processDownloadQueue($this->wpProxy->get_current_blog_id());
 
         $this->getLogger()->debug('Finished Translation Download Job.');
     }
 
-    private function processDownloadQueue(): void
+    private function processDownloadQueue(int $blogId): void
     {
-        while (null !== ($submissionId = $this->queue->dequeue(QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE))) {
-            $submissionId = ArrayHelper::first($submissionId);
-            $result = $this->submissionManager->find(['id' => $submissionId]);
+        $processed = 0;
+        $queueLength = $this->queue->stats()[QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE] ?? 0;
+        while ($processed++ < $queueLength) {
+            $queueItem = $this->queue->dequeue(QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
+            if ($queueItem === null) {
+                break;
+            }
+            $submissionId = ArrayHelper::first($queueItem);
+            $entity = $this->submissionManager->getEntityById($submissionId);
 
-            if (0 < count($result)) {
-                $entity = ArrayHelper::first($result);
-            } else {
+            if ($entity === null) {
                 $this->getLogger()
                     ->warning(vsprintf('Got submission id=%s that does not exists in database. Skipping.', [$submissionId]));
+                continue;
+            }
+            if ($entity->getSourceBlogId() !== $blogId) {
+                $this->queue->enqueue($queueItem, QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE);
                 continue;
             }
 
