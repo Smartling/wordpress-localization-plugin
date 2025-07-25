@@ -5,78 +5,34 @@ namespace Smartling\Helpers\MetaFieldProcessor;
 use Smartling\Exception\SmartlingDataReadException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\Parsers\IntegerParser;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 
 class ReferencedContentProcessor extends MetaFieldProcessorAbstract
 {
-    /**
-     * @var ContentHelper
-     */
-    private $contentHelper;
+    use LoggerSafeTrait;
 
-    /**
-     * @var string
-     */
-    private $contentType;
-
-    /**
-     * @return string
-     */
-    public function getContentType()
-    {
-        return $this->contentType;
-    }
-
-    /**
-     * @param string $contentType
-     */
-    public function setContentType($contentType)
-    {
-        $this->contentType = $contentType;
-    }
-
-    /**
-     * @return ContentHelper
-     */
-    public function getContentHelper()
-    {
-        return $this->contentHelper;
-    }
-
-    /**
-     * @param ContentHelper $contentHelper
-     */
-    public function setContentHelper($contentHelper)
-    {
-        $this->contentHelper = $contentHelper;
-    }
-
-    /**
-     * MetaFieldProcessorInterface constructor.
-     *
-     * @param TranslationHelper $translationHelper
-     * @param string            $fieldRegexp
-     * @param string            $contentType Expected content type in the field
-     */
-    public function __construct(TranslationHelper $translationHelper, $fieldRegexp, $contentType)
-    {
+    public function __construct(
+        protected ContentHelper $contentHelper,
+        private SubmissionManager $submissionManager,
+        TranslationHelper $translationHelper,
+        string $fieldRegexp,
+        private string $contentType,
+    ) {
         parent::__construct();
         $this->setTranslationHelper($translationHelper);
         $this->setFieldRegexp($fieldRegexp);
-        $this->setContentType($contentType);
     }
 
     /**
-     * @param SubmissionEntity $submission
-     * @param string           $fieldName
-     * @param mixed            $value
-     *
-     * @return mixed
+     * @param string $fieldName
+     * @param mixed $value
      */
-    public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
+    public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value): mixed
     {
         $originalValue = $value;
 
@@ -98,29 +54,57 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
             return $value;
         }
 
+        if (is_int($value)) {
+            $related = $this->submissionManager->findOne([
+                SubmissionEntity::FIELD_CONTENT_TYPE => $this->contentType,
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                SubmissionEntity::FIELD_SOURCE_ID => $value,
+                SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+            ]);
+            if ($related !== null) {
+                return $related->getTargetId();
+            }
+        }
+
+        return $originalValue;
+    }
+
+    /**
+     * @param string $fieldName
+     * @param mixed $value
+     */
+    public function processFieldPreTranslation(
+        SubmissionEntity $submission,
+        $fieldName,
+        $value,
+        array $collectedFields,
+        string $contentType = null,
+    ): mixed {
+        if ($contentType === null) {
+            $contentType = $this->contentType;
+        }
         try {
-            $contentType = $this->getContentType();
             $sourceBlogId = $submission->getSourceBlogId();
             $targetBlogId = $submission->getTargetBlogId();
             if ($this->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlogId, $value, $targetBlogId)) {
                 $this->getLogger()->debug("Sending for translation referenced content id = '$value' related to submission = '{$submission->getId()}'.");
 
-                return $this->getTranslationHelper()->tryPrepareRelatedContent(
+                $this->getTranslationHelper()->tryPrepareRelatedContent(
                     $contentType,
                     $sourceBlogId,
                     $value,
                     $targetBlogId,
                     JobEntityWithBatchUid::fromJob($submission->getJobInfo(), ''),
                     $submission->isCloned(),
-                )->getTargetId();
+                );
             }
 
             $this->getLogger()->debug("Skipped sending referenced content id = '$value' related to submission = '{$submission->getId()} due to manual relations handling");
-        } catch (SmartlingDataReadException $e) {
+        } catch (SmartlingDataReadException) {
             $message = vsprintf(
                 'An error happened while processing referenced content with original value=%s. Keeping original value.',
                 [
-                    var_export($originalValue, true),
+                    var_export($value, true),
                 ]
             );
             $this->getLogger()->error($message);
@@ -128,7 +112,7 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
             $message = vsprintf(
                 'An exception occurred while sending related item=%s, submission=%s for translation. Message: %s',
                 [
-                    var_export($originalValue, true),
+                    var_export($value, true),
                     $submission->getId(),
                     $e->getMessage(),
                 ]
@@ -136,19 +120,6 @@ class ReferencedContentProcessor extends MetaFieldProcessorAbstract
             $this->getLogger()->error($message);
         }
 
-        return $originalValue;
-    }
-
-    /**
-     * @param SubmissionEntity $submission
-     * @param string           $fieldName
-     * @param mixed            $value
-     * @param array            $collectedFields
-     *
-     * @return mixed or empty string (to skip translation)
-     */
-    public function processFieldPreTranslation(SubmissionEntity $submission, $fieldName, $value, array $collectedFields)
-    {
-        return $this->processFieldPostTranslation($submission, $fieldName, $value);
+        return $value;
     }
 }

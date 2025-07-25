@@ -36,7 +36,7 @@ class TranslationHelper
                     [implode(', ',$blogs), $sourceBlogId])
             );
 
-            $this->logger->warning(
+            $this->getLogger()->warning(
                 vsprintf(
                     'Trying to get/create submission with invalid sourceBlogId, trace:\n\n%s\nRequest dump:\n%s',
                     [
@@ -54,7 +54,7 @@ class TranslationHelper
                     [implode(', ', $blogs), $targetBlogId])
             );
 
-            $this->logger->warning(
+            $this->getLogger()->warning(
                 vsprintf(
                     'Trying to get/create submission with invalid targetBlogId, trace:\n\n%s\nRequest dump:\n%s',
                     [
@@ -69,7 +69,7 @@ class TranslationHelper
         if ($sourceBlogId === $targetBlogId) {
             $exception = new UnexpectedValueException('Unexpected value: sourceBlogId cannot be same as targetBlogId');
 
-            $this->logger->warning(
+            $this->getLogger()->warning(
                 vsprintf(
                     'Trying to get/create submission with same sourceBlogId and targetBlogId, trace:\n\n%s\nRequest dump:\n%s',
                     [
@@ -150,7 +150,7 @@ class TranslationHelper
     public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobEntityWithBatchUid $jobInfo): SubmissionEntity {
         $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->multilangProxy);
         if ($submission->getTargetId() === 0) {
-            $this->logger->debug("Got submission with 0 target id");
+            $this->getLogger()->debug("Got submission with 0 target id");
             $submission = $this->tryPrepareRelatedContent($contentType, $sourceBlogId, $contentId, $targetBlogId, $jobInfo);
         }
         return $submission;
@@ -186,7 +186,7 @@ class TranslationHelper
             // try to create target entity
             $relatedSubmission = apply_filters(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, $relatedSubmission);
             if (!($relatedSubmission instanceof SubmissionEntity)) {
-                $this->logger->critical('Related submission not instance of ' . SubmissionEntity::class . ' after filter ' . ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT . '. This is most likely due to an error outside of the plugins code.');
+                $this->getLogger()->critical('Related submission not instance of ' . SubmissionEntity::class . ' after filter ' . ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT . '. This is most likely due to an error outside of the plugins code.');
             }
 
             // add to upload queue
@@ -202,7 +202,7 @@ class TranslationHelper
             );
         }
 
-        $this->logger->debug($message);
+        $this->getLogger()->debug($message);
 
         return $this->reloadSubmission($relatedSubmission);
     }

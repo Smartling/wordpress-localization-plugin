@@ -15,13 +15,10 @@ class CustomTypeProcessor extends ReferencedContentProcessor
     use SerializerTrait;
 
     /**
-     * @param SubmissionEntity $submission
-     * @param string           $fieldName
-     * @param mixed            $value
-     *
-     * @return mixed
+     * @param string $fieldName
+     * @param mixed $value
      */
-    public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value)
+    public function processFieldPostTranslation(SubmissionEntity $submission, $fieldName, $value): mixed
     {
         $originalValue = $value;
 

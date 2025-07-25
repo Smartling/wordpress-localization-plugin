@@ -337,11 +337,12 @@ class FieldFilterConfigParser
                 break;
             default:
                 $filter = new CustomTypeProcessor(
+                    $this->getService('content.helper'),
+                    $this->submissionManager,
                     $this->getService('translation.helper'),
                     $this->getPattern(),
                     $this->getFilterType()
                 );
-                $filter->setContentHelper($this->getService('content.helper'));
                 $filter->setSerializer($serializer);
                 break;
         }
