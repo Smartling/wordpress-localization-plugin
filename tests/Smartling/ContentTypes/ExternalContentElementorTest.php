@@ -267,12 +267,15 @@ and management of:',
 
     public function testAlterContentFieldsForUpload()
     {
+        $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => 'elementor']);
+        $proxy->method('is_plugin_active')->willReturn(true);
         $this->assertEquals([
             'entity' => [],
             'meta' => [
                 'x' => 'relevant',
             ],
-        ], $this->getExternalContentElementor()->removeUntranslatableFieldsForUpload([
+        ], $this->getExternalContentElementor($proxy)->removeUntranslatableFieldsForUpload([
             'entity' => [
                 'post_content' => 'irrelevant',
             ],
@@ -291,7 +294,7 @@ and management of:',
         $pluginHelper = $this->createMock(PluginHelper::class);
         $pluginHelper->method('versionInRange')->willReturn(true);
         if ($proxy === null) {
-            $proxy = $this->createPartialMock(WordpressFunctionProxyHelper::class, ['add_action']);
+            $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
         }
         if ($submissionManager === null) {
             $submissionManager = $this->createMock(SubmissionManager::class);

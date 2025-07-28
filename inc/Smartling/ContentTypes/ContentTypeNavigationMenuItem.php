@@ -2,7 +2,6 @@
 
 namespace Smartling\ContentTypes;
 
-use Smartling\Helpers\CustomMenuContentTypeHelper;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
@@ -75,33 +74,9 @@ class ContentTypeNavigationMenuItem extends PostBasedContentTypeAbstract
         return $page === 'submissionBoard';
     }
 
-    /**
-     * @return void
-     */
-    public function registerFilters()
+    public function registerFilters(): void
     {
         $di = $this->getContainerBuilder();
-        $wrapperId = 'referenced-content.menu_item_parent';
-        $definition = $di->register($wrapperId, 'Smartling\Helpers\MetaFieldProcessor\ReferencedContentProcessor');
-        $definition
-            ->addArgument($di->getDefinition('translation.helper'))
-            ->addArgument(CustomMenuContentTypeHelper::META_KEY_MENU_ITEM_PARENT)
-            ->addArgument($this->getSystemName())
-            ->addMethodCall('setContentHelper', [$di->getDefinition('content.helper')]);
-
-        $di->get('meta-field.processor.manager')->registerProcessor($di->get($wrapperId));
-
-
-        $referenceWrapperId = 'referenced-content.menu_item_content';
-        $definition = $di->register($referenceWrapperId, 'Smartling\Helpers\MetaFieldProcessor\NavigationMenuItemProcessor');
-        $definition
-            ->addArgument($di->getDefinition('translation.helper'))
-            ->addArgument('^(_menu_item_object_id)$')
-            ->addArgument($this->getSystemName())
-            ->addMethodCall('setContentHelper', [$di->getDefinition('content.helper')]);
-
-        $di->get('meta-field.processor.manager')->registerProcessor($di->get($referenceWrapperId));
-
 
         $cloneWrapperId = 'cloned-content.menu_item_meta';
         $definition = $di->register($cloneWrapperId, 'Smartling\Helpers\MetaFieldProcessor\CloneValueFieldProcessor');

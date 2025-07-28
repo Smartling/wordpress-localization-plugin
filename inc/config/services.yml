@@ -456,6 +456,24 @@ services:
       - "@helper.gutenberg"
       - "@wp.proxy"
 
+  referenced-content.menu_item_content:
+    class: Smartling\Helpers\MetaFieldProcessor\NavigationMenuItemProcessor
+    arguments:
+      - "@content.helper"
+      - "@manager.submission"
+      - "@translation.helper"
+      - "_menu_item_object_id"
+      - "nav_menu_item"
+
+  referenced-content.menu_item_parent:
+    class: Smartling\Helpers\MetaFieldProcessor\ReferencedContentProcessor
+    arguments:
+      - "@content.helper"
+      - "@manager.submission"
+      - "@translation.helper"
+      - "_menu_item_menu_item_parent"
+      - "nav_menu_item"
+
   meta-field.processor.manager:
     class: Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager
     arguments:
@@ -464,6 +482,8 @@ services:
       - "@default.meta-field-processor"
     calls:
       - [ "registerProcessor", ["@post.content.processor"]]
+      - [ "registerProcessor", ["@referenced-content.menu_item_content"]]
+      - [ "registerProcessor", ["@referenced-content.menu_item_parent"]]
 
   service.blog-removal-handler:
     class: Smartling\Services\BlogRemovalHandler
