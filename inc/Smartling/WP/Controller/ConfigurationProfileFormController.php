@@ -212,7 +212,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $locale->setBlogId($defaultBlogId);
             $locale->setLabel($this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $defaultBlogId));
 
-            $profile->setLocale($locale);
+            $profile->setSourceLocale($locale);
         }
 
         $usedTargetLocales = [];

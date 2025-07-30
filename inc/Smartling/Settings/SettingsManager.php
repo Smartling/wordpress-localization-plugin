@@ -295,14 +295,14 @@ class SettingsManager extends EntityManagerAbstract
 
     protected function updateLabels(ConfigurationProfileEntity $entity): ConfigurationProfileEntity
     {
-        $mainLocaleBlogId = $entity->getOriginalBlogId()->getBlogId();
+        $mainLocaleBlogId = $entity->getSourceLocale()->getBlogId();
         if (0 < $mainLocaleBlogId) {
             try {
-                $entity->getOriginalBlogId()->setLabel($this->getSiteHelper()
+                $entity->getSourceLocale()->setLabel($this->getSiteHelper()
                     ->getBlogLabelById($this->getPluginProxy(), $mainLocaleBlogId));
             } catch (BlogNotFoundException $e) {
                 $this->getLogger()->notice("Got {$e->getMessage()}, removing profileId={$entity->getId()}");
-                $entity->getOriginalBlogId()->setLabel("* deleted blog *");
+                $entity->getSourceLocale()->setLabel("* deleted blog *");
                 $this->deleteProfile($entity->getId());
             }
         }

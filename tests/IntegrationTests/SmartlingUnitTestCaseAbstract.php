@@ -286,7 +286,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         $locale->setBlogId(1);
         $locale->setLabel('');
 
-        $profile->setLocale($locale);
+        $profile->setSourceLocale($locale);
         $profile->setAutoAuthorize(1);
         $profile->setRetrievalType('pseudo');
         $profile->setUploadOnUpdate(1);

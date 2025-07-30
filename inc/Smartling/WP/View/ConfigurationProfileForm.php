@@ -432,7 +432,7 @@ if (0 === $profileId) {
                         <?php
                         $tagOptions = ['prompt' => __('Please select source locale', $domain)];
                         $options = HtmlTagGeneratorHelper::renderSelectOptions(
-                            $profile->getOriginalBlogId()->getBlogId(),
+                            $profile->getSourceLocale()->getBlogId(),
                             $locales,
                             $tagOptions
                         );
@@ -447,7 +447,7 @@ if (0 === $profileId) {
                     <?php else: ?>
                         <p>
                             <?= __('Site source language is: ', $domain) ?>
-                            <strong><?= $profile->getOriginalBlogId()->getLabel() ?></strong>
+                            <strong><?= $profile->getSourceLocale()->getLabel() ?></strong>
                         </p>
                         <p>
                             <a href="#" id="change-default-locale"><?= __('Change source locale', $domain) ?></a>
@@ -456,7 +456,7 @@ if (0 === $profileId) {
                         <?= HtmlTagGeneratorHelper::tag(
                             'select',
                             HtmlTagGeneratorHelper::renderSelectOptions(
-                                $profile->getOriginalBlogId()->getBlogId(),
+                                $profile->getSourceLocale()->getBlogId(),
                                 $locales
                             ),
                             ['name' => 'smartling_settings[defaultLocale]',
@@ -473,7 +473,7 @@ if (0 === $profileId) {
                         <?php
                         $targetLocales = $profile->getTargetLocales();
                         foreach ($locales as $blogId => $label) {
-                            if ($blogId === $profile->getOriginalBlogId()
+                            if ($blogId === $profile->getSourceLocale()
                                     ->getBlogId()
                             ) {
                                 continue;

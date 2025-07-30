@@ -45,7 +45,7 @@ class BlogRemovalHandler implements WPHookInterface
             foreach ($profile->getTargetLocales() as $locale) {
                 $array[$locale->getBlogId()] = $profile;
             }
-            $profiles[$profile->getOriginalBlogId()->getBlogId()] = $array;
+            $profiles[$profile->getSourceLocale()->getBlogId()] = $array;
         }
 
         if (0 < count($submissions)) {
@@ -85,7 +85,7 @@ class BlogRemovalHandler implements WPHookInterface
         }
 
         foreach ($this->settingsManager->getEntities() as $profile) {
-            if ($profile->getOriginalBlogId()->getBlogId() === $blogId) {
+            if ($profile->getSourceLocale()->getBlogId() === $blogId) {
                 $this->settingsManager->deleteProfile($profile->getId());
                 $this->getLogger()->notice("Deleted profile profileId={$profile->getId()} while deleting blogId=$blogId");
             } else {
