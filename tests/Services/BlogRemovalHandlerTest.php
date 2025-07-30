@@ -26,7 +26,7 @@ class BlogRemovalHandlerTest extends TestCase
         $profiles = [];
         foreach ([1, 3] as $blogId) {
             $profile = $this->createMock(ConfigurationProfileEntity::class);
-            $profile->method('getOriginalBlogId')->willReturn(array_values(array_filter($locales, static function (TargetLocale $locale) use ($blogId) {
+            $profile->method('getSourceLocale')->willReturn(array_values(array_filter($locales, static function (TargetLocale $locale) use ($blogId) {
                 return $locale->getBlogId() === $blogId;
             }))[0]);
             $profile->method('getTargetLocales')->willReturn(array_values(array_filter($locales, static function (TargetLocale $locale) use ($blogId) {
@@ -41,9 +41,10 @@ class BlogRemovalHandlerTest extends TestCase
         $submissions = [];
         foreach (['12', '13', '31', '32'] as $blogs) {
             $submission = $this->createMock(SubmissionEntity::class);
+            $submission->method('getFileUri')->willReturn($blogs);
+            $submission->method('getId')->willReturn((int)$blogs);
             $submission->method('getSourceBlogId')->willReturn((int)$blogs[0]);
             $submission->method('getTargetBlogId')->willReturn((int)$blogs[1]);
-            $submission->method('getFileUri')->willReturn($blogs);
             $submissions[] = $submission;
         }
 
@@ -63,9 +64,17 @@ class BlogRemovalHandlerTest extends TestCase
         $matcher = $this->exactly(2);
         $apiWrapper->expects($matcher)
             ->method('createAuditLogRecord')
-            ->willReturnCallback(function (ConfigurationProfileEntity $profile, string $string) use ($matcher, $profiles) {
+            ->willReturnCallback(function (ConfigurationProfileEntity $profile, string $actionType, string $description) use ($matcher, $profiles) {
                 $this->assertEquals($profiles[$matcher->getInvocationCount() - 1], $profile);
-                $this->assertEquals(CreateRecordParameters::ACTION_TYPE_DELETE, $string);
+                $this->assertEquals(CreateRecordParameters::ACTION_TYPE_DELETE, $actionType);
+                switch ($matcher->getInvocationCount()) {
+                    case 1:
+                        $this->assertEquals('Blog deletion handler, submissionId=12, fileUri=12', $description);
+                        break;
+                    case 2:
+                        $this->assertEquals('Blog deletion handler, submissionId=32, fileUri=32', $description);
+                        break;
+                }
             });
 
         (new BlogRemovalHandler($apiWrapper, $settingsManager, $submissionManager))->blogRemovalHandler(2);
