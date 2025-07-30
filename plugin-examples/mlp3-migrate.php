@@ -27,7 +27,7 @@ add_action('admin_menu', static function () use ($log, $showForm) {
     $siteHelper = new SiteHelper();
     $settingsManager = new SettingsManager($db, $pageSize, $siteHelper, $localizationProxy);
     $profile = ArrayHelper::first($settingsManager->getActiveProfiles());
-    $sourceBlogId = $profile->getOriginalBlogId()->getBlogId();
+    $sourceBlogId = $profile->getSourceLocale()->getBlogId();
     $slug = 'migrate_mlp3_data_to_smartling';
     $title = 'Migrate MLP3 data to Smartling';
     if (($_POST['action'] ?? '') === 'Migrate' && wp_verify_nonce($_POST['nonce'] ?? '', $slug)) {

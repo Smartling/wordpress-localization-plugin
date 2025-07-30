@@ -231,7 +231,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 foreach ($submissions as $submission) {
                     [$id] = explode('-', $submission);
                     $type = $this->getContentTypeFilterValue();
-                    $curBlogId = $this->getProfile()->getOriginalBlogId()->getBlogId();
+                    $curBlogId = $this->getProfile()->getSourceLocale()->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
                         $submissionId =  $this->core->prepareForUpload(
                             $type,

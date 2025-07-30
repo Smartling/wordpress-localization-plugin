@@ -8,6 +8,7 @@ use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\WP\WPHookInterface;
 
 /** @noinspection PhpUnused */
@@ -38,6 +39,14 @@ class BlogRemovalHandler implements WPHookInterface
     public function blogRemovalHandler(int $blogId): void
     {
         $submissions = $this->getSubmissions($blogId);
+        $profiles = [];
+        foreach ($this->settingsManager->getEntities() as $profile) {
+            $array = [];
+            foreach ($profile->getTargetLocales() as $locale) {
+                $array[$locale->getBlogId()] = $profile;
+            }
+            $profiles[$profile->getSourceLocale()->getBlogId()] = $array;
+        }
 
         if (0 < count($submissions)) {
             $this->getLogger()->info(
@@ -61,13 +70,22 @@ class BlogRemovalHandler implements WPHookInterface
                             'File %s is not in use and will be deleted', [$submission->getFileUri()]
                         )
                     );
+                    $profile = $profiles[$submission->getSourceBlogId()][$submission->getTargetBlogId()] ?? null;
+                    if ($profile !== null) {
+                        $this->apiWrapper->createAuditLogRecord(
+                            $profile,
+                            CreateRecordParameters::ACTION_TYPE_DELETE,
+                            "Blog deletion handler, submissionId={$submission->getId()}, fileUri={$submission->getFileUri()}",
+                            [],
+                        );
+                    }
                     $this->apiWrapper->deleteFile($submission);
                 }
             }
         }
 
         foreach ($this->settingsManager->getEntities() as $profile) {
-            if ($profile->getOriginalBlogId()->getBlogId() === $blogId) {
+            if ($profile->getSourceLocale()->getBlogId() === $blogId) {
                 $this->settingsManager->deleteProfile($profile->getId());
                 $this->getLogger()->notice("Deleted profile profileId={$profile->getId()} while deleting blogId=$blogId");
             } else {
