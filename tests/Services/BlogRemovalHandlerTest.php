@@ -26,7 +26,7 @@ class BlogRemovalHandlerTest extends TestCase
         $profiles = [];
         foreach ([1, 3] as $blogId) {
             $profile = $this->createMock(ConfigurationProfileEntity::class);
-            $profile->method('getOriginalBlogId')->willReturn(array_values(array_filter($locales, static function (TargetLocale $locale) use ($blogId) {
+            $profile->method('getSourceLocale')->willReturn(array_values(array_filter($locales, static function (TargetLocale $locale) use ($blogId) {
                 return $locale->getBlogId() === $blogId;
             }))[0]);
             $profile->method('getTargetLocales')->willReturn(array_values(array_filter($locales, static function (TargetLocale $locale) use ($blogId) {
