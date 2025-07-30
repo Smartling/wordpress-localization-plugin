@@ -78,7 +78,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
             });
 
             $profile = $this->createMock(ConfigurationProfileEntity::class);
-            $profile->method('getOriginalBlogId')->willReturn($locale);
+            $profile->method('getSourceLocale')->willReturn($locale);
             $profile->method('getProjectId')->willReturn($projectUid);
 
             $x = new class($this->createMock(

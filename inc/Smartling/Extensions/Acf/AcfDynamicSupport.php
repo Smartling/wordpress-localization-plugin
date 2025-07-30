@@ -94,9 +94,9 @@ class AcfDynamicSupport
         foreach ($profiles as $profile) {
             if (
                 ($profile instanceof ConfigurationProfileEntity)
-                && in_array($profile->getOriginalBlogId()->getBlogId(), $blogs, true)
+                && in_array($profile->getSourceLocale()->getBlogId(), $blogs, true)
             ) {
-                $blogsToSearch[] = $profile->getOriginalBlogId()->getBlogId();
+                $blogsToSearch[] = $profile->getSourceLocale()->getBlogId();
             }
         }
 

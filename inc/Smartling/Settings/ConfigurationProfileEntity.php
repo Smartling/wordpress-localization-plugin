@@ -186,12 +186,12 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         $this->stateFields['is_active'] = $isActive;
     }
 
-    public function getOriginalBlogId(): Locale
+    public function getSourceLocale(): Locale
     {
         return $this->stateFields['original_blog_id'] ?? new Locale();
     }
 
-    public function setLocale(Locale $mainLocale): void
+    public function setSourceLocale(Locale $mainLocale): void
     {
         $this->stateFields['original_blog_id'] = $mainLocale;
     }
@@ -204,7 +204,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     {
         $locale = new Locale();
         $locale->setBlogId($blogId);
-        $this->setLocale($locale);
+        $this->setSourceLocale($locale);
     }
 
     public function getAutoAuthorize(): bool
@@ -398,7 +398,7 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
     {
         $state = parent::toArray(false);
 
-        $state['original_blog_id'] = $this->getOriginalBlogId()->getBlogId();
+        $state['original_blog_id'] = $this->getSourceLocale()->getBlogId();
 
         $state['auto_authorize'] = !$state['auto_authorize'] ? 0 : 1;
         $state['is_active'] = !$state['is_active'] ? 0 : 1;
