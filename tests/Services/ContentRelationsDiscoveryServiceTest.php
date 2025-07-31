@@ -70,7 +70,9 @@ namespace Smartling\Tests\Services {
 
     class ContentRelationsDiscoveryServiceTest extends TestCase
     {
+        private ContentEntitiesIOFactory $factory;
         private ?\Exception $exception = null;
+        private SmartlingToCMSDatabaseAccessWrapperInterface $db;
         protected function setUp(): void
         {
             WordpressFunctionsMockHelper::injectFunctionsMocks();
@@ -240,10 +242,6 @@ namespace Smartling\Tests\Services {
 
             $contentHelper = $this->createMock(ContentHelper::class);
             $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
-
-            $expectedTitles = array_map(static function ($id) use ($titlePrefix) {
-                return $titlePrefix . $id;
-            }, $sourceIds);
 
             $submission1 = $this->createMock(SubmissionEntity::class);
             $submission1->expects($this->once())->method('setStatus')->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
@@ -424,10 +422,8 @@ namespace Smartling\Tests\Services {
 
         public function testJobInfoGetsStoredOnNewSubmissions()
         {
-            $ioFactory = Bootstrap::getContainer()->get('factory.contentIO');
-            $ioFactoryMock = $this->createMock(ContentEntitiesIOFactory::class);
-            $ioFactoryMock->method('getMapper')->willReturn($this->createMock(WidgetEntity::class));
-            Bootstrap::getContainer()->set('factory.contentIO', $ioFactoryMock);
+            $this->prepareDependencyInjection(WidgetEntity::class);
+
             $sourceBlogId = 1;
             $sourceId = 48;
             $contentType = 'post';
@@ -495,17 +491,39 @@ namespace Smartling\Tests\Services {
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
             ]));
-            Bootstrap::getContainer()->set('factory.contentIO', $ioFactory);
+            $this->restoreDependencyInjection();
+        }
+
+        private function prepareDependencyInjection(string $mapperClass): void
+        {
+            $containerBuilder = Bootstrap::getContainer();
+
+            $db = $containerBuilder->get('site.db');
+            $this->assertInstanceOf(SmartlingToCMSDatabaseAccessWrapperInterface::class, $db);
+            $this->db = $db;
+
+            $dbMock = $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class);
+            $containerBuilder->set('site.db', $dbMock);
+
+            $factory = $containerBuilder->get('factory.contentIO');
+            $this->assertInstanceOf(ContentEntitiesIOFactory::class, $factory);
+            $this->factory = $factory;
+
+            $ioFactoryMock = $this->createMock(ContentEntitiesIOFactory::class);
+            $ioFactoryMock->method('getMapper')->willReturn($this->createMock($mapperClass));
+            $containerBuilder->set('factory.contentIO', $ioFactoryMock);
+        }
+
+        private function restoreDependencyInjection(): void
+        {
+            $containerBuilder = Bootstrap::getContainer();
+            $containerBuilder->set('site.db', $this->db);
+            $containerBuilder->set('factory.contentIO', $this->factory);
         }
 
         public function testCloningNoDuplication()
         {
-            $serviceId = 'factory.contentIO';
-            $containerBuilder = Bootstrap::getContainer();
-            $io = $containerBuilder->get($serviceId);
-            $factory = $this->createMock(ContentEntitiesIOFactory::class);
-            $factory->method('getMapper')->willReturn($this->createMock(VirtualEntityAbstract::class));
-            $containerBuilder->set($serviceId, $factory);
+            $this->prepareDependencyInjection(VirtualEntityAbstract::class);
 
             $contentType = 'post';
             $cloneLevel1 = 1;
@@ -548,7 +566,7 @@ namespace Smartling\Tests\Services {
             );
             $x->clone(new UserCloneRequest($rootPostId, $contentType, [$cloneLevel1 => [$targetBlogId => [$contentType => [$childPostId]]]], [$targetBlogId]));
 
-            $containerBuilder->set($serviceId, $io);
+            $this->restoreDependencyInjection();
         }
 
         public function testCloningSkipsLockedSubmissions()

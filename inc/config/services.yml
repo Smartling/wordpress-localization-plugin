@@ -209,6 +209,8 @@ services:
 
   factory.contentIO:
     class: Smartling\Processors\ContentEntitiesIOFactory
+    arguments:
+      - "@acf.dynamic.support"
 
   manager.content.external:
     class: Smartling\ContentTypes\ExternalContentManager
@@ -415,6 +417,7 @@ services:
   wp.bulkSubmit:
     class: Smartling\WP\Controller\BulkSubmitController
     arguments:
+      - "@acf.dynamic.support"
       - "@api.wrapper.with.retries"
       - "@multilang.proxy"
       - "@plugin.info"

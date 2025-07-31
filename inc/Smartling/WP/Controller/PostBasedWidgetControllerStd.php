@@ -611,7 +611,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     private function canHandle($postType): bool
     {
         return $this->servedContentType === $postType
-            // acf field groups are a private post type that needs to be handled
-            || $postType === AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP;
+            // acf underlying posts are of private post types, that needs to be handled
+            || in_array($postType, [AcfDynamicSupport::POST_TYPE_FIELD, AcfDynamicSupport::POST_TYPE_GROUP], true);
     }
 }

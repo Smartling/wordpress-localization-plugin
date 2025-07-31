@@ -25,9 +25,10 @@ class DetectChangesHelper
     }
 
     /**
+     * @param string[] $contentType
      * @return SubmissionEntity[]
      */
-    private function getSubmissions(int $blogId, int $contentId, string $contentType): array
+    public function getSubmissions(int $blogId, int $contentId, array $contentType): array
     {
         try {
             $params = [
@@ -104,13 +105,12 @@ class DetectChangesHelper
 
     public function detectChanges(int $blogId, int $contentId, string $contentType): void
     {
-        $submissions = $this->getSubmissions($blogId, $contentId, $contentType);
+        $submissions = $this->getSubmissions($blogId, $contentId, [$contentType]);
 
         if (0 === count($submissions)) {
-            $submissions = $this->getSubmissions($blogId, $contentId, AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP);
-            foreach ($submissions as $submission) {
-                $this->getLogger()->debug("Sync field group submissionId={$submission->getId()}");
-                $this->acfDynamicSupport->syncFieldGroup($submission);
+            foreach ($this->getSubmissions($blogId, $contentId, $this->acfDynamicSupport->getTypes()) as $submission) {
+                $this->getLogger()->debug("Sync ACF submissionId={$submission->getId()}");
+                $this->acfDynamicSupport->syncAcfData($submission);
             }
 
             $this->getLogger()->debug(

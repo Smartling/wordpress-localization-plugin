@@ -12,7 +12,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\BlogNotFoundException;
-use Smartling\Helpers\ArrayHelper;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
@@ -67,6 +67,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
     }
 
     public function __construct(
+        private AcfDynamicSupport $acfDynamicSupport,
         private ApiWrapperInterface $apiWrapper,
         protected LocalizationPluginProxyInterface $localizationPluginProxy,
         protected SiteHelper $siteHelper,
@@ -80,7 +81,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $filteredAllowedTypes = $this->getFilteredAllowedTypes();
         $this->defaultValues[static::CONTENT_TYPE_SELECT_ELEMENT_NAME] =
             array_key_exists('post', $filteredAllowedTypes) ? 'post' :
-                ArrayHelper::first(array_keys($filteredAllowedTypes));
+                $filteredAllowedTypes[array_key_first($filteredAllowedTypes)];
 
         parent::__construct($this->_settings);
     }
@@ -393,6 +394,10 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 continue;
             }
             $typesFiltered[$value] = $title;
+        }
+        if ($this->acfDynamicSupport->isAcfActive()) {
+            $typesFiltered[AcfDynamicSupport::POST_TYPE_FIELD] = 'ACF Fields';
+            $typesFiltered[AcfDynamicSupport::POST_TYPE_GROUP] = 'ACF Field Groups';
         }
 
         return $typesFiltered;
