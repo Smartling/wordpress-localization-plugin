@@ -413,6 +413,12 @@ class AcfDynamicSupport
 
     public function syncAcfData(SubmissionEntity $submission): void
     {
+        if ($submission->isLocked()) {
+            $this->logger->debug("Submission submissionId={$submission->getId()} is locked, skipping ACF sync");
+
+            return;
+        }
+
         $context = [
             'submissionId' => $submission->getId(),
             'contentType' => $submission->getContentType(),
