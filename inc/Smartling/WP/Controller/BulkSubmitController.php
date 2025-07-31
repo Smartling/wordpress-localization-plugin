@@ -5,6 +5,7 @@ use Smartling\ApiWrapperInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\UploadQueueManager;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
@@ -21,6 +22,7 @@ use Smartling\WP\WPHookInterface;
 class BulkSubmitController extends WPAbstract implements WPHookInterface
 {
     public function __construct(
+        private AcfDynamicSupport $acfDynamicSupport,
         private ApiWrapperInterface $apiWrapper,
         LocalizationPluginProxyInterface $connector,
         PluginInfo $pluginInfo,
@@ -80,6 +82,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
         } else {
             $profile = ArrayHelper::first($applicableProfiles);
             $table = new BulkSubmitTableWidget(
+                $this->acfDynamicSupport,
                 $this->apiWrapper,
                 $this->localizationPluginProxy,
                 $this->siteHelper,

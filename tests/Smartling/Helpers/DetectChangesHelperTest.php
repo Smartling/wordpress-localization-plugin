@@ -3,7 +3,6 @@
 namespace Smartling\Tests\Smartling\Helpers;
 
 use PHPUnit\Framework\TestCase;
-use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
@@ -59,7 +58,7 @@ class DetectChangesHelperTest extends TestCase
             ->with([
                 SubmissionEntity::FIELD_SOURCE_ID => 5,
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => 2,
-                SubmissionEntity::FIELD_CONTENT_TYPE => 'page',
+                SubmissionEntity::FIELD_CONTENT_TYPE => ['page'],
                 SubmissionEntity::FIELD_TARGET_BLOG_ID => $expectedLocales,
                 SubmissionEntity::FIELD_STATUS => [
                     SubmissionEntity::SUBMISSION_STATUS_NEW,
@@ -69,7 +68,7 @@ class DetectChangesHelperTest extends TestCase
                 ]
             ]);
 
-        $this->invokeMethod($this->getHelper($mock, $submissionManagerMock), 'getSubmissions', [2, 5, 'page']);
+        $this->getHelper($mock, $submissionManagerMock)->getSubmissions(2, 5, ['page']);
     }
 
     /**
@@ -83,13 +82,11 @@ class DetectChangesHelperTest extends TestCase
             ->expects(self::once())
             ->method('getSingleSettingsProfile')
             ->with(2)
-            ->willReturnCallback(function () {
-                throw new SmartlingDbException();
-            });
+            ->willThrowException(new SmartlingDbException());
 
         $helper = $this->getHelper($mock, $this->mockSubmissionManager($this->mockDbAl()));
 
-        self::assertEquals([], $this->invokeMethod($helper, 'getSubmissions', [2, 5, 'page']));
+        self::assertEquals([], $helper->getSubmissions(2, 5, ['page']));
     }
 
     public function testSubmissionStatusChange()
@@ -117,7 +114,7 @@ class DetectChangesHelperTest extends TestCase
 
         $submissionManager = $this->createMock(SubmissionManager::class);
         $submissionManager->method('find')->willReturnCallback(function (array $params) {
-            if (($params[SubmissionEntity::FIELD_CONTENT_TYPE] ?? '') === AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP) {
+            if (($params[SubmissionEntity::FIELD_CONTENT_TYPE] ?? '') === AcfDynamicSupport::POST_TYPE_GROUP) {
                 return [$this->createMock(SubmissionEntity::class)];
             }
 
@@ -126,7 +123,7 @@ class DetectChangesHelperTest extends TestCase
         $submissionManager->expects($this->never())->method('storeSubmissions');
 
         $this->getHelper($settingsManager, $submissionManager)
-            ->detectChanges(1, 2, ContentTypeHelper::CONTENT_TYPE_POST);
+            ->detectChanges(1, 2, AcfDynamicSupport::POST_TYPE_GROUP);
     }
 
     private function getHelper(

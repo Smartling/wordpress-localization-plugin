@@ -24,7 +24,8 @@ class AcfDynamicSupport
 {
     use LoggerSafeTrait;
 
-    public const POST_TYPE_ACF_FIELD_GROUP = 'acf-field-group';
+    public const POST_TYPE_FIELD = 'acf-field';
+    public const POST_TYPE_GROUP = 'acf-field-group';
     public const REFERENCED_TYPE_NONE = 'none';
     public const REFERENCED_TYPE_MEDIA = 'media';
     public const REFERENCED_TYPE_POST = 'post';
@@ -69,7 +70,8 @@ class AcfDynamicSupport
     )
     {}
 
-    public function addCopyRules(array $rules) {
+    public function addCopyRules(array $rules): void
+    {
         $this->rules['copy'] = $this->arrayHelper->add($this->rules['copy'], $rules);
     }
 
@@ -185,7 +187,7 @@ class AcfDynamicSupport
     {
         $posts = (new \WP_Query(
             [
-                'post_type' => self::POST_TYPE_ACF_FIELD_GROUP,
+                'post_type' => self::POST_TYPE_GROUP,
                 'suppress_filters' => true,
                 'posts_per_page'   => -1,
                 'post_status'      => 'publish',
@@ -207,7 +209,7 @@ class AcfDynamicSupport
     {
         $posts = (new \WP_Query(
             [
-                'post_type'        => 'acf-field',
+                'post_type'        => self::POST_TYPE_FIELD,
                 'suppress_filters' => true,
                 'posts_per_page'   => -1,
                 'post_status'      => 'publish',
@@ -300,7 +302,6 @@ class AcfDynamicSupport
      */
     private function getLocalDefinitionsOld(): array
     {
-        $acf  = null;
         $defs = [];
         try {
             $acf = (array)$this->getAcf();
@@ -410,7 +411,7 @@ class AcfDynamicSupport
         }
     }
 
-    public function syncFieldGroup(SubmissionEntity $submission): void
+    public function syncAcfData(SubmissionEntity $submission): void
     {
         $context = [
             'submissionId' => $submission->getId(),
@@ -421,51 +422,47 @@ class AcfDynamicSupport
             foreach ($context as $key => $value) {
                 LogContextMixinHelper::addToContext($key, $value);
             }
-            if ($submission->getContentType() !== self::POST_TYPE_ACF_FIELD_GROUP) {
-                $this->getLogger()->error("Trying to sync ACF field group, expected content type: " . self::POST_TYPE_ACF_FIELD_GROUP);
+            if (!in_array($submission->getContentType(), $this->getTypes(), true)) {
+                $this->getLogger()->error("Trying to sync {$submission->getContentType()}, expected content types: " . implode(', ', $this->getPostTypes()));
 
                 return;
             }
 
             $post = $this->wpProxy->get_post($submission->getSourceId(), ARRAY_A);
             if ($post === null) {
-                $this->getLogger()->error("Trying to sync ACF field group, source post not found");
+                $this->getLogger()->error("Trying to sync {$submission->getContentType()}, source post not found");
 
                 return;
             }
 
             $array = $this->wpProxy->maybe_unserialize($post['post_content']);
             if (!is_array($array)) {
-                $this->getLogger()->error("Trying to sync ACF field group, post content could not be unserialized, content=\"$post->post_content\"");
+                $this->getLogger()->error("Trying to sync {$submission->getContentType()}, post content could not be unserialized, content=\"$post->post_content\"");
 
                 return;
             }
 
-            if (!array_key_exists('location', $array)) {
-                $this->getLogger()->debug("Sync of ACF field group skipped: no location fields");
-
-                return;
-            }
-
-            foreach ($array['location'] as &$rules) {
-                foreach ($rules as &$rule) {
-                    if ($rule['param'] === 'page') {
-                        $targetSubmission = $this->submissionManager->findOne([
-                            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
-                            SubmissionEntity::FIELD_SOURCE_ID => $rule['value'],
-                            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
-                            SubmissionEntity::FIELD_CONTENT_TYPE => $this->wpProxy->get_post_types(),
-                        ]);
-                        if ($targetSubmission === null) {
-                            $this->getLogger()->debug("Skip change location page {$rule['operator']} {$rule['value']}: no target submission exists");
-                            continue;
+            if (array_key_exists('location', $array) && is_array($array['location'])) { // Null coalesce doesn't work with references
+                foreach ($array['location'] as &$rules) {
+                    foreach ($rules as &$rule) {
+                        if ($rule['param'] === 'page') {
+                            $targetSubmission = $this->submissionManager->findOne([
+                                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+                                SubmissionEntity::FIELD_SOURCE_ID => $rule['value'],
+                                SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+                                SubmissionEntity::FIELD_CONTENT_TYPE => $this->wpProxy->get_post_types(),
+                            ]);
+                            if ($targetSubmission === null) {
+                                $this->getLogger()->debug("Skip change location page {$rule['operator']} {$rule['value']}: no target submission exists");
+                                continue;
+                            }
+                            $rule['value'] = (string)$targetSubmission->getTargetId();
                         }
-                        $rule['value'] = (string)$targetSubmission->getTargetId();
                     }
+                    unset($rule);
                 }
-                unset($rule);
+                unset($rules);
             }
-            unset($rules);
 
             $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($array, $submission): void {
                 $result = $this->wpProxy->wp_update_post([
@@ -486,7 +483,7 @@ class AcfDynamicSupport
     private function tryRegisterACF(): void
     {
         $this->getLogger()->debug('Checking if ACF presents...');
-        if (true === $this->checkAcfTypes()) {
+        if ($this->isAcfActive()) {
             $this->getLogger()->debug('ACF detected.');
             $localDefinitions = $this->getLocalDefinitions();
 
@@ -593,21 +590,12 @@ class AcfDynamicSupport
         }
         $type = $this->definitions[$key]['type'] ?? '';
 
-        switch ($type) {
-            case 'image':
-            case 'image_aspect_ratio_crop':
-            case 'file':
-            case 'gallery':
-                return self::REFERENCED_TYPE_MEDIA;
-            case 'post_object':
-            case 'page_link':
-            case 'relationship':
-                return self::REFERENCED_TYPE_POST;
-            case 'taxonomy':
-                return self::REFERENCED_TYPE_TAXONOMY;
-        }
-
-        return self::REFERENCED_TYPE_NONE;
+        return match ($type) {
+            'image', 'image_aspect_ratio_crop', 'file', 'gallery' => self::REFERENCED_TYPE_MEDIA,
+            'post_object', 'page_link', 'relationship' => self::REFERENCED_TYPE_POST,
+            'taxonomy' => self::REFERENCED_TYPE_TAXONOMY,
+            default => self::REFERENCED_TYPE_NONE,
+        };
     }
 
     public function removePreTranslationFields(array $data): array
@@ -620,7 +608,7 @@ class AcfDynamicSupport
         }
 
         foreach ($data['meta'] as $key => $value) {
-            if (strpos($key, '_') === 0 && in_array($value, $this->rules['copy'], true)) {
+            if (str_starts_with($key, '_') && in_array($value, $this->rules['copy'], true)) {
                 $realKey = substr($key, 1);
                 unset($data['meta'][$realKey], $data['meta'][$key]);
                 $this->getLogger()->debug("Unset meta field $realKey");
@@ -691,11 +679,20 @@ class AcfDynamicSupport
         return array_keys($this->wpProxy->get_post_types());
     }
 
-    private function checkAcfTypes(): bool
+    public function isAcfActive(): bool
     {
         $postTypes = $this->getPostTypes();
 
-        return in_array('acf-field', $postTypes, true) && in_array(self::POST_TYPE_ACF_FIELD_GROUP, $postTypes, true);
+        return in_array(self::POST_TYPE_FIELD, $postTypes, true)
+            && in_array(self::POST_TYPE_GROUP, $postTypes, true);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getTypes(): array
+    {
+        return [self::POST_TYPE_GROUP];
     }
 
     /**
