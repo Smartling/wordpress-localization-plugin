@@ -25,6 +25,9 @@ class SmartlingCoreTraitTest extends TestCase
 {
     public function testPrepareTargetContentClonedGuid()
     {
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('apply_filters')->willReturnArgument(2);
+
         $x = new SmartlingCore(
             $this->createMock(ExternalContentManager::class),
             $this->createMock(FileUriHelper::class),
@@ -33,7 +36,7 @@ class SmartlingCoreTraitTest extends TestCase
             $this->createMock(UploadQueueManager::class),
             $this->createMock(XmlHelper::class),
             $this->createMock(TestRunHelper::class),
-            $this->createMock(WordpressFunctionProxyHelper::class),
+            $wpProxy,
         );
 
         $entity = new PostEntityStd();
@@ -63,6 +66,7 @@ class SmartlingCoreTraitTest extends TestCase
         $submission = $this->createMock(SubmissionEntity::class);
         $submission->method('getTargetId')->willReturn(0);
         $submission->method('isCloned')->willReturn(true);
+        $submission->expects($this->never())->method('setLastError');
 
         $x->prepareTargetContent($submission);
     }
