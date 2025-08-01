@@ -2,6 +2,7 @@
 
 namespace Smartling\Base;
 
+use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\EntityWithPostStatus;
 use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
 use Smartling\Helpers\ArrayHelper;
@@ -65,16 +66,11 @@ trait SmartlingCoreTrait
         $this->prepareFieldProcessorValues($submission);
         $unfilteredSourceData = $this->readSourceContentWithMetadataAsArray($submission);
 
-        $filteredData = $submission->isCloned() ? $unfilteredSourceData : $this->getFieldsFilter()->removeIgnoringFields($submission, $unfilteredSourceData);
+        $filteredData = $this->filterData($targetContent, $submission, $unfilteredSourceData);
 
-        unset ($filteredData['entity']['ID'], $filteredData['entity']['term_id'], $filteredData['entity']['id']);
-
-        if (array_key_exists('entity', $filteredData) &&
-            $targetContent instanceof EntityAbstract &&
-            ArrayHelper::notEmpty($filteredData['entity'])
-        ) {
-            foreach ($filteredData['entity'] as $k => $v) {
-                $targetContent->{$k} = apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $k, $v, $submission);
+        if ($targetContent instanceof EntityAbstract) {
+            foreach ($filteredData['entity'] ?? [] as $k => $v) {
+                $targetContent->{$k} = $this->wpProxy->apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $k, $v, $submission);
             }
         }
 
@@ -117,5 +113,23 @@ trait SmartlingCoreTrait
         }
 
         return $submission;
+    }
+
+    private function filterData(Entity $target, SubmissionEntity $submission, array $unfilteredSourceData): array
+    {
+        if ($submission->isCloned()) {
+            if ($target instanceof EntityAbstract) {
+                foreach ($target->getNonCloneableFields() as $field) {
+                    unset($unfilteredSourceData['entity'][$field]);
+                }
+            }
+            $result = $unfilteredSourceData;
+        } else {
+            $result = $this->getFieldsFilter()->removeIgnoringFields($submission, $unfilteredSourceData);
+        }
+
+        unset ($result['entity']['ID'], $result['entity']['term_id'], $result['entity']['id']);
+
+        return $result;
     }
 }

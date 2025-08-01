@@ -218,7 +218,7 @@ abstract class EntityAbstract extends EntityBase implements EntityHandler
     /**
      * @return string[]
      */
-    abstract protected function getNonCloneableFields(): array;
+    abstract public function getNonCloneableFields(): array;
 
     public function forInsert(): static
     {

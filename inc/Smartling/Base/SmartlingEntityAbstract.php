@@ -100,12 +100,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
         return [];
     }
 
-    /**
-     * @param bool $addVirtualColumns
-     *
-     * @return array
-     */
-    public function toArray($addVirtualColumns = true)
+    public function toArray(bool $addVirtualColumns = true): array
     {
         $arr = $this->stateFields;
         if (true === $addVirtualColumns) {

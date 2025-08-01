@@ -116,7 +116,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         return $fieldName;
     }
 
-    protected function getNonCloneableFields(): array
+    public function getNonCloneableFields(): array
     {
         return [
             'comment_count',
