@@ -188,7 +188,7 @@ class WidgetEntity extends VirtualEntityAbstract
     /**
      * @return array
      */
-    protected function getNonCloneableFields(): array
+    public function getNonCloneableFields(): array
     {
         return [$this->getPrimaryFieldName()];
     }
