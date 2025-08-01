@@ -43,7 +43,7 @@ class SmartlingCore extends SmartlingCoreAbstract
         $this->wpProxy->add_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, [$this, 'sendForTranslation']);
         $this->wpProxy->add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);
         $this->wpProxy->add_action(ExportedAPI::ACTION_SMARTLING_REGENERATE_THUMBNAILS, [$this, 'regenerateTargetThumbnailsBySubmission']);
-        $this->wpProxy->add_action(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
+        $this->wpProxy->add_filter(ExportedAPI::FILTER_SMARTLING_PREPARE_TARGET_CONTENT, [$this, 'prepareTargetContent']);
         $this->wpProxy->add_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
     }
 
