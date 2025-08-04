@@ -290,7 +290,7 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
 
     }
 
-    protected function getNonCloneableFields(): array
+    public function getNonCloneableFields(): array
     {
         return [
             'term_id',

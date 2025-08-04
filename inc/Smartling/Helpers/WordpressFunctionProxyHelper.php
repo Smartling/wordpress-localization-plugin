@@ -15,6 +15,12 @@ class WordpressFunctionProxyHelper
     {
         return add_action(...func_get_args());
     }
+
+    public function add_filter()
+    {
+        return add_filter(...func_get_args());
+    }
+
     public function get_home_url()
     {
         return get_home_url(...func_get_args());

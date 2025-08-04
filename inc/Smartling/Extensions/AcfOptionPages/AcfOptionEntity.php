@@ -132,7 +132,7 @@ class AcfOptionEntity extends VirtualEntityAbstract
         return $acfOptionHelper->getPk();
     }
 
-    protected function getNonCloneableFields(): array
+    public function getNonCloneableFields(): array
     {
         return [$this->getPrimaryFieldName()];
     }
