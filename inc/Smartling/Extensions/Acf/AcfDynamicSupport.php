@@ -429,7 +429,7 @@ class AcfDynamicSupport
                 LogContextMixinHelper::addToContext($key, $value);
             }
             if (!in_array($submission->getContentType(), $this->getTypes(), true)) {
-                $this->getLogger()->error("Trying to sync {$submission->getContentType()}, expected content types: " . implode(', ', $this->getPostTypes()));
+                $this->getLogger()->error("Trying to sync {$submission->getContentType()}, expected content types: " . implode(', ', $this->getTypes()));
 
                 return;
             }
