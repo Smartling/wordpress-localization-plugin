@@ -47,7 +47,7 @@ class AcfDynamicSupportTest extends TestCase
         $fieldGroupSubmissionTargetId = 11;
 
         $fieldGroupSubmission = $this->createMock(SubmissionEntity::class);
-        $fieldGroupSubmission->method('getContentType')->willReturn(AcfDynamicSupport::POST_TYPE_ACF_FIELD_GROUP);
+        $fieldGroupSubmission->method('getContentType')->willReturn(AcfDynamicSupport::POST_TYPE_GROUP);
         $fieldGroupSubmission->method('getSourceBlogId')->willReturn($sourceBlogId);
         $fieldGroupSubmission->method('getSourceId')->willReturn(3);
         $fieldGroupSubmission->method('getTargetBlogId')->willReturn($targetBlogId);
@@ -135,6 +135,6 @@ class AcfDynamicSupportTest extends TestCase
             $wpProxy
         );
 
-        $x->syncFieldGroup($fieldGroupSubmission);
+        $x->syncAcfData($fieldGroupSubmission);
     }
 }
