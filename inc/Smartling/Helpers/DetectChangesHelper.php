@@ -25,16 +25,16 @@ class DetectChangesHelper
     }
 
     /**
-     * @param string[] $contentType
+     * @param string[] $contentTypes
      * @return SubmissionEntity[]
      */
-    public function getSubmissions(int $blogId, int $contentId, array $contentType): array
+    public function getSubmissions(int $blogId, int $contentId, array $contentTypes): array
     {
         try {
             $params = [
                 SubmissionEntity::FIELD_SOURCE_ID       => $contentId,
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID  => $blogId,
-                SubmissionEntity::FIELD_CONTENT_TYPE    => $contentType,
+                SubmissionEntity::FIELD_CONTENT_TYPE    => $contentTypes,
                 SubmissionEntity::FIELD_TARGET_BLOG_ID  => $this->settingsManager
                                                                 ->getProfileTargetBlogIdsByMainBlogId($blogId),
                 SubmissionEntity::FIELD_STATUS => [
