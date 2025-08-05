@@ -78,6 +78,7 @@ class SmartlingCore extends SmartlingCoreAbstract
             $submission = $this->prepareTargetContent($submission);
             $entity = $this->getContentHelper()->readTargetContent($submission);
             $content = $entity->toArray();
+            $content = $this->externalContentManager->setExternalContent($content, $content, $submission);
             foreach ($content as $key => $value) {
                 if (array_key_exists($key, $lockedFields['entity'])) {
                     $content[$key] = $lockedFields['entity'][$key];
