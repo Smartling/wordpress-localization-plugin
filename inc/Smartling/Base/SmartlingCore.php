@@ -77,24 +77,26 @@ class SmartlingCore extends SmartlingCoreAbstract
             }
             $submission = $this->prepareTargetContent($submission);
             $entity = $this->getContentHelper()->readTargetContent($submission);
-            $content = $entity->toArray();
+            $entityStrings = $entity->toArray();
+            $metadata = $this->getContentHelper()->readTargetMetadata($submission);
+            $content = ['entity' => $entityStrings, 'meta' => $metadata];
             $content = $this->externalContentManager->setExternalContent($content, $content, $submission);
-            foreach ($content as $key => $value) {
+            foreach ($entityStrings as $key => $value) {
                 if (array_key_exists($key, $lockedFields['entity'])) {
-                    $content[$key] = $lockedFields['entity'][$key];
+                    $entityStrings[$key] = $lockedFields['entity'][$key];
                     continue;
                 }
                 if (is_string($value)) {
                     if ($key === 'post_content' && array_key_exists('post_content', $target['entity'])) {
                         $value = $this->postContentHelper->applyContentWithBlockLocks($target['entity']['post_content'], $value);
                     }
-                    $content[$key] = $this->gutenbergBlockHelper->replacePostTranslateBlockContent($value, $value, $submission);
+                    $entityStrings[$key] = $this->gutenbergBlockHelper->replacePostTranslateBlockContent($value, $value, $submission);
                 }
             }
-            $content = apply_filters(ExportedAPI::FILTER_BEFORE_CLONE_CONTENT_WRITTEN, $content, $submission);
-            $this->getContentHelper()->writeTargetContent($submission, $entity->fromArray($content));
+            $entityStrings = apply_filters(ExportedAPI::FILTER_BEFORE_CLONE_CONTENT_WRITTEN, $entityStrings, $submission);
+            $this->getContentHelper()->writeTargetContent($submission, $entity->fromArray($entityStrings));
 
-            $metadata = [];
+            $metadata = $content['meta'];
             foreach ($lockedFields['meta'] as $key => $value) {
                 $metadata[$key] = $value;
             }
