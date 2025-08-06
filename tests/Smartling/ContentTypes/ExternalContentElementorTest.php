@@ -329,6 +329,48 @@ and management of:',
         ], $this->createMock(SubmissionEntity::class)));
     }
 
+    public function testSetContentFieldsRelationsChange()
+    {
+        $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => 'elementor']);
+        $proxy->method('is_plugin_active')->willReturn(true);
+
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getSourceBlogId')->willReturn(1);
+        $submission->method('getTargetBlogId')->willReturn(2);
+
+        $sourceAttachmentId = 22872;
+        $targetAttachmentId = 3;
+
+        $relatedSubmission = $this->createMock(SubmissionEntity::class);
+        $relatedSubmission->method('getTargetId')->willReturn($targetAttachmentId);
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->expects($this->once())->method('findOne')->with([
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+            SubmissionEntity::FIELD_SOURCE_ID => $sourceAttachmentId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+        ])->willReturn($relatedSubmission);
+        $elementorData = <<<JSON
+[{"id":"4edbf72","elType":"section","settings":[],"elements":[{"id":"1694689","elType":"column","settings":{"_column_size":100,"_inline_size":null},"elements":[{"id":"70e2843","elType":"widget","settings":{"image":{"url":"http:\/\/example.com\/wp-content\/uploads\/2024\/08\/320-300x300-1.jpg","id":$sourceAttachmentId,"size":"","alt":"","source":"library"},"caption_source":"custom","caption":"My custom caption"},"elements":[],"widgetType":"image"}],"isInner":false}],"isInner":false}]
+JSON;
+        $original = [
+            'entity' => [
+                'post_content' => 'irrelevant',
+            ],
+            'meta' => [
+                ExternalContentElementor::META_FIELD_NAME => $elementorData,
+            ],
+        ];
+
+        $this->assertEquals(
+            str_replace($sourceAttachmentId, $targetAttachmentId, $elementorData),
+            $this->getExternalContentElementor($proxy, $submissionManager)
+                ->setContentFields($original, $original, $submission)['meta'][ExternalContentElementor::META_FIELD_NAME]
+        );
+    }
+
     private function getExternalContentElementor(?WordpressFunctionProxyHelper $proxy = null, ?SubmissionManager $submissionManager = null): ExternalContentElementor
     {
         $contentTypeHelper = $this->createMock(ContentTypeHelper::class);

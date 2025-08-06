@@ -64,7 +64,7 @@ class RelatedContentInfo {
     public function include(self $info, string $containerId): self
     {
         $result = clone $this;
-        $result->info[$containerId] = array_merge($result->info[$containerId] ?? [], $info->info);
+        $result->info[$containerId] = $this->arrayHelper->add($result->info[$containerId] ?? [], $info->info);
 
         return $result;
     }
