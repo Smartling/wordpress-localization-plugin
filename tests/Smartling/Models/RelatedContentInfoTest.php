@@ -31,6 +31,15 @@ class RelatedContentInfoTest extends TestCase
         $this->assertArrayHasKey('containerTwo', $mergedContentInfo->getInfo()['mergedContainer']);
     }
 
+    public function testIncludeWithOverlappingKeys()
+    {
+        $contentInfo1 = new RelatedContentInfo(['sharedContainer' => ['path1' => new Content(1, ContentTypeHelper::POST_TYPE_ATTACHMENT)]]);
+        $contentInfo2 = new RelatedContentInfo(['sharedContainer' => ['path2' => new Content(2, ContentTypeHelper::POST_TYPE_ATTACHMENT)]]);
+        $mergedContentInfo = $contentInfo1->include($contentInfo2, 'rootContainer');
+        $this->assertArrayHasKey('sharedContainer', $mergedContentInfo->getInfo()['rootContainer']);
+        $this->assertCount(2, $mergedContentInfo->getInfo()['rootContainer']['sharedContainer']);
+    }
+
     public function testIncludeIsImmutable()
     {
         $originalContentInfo = new RelatedContentInfo(['containerId' => ['path' => new Content(1, ContentTypeHelper::POST_TYPE_ATTACHMENT)]]);
