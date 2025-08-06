@@ -175,7 +175,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         }
     }
 
-    private function getCheckStatusCronActionCell(ConfigurationProfileEntity $profile, int $count): string
+    private function getCheckStatusCronActionCell(?ConfigurationProfileEntity $profile, int $count): string
     {
         if ($count === 0) {
             return __(self::MESSAGE_NOTHING_TO_DO);
