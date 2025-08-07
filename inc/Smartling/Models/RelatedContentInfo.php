@@ -64,9 +64,25 @@ class RelatedContentInfo {
     public function include(self $info, string $containerId): self
     {
         $result = clone $this;
-        $result->info[$containerId] = array_merge($result->info[$containerId] ?? [], $info->info);
+        $result->info[$containerId] = $this->arrayMergePreserveKeys($this->info, $info->info);
 
         return $result;
+    }
+
+    /**
+     * Elementor sometimes generates ids as numerical strings e.g. "12345678"
+     * array_merge and array_merge_recursive don't preserve numerical keys
+    */
+    private function arrayMergePreserveKeys(array $array1, array $array2): array
+    {
+        foreach ($array2 as $key => $value) {
+            if (is_array($value) && isset($array1[$key]) && is_array($array1[$key])) {
+                $array1[$key] = $this->arrayMergePreserveKeys($array1[$key], $value);
+            } else {
+                $array1[$key] = $value;
+            }
+        }
+        return $array1;
     }
 
     public function merge(self $info): self

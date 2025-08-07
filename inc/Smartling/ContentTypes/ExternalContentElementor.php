@@ -25,7 +25,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 {
     use LoggerSafeTrait;
 
-    protected const META_FIELD_NAME = '_elementor_data';
+    public const META_FIELD_NAME = '_elementor_data';
     private const META_CONDITIONS_NAME = '_elementor_conditions';
 
     private array $copyFields = [

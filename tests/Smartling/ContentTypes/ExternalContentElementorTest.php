@@ -243,6 +243,48 @@ and management of:',
                     ],
                 ],
             ],
+            'Social icons widget, menus, icons' => [
+                file_get_contents(__DIR__ . '/wp-952.json'),
+                [
+                    'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/5ad501f/fbb4f70/title' => 'Products',
+                    'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/5ad501f/f530aca/editor' => '<p>System Integration Automation.</p>',
+                    'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/5ad501f/75c208f/text' => 'Explore All',
+                    'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/2e55355/e783e97/e4a9505/title' => 'Feature 1 title',
+                    'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/2e55355/4a72e7c/4aa9489/title' => 'Feature 2 title',
+                    'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/2e55355/932fc0f/cf5efdf/title' => 'Feature 3 title',
+                    'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/2e55355/bff9796/0cd7ff3/title' => 'Packaging',
+                    'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/2e55355/9208e53/904cc58/title' => 'SoC Connectivity',
+                    'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/2e55355/90eaa7c/0f5bccf/title' => 'Hardware / Software Interface',
+                    'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/416244b/6e3c7c7/title' => 'Boost Efficiency',
+                    'b966541/0841fb9/2dd1556/7399cf4/5a30eae/3daa081/8c311fd/b2bc2c0/title' => 'Solutions',
+                    'b966541/0841fb9/2dd1556/7399cf4/5a30eae/3daa081/8c311fd/27652a3/editor' => '<p>Company offerings.</p>',
+                    'b966541/0841fb9/2dd1556/7399cf4/5a30eae/3daa081/8c311fd/90ae780/text' => 'Explore All',
+                    'b966541/0841fb9/2dd1556/7399cf4/5a30eae/3daa081/f0724a8/853f49c/5174a84/title' => 'Industries',
+                    'b966541/0841fb9/2dd1556/7399cf4/5a30eae/3daa081/f0724a8/f5551a4/2ee2dcb/title' => 'Technologies',
+                    'b966541/0841fb9/2dd1556/7399cf4/5a30eae/3daa081/eb65e3a/882da0e/title' => 'Accelerate and Derisk With Company',
+                    'b966541/0841fb9/2dd1556/7399cf4/554323e/070464f/de45471/6e88436/title' => 'Resources',
+                    'b966541/0841fb9/2dd1556/7399cf4/554323e/070464f/de45471/4d10f3f/editor' => '<p>Explore case studies.</p>',
+                    'b966541/0841fb9/2dd1556/7399cf4/554323e/070464f/de45471/29a44e1/text' => 'Explore All',
+                    'b966541/0841fb9/2dd1556/7399cf4/554323e/070464f/ad74e5b/cdd5b95/title' => 'Making Cache',
+                    'b966541/0841fb9/2dd1556/7399cf4/0b0011b/4ad1ceb/c7e099d/ff9c49e/title' => 'Company',
+                    'b966541/0841fb9/2dd1556/7399cf4/0b0011b/4ad1ceb/c7e099d/40a298f/editor' => '<p>Company is a leading provider of today’s systems.</p>',
+                    'b966541/0841fb9/2dd1556/7399cf4/0b0011b/4ad1ceb/c7e099d/45d667f/text' => 'Explore All',
+                    'b966541/0841fb9/2dd1556/7399cf4/0b0011b/4ad1ceb/7a17916/caaf2cc/title' => 'Company – Let’s Talk',
+                    'b966541/0841fb9/2dd1556/7399cf4/2012db2/e558561/text' => 'Contact Us',
+                    'b966541/0841fb9/2dd1556/7399cf4/2012db2/0292a78/5227d76/icon_list/bb4f3a3/text' => 'China (CN)',
+                    'b966541/0841fb9/06f836b/9131e8d/text' => 'Contact Us',
+                ],
+                [
+                    ContentTypeHelper::POST_TYPE_ATTACHMENT => [
+                        21667,
+                        1013,
+                        38,
+                        40,
+                        41,
+                        4830,
+                    ],
+                ]
+            ],
             'Unlimited Elements addon Logo Marquee' => [
                 file_get_contents(__DIR__ . '/wp-944.json'),
                 [],
@@ -285,6 +327,48 @@ and management of:',
                 '_elementor_version' => 'irrelevant',
             ],
         ], $this->createMock(SubmissionEntity::class)));
+    }
+
+    public function testSetContentFieldsRelationsChange()
+    {
+        $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => 'elementor']);
+        $proxy->method('is_plugin_active')->willReturn(true);
+
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getSourceBlogId')->willReturn(1);
+        $submission->method('getTargetBlogId')->willReturn(2);
+
+        $sourceAttachmentId = 22872;
+        $targetAttachmentId = 3;
+
+        $relatedSubmission = $this->createMock(SubmissionEntity::class);
+        $relatedSubmission->method('getTargetId')->willReturn($targetAttachmentId);
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->expects($this->once())->method('findOne')->with([
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $submission->getSourceBlogId(),
+            SubmissionEntity::FIELD_SOURCE_ID => $sourceAttachmentId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => $submission->getTargetBlogId(),
+            SubmissionEntity::FIELD_CONTENT_TYPE => ContentTypeHelper::POST_TYPE_ATTACHMENT,
+        ])->willReturn($relatedSubmission);
+        $elementorData = <<<JSON
+[{"id":"4edbf72","elType":"section","settings":[],"elements":[{"id":"1694689","elType":"column","settings":{"_column_size":100,"_inline_size":null},"elements":[{"id":"70e2843","elType":"widget","settings":{"image":{"url":"http:\/\/example.com\/wp-content\/uploads\/2024\/08\/320-300x300-1.jpg","id":$sourceAttachmentId,"size":"","alt":"","source":"library"},"caption_source":"custom","caption":"My custom caption"},"elements":[],"widgetType":"image"}],"isInner":false}],"isInner":false}]
+JSON;
+        $original = [
+            'entity' => [
+                'post_content' => 'irrelevant',
+            ],
+            'meta' => [
+                ExternalContentElementor::META_FIELD_NAME => $elementorData,
+            ],
+        ];
+
+        $this->assertEquals(
+            str_replace($sourceAttachmentId, $targetAttachmentId, $elementorData),
+            $this->getExternalContentElementor($proxy, $submissionManager)
+                ->setContentFields($original, $original, $submission)['meta'][ExternalContentElementor::META_FIELD_NAME]
+        );
     }
 
     private function getExternalContentElementor(?WordpressFunctionProxyHelper $proxy = null, ?SubmissionManager $submissionManager = null): ExternalContentElementor
