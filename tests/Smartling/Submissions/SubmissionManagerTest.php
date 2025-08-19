@@ -118,10 +118,11 @@ class SubmissionManagerTest extends TestCase
         $x->expects($this->once())->method('fetchData')->willReturnCallback(function(string $query) {
             $this->assertStringContainsString("`is_cloned` = '1'", $query);
             $this->assertStringContainsString("`is_locked` = '0'", $query);
+            $this->assertStringContainsString("`source_blog_id` = '1'", $query);
             return [];
         });
 
-        $x->findSubmissionForCloning();
+        $x->findSubmissionForCloning(1);
     }
 
     public function testStoreEmptyEntity()
