@@ -41,12 +41,13 @@ class UploadJob extends JobAbstract
         if ($source !== '') {
             $message .= ", source=\"$source\"";
         }
-        $message .= '.';
+        $blogId = $this->wpProxy->get_current_blog_id();
+        $message .= ", blogId=$blogId";
         $this->getLogger()->debug("Started $message");
 
-        $this->processUploadQueue($this->wpProxy->get_current_blog_id());
+        $this->processUploadQueue($blogId);
 
-        $this->processCloning();
+        $this->processCloning($blogId);
 
         $this->getLogger()->debug("Finished $message");
     }
@@ -106,9 +107,9 @@ class UploadJob extends JobAbstract
         }
     }
 
-    private function processCloning(): void
+    private function processCloning(int $blogId): void
     {
-        while (($submission = $this->submissionManager->findSubmissionForCloning()) !== null) {
+        while (($submission = $this->submissionManager->findSubmissionForCloning($blogId)) !== null) {
             do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
             $this->placeLockFlag(true);
         }
