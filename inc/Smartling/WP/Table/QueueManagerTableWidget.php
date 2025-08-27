@@ -6,6 +6,7 @@ use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\LastModifiedCheckJob;
@@ -36,6 +37,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         private SettingsManager $settingsManager,
         private SubmissionManager $submissionManager,
         private UploadQueueManager $uploadQueueManager,
+        private WordpressFunctionProxyHelper $wpProxy,
     )
     {
         $this->setSource($_REQUEST);
@@ -139,7 +141,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
 
     private function getUploadCronActionCell(?ConfigurationProfileEntity $profile, int $count): string
     {
-        if ($count === 0 && $this->submissionManager->findSubmissionForCloning() === null) {
+        if ($count === 0 && $this->submissionManager->findSubmissionForCloning($this->wpProxy->get_current_blog_id()) === null) {
             return self::MESSAGE_NOTHING_TO_DO;
         }
 
