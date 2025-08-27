@@ -11,6 +11,7 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Queue\QueueInterface;
 use Smartling\Services\GlobalSettingsManager;
@@ -38,6 +39,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         Cache $cache,
         private QueueInterface $queue,
         private UploadQueueManager $uploadQueueManager,
+        private WordpressFunctionProxyHelper $wpProxy,
     ) {
         parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
@@ -199,6 +201,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
                 $this->settingsManager,
                 $this->getManager(),
                 $this->uploadQueueManager,
+                $this->wpProxy,
             ),
         ]);
     }
