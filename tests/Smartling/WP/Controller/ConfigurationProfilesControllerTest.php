@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\UploadQueueManager;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WpObjectCache;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
@@ -47,6 +48,7 @@ class ConfigurationProfilesControllerTest extends TestCase {
             $this->createMock(WpObjectCache::class),
             $this->createMock(QueueInterface::class),
             $uploadQueueManager,
+            $this->createMock(WordpressFunctionProxyHelper::class),
         );
 
         $this->assertEquals([
