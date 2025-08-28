@@ -49,4 +49,18 @@ class RelatedContentInfoTest extends TestCase
         $this->assertArrayNotHasKey($containerId, $originalContentInfo->getInfo());
         $this->assertArrayHasKey($containerId, $resultContentInfo->getInfo());
     }
+
+    public function testIncludeNested()
+    {
+        $contentInfo1 = new RelatedContentInfo();
+        $path = 'settings/image/id';
+        $contentInfo1->addContent(new Content(13441, ContentTypeHelper::POST_TYPE_ATTACHMENT), '5745566', $path);
+        $contentInfo2 = new RelatedContentInfo();
+        $contentInfo2->addContent(new Content(233, ContentTypeHelper::POST_TYPE_ATTACHMENT), '43b3287', $path);
+        $parentContentInfo = (new RelatedContentInfo())->include($contentInfo2, '2171630');
+        $this->assertEquals(['2171630' => [
+            '5745566' => [$path => new Content(13441, ContentTypeHelper::POST_TYPE_ATTACHMENT)],
+            '43b3287' => [$path => new Content(233, ContentTypeHelper::POST_TYPE_ATTACHMENT)],
+        ]], $parentContentInfo->include($contentInfo1, '2171630')->getInfo());
+    }
 }

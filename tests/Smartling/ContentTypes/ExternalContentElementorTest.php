@@ -243,7 +243,7 @@ and management of:',
                     ],
                 ],
             ],
-            'Social icons widget, menus, icons' => [
+            'Social icons widget, menus, icons, templates' => [
                 file_get_contents(__DIR__ . '/wp-952.json'),
                 [
                     'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/5ad501f/fbb4f70/title' => 'Products',
@@ -283,6 +283,9 @@ and management of:',
                         41,
                         4830,
                     ],
+                    ContentTypeHelper::CONTENT_TYPE_UNKNOWN => [
+                        31885,
+                    ]
                 ]
             ],
             'Unlimited Elements addon Logo Marquee' => [

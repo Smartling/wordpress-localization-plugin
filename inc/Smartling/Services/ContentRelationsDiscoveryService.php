@@ -4,6 +4,7 @@ namespace Smartling\Services;
 
 use Exception;
 use Smartling\ApiWrapperInterface;
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ContentTypeManager;
 use Smartling\ContentTypes\ContentTypeNavigationMenu;
 use Smartling\ContentTypes\ContentTypeNavigationMenuItem;
@@ -592,12 +593,15 @@ class ContentRelationsDiscoveryService
     {
         $result = [];
 
-        if (isset($references['attachment'])) {
-            $result['attachment'] = $references['attachment'];
+        if (isset($references[ContentTypeHelper::POST_TYPE_ATTACHMENT])) {
+            $result[ContentTypeHelper::POST_TYPE_ATTACHMENT] = $references[ContentTypeHelper::POST_TYPE_ATTACHMENT];
+        }
+        if (isset($references[ContentTypeHelper::CONTENT_TYPE_UNKNOWN])) {
+            $references[self::POST_BASED_PROCESSOR] = array_merge($references[self::POST_BASED_PROCESSOR] ?? [], $references[ContentTypeHelper::CONTENT_TYPE_UNKNOWN]);
         }
 
         if (isset($references['MediaBasedProcessor'])) {
-            $result['attachment'] = array_merge(($result['attachment'] ?? []), $references['MediaBasedProcessor']);
+            $result['attachment'] = array_merge($result['attachment'] ?? [], $references['MediaBasedProcessor']);
         }
 
         if (isset($references[self::POST_BASED_PROCESSOR])) {
