@@ -522,10 +522,8 @@ class ContentRelationsDiscoveryService
                 if ($processor instanceof DefaultMetaFieldProcessor) {
                     $this->getLogger()->debug(vsprintf('Trying to treat \'%s\' field as ACF', [$fName]));
                     $acfTypeDetector = $this->metaFieldProcessorManager->getAcfTypeDetector();
-                    $processor = $acfTypeDetector->getProcessorByMetaFields($fName, $content['meta']);
-                    if ($processor === false) {
-                        $processor = $acfTypeDetector->getProcessorForGutenberg($fName, $fields);
-                    }
+                    $processor = $acfTypeDetector->getProcessorByMetaFields($fName, $content['meta']) ??
+                        $acfTypeDetector->getProcessorForGutenberg($fName, $fields);
                 }
 
                 /**
