@@ -64,7 +64,11 @@ class RelatedContentInfo {
     public function include(self $info, string $containerId): self
     {
         $result = clone $this;
-        $result->info[$containerId] = $this->arrayMergePreserveKeys($this->info, $info->info);
+        if (array_key_exists($containerId, $result->info)) {
+            $result->info[$containerId] = $this->arrayMergePreserveKeys($result->info[$containerId], $info->info);
+        } else {
+            $result->info[$containerId] = $this->arrayMergePreserveKeys($result->info, $info->info);
+        }
 
         return $result;
     }
