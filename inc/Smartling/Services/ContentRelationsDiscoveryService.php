@@ -601,7 +601,7 @@ class ContentRelationsDiscoveryService
         }
 
         if (isset($references['MediaBasedProcessor'])) {
-            $result['attachment'] = array_merge($result['attachment'] ?? [], $references['MediaBasedProcessor']);
+            $result[ContentTypeHelper::POST_TYPE_ATTACHMENT] = array_merge($result[ContentTypeHelper::POST_TYPE_ATTACHMENT] ?? [], $references['MediaBasedProcessor']);
         }
 
         if (isset($references[self::POST_BASED_PROCESSOR])) {
