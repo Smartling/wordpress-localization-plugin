@@ -575,9 +575,7 @@ class AcfDynamicSupport
         $parts[0] = "_$parts[0]";
         $key = implode(FieldsFilterHelper::ARRAY_DIVIDER, array_reverse($parts));
         if (array_key_exists($key, $attributes)) {
-            $matches = [];
-            preg_match_all(AcfTypeDetector::ACF_FIELD_GROUP_REGEX, $attributes[$key], $matches);
-            $ruleId = array_pop($matches[0]) ?? $attributes[$key];
+            $ruleId = $this->getRuleId($attributes[$key]);
             if (in_array($ruleId, $this->rules['localize'], true)) {
                 return ReplacerFactory::REPLACER_RELATED;
             }
@@ -594,7 +592,7 @@ class AcfDynamicSupport
         if ($this->definitions === null) {
             $this->run();
         }
-        $type = $this->definitions[$key]['type'] ?? '';
+        $type = $this->definitions[$this->getRuleId($key)]['type'] ?? '';
 
         return match ($type) {
             'image', 'image_aspect_ratio_crop', 'file', 'gallery' => self::REFERENCED_TYPE_MEDIA,
@@ -707,5 +705,13 @@ class AcfDynamicSupport
     private function checkOptionPages(): bool
     {
         return in_array('acf_option_page', $this->getPostTypes(), true);
+    }
+
+    public function getRuleId(string $key): string
+    {
+        $matches = [];
+        preg_match_all(AcfTypeDetector::ACF_FIELD_GROUP_REGEX, $key, $matches);
+
+        return array_pop($matches[0]) ?? $key;
     }
 }

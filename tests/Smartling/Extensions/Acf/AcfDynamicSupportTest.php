@@ -28,8 +28,7 @@ class AcfDynamicSupportTest extends TestCase
             $this->createMock(SubmissionManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
         ) extends AcfDynamicSupport {
-            public
-            function run(): void
+            public function run(): void
             {
             }
         };
@@ -136,5 +135,18 @@ class AcfDynamicSupportTest extends TestCase
         );
 
         $x->syncAcfData($fieldGroupSubmission);
+    }
+
+    public function testGetRuleId()
+    {
+        $x = new AcfDynamicSupport(
+            $this->createMock(ArrayHelper::class),
+            $this->createMock(SettingsManager::class),
+            $this->createMock(SiteHelper::class),
+            $this->createMock(SubmissionManager::class),
+            $this->createMock(WordpressFunctionProxyHelper::class),
+        );
+        $this->assertEquals('field_66d0680a343ff', $x->getRuleId('field_66d0680a343ff'), 'Should return rule id');
+        $this->assertEquals('field_66d08bd321aee', $x->getRuleId('field_66d0680a343ff_field_66d08bd321aee'), 'Should return last part of complex rule id');
     }
 }
