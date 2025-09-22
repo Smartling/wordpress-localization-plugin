@@ -26,6 +26,7 @@ use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
 use Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorAbstract;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
@@ -528,10 +529,9 @@ class ContentRelationsDiscoveryService
                     }
                 }
 
-                /**
-                 * If processor is detected
-                 */
-                if ($processor instanceof MetaFieldProcessorAbstract && 0 !== (int)$fValue) {
+                if ($processor instanceof PostBasedProcessor && is_array($this->wordpressProxy->maybe_unserialize($fValue))) {
+                    $detectedReferences[self::POST_BASED_PROCESSOR][] = $this->wordpressProxy->maybe_unserialize($fValue);
+                } elseif ($processor instanceof MetaFieldProcessorAbstract && 0 !== (int)$fValue) {
                     $shortProcessorName = ArrayHelper::last(explode('\\', get_class($processor)));
 
                     $detectedReferences[$shortProcessorName][] = (int)$fValue;
@@ -605,12 +605,21 @@ class ContentRelationsDiscoveryService
         }
 
         if (isset($references[self::POST_BASED_PROCESSOR])) {
-            foreach ($references[self::POST_BASED_PROCESSOR] as $postId) {
-                $postType = $this->wordpressProxy->get_post_type($postId);
-                if ($postType !== false) {
-                    $result[$postType][] = $postId;
-                } else {
-                    $this->getLogger()->warning("WordPress returned no post exist for detected reference postId=$postId");
+            foreach ($references[self::POST_BASED_PROCESSOR] as $reference) {
+                if (!is_array($reference)) {
+                    $reference = [$reference];
+                }
+                foreach ($reference as $referenceId) {
+                    if (!is_numeric($referenceId)) {
+                        $this->getLogger()->warning("Got non-numeric reference postId=$referenceId, skipping");
+                    }
+                    $referenceId = (int)$referenceId;
+                    $postType = $this->wordpressProxy->get_post_type($referenceId);
+                    if ($postType !== false) {
+                        $result[$postType][] = $referenceId;
+                    } else {
+                        $this->getLogger()->warning("WordPress returned no post exists for detected reference postId=$referenceId, skipping");
+                    }
                 }
             }
         }
