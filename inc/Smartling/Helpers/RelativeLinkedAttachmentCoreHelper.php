@@ -74,15 +74,15 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
 
     protected function processString(string|array &$stringValue): void
     {
-        $replacer = new PairReplacerHelper();
-        $matches = [];
-
         if (is_array($stringValue)) {
             foreach ($stringValue as &$value) {
                 $this->processString($value);
             }
             return;
         }
+
+        $replacer = new PairReplacerHelper();
+        $matches = [];
 
         if (0 < preg_match_all(self::ACF_GUTENBERG_BLOCK, $stringValue, $matches)) {
             // ACF has it's own processing because we know how it works with attachments

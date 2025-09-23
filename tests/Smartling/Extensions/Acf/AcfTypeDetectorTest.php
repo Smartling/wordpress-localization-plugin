@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Extensions\Acf\AcfTypeDetector;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\MediaBasedProcessor;
 use Smartling\Helpers\SiteHelper;
@@ -30,6 +31,46 @@ class AcfTypeDetectorTest extends TestCase
     {
         global $acf_stores;
         $acf_stores = $this->acfStores;
+    }
+
+    /**
+     * @dataProvider providerGetProcessorByMetaFields
+     */
+    public function testGetProcessorByMetaFields(string $fieldName, array $metaFields = [])
+    {
+        $cache = $this->createMock(Cache::class);
+        $cache->method('get')->willReturn(false);
+        $x = $this->getMockBuilder(AcfTypeDetector::class)
+            ->setConstructorArgs([
+                new ContentHelper(
+                    $this->createMock(ContentEntitiesIOFactory::class),
+                    $this->createMock(SiteHelper::class),
+                    new WordpressFunctionProxyHelper()
+                ),
+                $cache,
+            ])
+            ->onlyMethods(["getProcessorByFieldKey"])
+            ->getMock();
+        $x->expects($this->once())->method("getProcessorByFieldKey")->with("field_6835dc2b65da8", $fieldName);
+        $x->getProcessorByMetaFields($fieldName, $metaFields);
+    }
+
+    private function providerGetProcessorByMetaFields()
+    {
+        return [
+            [
+                "meta/field/0",
+                ["field/0" => "irrelevant", "_field" => "field_6835dc2b65da8"],
+            ],
+            [
+                "meta/field",
+                ["field" => "irrelevant", "_field" => "field_6835dc2b65da8"],
+            ],
+            [
+                "field",
+                ["field" => "irrelevant", "_field" => "field_6835dc2b65da8"],
+            ],
+        ];
     }
 
     public function testGetProcessorForGutenberg()

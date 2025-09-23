@@ -96,7 +96,8 @@ class AcfTypeDetector
     private function getFieldKeyFieldNameByMetaFields($fieldName, array $metadata)
     {
         if (false === $fieldKey = $this->getCache()->get($this->getCacheKeyByFieldName($fieldName))) {
-            $_realFieldName = preg_replace('#^meta\/#ius', '', $fieldName);
+            $matches = [];
+            $_realFieldName = preg_match('#^(?:meta/)?([^/]+)#i', $fieldName, $matches) ? $matches[1] : $fieldName;
             if (array_key_exists('_' . $_realFieldName, $metadata)) {
                 $fieldKey = $metadata['_' . $_realFieldName];
                 $this->getCache()->set($this->getCacheKeyByFieldName($fieldName), $fieldKey, static::$cacheExpireSec);
@@ -108,7 +109,7 @@ class AcfTypeDetector
         return $fieldKey;
     }
 
-    private function getProcessorByFieldKey($key, $fieldName)
+    public function getProcessorByFieldKey($key, $fieldName)
     {
         if (!array_key_exists($key, AcfDynamicSupport::$acfReverseDefinitionAction)) {
             MonologWrapper::getLogger(__CLASS__)
