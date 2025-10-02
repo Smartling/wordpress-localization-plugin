@@ -44,17 +44,16 @@ class AbsoluteLinkedAttachmentCoreHelperTest extends TestCase
         /** @noinspection MockingMethodsCorrectnessInspection added with addMethods */
         $wpdb->expects($this->once())->method('get_results')->with("SELECT `id` FROM `wp_posts` WHERE ( `guid` LIKE '%$url' )");
 
-        $x = new AbsoluteLinkedAttachmentCoreHelper(
+        $this->invokeMethod(new AbsoluteLinkedAttachmentCoreHelper(
             $this->createMock(SmartlingCore::class),
             $this->createMock(AcfDynamicSupport::class),
             $this->createMock(SubmissionManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
             $this->createMock(WordpressLinkHelper::class),
-        );
-        $this->invokeMethod($x, 'lookForDirectGuidEntry', [$url]);
+        ), 'lookForDirectGuidEntry', [$url]);
     }
 
-    public function testIdk()
+    public function testProxyFunctionGetsCalledWhenLookingUpPossibleAttachmentId()
     {
         $core = $this->createMock(SmartlingCore::class);
         $core->method('getUploadFileInfo')->willReturn(['basedir' => __DIR__]);
@@ -63,18 +62,22 @@ class AbsoluteLinkedAttachmentCoreHelperTest extends TestCase
         $expectedPath = 'https://test.com/wp-content/uploads/2025/10/test.svg';
         $wordpressProxy->expects($this->once())->method('attachment_url_to_postid')
             ->with($expectedPath);
-        $x = new AbsoluteLinkedAttachmentCoreHelper(
-            $core,
-            $this->createMock(AcfDynamicSupport::class),
-            $this->createMock(SubmissionManager::class),
-            $wordpressProxy,
-            $this->createMock(WordpressLinkHelper::class),
-        );
         $source = ['entity' => ['post_content' => <<<HTML
 <!-- wp:core/image {"id":13} -->
 <figure class="wp-block-image size-full"><img src="$expectedPath" alt="" class="wp-image-13"/></figure>
 <!-- /wp:core/image -->
 HTML]];
-        $x->processor(new AfterDeserializeContentEventParameters($source, $this->createMock(SubmissionEntity::class), $this->createMock(Entity::class), []));
+        (new AbsoluteLinkedAttachmentCoreHelper(
+            $core,
+            $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(SubmissionManager::class),
+            $wordpressProxy,
+            $this->createMock(WordpressLinkHelper::class),
+        ))->processor(new AfterDeserializeContentEventParameters(
+            $source,
+            $this->createMock(SubmissionEntity::class),
+            $this->createMock(Entity::class),
+            [],
+        ));
     }
 }
