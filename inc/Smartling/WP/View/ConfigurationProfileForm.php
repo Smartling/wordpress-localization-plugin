@@ -728,8 +728,46 @@ Contact Technical Support or your Customer Success Manager before modifying thes
                                 '1' => __('RegExp', $domain),
                             ]
                         ),
-                        ['name' => 'smartling_settings[' . ConfigurationProfileFormController::FILTER_FIELD_NAME_REGEXP . ']'])
+                        [
+                                'id' => 'filter-field-name-regexp',
+                                'name' => 'smartling_settings[' . ConfigurationProfileFormController::FILTER_FIELD_NAME_REGEXP . ']'
+                        ]
+                    )
                     ?>
+                    <script>
+                        document.getElementById('filter-field-name-regexp').addEventListener('change', function (e) {
+                            for (const input of [
+                                document.getElementById('filter-skip'),
+                                document.getElementById('filter-copy-by-name'),
+                            ]) {
+                                input.value = input.value.split('\n')
+                                    .map(e.target.value === '0' ? function removeRegexStartAndEnd (value) {
+                                        if (value.length > 0) {
+                                            if (value[0] === '^') {
+                                                value = value.substring(1);
+                                            }
+                                            if (value[value.length - 1] === '$') {
+                                                value = value.substring(0, value.length - 1);
+                                            }
+                                        }
+
+                                        return value
+                                    } : function addRegexStartAndEnd (value) {
+                                        if (value.length > 0) {
+                                            if (value[0] !== '^') {
+                                                value = '^' + value;
+                                            }
+                                            if (value[value.length - 1] !== '$') {
+                                                value = value + '$';
+                                            }
+                                        }
+
+                                        return value;
+                                    })
+                                    .join('\n');
+                            }
+                        })
+                    </script>
                 </td>
             </tr>
 

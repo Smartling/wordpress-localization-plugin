@@ -4,10 +4,13 @@ namespace Smartling\Tests\Smartling\Helpers;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\Base\SmartlingCore;
+use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
+use Smartling\Helpers\EventParameters\AfterDeserializeContentEventParameters;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\WordpressLinkHelper;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
@@ -41,15 +44,37 @@ class AbsoluteLinkedAttachmentCoreHelperTest extends TestCase
         /** @noinspection MockingMethodsCorrectnessInspection added with addMethods */
         $wpdb->expects($this->once())->method('get_results')->with("SELECT `id` FROM `wp_posts` WHERE ( `guid` LIKE '%$url' )");
 
-        $core = $this->createMock(SmartlingCore::class);
-        $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
         $x = new AbsoluteLinkedAttachmentCoreHelper(
-            $core,
-            $acfDynamicSupport,
+            $this->createMock(SmartlingCore::class),
+            $this->createMock(AcfDynamicSupport::class),
             $this->createMock(SubmissionManager::class),
             $this->createMock(WordpressFunctionProxyHelper::class),
             $this->createMock(WordpressLinkHelper::class),
         );
         $this->invokeMethod($x, 'lookForDirectGuidEntry', [$url]);
+    }
+
+    public function testIdk()
+    {
+        $core = $this->createMock(SmartlingCore::class);
+        $core->method('getUploadFileInfo')->willReturn(['basedir' => __DIR__]);
+        $core->method('getFullyRelateAttachmentPathByBlogId')->willReturn( basename(__FILE__));
+        $wordpressProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $expectedPath = 'https://test.com/wp-content/uploads/2025/10/test.svg';
+        $wordpressProxy->expects($this->once())->method('attachment_url_to_postid')
+            ->with($expectedPath);
+        $x = new AbsoluteLinkedAttachmentCoreHelper(
+            $core,
+            $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(SubmissionManager::class),
+            $wordpressProxy,
+            $this->createMock(WordpressLinkHelper::class),
+        );
+        $source = ['entity' => ['post_content' => <<<HTML
+<!-- wp:core/image {"id":13} -->
+<figure class="wp-block-image size-full"><img src="$expectedPath" alt="" class="wp-image-13"/></figure>
+<!-- /wp:core/image -->
+HTML]];
+        $x->processor(new AfterDeserializeContentEventParameters($source, $this->createMock(SubmissionEntity::class), $this->createMock(Entity::class), []));
     }
 }
