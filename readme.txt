@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 4.3.6 =
-* Improved replacement of attachment urls in translated content
+* Improved replacement of attachment URLs in translated content by using WordPress built-in attachment_url_to_postid() function
 * Exclude and Copy fields by field name will now change to a stricter regex when changing the "Treat Exclude fields by field name and Copy fields by field name as regex" setting
 
 = 4.3.5 =
