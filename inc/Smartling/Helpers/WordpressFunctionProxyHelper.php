@@ -21,6 +21,11 @@ class WordpressFunctionProxyHelper
         return add_filter(...func_get_args());
     }
 
+    public function attachment_url_to_postid()
+    {
+        return attachment_url_to_postid(...func_get_args());
+    }
+
     public function get_home_url()
     {
         return get_home_url(...func_get_args());

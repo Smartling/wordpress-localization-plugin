@@ -217,6 +217,11 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
     {
         if (true === FileHelper::testFile($localOriginalFile)) {
             $originalPathinfo = pathinfo($localOriginalFile);
+            $wpAttachmentUrlToPostId = $this->wordpressProxy->attachment_url_to_postid($url);
+            if ($wpAttachmentUrlToPostId !== 0) {
+                return $wpAttachmentUrlToPostId;
+            }
+            // TODO revisit after second half of 2026, see https://smartling.atlassian.net/browse/WP-963
             $possibleId = $this->lookForDirectGuidEntry($url);
             if (null === $possibleId && $this->fileLooksLikeThumbnail($originalPathinfo['filename'])) {
                 $originalFilename = preg_replace(
@@ -227,6 +232,9 @@ class AbsoluteLinkedAttachmentCoreHelper extends RelativeLinkedAttachmentCoreHel
             }
             if (null === $possibleId) {
                 $this->getLogger()->info(vsprintf('No \'attachment\' found for url=%s', [$url]));
+            }
+            if ($possibleId !== null) {
+                $this->getLogger()->debug("attachment_url_to_postid result for url=$url was 0, legacy code determined possible_id=$possibleId");
             }
 
             return $possibleId;
