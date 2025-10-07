@@ -67,11 +67,6 @@ class IconList extends Unknown {
             }
         }
 
-        foreach ($info->getOwnRelatedContent($this->id) as $path => $content) {
-            assert($content instanceof Content);
-            $this->raw = $this->setRelations($content, $externalContentElementor, $path, $submission)->toArray();
-        }
-
         return new self($this->raw);
     }
 }
