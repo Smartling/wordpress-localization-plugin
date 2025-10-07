@@ -23,6 +23,14 @@ class IconList extends Unknown {
             if ($id !== null) {
                 $return->addContent(new Content($id, ContentTypeHelper::POST_TYPE_ATTACHMENT), $this->id, "settings/$key");
             }
+            if (array_key_exists(self::SETTING_KEY_DYNAMIC, $listItem)) {
+                foreach ($this->getRelatedFromDynamic(
+                    $listItem[self::SETTING_KEY_DYNAMIC],
+                    "settings/icon_list/$index/" . self::SETTING_KEY_DYNAMIC,
+                ) as $item) {
+                    $return->addContent($item->getContent(), $item->getContainerId(), $item->getPath());
+                }
+            }
         }
 
         return $return;
@@ -47,6 +55,7 @@ class IconList extends Unknown {
         array $strings,
         SubmissionEntity $submission,
     ): static {
+        $this->raw = parent::setTargetContent($externalContentElementor, $info, $strings, $submission)->toArray();
         foreach ($strings[$this->id]['icon_list'] ?? [] as $id => $setting) {
             if (is_array($setting) && array_key_exists('text', $setting)) {
                 foreach ($this->raw['settings']['icon_list'] ?? [] as $key => $icon) {
@@ -56,6 +65,11 @@ class IconList extends Unknown {
                     }
                 }
             }
+        }
+
+        foreach ($info->getOwnRelatedContent($this->id) as $path => $content) {
+            assert($content instanceof Content);
+            $this->raw = $this->setRelations($content, $externalContentElementor, $path, $submission)->toArray();
         }
 
         return new self($this->raw);

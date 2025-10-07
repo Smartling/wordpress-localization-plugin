@@ -2,9 +2,9 @@
 
 namespace Smartling\ContentTypes\Elementor\Elements;
 
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
-use Smartling\Services\ContentRelationsDiscoveryService;
 
 class GlobalWidget extends Unknown {
     public function getType(): string
@@ -17,7 +17,7 @@ class GlobalWidget extends Unknown {
         $result = parent::getRelated();
         $id = $this->getIntSettingByKey('templateID', $this->raw);
         if ($id !== null) {
-            $result->addContent(new Content($id, ContentRelationsDiscoveryService::POST_BASED_PROCESSOR), $this->id, 'templateID');
+            $result->addContent(new Content($id, ContentTypeHelper::CONTENT_TYPE_POST), $this->id, 'templateID');
         }
 
         return $result;

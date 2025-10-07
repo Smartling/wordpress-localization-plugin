@@ -75,7 +75,7 @@ class ExternalContentElementorTest extends TestCase {
                     'ea10189/image/alt' => '',
                 ],
                 [
-                    ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [19366],
+                    ContentTypeHelper::CONTENT_TYPE_POST => [19366],
                     ContentTypeHelper::POST_TYPE_ATTACHMENT => [597, 598],
                 ],
             ],
