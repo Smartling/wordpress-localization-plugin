@@ -36,6 +36,13 @@ class DynamicTagHandlingTest extends TestCase
         $this->assertEquals(str_replace('123', '456', $original), $result);
     }
 
+    public function testReplaceDynamicFeaturedImage(): void
+    {
+        $original = '[elementor-tag id="" name="post-featured-image" settings="%7B%22fallback%22%3A%7B%22url%22%3A%22http%3A%2F%2Ftest.com%2Fwp-content%2Fuploads%2F2025%2F10%2FImage.webp%22%2C%22id%22%3A123%2C%22size%22%3A%22%22%2C%22alt%22%3A%22%22%2C%22source%22%3A%22library%22%7D%7D"]';
+        $result = $this->getElement($this->getManager())->replaceDynamicTagSetting($original, '456');
+        $this->assertEquals(str_replace('123', '456', $original), $result);
+    }
+
     private function getManager(): DynamicTagManager
     {
         $mock = $this->createMock(DynamicTagManager::class);
@@ -46,7 +53,7 @@ class DynamicTagHandlingTest extends TestCase
                     'elementor-tag',
                     $tagId,
                     $tagName,
-                    urlencode(json_encode($settings, JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT)),
+                    urlencode(json_encode($settings, JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT | JSON_UNESCAPED_SLASHES)),
                 );
             });
         $mock->method('tag_text_to_tag_data')

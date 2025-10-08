@@ -110,6 +110,9 @@ class Unknown extends ElementAbstract {
         if ($name === self::DYNAMIC_INTERNAL_URL && ($settings['type'] ?? '') === 'post' && array_key_exists('post_id', $settings)) {
             return new Content((int)$settings['post_id'], ContentTypeHelper::CONTENT_TYPE_POST);
         }
+        if ($name === self::DYNAMIC_POST_FEATURED_IMAGE && array_key_exists('fallback', $settings) && array_key_exists('id', $settings['fallback'])) {
+            return new Content((int)$settings['fallback']['id'], ContentTypeHelper::POST_TYPE_ATTACHMENT);
+        }
 
         return null;
     }

@@ -16,6 +16,7 @@ abstract class ElementAbstract implements Element {
     protected const SETTING_KEY_DYNAMIC = '__dynamic__';
     protected const DYNAMIC_INTERNAL_URL = 'internal-url';
     protected const DYNAMIC_POPUP = 'popup';
+    protected const DYNAMIC_POST_FEATURED_IMAGE = 'post-featured-image';
 
     protected array $elements;
     protected string $id;
@@ -216,6 +217,9 @@ abstract class ElementAbstract implements Element {
                 break;
             case self::DYNAMIC_POPUP:
                 $tagData['settings'][self::DYNAMIC_POPUP] = $value;
+                break;
+            case self::DYNAMIC_POST_FEATURED_IMAGE:
+                $tagData['settings']['fallback']['id'] = (int)$value;
                 break;
             default:
                 $this->getLogger()->warning("Unknown Elementor tag encountered, skipping replacement, tagText=\"$tag\"");
