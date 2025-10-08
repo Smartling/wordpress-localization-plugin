@@ -46,7 +46,6 @@ class Unknown extends ElementAbstract {
         return $return;
     }
 
-
     public function getTranslatableStrings(): array
     {
         $return = [];
