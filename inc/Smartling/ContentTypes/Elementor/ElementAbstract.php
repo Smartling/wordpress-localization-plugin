@@ -3,6 +3,7 @@
 namespace Smartling\ContentTypes\Elementor;
 
 use Elementor\Core\DynamicTags\Manager;
+use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\LoggerSafeTrait;
@@ -13,7 +14,8 @@ use Smartling\Submissions\SubmissionEntity;
 abstract class ElementAbstract implements Element {
     use LoggerSafeTrait;
     protected const SETTING_KEY_DYNAMIC = '__dynamic__';
-    protected const SETTING_KEY_POPUP = 'popup';
+    protected const DYNAMIC_INTERNAL_URL = 'internal-url';
+    protected const DYNAMIC_POPUP = 'popup';
 
     protected array $elements;
     protected string $id;
@@ -98,11 +100,18 @@ abstract class ElementAbstract implements Element {
     ): static {
         $arrayHelper = new ArrayHelper();
         $result = clone $this;
+        $contentType = $content->getType() === ContentTypeHelper::CONTENT_TYPE_POST ?
+            $externalContentElementor->getWpProxy()->get_post_type($content->getId()) :
+            $content->getType();
+        if ($contentType === false) {
+            $this->getLogger()->debug("Unable to get post type for contentId={$content->getId()}, proceeding with unknown type");
+            $contentType = ContentTypeHelper::CONTENT_TYPE_UNKNOWN;
+        }
         $targetId = $externalContentElementor->getTargetId(
             $submission->getSourceBlogId(),
             $content->getId(),
             $submission->getTargetBlogId(),
-            $content->getType(),
+            $contentType,
         );
         if ($targetId !== null) {
             $result->raw = array_replace_recursive(
@@ -166,13 +175,14 @@ abstract class ElementAbstract implements Element {
         return str_contains($path, self::SETTING_KEY_DYNAMIC);
     }
 
-    public function getDynamicTagsManager(): ?Manager
+    public function getDynamicTagsManager(): DynamicTagsManagerShim|Manager
     {
         if (class_exists(Manager::class)) {
             return new Manager();
         }
         if (!defined('WP_PLUGIN_DIR')) {
-            return null;
+            $this->getLogger()->notice('Not in WordPress environment, will use shim for Elementor dynamic tags manager');
+            return new DynamicTagsManagerShim();
         }
         $managerPath = WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
         if (file_exists($managerPath)) {
@@ -180,31 +190,35 @@ abstract class ElementAbstract implements Element {
                 require_once $managerPath;
                 return new Manager();
             } catch (\Throwable $e) {
-                $this->getLogger()->notice('Unable to initialize Elementor dynamic tags manager, Elementor tags processing not available: ' . $e->getMessage());
+                $this->getLogger()->notice('Unable to initialize Elementor dynamic tags manager, will use shim: ' . $e->getMessage());
             }
         }
 
-        return null;
+        return new DynamicTagsManagerShim();
     }
 
+    // $value must be string to be converted back to tag
     public function replaceDynamicTagSetting(string $tag, string $value): string
     {
         $dynamicTagsManager = $this->getDynamicTagsManager();
-        if ($dynamicTagsManager === null) {
-            $this->getLogger()->info("Elementor dynamic tags manager not available, skip replacing tag=\"$tag\", value=\"$value\"");
-        }
         try {
             $tagData = $dynamicTagsManager->tag_text_to_tag_data($tag);
         } catch (\Throwable $e) {
             $this->getLogger()->warning("Unable to convert Elementor tagText=\"$tag\" to array, value=\"$value\": {$e->getMessage()}");
             return $tag;
         }
-        if (($tagData['name'] ?? '') !== self::SETTING_KEY_POPUP) {
-            $this->getLogger()->warning("Unknown Elementor tag encountered, skipping replacement, tagText=\"$tag\"");
-            return $tag;
+        switch ($tagData['name'] ?? '') {
+            case self::DYNAMIC_INTERNAL_URL:
+                $tagData['settings']['post_id'] = $value;
+                break;
+            case self::DYNAMIC_POPUP:
+                $tagData['settings'][self::DYNAMIC_POPUP] = $value;
+                break;
+            default:
+                $this->getLogger()->warning("Unknown Elementor tag encountered, skipping replacement, tagText=\"$tag\"");
+                return $tag;
         }
         try {
-            $tagData['settings'][self::SETTING_KEY_POPUP] = $value; // $value must be string in order to be converted back to tag
             $tagText = $dynamicTagsManager->tag_data_to_tag_text(...array_values($tagData));
             if ($tagText === '') {
                 $this->getLogger()->debug('No tag text returned by manager, fallback tag text creation');
@@ -215,6 +229,7 @@ abstract class ElementAbstract implements Element {
         } catch (\Throwable $e) {
             $this->getLogger()->warning("Unable to convert Elementor tag data to text: {$e->getMessage()}");
         }
+
         return $tag;
     }
 }

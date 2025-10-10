@@ -596,8 +596,10 @@ class ContentRelationsDiscoveryService
         if (isset($references[ContentTypeHelper::POST_TYPE_ATTACHMENT])) {
             $result[ContentTypeHelper::POST_TYPE_ATTACHMENT] = $references[ContentTypeHelper::POST_TYPE_ATTACHMENT];
         }
-        if (isset($references[ContentTypeHelper::CONTENT_TYPE_UNKNOWN])) {
-            $references[self::POST_BASED_PROCESSOR] = array_merge($references[self::POST_BASED_PROCESSOR] ?? [], $references[ContentTypeHelper::CONTENT_TYPE_UNKNOWN]);
+        foreach ([ContentTypeHelper::CONTENT_TYPE_POST, ContentTypeHelper::CONTENT_TYPE_UNKNOWN] as $contentType) {
+            if (isset($references[$contentType])) {
+                $references[self::POST_BASED_PROCESSOR] = array_merge($references[self::POST_BASED_PROCESSOR] ?? [], $references[$contentType]);
+            }
         }
 
         if (isset($references['MediaBasedProcessor'])) {

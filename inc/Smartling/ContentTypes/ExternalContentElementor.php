@@ -65,6 +65,11 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         parent::__construct($pluginHelper, $submissionManager, $wpProxy);
     }
 
+    public function getWpProxy(): WordpressFunctionProxyHelper
+    {
+        return $this->wpProxy;
+    }
+
     public function afterMetaWritten(SubmissionEntity $submission): void
     {
         if ($submission->getTargetId() === 0) {

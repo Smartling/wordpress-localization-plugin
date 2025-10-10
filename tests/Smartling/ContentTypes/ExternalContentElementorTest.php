@@ -13,7 +13,6 @@ use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\UserHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
@@ -75,7 +74,7 @@ class ExternalContentElementorTest extends TestCase {
                     'ea10189/image/alt' => '',
                 ],
                 [
-                    ContentRelationsDiscoveryService::POST_BASED_PROCESSOR => [19366],
+                    ContentTypeHelper::CONTENT_TYPE_POST => [19366],
                     ContentTypeHelper::POST_TYPE_ATTACHMENT => [597, 598],
                 ],
             ],
@@ -282,6 +281,13 @@ and management of:',
                         40,
                         41,
                         4830,
+                    ],
+                    ContentTypeHelper::CONTENT_TYPE_POST => [
+                        1618,
+                        2511,
+                        2408,
+                        17571,
+                        9935,
                     ],
                     ContentTypeHelper::CONTENT_TYPE_UNKNOWN => [
                         31885,
