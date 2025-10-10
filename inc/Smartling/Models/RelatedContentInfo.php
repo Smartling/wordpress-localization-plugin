@@ -55,7 +55,7 @@ class RelatedContentInfo {
             $return[$item->getType()][] = $item->getId();
         }
         foreach ($return as $key => $value) {
-            $return[$key] = array_unique($value);
+            $return[$key] = array_values(array_unique($value));
         }
 
         return $return;

@@ -46,7 +46,6 @@ class Unknown extends ElementAbstract {
         return $return;
     }
 
-
     public function getTranslatableStrings(): array
     {
         $return = [];
@@ -79,23 +78,21 @@ class Unknown extends ElementAbstract {
     {
         $return = [];
         $dynamicTagsManager = $this->getDynamicTagsManager();
-        if ($dynamicTagsManager !== null) {
-            foreach ($dynamic as $property => $value) {
-                try {
-                    $related = $dynamicTagsManager->parse_tag_text($value, [], function ($id, $name, $settings): ?Content {
-                        if (is_array($settings)) {
-                            return $this->getKnownDynamicContent($name, $settings);
-                        }
-
-                        return null;
-                    });
-                    if ($related !== null) {
-                        $return[] = new RelatedContentItem($related, $this->id, "$path/$property");
+        foreach ($dynamic as $property => $value) {
+            try {
+                $related = $dynamicTagsManager->parse_tag_text($value, [], function ($id, $name, $settings): ?Content {
+                    if (is_array($settings)) {
+                        return $this->getKnownDynamicContent($name, $settings);
                     }
-                } catch (\Throwable $e) {
-                    $this->getLogger()->notice("Failed to get related id for property=$property, tag=$value: {$e->getMessage()}");
-                    continue;
+
+                    return null;
+                });
+                if ($related !== null) {
+                    $return[] = new RelatedContentItem($related, $this->id, "$path/$property");
                 }
+            } catch (\Throwable $e) {
+                $this->getLogger()->notice("Failed to get related id for property=$property, tag=$value: {$e->getMessage()}");
+                continue;
             }
         }
 
