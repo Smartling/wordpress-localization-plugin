@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 4.3.7 =
-* Added support for Elementor internal url links
+* Added support for Elementor internal url links and dynamic featured images
 
 = 4.3.6 =
 * Improved replacement of attachment URLs in translated content by using WordPress built-in attachment_url_to_postid() function

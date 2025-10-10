@@ -89,7 +89,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                             'elements' => json_decode($this->getDataFromPostMeta($submission->getTargetId()),
                                 true,
                                 512,
-                                JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT),
+                                JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE),
                             'status' => $this->wpProxy->get_post($submission->getTargetId())->post_status,
                         ]);
                     } catch (\Throwable $e) {
