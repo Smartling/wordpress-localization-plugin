@@ -4,7 +4,7 @@ namespace Smartling\Models;
 
 class RelatedContentItem
 {
-    function __construct(private Content $content, private string $containerId, private string $path)
+    public function __construct(private Content $content, private string $containerId, private string $path)
     {
     }
 
