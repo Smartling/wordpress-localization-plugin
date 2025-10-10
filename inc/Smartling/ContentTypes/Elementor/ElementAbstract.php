@@ -175,13 +175,14 @@ abstract class ElementAbstract implements Element {
         return str_contains($path, self::SETTING_KEY_DYNAMIC);
     }
 
-    public function getDynamicTagsManager(): DynamicTagManager|Manager|null
+    public function getDynamicTagsManager(): DynamicTagsManagerShim|Manager
     {
         if (class_exists(Manager::class)) {
             return new Manager();
         }
         if (!defined('WP_PLUGIN_DIR')) {
-            return null;
+            $this->getLogger()->notice('Not in WordPress environment, will use shim for Elementor dynamic tags manager');
+            return new DynamicTagsManagerShim();
         }
         $managerPath = WP_PLUGIN_DIR . '/elementor/core/dynamic-tags/manager.php';
         if (file_exists($managerPath)) {
@@ -189,21 +190,17 @@ abstract class ElementAbstract implements Element {
                 require_once $managerPath;
                 return new Manager();
             } catch (\Throwable $e) {
-                $this->getLogger()->notice('Unable to initialize Elementor dynamic tags manager, Elementor tags processing not available: ' . $e->getMessage());
+                $this->getLogger()->notice('Unable to initialize Elementor dynamic tags manager, will use shim: ' . $e->getMessage());
             }
         }
 
-        return null;
+        return new DynamicTagsManagerShim();
     }
 
     // $value must be string to be converted back to tag
     public function replaceDynamicTagSetting(string $tag, string $value): string
     {
         $dynamicTagsManager = $this->getDynamicTagsManager();
-        if ($dynamicTagsManager === null) {
-            $this->getLogger()->info("Elementor dynamic tags manager not available, skip replacing tag=\"$tag\", value=\"$value\"");
-            return $tag;
-        }
         try {
             $tagData = $dynamicTagsManager->tag_text_to_tag_data($tag);
         } catch (\Throwable $e) {
