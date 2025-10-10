@@ -283,7 +283,11 @@ and management of:',
                         4830,
                     ],
                     ContentTypeHelper::CONTENT_TYPE_POST => [
-
+                        1618,
+                        2511,
+                        2408,
+                        17571,
+                        9935,
                     ],
                     ContentTypeHelper::CONTENT_TYPE_UNKNOWN => [
                         31885,
