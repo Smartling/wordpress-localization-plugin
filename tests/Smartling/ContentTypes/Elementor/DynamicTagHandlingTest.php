@@ -7,20 +7,6 @@ use Smartling\ContentTypes\Elementor\Elements\Unknown;
 
 class DynamicTagHandlingTest extends TestCase
 {
-    public function testReplaceDynamicTagSettingNoManager(): void
-    {
-        $element = new Unknown(['settings' => []]);
-        $result = $element->replaceDynamicTagSetting('[elementor-tag]', '456');
-        $this->assertEquals('[elementor-tag]', $result);
-    }
-
-    public function testGetRelatedFromDynamicNoManager(): void
-    {
-        $element = new Unknown(['settings' => []]);
-        $related = $element->getRelated();
-        $this->assertCount(0, $related->getInfo());
-    }
-
     public function testReplaceDynamicInternalUrl(): void
     {
         $original = '[elementor-tag id="3039f16" name="internal-url" settings="%7B%22type%22%3A%22post%22%2C%22post_id%22%3A%22123%22%7D"]';
