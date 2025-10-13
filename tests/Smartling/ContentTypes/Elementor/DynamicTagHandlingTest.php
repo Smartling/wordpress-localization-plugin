@@ -25,6 +25,10 @@ class DynamicTagHandlingTest extends TestCase
     {
         $original = '[elementor-tag id="" name="post-featured-image" settings="%7B%22fallback%22%3A%7B%22url%22%3A%22http%3A%2F%2Ftest.com%2Fwp-content%2Fuploads%2F2025%2F10%2FImage.webp%22%2C%22id%22%3A123%2C%22size%22%3A%22%22%2C%22alt%22%3A%22%22%2C%22source%22%3A%22library%22%7D%7D"]';
         $result = (new Unknown())->replaceDynamicTagSetting($original, '456');
-        $this->assertEquals(str_replace('123', '456', $original), $result);
+        // simple replacement doesn't work, slashes in url need to be escaped
+        $this->assertEquals(
+            '[elementor-tag id="" name="post-featured-image" settings="%7B%22fallback%22%3A%7B%22url%22%3A%22http%3A%5C%2F%5C%2Ftest.com%5C%2Fwp-content%5C%2Fuploads%5C%2F2025%5C%2F10%5C%2FImage.webp%22%2C%22id%22%3A456%2C%22size%22%3A%22%22%2C%22alt%22%3A%22%22%2C%22source%22%3A%22library%22%7D%7D"]',
+            $result,
+        );
     }
 }
