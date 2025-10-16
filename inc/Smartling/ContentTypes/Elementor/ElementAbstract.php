@@ -115,6 +115,9 @@ abstract class ElementAbstract implements Element {
             $contentType,
         );
         if ($targetId !== null) {
+            if (is_string($this->getSettingByKey($path, $this->raw ?? []))) {
+                $targetId = (string)$targetId;
+            }
             $result->raw = array_replace_recursive(
                 $result->raw,
                 $arrayHelper->structurize([$path => $this->isDynamicProperty($path)
