@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 4.3.8 =
 * Added support for the Elementor Loop Carousel element
+* Added support for the Elementor Image Gallery element
 
 = 4.3.7 =
 * Added support for Elementor internal url links and dynamic featured images
