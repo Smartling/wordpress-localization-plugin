@@ -2,6 +2,8 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
+use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingTestRunCheckFailedException;
 use Smartling\Models\GutenbergBlock;
 use Smartling\Submissions\SubmissionEntity;
@@ -9,13 +11,11 @@ use Smartling\Submissions\SubmissionEntity;
 class TestRunHelper
 {
     public const TEST_RUN_BLOG_ID_SETTING_NAME = 'smartling_TestRunBlogId';
-    private SiteHelper $siteHelper;
-    private GutenbergBlockHelper $gutenbergBlockHelper;
 
-    public function __construct(SiteHelper $siteHelper, GutenbergBlockHelper $gutenbergBlockHelper)
-    {
-        $this->siteHelper = $siteHelper;
-        $this->gutenbergBlockHelper = $gutenbergBlockHelper;
+    public function __construct(
+        private ContentHelper $contentHelper,
+        private GutenbergBlockHelper $gutenbergBlockHelper,
+    ) {
     }
 
     public static function isTestRunBlog(int $id): bool
@@ -25,24 +25,24 @@ class TestRunHelper
 
     public function checkDownloadedSubmission(SubmissionEntity $submission): void
     {
-        $original = $this->siteHelper->withBlog($submission->getSourceBlogId(), function () use ($submission) {
-            return get_post($submission->getSourceId());
-        });
-        if (!$original instanceof \WP_Post) {
-            throw new SmartlingTestRunCheckFailedException("Unable to get source post while checking test run download blogId={$submission->getSourceBlogId()}, postId={$submission->getSourceId()}");
+        try {
+            $original = $this->contentHelper->readSourceContent($submission);
+        } catch (EntityNotFoundException) {
+            throw new SmartlingTestRunCheckFailedException("Unable to get source content while checking test run download blogId={$submission->getSourceBlogId()}, postId={$submission->getSourceId()}");
         }
-        $target = $this->siteHelper->withBlog($submission->getTargetBlogId(), function () use ($submission) {
-            return get_post($submission->getTargetId());
-        });
-        if (!$target instanceof \WP_Post) {
-            throw new SmartlingTestRunCheckFailedException("Unable to get target post while checking test run download blogId={$submission->getTargetBlogId()}, postId={$submission->getTargetId()}");
+        try {
+            $target = $this->contentHelper->readTargetContent($submission);
+        } catch (EntityNotFoundException) {
+            throw new SmartlingTestRunCheckFailedException("Unable to get target content while checking test run download blogId={$submission->getTargetBlogId()}, postId={$submission->getTargetId()}");
         }
-        $sourceBlocks = $this->gutenbergBlockHelper->getPostContentBlocks($original->post_content);
-        $targetBlocks = $this->gutenbergBlockHelper->getPostContentBlocks($target->post_content);
-        if (count($sourceBlocks) !== count($targetBlocks)) {
-            throw new SmartlingTestRunCheckFailedException("Source and target block count does not match");
+        if ($original instanceof PostEntityStd && $target instanceof PostEntityStd) {
+            $sourceBlocks = $this->gutenbergBlockHelper->getPostContentBlocks($original->post_content);
+            $targetBlocks = $this->gutenbergBlockHelper->getPostContentBlocks($target->post_content);
+            if (count($sourceBlocks) !== count($targetBlocks)) {
+                throw new SmartlingTestRunCheckFailedException("Source and target block count does not match");
+            }
+            $this->assertBlockStructureSame($sourceBlocks, $targetBlocks);
         }
-        $this->assertBlockStructureSame($sourceBlocks, $targetBlocks);
     }
 
     /**

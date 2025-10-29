@@ -107,6 +107,9 @@ class ContentHelper
         return $clone;
     }
 
+    /**
+     * @throws EntityNotFoundException
+     */
     public function readTargetContent(SubmissionEntity $submission): Entity
     {
         $wrapper = $this->getWrapper($submission->getContentType());
