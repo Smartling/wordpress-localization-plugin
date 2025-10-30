@@ -1,6 +1,6 @@
 === Smartling Connector ===
 Contributors: smartling
-Tags: translation, localization, multilingual, internationalization, automation
+Tags: translation, localization, multilingual, internationalization, smartling
 Requires at least: 5.5
 Tested up to: 6.6.2
 Requires PHP: 8.0
