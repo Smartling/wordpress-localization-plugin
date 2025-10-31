@@ -321,7 +321,7 @@ services:
   test.run.helper:
     class: Smartling\Helpers\TestRunHelper
     arguments:
-      - "@site.helper"
+      - "@content.helper"
       - "@helper.gutenberg"
 
   wp.link.helper:

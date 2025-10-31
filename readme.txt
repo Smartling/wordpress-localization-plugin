@@ -1,10 +1,10 @@
 === Smartling Connector ===
 Contributors: smartling
-Tags: translation, localization, localisation, translate, multilingual, smartling, internationalization, internationalisation, automation, international
+Tags: translation, localization, multilingual, internationalization, smartling
 Requires at least: 5.5
 Tested up to: 6.6.2
 Requires PHP: 8.0
-Stable tag: 4.4.0
+Stable tag: 4.4.1
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 4.4.1 =
+* Added possibility to clear the test run flag regardless of the test run status
+* Fixed test run erroneously flagging taxonomy submissions as failed
+
 = 4.4.0 =
 * Added support for the Elementor Loop Carousel element
 * Added support for the Elementor Image Gallery element
