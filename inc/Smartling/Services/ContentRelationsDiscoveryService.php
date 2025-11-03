@@ -570,22 +570,6 @@ class ContentRelationsDiscoveryService
 
         $responseData = new DetectedRelations($detectedReferences);
 
-        foreach ($targetBlogIds as $targetBlogId) {
-            foreach ($detectedReferences as $detectedContentType => $ids) {
-                if (in_array($detectedContentType, array_merge($this->contentTypeManager->getRegisteredContentTypes(), $this->externalContentManager->getExternalContentTypes()), true)) {
-                    foreach ($ids as $detectedId) {
-                        if (!$this->submissionManager->submissionExistsNoLastError($detectedContentType, $curBlogId, $detectedId, $targetBlogId)) {
-                            $responseData->addMissingReference($targetBlogId, $detectedContentType, $detectedId);
-                        } else {
-                            $this->getLogger()->debug("Skipped adding relatedId=$detectedId for sourceContentId=$id, blogId=$targetBlogId: submission exists");
-                        }
-                    }
-                } else {
-                    $this->getLogger()->debug("Excluded $detectedContentType from related submissions, type not in registered or external types");
-                }
-            }
-        }
-
         return $responseData;
     }
 

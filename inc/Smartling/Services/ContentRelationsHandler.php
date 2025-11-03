@@ -25,12 +25,6 @@ use Smartling\Models\UserTranslationRequest;
  *              "page":[2],
  *              "post_tag":[13,14],
  *              "category":[1]
- *          },
- *          "missingTranslatedReferences":{
- *              "2":{"attachment":[244,232,231]},
- *              "3":{"attachment":[244,232,26,231]},
- *              "4":{"attachment":[244,232,26,231],"post":[1],"post_tag":[13,14]},
- *              "5":{"attachment":[244,232,26,231],"post_tag":[13,14]}
  *          }
  *      }
  *  }

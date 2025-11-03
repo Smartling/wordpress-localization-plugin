@@ -238,12 +238,11 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         ]);
         $expectedThumbId = -1;
         $thumbId = get_post_thumbnail_id($postId);
-        $this->assertArrayHasKey($cloneBlogId, $relations->getMissingReferences());
-        $this->assertArrayHasKey(ContentTypeHelper::POST_TYPE_ATTACHMENT, $relations->getMissingReferences()[$cloneBlogId]);
-        $this->assertCount($imagesPerPost, $relations->getMissingReferences()[$cloneBlogId][ContentTypeHelper::POST_TYPE_ATTACHMENT]);
+        $this->assertArrayHasKey(ContentTypeHelper::POST_TYPE_ATTACHMENT, $relations->getOriginalReferences());
+        $this->assertCount($imagesPerPost, $relations->getOriginalReferences()[ContentTypeHelper::POST_TYPE_ATTACHMENT]);
         #region cloning
         $imageSubmissions = [];
-        foreach ($relations->getMissingReferences()[$cloneBlogId][ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
+        foreach ($relations->getOriginalReferences()[ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
             $submission = $this->uploadDownload($this->createSubmissionForCloning(ContentTypeHelper::POST_TYPE_ATTACHMENT, $imageId));
             $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
             $this->assertNotEquals(0, $submission->getTargetId());
@@ -267,7 +266,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         #endregion
         #region translation
         $imageSubmissions = [];
-        foreach ($relations->getMissingReferences()[$translationBlogId][ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
+        foreach ($relations->getOriginalReferences()[ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
             $submission = $this->uploadDownload($this->createSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $imageId));
             $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
             $this->assertNotEquals(0, $submission->getTargetId());

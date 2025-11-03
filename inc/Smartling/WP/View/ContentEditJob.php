@@ -28,8 +28,8 @@ $needWrapper = ($tag instanceof WP_Term);
 
 <script>
     const isBulkSubmitPage = <?= $isBulkSubmitPage ? 'true' : 'false'?>;
-    let l1Relations = {missingTranslatedReferences: {}, originalReferences: {}};
-    let l2Relations = {missingTranslatedReferences: {}, originalReferences: {}};
+    let l1Relations = {originalReferences: {}};
+    let l2Relations = {originalReferences: {}};
     let globalButton;
 </script>
 
@@ -141,7 +141,7 @@ $needWrapper = ($tag instanceof WP_Term);
                                 </td>
                             </tr>
                             <tr id="relationsInfo">
-                                <th>New content to be uploaded:</th>
+                                <th>Related content to be uploaded:</th>
                                 <td id="relatedContent">
                                 </td>
                             </tr>
@@ -387,38 +387,27 @@ if ($post instanceof WP_Post) {
                 minDate: 0
             });
 
-            const mergeRelations = function mergeRelations(a, b) {
-                a = a || {};
-                b = b || {};
-                const result = JSON.parse(JSON.stringify(a));
-                for (const blogId in b) {
-                    if (!result.hasOwnProperty(blogId)) {
-                        result[blogId] = {};
-                    }
-                    for (const type in b[blogId]) {
-                        if (!result[blogId].hasOwnProperty(type)) {
-                            result[blogId][type] = [];
-                        }
-                        result[blogId][type] = result[blogId][type].concat(b[blogId][type]).filter((value, index, self) => self.indexOf(value) === index);
-                    }
-                }
-
-                return result;
-            }
-
             const recalculateRelations = function recalculateRelations() {
-                $("#relatedContent").html("");
+                const relatedContent = $("#relatedContent");
+                relatedContent.html("");
                 const relations = {};
-                let missingRelations = {};
+                let allRelations = {};
                 const cloneDepth = $('#cloneDepth').val();
                 switch (cloneDepth) {
                     case "0":
                         return;
                     case "1":
-                        missingRelations = l1Relations.missingTranslatedReferences;
+                        allRelations = l1Relations.originalReferences;
                         break;
                     case "2":
-                        missingRelations = mergeRelations(l1Relations.missingTranslatedReferences, l2Relations.missingTranslatedReferences);
+                        allRelations = {...l1Relations.originalReferences};
+                        for (const type in l2Relations.originalReferences) {
+                            if (allRelations[type]) {
+                                allRelations[type] = [...new Set([...allRelations[type], ...l2Relations.originalReferences[type]])];
+                            } else {
+                                allRelations[type] = l2Relations.originalReferences[type];
+                            }
+                        }
                         break;
                     default:
                         console.error(`Unsupported clone depth value: ${cloneDepth}`);
@@ -430,20 +419,17 @@ if ($post instanceof WP_Post) {
                     }
                     return html;
                 };
-                $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
-                    const blogId = this.dataset.blogId;
-                    if (missingRelations && missingRelations.hasOwnProperty(blogId)) {
-                        for (const sysType in missingRelations[blogId]) {
-                            let sysCount = missingRelations[blogId][sysType].length;
-                            if (relations.hasOwnProperty(sysType)) {
-                                relations[sysType] += sysCount;
-                            } else {
-                                relations[sysType] = sysCount;
-                            }
-                            $("#relatedContent").html(buildRelationsHint(relations));
+                if (allRelations && Object.keys(allRelations).length > 0) {
+                    for (const sysType in allRelations) {
+                        let sysCount = allRelations[sysType].length;
+                        if (relations.hasOwnProperty(sysType)) {
+                            relations[sysType] += sysCount;
+                        } else {
+                            relations[sysType] = sysCount;
                         }
                     }
-                });
+                    relatedContent.html(buildRelationsHint(relations));
+                }
             };
 
             const loadRelations = function loadRelations(contentType, contentId, level = 1) {
@@ -464,16 +450,10 @@ if ($post instanceof WP_Post) {
                             case 2:
                                 const originalReferences = data.response.data.originalReferences;
                                 for (const relatedType in originalReferences) {
-                                    for (const relatedId of originalReferences[relatedType]) {
-                                        if (!l2Relations.originalReferences.hasOwnProperty(relatedType)) {
-                                            l2Relations.originalReferences[relatedType] = [];
-                                        }
-                                        l2Relations.originalReferences[relatedType] = l2Relations.originalReferences[relatedType].concat(originalReferences[relatedType]);
+                                    if (!l2Relations.originalReferences.hasOwnProperty(relatedType)) {
+                                        l2Relations.originalReferences[relatedType] = [];
                                     }
-                                    l2Relations.missingTranslatedReferences = mergeRelations(
-                                        l2Relations.missingTranslatedReferences,
-                                        data.response.data.missingTranslatedReferences,
-                                    );
+                                    l2Relations.originalReferences[relatedType] = l2Relations.originalReferences[relatedType].concat(originalReferences[relatedType]);
                                 }
                                 break;
                         }
@@ -547,12 +527,29 @@ if ($post instanceof WP_Post) {
                 };
 
                 if (!isBulkSubmitPage) {
+                    const prepareRequest = (originalRefs) => {
+                        const result = {};
+                        $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
+                            const blogId = this.dataset.blogId;
+                            result[blogId] = originalRefs;
+                        });
+                        return result;
+                    };
+
                     switch ($('#cloneDepth').val()) {
                         case "1":
-                            data.relations = {1: l1Relations.missingTranslatedReferences};
+                            data.relations = {1: prepareRequest(l1Relations.originalReferences)};
                             break;
                         case "2":
-                            data.relations = {1: l1Relations.missingTranslatedReferences, 2: l2Relations.missingTranslatedReferences}
+                            const mergedOriginal = {...l1Relations.originalReferences};
+                            for (const type in l2Relations.originalReferences) {
+                                if (mergedOriginal[type]) {
+                                    mergedOriginal[type] = [...new Set([...mergedOriginal[type], ...l2Relations.originalReferences[type]])];
+                                } else {
+                                    mergedOriginal[type] = l2Relations.originalReferences[type];
+                                }
+                            }
+                            data.relations = {1: prepareRequest(l1Relations.originalReferences), 2: prepareRequest(l2Relations.originalReferences)};
                             break;
                     }
                 }

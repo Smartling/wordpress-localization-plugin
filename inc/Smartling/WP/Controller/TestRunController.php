@@ -187,10 +187,12 @@ class TestRunController extends WPAbstract implements WPHookInterface
             if (!$post instanceof \WP_Post) {
                 wp_send_json_error('Unable to get posts');
             }
+            $originalRefs = $this->contentRelationDiscoveryService->getRelations($post->post_type, $post->ID, [$targetBlogId])->getOriginalReferences();
+            $transformedRefs = [$targetBlogId => $originalRefs];
             $this->contentRelationDiscoveryService->createSubmissions(new UserTranslationRequest(
                 $post->ID,
                 $post->post_type,
-                $this->contentRelationDiscoveryService->getRelations($post->post_type, $post->ID, [$targetBlogId])->getMissingReferences(),
+                $transformedRefs,
                 [$targetBlogId],
                 new JobInformation($job->getJobUid(), true, $job->getJobName(), 'Test run job', '', 'UTC'),
                 [],
