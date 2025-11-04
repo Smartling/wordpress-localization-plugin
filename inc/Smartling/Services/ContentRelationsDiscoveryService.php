@@ -217,14 +217,12 @@ class ContentRelationsDiscoveryService
 
         $relatedIds = [];
         try {
-            foreach ($request->getRelationsOrdered() as $relations) {
-                foreach ($relations as $content) {
-                    foreach ($content as $contentType => $contentIds) {
-                        if (!array_key_exists($contentType, $relatedIds)) {
-                            $relatedIds[$contentType] = [];
-                        }
-                        $relatedIds[$contentType] = array_merge($relatedIds[$contentType], $contentIds);
+            foreach ($request->getRelationsOrdered() as $content) {
+                foreach ($content as $contentType => $contentIds) {
+                    if (!array_key_exists($contentType, $relatedIds)) {
+                        $relatedIds[$contentType] = [];
                     }
+                    $relatedIds[$contentType] = array_merge($relatedIds[$contentType], $contentIds);
                 }
             }
             foreach ($relatedIds as $contentType => $contentIds) {
@@ -568,9 +566,7 @@ class ContentRelationsDiscoveryService
         $detectedReferences = $this->normalizeReferences($detectedReferences);
         $this->getLogger()->debug('References after normalizing: ' . json_encode($detectedReferences));
 
-        $responseData = new DetectedRelations($detectedReferences);
-
-        return $responseData;
+        return new DetectedRelations($detectedReferences);
     }
 
     public function normalizeReferences(array $references): array
@@ -666,17 +662,16 @@ class ContentRelationsDiscoveryService
     {
         $sources = [];
 
-        foreach ($request->getRelationsOrdered() as $relationSet) {
-            foreach (($relationSet[$targetBlogId] ?? []) as $type => $ids) {
-                foreach ($ids as $id) {
-                    if ($id === $request->getContentId() && $type === $request->getContentType()) {
-                        $this->getLogger()->info("Related list contains reference to root content, skip adding sourceId=$id, contentType=$type to sources list");
-                    } else {
-                        $sources[] = [
-                            'id' => $id,
-                            'type' => $type,
-                        ];
-                    }
+        $relationSet = $request->getRelationsOrdered();
+        foreach (($relationSet[$targetBlogId] ?? []) as $type => $ids) {
+            foreach ($ids as $id) {
+                if ($id === $request->getContentId() && $type === $request->getContentType()) {
+                    $this->getLogger()->info("Related list contains reference to root content, skip adding sourceId=$id, contentType=$type to sources list");
+                } else {
+                    $sources[] = [
+                        'id' => $id,
+                        'type' => $type,
+                    ];
                 }
             }
         }

@@ -538,7 +538,7 @@ if ($post instanceof WP_Post) {
 
                     switch ($('#cloneDepth').val()) {
                         case "1":
-                            data.relations = {1: prepareRequest(l1Relations.originalReferences)};
+                            data.relations = prepareRequest(l1Relations.originalReferences);
                             break;
                         case "2":
                             const mergedOriginal = {...l1Relations.originalReferences};
@@ -549,7 +549,7 @@ if ($post instanceof WP_Post) {
                                     mergedOriginal[type] = l2Relations.originalReferences[type];
                                 }
                             }
-                            data.relations = {1: prepareRequest(l1Relations.originalReferences), 2: prepareRequest(l2Relations.originalReferences)};
+                            data.relations = prepareRequest(mergedOriginal);
                             break;
                     }
                 }
