@@ -46,8 +46,9 @@ class CloneTest extends SmartlingUnitTestCaseAbstract {
             ],
         ], function () use ($childPostId, $imageId, $relationsDiscoveryService, $rootPostId, $targetBlogId) {
             $references = $relationsDiscoveryService->getRelations('post', $rootPostId, [$targetBlogId]);
-            $this->assertCount(1, $references->getReferences()['post']);
-            $this->assertEquals($childPostId, $references->getReferences()['post'][0]);
+            $postReferences = array_filter($references->getReferences(), fn($rel) => $rel->getContentType() === 'post');
+            $this->assertCount(1, $postReferences);
+            $this->assertEquals($childPostId, $postReferences[0]->getId());
             $relationsDiscoveryService->clone(new UserCloneRequest($rootPostId, 'post', [
                 1 => [$targetBlogId => ['post' => [$childPostId]]],
                 2 => [$targetBlogId => ['attachment' => [$imageId]]],

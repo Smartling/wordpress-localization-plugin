@@ -27,9 +27,7 @@ class DetectedRelations
     {
         return [
             self::REFERENCES_KEY =>
-                array_map(static function (DetectedRelation $relation) {
-                    return $relation->toArray();
-                }, $this->references),
+                array_map(static fn(DetectedRelation $relation) => $relation->toArray(), $this->references),
         ];
     }
 }
