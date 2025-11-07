@@ -36,6 +36,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Models\IntegerIterator;
 use Smartling\Models\UserCloneRequest;
+use Smartling\Models\DetectedRelation;
 use Smartling\Models\DetectedRelations;
 use Smartling\Models\GutenbergBlock;
 use Smartling\Models\UserTranslationRequest;
@@ -566,7 +567,7 @@ class ContentRelationsDiscoveryService
         $detectedReferences = $this->normalizeReferences($detectedReferences);
         $this->getLogger()->debug('References after normalizing: ' . json_encode($detectedReferences));
 
-        return new DetectedRelations($detectedReferences);
+        return new DetectedRelations($this->getRelationObjects($detectedReferences, $targetBlogIds, $curBlogId));
     }
 
     public function normalizeReferences(array $references): array
@@ -747,5 +748,60 @@ class ContentRelationsDiscoveryService
         }
 
         return $result;
+    }
+
+    private function getRelationObjects(array $detectedReferences, array $targetBlogIds, int $currentBlogId): array
+    {
+        $detectedRelations = [];
+        foreach ($detectedReferences as $type => $ids) {
+            foreach ($ids as $id) {
+                $submissions = $this->submissionManager->find([
+                    SubmissionEntity::FIELD_CONTENT_TYPE => $type,
+                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
+                    SubmissionEntity::FIELD_SOURCE_ID => $id,
+                    SubmissionEntity::FIELD_TARGET_BLOG_ID => $targetBlogIds,
+                ]);
+                $status = SubmissionEntity::SUBMISSION_STATUS_COMPLETED;
+                if (count($submissions) !== count($targetBlogIds)) {
+                    $status = SubmissionEntity::SUBMISSION_STATUS_NEW;
+                } else {
+                    foreach ($submissions as $submission) {
+                        if ($submission->getStatus() !== SubmissionEntity::SUBMISSION_STATUS_COMPLETED) {
+                            $status = SubmissionEntity::SUBMISSION_STATUS_NEW;
+                            break;
+                        }
+                    }
+                }
+
+                $title = '';
+                $url = '';
+                $thumbnailUrl = '';
+                try {
+                    switch ($type) {
+                        /** @noinspection PhpMissingBreakStatementInspection */
+                        case 'attachment':
+                            $thumbnailUrl = $this->wordpressProxy->wp_get_attachment_image_url($id) ?: '';
+                            // fallthrough intentional
+                        case 'page':
+                        case 'post':
+                            $title = $this->wordpressProxy->get_post($id)->post_title;
+                            $url = $this->wordpressProxy->get_edit_post_link($id);
+                            break;
+                        default:
+                            $term = $this->wordpressProxy->get_term($id);
+                            if ($term instanceof \WP_Term) {
+                                $title = $term->name;
+                                $url = $this->wordpressProxy->get_edit_term_link($id, $type);
+                            }
+                    }
+                } catch (\Exception) {
+                    // Ignore errors, use empty title/url/thumbnailUrl
+                }
+
+                $detectedRelations[] = new DetectedRelation($type, $id, $status, $title, $url, $thumbnailUrl);
+            }
+        }
+
+        return $detectedRelations;
     }
 }

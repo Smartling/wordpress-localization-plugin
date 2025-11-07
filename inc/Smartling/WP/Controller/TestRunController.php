@@ -191,7 +191,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
                 $post->ID,
                 $post->post_type,
                 [$targetBlogId => $this->contentRelationDiscoveryService
-                    ->getRelations($post->post_type, $post->ID, [$targetBlogId])->getOriginalReferences()],
+                    ->getRelations($post->post_type, $post->ID, [$targetBlogId])->getReferences()],
                 [$targetBlogId],
                 new JobInformation($job->getJobUid(), true, $job->getJobName(), 'Test run job', '', 'UTC'),
                 [],
