@@ -2,7 +2,6 @@
 
 namespace IntegrationTests\tests;
 
-use Smartling\ApiWrapper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Jobs\JobEntity;
@@ -46,12 +45,14 @@ class CloneTest extends SmartlingUnitTestCaseAbstract {
             ],
         ], function () use ($childPostId, $imageId, $relationsDiscoveryService, $rootPostId, $targetBlogId) {
             $references = $relationsDiscoveryService->getRelations('post', $rootPostId, [$targetBlogId]);
-            $postReferences = array_filter($references->getReferences(), fn($rel) => $rel->getContentType() === 'post');
+            $postReferences = array_filter($references->getReferences(), static fn($rel) => $rel->getContentType() === 'post');
             $this->assertCount(1, $postReferences);
             $this->assertEquals($childPostId, $postReferences[0]->getId());
             $relationsDiscoveryService->clone(new UserCloneRequest($rootPostId, 'post', [
-                1 => [$targetBlogId => ['post' => [$childPostId]]],
-                2 => [$targetBlogId => ['attachment' => [$imageId]]],
+                $targetBlogId => [
+                    'post' => [$childPostId],
+                    'attachment' => [$imageId],
+                ],
             ], [$targetBlogId]));
             $this->executeUpload();
         });

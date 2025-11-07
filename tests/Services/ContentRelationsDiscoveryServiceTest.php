@@ -889,11 +889,9 @@ namespace Smartling\Tests\Services {
             $references = $relations->getReferences();
             $this->assertCount(2, $references);
 
-            // Check first relation (post_parent)
             $this->assertEquals($contentType, $references[0]->getContentType());
             $this->assertEquals($postParentId, $references[0]->getId());
 
-            // Check second relation (related content)
             $this->assertEquals($contentType, $references[1]->getContentType());
             $this->assertEquals($relatedPostId, $references[1]->getId());
         }
