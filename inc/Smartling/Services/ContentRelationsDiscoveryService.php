@@ -798,6 +798,11 @@ class ContentRelationsDiscoveryService
                     // Ignore errors, use empty title/url/thumbnailUrl
                 }
 
+                if ($url === null) {
+                    $this->getLogger()->debug("Unable to get url for contentType=\"$type\" id=\"$id\"");
+                    $url = '';
+                }
+
                 $detectedRelations[] = new DetectedRelation($type, $id, $status, $title, $url, $thumbnailUrl);
             }
         }
