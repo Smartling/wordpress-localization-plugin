@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 5.0.0 =
-* Related assets will now be processed for translation when the content is submitted from the widget, even if they were previously sent for translation
+* Added Related assets UI to allow precise control over related content submission from the widget
 
 = 4.4.1 =
 * Added possibility to clear the test run flag regardless of the test run status
