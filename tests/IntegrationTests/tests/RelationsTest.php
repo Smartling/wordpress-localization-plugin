@@ -239,14 +239,16 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         ]);
         $expectedThumbId = -1;
         $thumbId = get_post_thumbnail_id($postId);
-        $this->assertCount($imagesPerPost, array_filter(
+        $attachmentRelations = array_filter(
             $relations->getReferences(),
-            static fn(DetectedRelation $relation) => $relation->getContentType() === ContentTypeHelper::POST_TYPE_ATTACHMENT),
+            static fn(DetectedRelation $relation) => $relation->getContentType() === ContentTypeHelper::POST_TYPE_ATTACHMENT,
         );
+        $this->assertCount($imagesPerPost, $attachmentRelations);
         #region cloning
         $imageSubmissions = [];
-        foreach ($relations->getReferences()[ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
-            $submission = $this->uploadDownload($this->createSubmissionForCloning(ContentTypeHelper::POST_TYPE_ATTACHMENT, $imageId));
+        foreach ($attachmentRelations as $relation) {
+            $this->assertInstanceOf(DetectedRelation::class, $relation);
+            $submission = $this->uploadDownload($this->createSubmissionForCloning(ContentTypeHelper::POST_TYPE_ATTACHMENT, $relation->getId()));
             $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
             $this->assertNotEquals(0, $submission->getTargetId());
             if ($submission->getSourceId() !== $thumbId) {
@@ -269,8 +271,9 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         #endregion
         #region translation
         $imageSubmissions = [];
-        foreach ($relations->getReferences()[ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
-            $submission = $this->uploadDownload($this->createSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $imageId));
+        foreach ($attachmentRelations as $relation) {
+            $this->assertInstanceOf(DetectedRelation::class, $relation);
+            $submission = $this->uploadDownload($this->createSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $relation->getId()));
             $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
             $this->assertNotEquals(0, $submission->getTargetId());
             if ($submission->getSourceId() !== $thumbId) {
