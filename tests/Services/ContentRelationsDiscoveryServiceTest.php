@@ -212,10 +212,7 @@ namespace Smartling\Tests\Services {
                         'authorize' => 'true',
                     ],
                 'targetBlogIds' => $targetBlogId,
-                'relations' => [
-                    1 => [$targetBlogId => ['post' => [17]]],
-                    2 => [$targetBlogId => ['attachment' => [23]]],
-                ],
+                'relations' => [$targetBlogId => ['post' => [17], 'attachment' => [23]]],
             ]));
         }
         public function testBulkSubmitHandler()
@@ -526,7 +523,6 @@ namespace Smartling\Tests\Services {
             $this->prepareDependencyInjection(VirtualEntityAbstract::class);
 
             $contentType = 'post';
-            $cloneLevel1 = 1;
             $childPostId = 2;
             $rootPostId = 1;
             $sourceBlogId = 1;
@@ -564,7 +560,7 @@ namespace Smartling\Tests\Services {
                 $submissionManager,
                 wpProxy: $wpProxy,
             );
-            $x->clone(new UserCloneRequest($rootPostId, $contentType, [$cloneLevel1 => [$targetBlogId => [$contentType => [$childPostId]]]], [$targetBlogId]));
+            $x->clone(new UserCloneRequest($rootPostId, $contentType, [$targetBlogId => [$contentType => [$childPostId]]], [$targetBlogId]));
 
             $this->restoreDependencyInjection();
         }
@@ -657,7 +653,9 @@ namespace Smartling\Tests\Services {
             $x->method('getBackwardRelatedTaxonomies')->willReturn([]);
 
             $relations = $x->getRelations('post', 1, [$targetBlogId]);
-            $this->assertEquals($parentId, $relations->getOriginalReferences()['page'][0]);
+            $this->assertCount(1, $relations->getReferences());
+            $this->assertEquals('page', $relations->getReferences()[0]->getContentType());
+            $this->assertEquals($parentId, $relations->getReferences()[0]->getId());
         }
 
         public function testRelatedItemsSentForTranslation()
@@ -751,10 +749,7 @@ namespace Smartling\Tests\Services {
                 ],
                 'formAction' => ContentRelationsHandler::FORM_ACTION_UPLOAD,
                 'source' => ['id' => [$sourceId], 'contentType' => $contentType],
-                'relations' => [
-                    1 => [$targetBlogId => ['post' => [$depth1AttachmentId]]],
-                    2 => [$targetBlogId => ['attachment' => [$depth2AttachmentId]]],
-                ],
+                'relations' => [$targetBlogId => ['post' => [$depth1AttachmentId], 'attachment' => [$depth2AttachmentId]]],
                 'targetBlogIds' => (string)$targetBlogId,
             ]));
             if ($this->exception !== null) {
@@ -891,12 +886,14 @@ namespace Smartling\Tests\Services {
                 replacerFactory: $replacerFactory,
             );
             $relations = $x->getRelations($contentType, 1, [2]);
-            $this->assertEquals([
-                $contentType => [
-                    $postParentId,
-                    13,
-                ]
-            ], $relations->getOriginalReferences());
+            $references = $relations->getReferences();
+            $this->assertCount(2, $references);
+
+            $this->assertEquals($contentType, $references[0]->getContentType());
+            $this->assertEquals($postParentId, $references[0]->getId());
+
+            $this->assertEquals($contentType, $references[1]->getContentType());
+            $this->assertEquals($relatedPostId, $references[1]->getId());
         }
 
         /**

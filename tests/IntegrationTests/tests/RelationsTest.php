@@ -5,6 +5,7 @@ namespace IntegrationTests\tests;
 use JetBrains\PhpStorm\ArrayShape;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Models\DetectedRelation;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
@@ -238,11 +239,13 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         ]);
         $expectedThumbId = -1;
         $thumbId = get_post_thumbnail_id($postId);
-        $this->assertArrayHasKey(ContentTypeHelper::POST_TYPE_ATTACHMENT, $relations->getOriginalReferences());
-        $this->assertCount($imagesPerPost, $relations->getOriginalReferences()[ContentTypeHelper::POST_TYPE_ATTACHMENT]);
+        $this->assertCount($imagesPerPost, array_filter(
+            $relations->getReferences(),
+            static fn(DetectedRelation $relation) => $relation->getContentType() === ContentTypeHelper::POST_TYPE_ATTACHMENT),
+        );
         #region cloning
         $imageSubmissions = [];
-        foreach ($relations->getOriginalReferences()[ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
+        foreach ($relations->getReferences()[ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
             $submission = $this->uploadDownload($this->createSubmissionForCloning(ContentTypeHelper::POST_TYPE_ATTACHMENT, $imageId));
             $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
             $this->assertNotEquals(0, $submission->getTargetId());
@@ -266,7 +269,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         #endregion
         #region translation
         $imageSubmissions = [];
-        foreach ($relations->getOriginalReferences()[ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
+        foreach ($relations->getReferences()[ContentTypeHelper::POST_TYPE_ATTACHMENT] as $imageId) {
             $submission = $this->uploadDownload($this->createSubmission(ContentTypeHelper::POST_TYPE_ATTACHMENT, $imageId));
             $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
             $this->assertNotEquals(0, $submission->getTargetId());

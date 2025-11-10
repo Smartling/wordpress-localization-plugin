@@ -19,13 +19,12 @@ use Smartling\Models\UserTranslationRequest;
  *  "status":"SUCCESS",
  *  "response":{
  *      "data":{
- *          "originalReferences":{
- *              "attachment":[244,232,26,231],
- *              "post":[1],
- *              "page":[2],
- *              "post_tag":[13,14],
- *              "category":[1]
- *          }
+ *          "references":[
+ *              {"contentType":"attachment","id":244,"status":"new"},
+ *              {"contentType":"attachment","id":232,"status":"completed"},
+ *              {"contentType":"post","id":1,"status":"new"},
+ *              {"contentType":"category","id":1,"status":"completed"}
+ *          ]
  *      }
  *  }
  * }

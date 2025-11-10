@@ -4,23 +4,30 @@ namespace Smartling\Models;
 
 class DetectedRelations
 {
-    public const ORIGINAL_REFERENCES_KEY = 'originalReferences';
-    private array $originalReferences;
+    public const REFERENCES_KEY = 'references';
+    private array $references;
 
-    public function __construct(array $originalReferences)
+    /**
+     * @param DetectedRelation[] $references
+     */
+    public function __construct(array $references)
     {
-        $this->originalReferences = $originalReferences;
+        $this->references = $references;
     }
 
-    public function getOriginalReferences(): array
+    /**
+     * @return DetectedRelation[]
+     */
+    public function getReferences(): array
     {
-        return $this->originalReferences;
+        return $this->references;
     }
 
     public function toArray(): array
     {
         return [
-            self::ORIGINAL_REFERENCES_KEY => $this->originalReferences,
+            self::REFERENCES_KEY =>
+                array_map(static fn(DetectedRelation $relation) => $relation->toArray(), $this->references),
         ];
     }
 }

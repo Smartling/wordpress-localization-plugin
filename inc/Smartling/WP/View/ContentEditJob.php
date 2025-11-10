@@ -6,6 +6,7 @@ use Smartling\Services\BaseAjaxServiceAbstract;
 use Smartling\Services\ContentRelationsHandler;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\ContentEditJobController;
 use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
@@ -20,6 +21,19 @@ $profile = $data['profile'];
 $widgetName = 'bulk-submit-locales';
 
 ?>
+<style>
+.relations-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+.relation-item {
+    margin: 5px 0;
+}
+.relation-item label {
+    display: block;
+    cursor: pointer;
+}
+</style>
 <?php
 $isBulkSubmitPage = get_current_screen()?->id === 'smartling_page_smartling-bulk-submit';
 global $tag;
@@ -28,8 +42,8 @@ $needWrapper = ($tag instanceof WP_Term);
 
 <script>
     const isBulkSubmitPage = <?= $isBulkSubmitPage ? 'true' : 'false'?>;
-    let l1Relations = {originalReferences: {}};
-    let l2Relations = {originalReferences: {}};
+    let l1Relations = {references: []};
+    let l2Relations = {references: []};
     let globalButton;
 </script>
 
@@ -134,8 +148,8 @@ $needWrapper = ($tag instanceof WP_Term);
                                             ]
                                         ),
                                         [
-                                            'id' => 'cloneDepth',
-                                            'name' => 'cloneDepth',
+                                            'id' => 'depth',
+                                            'name' => 'depth',
                                         ],
                                     )?>
                                 </td>
@@ -387,79 +401,73 @@ if ($post instanceof WP_Post) {
                 minDate: 0
             });
 
+            const depthSelector = $('#depth');
             const recalculateRelations = function recalculateRelations() {
+                let allRelations = [];
                 const relatedContent = $("#relatedContent");
                 relatedContent.html("");
-                const relations = {};
-                let allRelations = {};
-                const cloneDepth = $('#cloneDepth').val();
-                switch (cloneDepth) {
+                const depth = depthSelector.val();
+                switch (depth) {
                     case "0":
                         return;
                     case "1":
-                        allRelations = l1Relations.originalReferences;
+                        allRelations = l1Relations.references;
                         break;
                     case "2":
-                        allRelations = {...l1Relations.originalReferences};
-                        for (const type in l2Relations.originalReferences) {
-                            if (allRelations[type]) {
-                                allRelations[type] = [...new Set([...allRelations[type], ...l2Relations.originalReferences[type]])];
-                            } else {
-                                allRelations[type] = l2Relations.originalReferences[type];
-                            }
-                        }
-                        break;
-                    default:
-                        console.error(`Unsupported clone depth value: ${cloneDepth}`);
+                        allRelations = [...(l1Relations.references), ...(l2Relations.references)];
+                        const seen = new Set();
+                        allRelations = allRelations.filter(rel => {
+                            const key = `${rel.contentType}-${rel.id}`;
+                            if (seen.has(key)) return false;
+                            seen.add(key);
+                            return true;
+                        });
                 }
-                const buildRelationsHint = function (relations) {
-                    let html = "";
-                    for (const type in relations) {
-                        html += `${type} (${relations[type]}) </br>`;
-                    }
-                    return html;
-                };
-                if (allRelations && Object.keys(allRelations).length > 0) {
-                    for (const sysType in allRelations) {
-                        let sysCount = allRelations[sysType].length;
-                        if (relations.hasOwnProperty(sysType)) {
-                            relations[sysType] += sysCount;
-                        } else {
-                            relations[sysType] = sysCount;
-                        }
-                    }
-                    relatedContent.html(buildRelationsHint(relations));
+
+                if (allRelations.length > 0) {
+                    let html = '<div class="relations-list">';
+                    allRelations.forEach(relation => {
+                        const checkboxId = `relation-${relation.contentType}-${relation.id}`;
+                        const isChecked = relation.status !== '<?= SubmissionEntity::SUBMISSION_STATUS_COMPLETED ?>' ? 'checked' : '';
+                        const titleLink = relation.url ? `<a href="${relation.url}">${relation.title || 'Untitled'}</a>` : (relation.title || 'Untitled');
+                        const thumbnail = relation.contentType === 'attachment' && relation.thumbnailUrl ?
+                            ` <img src="${relation.thumbnailUrl}" alt="Preview" style="width:30px;height:30px;object-fit:cover;vertical-align:middle;margin-left:5px;">` : '';
+                        html += `<div class="relation-item">
+                            <label>
+                                <input type="checkbox" id="${checkboxId}" class="relation-checkbox"
+                                       data-content-type="${relation.contentType}"
+                                       data-id="${relation.id}"
+                                       data-status="${relation.status}" ${isChecked}>
+                                ${relation.contentType} #${relation.id} (${relation.status}) - ${titleLink}${thumbnail}
+                            </label>
+                        </div>`;
+                    });
+                    html += '</div>';
+                    relatedContent.html(html);
                 }
             };
 
             const loadRelations = function loadRelations(contentType, contentId, level = 1) {
                 const url = `${ajaxurl}?action=<?= ContentRelationsHandler::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
+                $('#createJob, #addToJob').prop('disabled', true).addClass(busyClass);
 
                 $.get(url, function loadData(data) {
                     if (data.response.data) {
                         switch (level) {
                             case 1:
                                 l1Relations = data.response.data;
-                                for (const relatedType in l1Relations.originalReferences) {
-                                    for (const relatedId of l1Relations.originalReferences[relatedType]) {
-                                        loadRelations(relatedType, relatedId, level + 1);
-                                    }
-                                }
                                 window.relationsInfo = data.response.data;
                                 break;
                             case 2:
-                                const originalReferences = data.response.data.originalReferences;
-                                for (const relatedType in originalReferences) {
-                                    if (!l2Relations.originalReferences.hasOwnProperty(relatedType)) {
-                                        l2Relations.originalReferences[relatedType] = [];
-                                    }
-                                    l2Relations.originalReferences[relatedType] = l2Relations.originalReferences[relatedType].concat(originalReferences[relatedType]);
-                                }
+                                const references = data.response.data.references;
+                                l2Relations.references = (l2Relations.references).concat(references);
                                 break;
                         }
 
                         recalculateRelations();
                     }
+                }).always(() => {
+                    $('#createJob, #addToJob').prop('disabled', false).removeClass(busyClass);
                 });
             };
 
@@ -480,10 +488,36 @@ if ($post instanceof WP_Post) {
                 button.text(buttonTexts[button.id]);
             }
 
+            let relationsLoaded = false;
+            let level2RelationsLoaded = false;
+
+            const loadRelationsOnce = function() {
+                if (!relationsLoaded) {
+                    relationsLoaded = true;
+                    loadRelations(currentContent.contentType, currentContent.id, 1);
+                }
+
+                const depth = depthSelector.val();
+                if (depth === "2" && !level2RelationsLoaded) {
+                    level2RelationsLoaded = true;
+                    for (const relation of l1Relations.references) {
+                        loadRelations(relation.contentType, relation.id, 2);
+                    }
+                }
+            };
+
             if (!isBulkSubmitPage) {
-                loadRelations(currentContent.contentType, currentContent.id);
+                if (depthSelector.val() !== "0") {
+                    loadRelationsOnce();
+                }
+
                 $('.job-wizard input.mcheck, .job-wizard a').on('click', recalculateRelations);
-                $('#cloneDepth').on('change', recalculateRelations);
+                depthSelector.on('change', function() {
+                    if ($(this).val() !== "0") {
+                        loadRelationsOnce();
+                    }
+                    recalculateRelations();
+                });
             }
             var hasProp = function (obj, prop) {
                 return Object.prototype.hasOwnProperty.call(obj, prop);
@@ -527,31 +561,36 @@ if ($post instanceof WP_Post) {
                 };
 
                 if (!isBulkSubmitPage) {
-                    const prepareRequest = (originalRefs) => {
-                        const result = {};
+                    const prepareRequest = () => {
+                        const selectedRelations = {};
+
+                        // Get selected target blog IDs
+                        const targetBlogIds = [];
                         $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
-                            const blogId = this.dataset.blogId;
-                            result[blogId] = originalRefs;
+                            targetBlogIds.push(this.dataset.blogId);
                         });
-                        return result;
+
+                        $(".relation-checkbox:checked").each(function () {
+                            const contentType = this.dataset.contentType;
+                            const id = parseInt(this.dataset.id);
+
+                            targetBlogIds.forEach(blogId => {
+                                if (!selectedRelations[blogId]) {
+                                    selectedRelations[blogId] = {};
+                                }
+                                if (!selectedRelations[blogId][contentType]) {
+                                    selectedRelations[blogId][contentType] = [];
+                                }
+                                if (!selectedRelations[blogId][contentType].includes(id)) {
+                                    selectedRelations[blogId][contentType].push(id);
+                                }
+                            });
+                        });
+
+                        return selectedRelations;
                     };
 
-                    switch ($('#cloneDepth').val()) {
-                        case "1":
-                            data.relations = prepareRequest(l1Relations.originalReferences);
-                            break;
-                        case "2":
-                            const mergedOriginal = {...l1Relations.originalReferences};
-                            for (const type in l2Relations.originalReferences) {
-                                if (mergedOriginal[type]) {
-                                    mergedOriginal[type] = [...new Set([...mergedOriginal[type], ...l2Relations.originalReferences[type]])];
-                                } else {
-                                    mergedOriginal[type] = l2Relations.originalReferences[type];
-                                }
-                            }
-                            data.relations = prepareRequest(mergedOriginal);
-                            break;
-                    }
+                    data.relations = prepareRequest();
                 }
 
                 if (isBulkSubmitPage) {

@@ -151,6 +151,26 @@ class WordpressFunctionProxyHelper
         return get_terms(...func_get_args());
     }
 
+    public function get_term()
+    {
+        return get_term(...func_get_args());
+    }
+
+    public function get_edit_post_link()
+    {
+        return get_edit_post_link(...func_get_args());
+    }
+
+    public function get_edit_term_link()
+    {
+        return get_edit_term_link(...func_get_args());
+    }
+
+    public function wp_get_attachment_image_url()
+    {
+        return wp_get_attachment_image_url(...func_get_args());
+    }
+
     public function maybe_unserialize()
     {
         return maybe_unserialize(...func_get_args());
