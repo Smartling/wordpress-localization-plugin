@@ -657,7 +657,7 @@ namespace Smartling\Tests\Services {
             $x->method('getBackwardRelatedTaxonomies')->willReturn([]);
 
             $relations = $x->getRelations('post', 1, [$targetBlogId]);
-            $this->assertEquals($parentId, $relations->getMissingReferences()[$targetBlogId]['page'][0]);
+            $this->assertEquals($parentId, $relations->getOriginalReferences()['page'][0]);
         }
 
         public function testRelatedItemsSentForTranslation()
