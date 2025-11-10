@@ -85,7 +85,7 @@ HTML);
         $service->createSubmissions(new UserTranslationRequest(
             $postId,
             ContentTypeHelper::CONTENT_TYPE_POST,
-            [1 => [2 => ['attachment' => [$attachmentId]]]],
+            [2 => ['attachment' => [$attachmentId]]],
             $targetBlogs,
             new JobInformation($job['translationJobUid'], false, $jobName, '', '', ''),
         ));

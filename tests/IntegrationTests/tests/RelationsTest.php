@@ -239,7 +239,6 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         ]);
         $expectedThumbId = -1;
         $thumbId = get_post_thumbnail_id($postId);
-        $this->assertArrayHasKey(ContentTypeHelper::POST_TYPE_ATTACHMENT, $relations->getReferences());
         $this->assertCount($imagesPerPost, array_filter(
             $relations->getReferences(),
             static fn(DetectedRelation $relation) => $relation->getContentType() === ContentTypeHelper::POST_TYPE_ATTACHMENT),
