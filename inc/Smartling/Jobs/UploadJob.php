@@ -110,7 +110,12 @@ class UploadJob extends JobAbstract
     private function processCloning(int $blogId): void
     {
         while (($submission = $this->submissionManager->findSubmissionForCloning($blogId)) !== null) {
-            do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
+            try {
+                do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
+            } catch (\Throwable $e) {
+                $this->submissionManager->setErrorMessage($submission, $e->getMessage());
+                continue;
+            }
             $this->placeLockFlag(true);
         }
     }
