@@ -114,7 +114,7 @@ class UploadJob extends JobAbstract
                 do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
             } catch (\Throwable $e) {
                 $this->submissionManager->setErrorMessage($submission, $e->getMessage());
-                throw $e;
+                continue;
             }
             $this->placeLockFlag(true);
         }
