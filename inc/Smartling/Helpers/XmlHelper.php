@@ -53,12 +53,13 @@ class XmlHelper
 
         if ($profile !== null) {
             $comments[] = 'Profile config:';
-            $comments[] = 'Treat filter by name fields as: ' . $profile->getFilterFieldNameRegExp() ? 'RegExp' : 'Exact match';
+            $comments[] = 'Treat filter by name fields as: ' . ($profile->getFilterFieldNameRegExp() ? 'RegExp' : 'Exact match');
             $comments[] = 'Ignore by name fields: ' . $this->listArray($profile->getFilterSkipArray());
             $comments[] = 'Copy by name fields: ' .
                 $this->listArray(explode(PHP_EOL, $profile->getFilterCopyByFieldName()));
             $comments[] = 'Copy by value fields RegExp: ' .
                 $this->listArray(explode(PHP_EOL, $profile->getFilterCopyByFieldValueRegex()));
+            $comments[] = 'Test: ' . $this->listArray(['-->']);
         }
 
         foreach (explode("\n", GlobalSettingsManager::getCustomDirectives()) as $comment) {
@@ -218,6 +219,7 @@ class XmlHelper
 
     private function listArray(array $array): string
     {
-        return implode(', ', $array) . ' (' . count($array) . ')';
+        return implode(', ', array_map(static fn($item) => trim(htmlentities($item)), $array)) .
+            ' (' . count($array) . ')';
     }
 }
