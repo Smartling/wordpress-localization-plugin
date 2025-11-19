@@ -1,0 +1,20 @@
+name: Smartling Submit Dependency Graph
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master, SPS-456-dependency-submision ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  dependency-submission:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Component detection
+        uses: advanced-security/component-detection-dependency-submission-action@v0.1.0
