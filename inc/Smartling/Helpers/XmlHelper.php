@@ -59,7 +59,6 @@ class XmlHelper
                 $this->listArray(explode(PHP_EOL, $profile->getFilterCopyByFieldName()));
             $comments[] = 'Copy by value fields RegExp: ' .
                 $this->listArray(explode(PHP_EOL, $profile->getFilterCopyByFieldValueRegex()));
-            $comments[] = 'Test: ' . $this->listArray(['-->']);
         }
 
         foreach (explode("\n", GlobalSettingsManager::getCustomDirectives()) as $comment) {
