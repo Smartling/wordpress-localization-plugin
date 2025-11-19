@@ -218,7 +218,7 @@ class XmlHelper
 
     private function listArray(array $array): string
     {
-        return implode(', ', array_map(static fn($item) => trim(htmlentities($item)), $array)) .
+        return implode(', ', array_map(static fn($item) => trim(preg_replace('~-{2,}~', '-​-', $item)), $array)) .
             ' (' . count($array) . ')';
     }
 }
