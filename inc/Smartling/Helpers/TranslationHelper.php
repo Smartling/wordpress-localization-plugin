@@ -110,6 +110,9 @@ class TranslationHelper
             $sourceId,
             $targetBlog
         );
+        if ($submission->getFileUri() === '') {
+            $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
+        }
 
         if (0 === (int)$submission->getId()) {
             if (true === $clone) {
