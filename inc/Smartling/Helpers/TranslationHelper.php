@@ -105,7 +105,7 @@ class TranslationHelper
      * @throws SmartlingConfigException
      * @throws SmartlingDirectRunRuntimeException
      * @throws SmartlingDataReadException
-    * @throws SmartlingInvalidFactoryArgumentException
+     * @throws SmartlingInvalidFactoryArgumentException
      */
     public function prepareSubmission(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, bool $clone = false): SubmissionEntity
     {
