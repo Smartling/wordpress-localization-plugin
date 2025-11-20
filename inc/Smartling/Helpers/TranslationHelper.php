@@ -168,7 +168,11 @@ class TranslationHelper
     }
 
     /**
+     * @throws BlogNotFoundException
+     * @throws SmartlingConfigException
+     * @throws SmartlingDirectRunRuntimeException
      * @throws SmartlingDataReadException
+     * @throws SmartlingInvalidFactoryArgumentException
      */
     public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity
     {
