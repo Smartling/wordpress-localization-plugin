@@ -53,12 +53,14 @@ class XmlHelper
 
         if ($profile !== null) {
             $comments[] = 'Profile config:';
-            $comments[] = 'Treat filter by name fields as: ' . ($profile->getFilterFieldNameRegExp() ? 'RegExp' : 'Exact match');
-            $comments[] = 'Ignore by name fields: ' . $this->listArray($profile->getFilterSkipArray());
-            $comments[] = 'Copy by name fields: ' .
-                $this->listArray(explode(PHP_EOL, $profile->getFilterCopyByFieldName()));
-            $comments[] = 'Copy by value fields RegExp: ' .
-                $this->listArray(explode(PHP_EOL, $profile->getFilterCopyByFieldValueRegex()));
+            try {
+                $comments[] = $this->escapeCommentString(json_encode(
+                    $profile->toArray(),
+                    JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR,
+                ));
+            } catch (\Throwable $e) {
+                $this->getLogger()->warning('Failed to encode profile config: ' . $e->getMessage());
+            }
         }
 
         foreach (explode("\n", GlobalSettingsManager::getCustomDirectives()) as $comment) {
@@ -216,9 +218,8 @@ class XmlHelper
         return [];
     }
 
-    private function listArray(array $array): string
+    private function escapeCommentString(string $string): string
     {
-        return implode(', ', array_map(static fn($item) => trim(preg_replace('~-{2,}~', '-​-', $item)), $array)) .
-            ' (' . count($array) . ')';
+        return preg_replace('~-{2,}~', '-​-', $string);
     }
 }
