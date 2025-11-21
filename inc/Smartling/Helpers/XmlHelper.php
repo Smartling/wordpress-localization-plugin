@@ -9,8 +9,10 @@ use DOMXPath;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\Exception\InvalidXMLException;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\Serializers\SerializerInterface;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Services\GlobalSettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -26,7 +28,7 @@ class XmlHelper
     ) {
     }
 
-    const XML_ROOT_NODE_NAME = 'data';
+    private const XML_ROOT_NODE_NAME = 'data';
 
     private const XML_STRING_NODE_NAME = 'string';
 
@@ -37,7 +39,7 @@ class XmlHelper
         return new DOMDocument('1.0', 'UTF-8');
     }
 
-    private function setTranslationComments(DOMDocument $document): DOMDocument
+    private function setTranslationComments(DOMDocument $document, ?ConfigurationProfileEntity $profile): DOMDocument
     {
         $comments = [
             'smartling.translate_paths = data/string/',
@@ -48,6 +50,18 @@ class XmlHelper
             'Wordpress installation host: ' . Bootstrap::getHttpHostName(),
             'smartling.placeholder_format_custom = #sl-start#.+?#sl-end#',
         ];
+
+        if ($profile !== null) {
+            $comments[] = 'Profile config:';
+            try {
+                $comments[] = $this->escapeCommentString(json_encode(
+                    $profile->toArray(),
+                    JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR,
+                ));
+            } catch (\Throwable $e) {
+                $this->getLogger()->warning('Failed to encode profile config: ' . $e->getMessage());
+            }
+        }
 
         foreach (explode("\n", GlobalSettingsManager::getCustomDirectives()) as $comment) {
             if ($comment !== '') {
@@ -75,7 +89,12 @@ class XmlHelper
     public function xmlEncode(array $source, SubmissionEntity $submission, array $originalContent = []): string
     {
         $this->getLogger()->debug(sprintf('Started creating XML for fields: %s', base64_encode(var_export($source, true))));
-        $xml = $this->setTranslationComments($this->initXml());
+        try {
+            $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+        } catch (SmartlingDbException) {
+            $profile = null;
+        }
+        $xml = $this->setTranslationComments($this->initXml(), $profile);
         $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
         $rootNode = $xml->createElement(self::XML_ROOT_NODE_NAME);
         foreach ($source as $name => $value) {
@@ -197,5 +216,10 @@ class XmlHelper
             }
         }
         return [];
+    }
+
+    private function escapeCommentString(string $string): string
+    {
+        return preg_replace('~-{2,}~', '-​-', $string);
     }
 }
