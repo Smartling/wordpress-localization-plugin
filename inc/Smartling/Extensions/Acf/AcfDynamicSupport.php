@@ -4,14 +4,18 @@ namespace Smartling\Extensions\Acf;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
+use Smartling\Exception\SmartlingConfigException;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LogContextMixinHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Replacers\ReplacerFactory;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -43,6 +47,20 @@ class AcfDynamicSupport
         return $this->definitions ?? [];
     }
 
+    /**
+     * @throws SmartlingConfigException
+     */
+    private function getAcf(): mixed
+    {
+        global $acf;
+
+        if (!isset($acf)) {
+            throw new SmartlingConfigException('ACF plugin is not installed or activated.');
+        }
+
+        return $acf;
+    }
+
     public function __construct(
         private ArrayHelper $arrayHelper,
         private SettingsManager $settingsManager,
@@ -55,6 +73,143 @@ class AcfDynamicSupport
     public function addCopyRules(array $rules): void
     {
         $this->rules['copy'] = $this->arrayHelper->add($this->rules['copy'], $rules);
+    }
+
+    /**
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    private function getBlogs(): array
+    {
+        return $this->siteHelper->listBlogs();
+    }
+
+    /**
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    private function getBlogListForSearch(): array
+    {
+        $blogs    = $this->getBlogs();
+        $profiles = $this->settingsManager->getActiveProfiles();
+
+        $blogsToSearch = [];
+
+        foreach ($profiles as $profile) {
+            if (
+                ($profile instanceof ConfigurationProfileEntity)
+                && in_array($profile->getSourceLocale()->getBlogId(), $blogs, true)
+            ) {
+                $blogsToSearch[] = $profile->getSourceLocale()->getBlogId();
+            }
+        }
+
+        return $blogsToSearch;
+    }
+
+    /**
+     * @throws SmartlingDirectRunRuntimeException
+     */
+    private function getDatabaseDefinitions(): array
+    {
+        $defs = [];
+        $this->getLogger()->debug('Looking for ACF definitions in the database');
+        $blogsToSearch = $this->getBlogListForSearch();
+        foreach ($blogsToSearch as $blog) {
+            $this->getLogger()->debug(vsprintf('Collecting ACF definitions for blog = \'%s\'...', [$blog]));
+            try {
+                $this->getLogger()->debug(vsprintf('Looking for profiles for blog %s', [$blog]));
+                $applicableProfiles = $this->settingsManager->findEntityByMainLocale($blog);
+                if (0 === count($applicableProfiles)) {
+                    $this->getLogger()->debug(vsprintf('No suitable profile found for this blog %s', [$blog]));
+                } else {
+                    $groups = $this->getGroups($blog);
+                    if (0 < count($groups)) {
+                        foreach ($groups as $groupKey => $group) {
+                            $defs[$groupKey] = [
+                                'global_type' => 'group',
+                                'active' => 1,
+                            ];
+                        }
+                        foreach ($this->getFields($blog, array_map(static fn($item) => $item['post_id'], $groups)) as $fieldKey => $field) {
+                            $defs[$fieldKey] = [
+                                'global_type' => 'field',
+                                'type' => $field['type'],
+                            ];
+
+                            if ('clone' === $field['type']) {
+                                if (array_key_exists('clone', $field)) {
+                                    $defs[$fieldKey]['clone'] = $field['clone'];
+                                } else {
+                                    $this->getLogger()->debug('ACF field fieldType="clone" has no target. ' . json_encode($field));
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                $this->getLogger()->warning(vsprintf('ACF Filter generation failed: %s', [$e->getMessage()]));
+            }
+        }
+
+        return $defs;
+    }
+
+    protected function getGroups($blogId): array
+    {
+        $dbGroups   = [];
+        $needChange = $this->siteHelper->getCurrentBlogId() !== $blogId;
+        try {
+            if ($needChange) {
+                $this->siteHelper->switchBlogId($blogId);
+            }
+            $dbGroups = $this->rawReadGroups();
+        } catch (\Exception $e) {
+            $this->getLogger()->warning(
+                vsprintf('Error occurred while reading ACF data from blog %s. Message: %s', [$blogId, $e->getMessage()])
+            );
+        } finally {
+            if ($needChange) {
+                $this->siteHelper->restoreBlogId();
+            }
+        }
+
+        return $dbGroups;
+    }
+
+    /**
+     * Reads the list of groups from database
+     */
+    private function rawReadGroups(): array
+    {
+        $posts = (new \WP_Query(
+            [
+                'post_type' => self::POST_TYPE_GROUP,
+                'suppress_filters' => true,
+                'posts_per_page'   => -1,
+                'post_status'      => 'publish',
+            ]
+        ))->get_posts();
+
+        $groups = [];
+        foreach ($posts as $post) {
+            $groups[$post->post_name] = [
+                'title'   => $post->post_title,
+                'post_id' => $post->ID,
+            ];
+        }
+
+        return $groups;
+    }
+
+    private function rawReadFields($parentId): array
+    {
+        return $this->getFieldsFromPosts($this->getQueryByParentId($parentId)->get_posts());
+    }
+
+    private function getFields(int $blogId, array $parentIds): array
+    {
+        return $this->siteHelper->withBlog($blogId, function () use ($parentIds): array {
+            return $this->getFieldsFromPosts($this->getQueryByParentIds($parentIds)->get_posts());
+        });
     }
 
     protected function extractGroupsDefinitions(array $groups): array
@@ -92,6 +247,34 @@ class AcfDynamicSupport
         return $defs;
     }
 
+    /**
+     * Get local definitions for ACF Pro ver < 5.7.12
+     */
+    private function getLocalDefinitionsOld(): array
+    {
+        $defs = [];
+        try {
+            $acf = (array)$this->getAcf();
+        } catch (SmartlingConfigException $e) {
+            $this->getLogger()->warning($e->getMessage());
+            $this->getLogger()->warning('Unable to load old type local ACF definitions.');
+
+            return $defs;
+        }
+
+        if (array_key_exists('local', $acf)) {
+            if ($acf['local'] instanceof \acf_local) {
+                $local = $acf['local'];
+
+                $defs = array_merge($defs, $this->extractGroupsDefinitions($local->groups));
+                $defs = array_merge($defs, $this->extractFieldDefinitions($local->fields));
+
+            }
+        }
+
+        return $defs;
+    }
+
     protected function validateAcfStores(): bool
     {
         global $acf_stores;
@@ -106,7 +289,7 @@ class AcfDynamicSupport
     /**
      * Get local definitions for ACF Pro ver 5.7.12+
      */
-    private function getLocalDefinitions(): array
+    private function getLocalDefinitionsNew(): array
     {
         $defs = [];
 
@@ -121,6 +304,43 @@ class AcfDynamicSupport
         }
 
         return $defs;
+    }
+
+    /**
+     * Reads local (PHP and JSON) ACF Definitions
+     */
+    private function getLocalDefinitions(): array
+    {
+        $defs = $this->getLocalDefinitionsOld();
+
+        if (empty($defs)) {
+            $defs = $this->getLocalDefinitionsNew();
+        }
+
+        return $defs;
+    }
+
+    private function verifyDefinitions(array $localDefinitions, array $dbDefinitions): bool
+    {
+        foreach ($dbDefinitions as $key => $definition) {
+            if (!array_key_exists($key, $localDefinitions)) {
+                return false;
+            }
+
+            if ($definition['global_type'] === 'field') {
+                $local = $localDefinitions[$key];
+                if ($local['type'] !== $definition['type'] || $local['name'] !== $definition['name'] ||
+                    $local['parent'] !== $definition['parent']
+                ) {
+                    // ACF Option Pages has internal issue in definition, so skip it:
+                    if ('group_572b269b668a4' !== $local['parent']) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     private function tryRegisterACFOptions(): void
@@ -221,7 +441,31 @@ class AcfDynamicSupport
         $this->getLogger()->debug('Checking if ACF presents...');
         if ($this->isAcfActive()) {
             $this->getLogger()->debug('ACF detected.');
-            $this->definitions = $this->getLocalDefinitions();
+            $localDefinitions = $this->getLocalDefinitions();
+
+            try {
+                $dbDefinitions = $this->getDatabaseDefinitions();
+            } catch (SmartlingDirectRunRuntimeException $e) {
+                $dbDefinitions = [];
+                DiagnosticsHelper::addDiagnosticsMessage(
+                    'Failed to get ACF definitions from database.' .
+                    'Please ensure that WordPress network is set up properly.<br>' .
+                    "Exception message: {$e->getMessage()}"
+                );
+            }
+
+            if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
+                $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
+                $msg = [
+                    'ACF Configuration has been changed.',
+                    'Please update groups and fields definitions for all sites (As PHP generated code).',
+                    vsprintf('Use <strong><a href="%s">this</a></strong> page to generate export code and add it to your theme or extra plugin.',
+                        [$url]),
+                ];
+                DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
+            }
+
+            $this->definitions = array_merge($localDefinitions, $dbDefinitions);
             $this->buildRules();
             $this->prepareFilters();
         } else {
@@ -419,5 +663,42 @@ class AcfDynamicSupport
         preg_match_all(AcfTypeDetector::ACF_FIELD_GROUP_REGEX, $key, $matches);
 
         return array_pop($matches[0]) ?? $key;
+    }
+
+    private function getQueryByParentId($parentId): \WP_Query
+    {
+        return new \WP_Query(array_merge($this->getQueryArray(), ['post_parent' => $parentId]));
+    }
+
+    private function getQueryByParentIds(array $parentIds): \WP_Query
+    {
+        return new \WP_Query(array_merge($this->getQueryArray(), ['post_parent__in' => $parentIds]));
+    }
+
+    private function getQueryArray(): array
+    {
+        return [
+            'post_type' => self::POST_TYPE_FIELD,
+            'suppress_filters' => true,
+            'posts_per_page' => -1,
+            'post_status' => 'publish',
+        ];
+    }
+
+    private function getFieldsFromPosts(array $posts): array
+    {
+        $fields = [];
+        foreach ($posts as $post) {
+            $configuration = unserialize($post->post_content);
+            $fields[$post->post_name] = [
+                'type' => $configuration['type'],
+            ];
+            $subFields = $this->rawReadFields($post->ID);
+            if (0 < count($subFields)) {
+                $fields = array_merge($fields, $subFields);
+            }
+        }
+
+        return $fields;
     }
 }
