@@ -5,7 +5,11 @@ namespace Smartling\Helpers;
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Exception\BlogNotFoundException;
+use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDataReadException;
+use Smartling\Exception\SmartlingDirectRunRuntimeException;
+use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -97,7 +101,11 @@ class TranslationHelper
     }
 
     /**
+     * @throws BlogNotFoundException
+     * @throws SmartlingConfigException
+     * @throws SmartlingDirectRunRuntimeException
      * @throws SmartlingDataReadException
+     * @throws SmartlingInvalidFactoryArgumentException
      */
     public function prepareSubmission(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, bool $clone = false): SubmissionEntity
     {
@@ -110,6 +118,9 @@ class TranslationHelper
             $sourceId,
             $targetBlog
         );
+        if ($submission->getFileUri() === '') {
+            $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
+        }
 
         if (0 === (int)$submission->getId()) {
             if (true === $clone) {
@@ -157,7 +168,11 @@ class TranslationHelper
     }
 
     /**
+     * @throws BlogNotFoundException
+     * @throws SmartlingConfigException
+     * @throws SmartlingDirectRunRuntimeException
      * @throws SmartlingDataReadException
+     * @throws SmartlingInvalidFactoryArgumentException
      */
     public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity
     {
