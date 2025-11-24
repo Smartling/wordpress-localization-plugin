@@ -126,25 +126,20 @@ class AcfDynamicSupport
                         foreach ($groups as $groupKey => $group) {
                             $defs[$groupKey] = [
                                 'global_type' => 'group',
-                                'active'      => 1,
+                                'active' => 1,
                             ];
-                            $fields          = $this->getFieldsByGroup($blog, [$groupKey => $group]);
-                            if (0 < count($fields)) {
-                                foreach ($fields as $fieldKey => $field) {
-                                    $defs[$fieldKey] = [
-                                        'global_type' => 'field',
-                                        'type'        => $field['type'],
-                                        'name'        => $field['name'],
-                                        'parent'      => $field['parent'],
-                                    ];
+                        }
+                        foreach ($this->getFields($blog, array_map(static fn($item) => $item['post_id'], $groups)) as $fieldKey => $field) {
+                            $defs[$fieldKey] = [
+                                'global_type' => 'field',
+                                'type' => $field['type'],
+                            ];
 
-                                    if ('clone' === $field['type']) {
-                                        if (array_key_exists('clone', $field)) {
-                                            $defs[$fieldKey]['clone'] = $field['clone'];
-                                        } else {
-                                            $this->getLogger()->debug('ACF field fieldType="clone" has no target. ' . json_encode($field));
-                                        }
-                                    }
+                            if ('clone' === $field['type']) {
+                                if (array_key_exists('clone', $field)) {
+                                    $defs[$fieldKey]['clone'] = $field['clone'];
+                                } else {
+                                    $this->getLogger()->debug('ACF field fieldType="clone" has no target. ' . json_encode($field));
                                 }
                             }
                         }
@@ -205,61 +200,16 @@ class AcfDynamicSupport
         return $groups;
     }
 
-    private function rawReadFields($parentId, $parentKey): array
+    private function rawReadFields($parentId): array
     {
-        $posts = (new \WP_Query(
-            [
-                'post_type'        => self::POST_TYPE_FIELD,
-                'suppress_filters' => true,
-                'posts_per_page'   => -1,
-                'post_status'      => 'publish',
-                'post_parent'      => $parentId,
-            ]
-        ))->get_posts();
-
-        $fields = [];
-        foreach ($posts as $post) {
-            $configuration            = unserialize($post->post_content);
-            $fields[$post->post_name] = [
-                'parent' => $parentKey,
-                'name'   => $post->post_excerpt,
-                'type'   => $configuration['type'],
-            ];
-            $subFields                = $this->rawReadFields($post->ID, $post->post_name);
-            if (0 < count($subFields)) {
-                $fields = array_merge($fields, $subFields);
-            }
-        }
-
-        return $fields;
+        return $this->getFieldsFromPosts($this->getQueryByParentId($parentId)->get_posts());
     }
 
-    protected function getFieldsByGroup($blogId, $group): array
+    private function getFields(int $blogId, array $parentIds): array
     {
-        $dbFields   = [];
-        $needChange = $this->siteHelper->getCurrentBlogId() !== $blogId;
-        try {
-            if ($needChange) {
-                $this->siteHelper->switchBlogId($blogId);
-            }
-            $keys   = array_keys($group);
-            $key    = reset($keys);
-            $_group = reset($group);
-            $id     = $_group['post_id'];
-
-            $dbFields = $this->rawReadFields($id, $key);
-
-        } catch (\Exception $e) {
-            $this->getLogger()->warning(
-                vsprintf('Error occurred while reading ACF data from blog %s. Message: %s', [$blogId, $e->getMessage()])
-            );
-        } finally {
-            if ($needChange) {
-                $this->siteHelper->restoreBlogId();
-            }
-        }
-
-        return $dbFields;
+        return $this->siteHelper->withBlog($blogId, function () use ($parentIds): array {
+            return $this->getFieldsFromPosts($this->getQueryByParentIds($parentIds)->get_posts());
+        });
     }
 
     protected function extractGroupsDefinitions(array $groups): array
@@ -713,5 +663,42 @@ class AcfDynamicSupport
         preg_match_all(AcfTypeDetector::ACF_FIELD_GROUP_REGEX, $key, $matches);
 
         return array_pop($matches[0]) ?? $key;
+    }
+
+    private function getQueryByParentId($parentId): \WP_Query
+    {
+        return new \WP_Query(array_merge($this->getQueryArray(), ['post_parent' => $parentId]));
+    }
+
+    private function getQueryByParentIds(array $parentIds): \WP_Query
+    {
+        return new \WP_Query(array_merge($this->getQueryArray(), ['post_parent__in' => $parentIds]));
+    }
+
+    private function getQueryArray(): array
+    {
+        return [
+            'post_type' => self::POST_TYPE_FIELD,
+            'suppress_filters' => true,
+            'posts_per_page' => -1,
+            'post_status' => 'publish',
+        ];
+    }
+
+    private function getFieldsFromPosts(array $posts): array
+    {
+        $fields = [];
+        foreach ($posts as $post) {
+            $configuration = unserialize($post->post_content);
+            $fields[$post->post_name] = [
+                'type' => $configuration['type'],
+            ];
+            $subFields = $this->rawReadFields($post->ID);
+            if (0 < count($subFields)) {
+                $fields = array_merge($fields, $subFields);
+            }
+        }
+
+        return $fields;
     }
 }
