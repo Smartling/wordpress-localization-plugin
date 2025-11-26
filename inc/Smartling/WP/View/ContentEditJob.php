@@ -642,9 +642,6 @@ if ($post instanceof WP_Post) {
 
                 var message = "Failed adding content to upload queue.";
                 $.post(url, data, function (d) {
-                    if (!isBulkSubmitPage) {
-                        loadRelations(currentContent.contentType, currentContent.id, localeList);
-                    }
                     switch (d.status) {
                         case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
                             uiShowMessage(d.status, "Content successfully added to upload queue.");
