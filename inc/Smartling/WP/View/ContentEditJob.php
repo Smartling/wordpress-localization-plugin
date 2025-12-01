@@ -161,6 +161,12 @@ $needWrapper = ($tag instanceof WP_Term);
                         <tr>
                             <th class="center" colspan="2">
                                 <div id="error-messages"></div>
+                                <div id="progress-indicator" class="hidden" style="margin: 10px 0;">
+                                    <div style="background: #f0f0f0; border-radius: 4px; overflow: hidden; height: 20px;">
+                                        <div id="progress-bar" style="background: #2271b1; height: 100%; width: 0; transition: width 0.3s;"></div>
+                                    </div>
+                                    <div id="progress-text" style="margin-top: 5px; font-size: 12px;"></div>
+                                </div>
                                 <div id="loader-image" class="hidden"><span class="loader"></span></div>
                                 <button class="button button-primary components-button is-primary" id="createJob"
                                         title="Create a new job and add content into it">Create Job
@@ -447,6 +453,9 @@ if ($post instanceof WP_Post) {
             const loadRelations = function loadRelations(contentType, contentId, level = 1) {
                 const url = `${ajaxurl}?action=<?= ContentRelationsHandler::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
                 pendingRequests++;
+                totalRequests++;
+                $('#progress-indicator').removeClass('hidden');
+                updateProgress();
                 $('#createJob, #addToJob').prop('disabled', true).addClass(busyClass);
 
                 $.get(url, function loadData(data) {
@@ -471,6 +480,7 @@ if ($post instanceof WP_Post) {
                     }
                 }).always(() => {
                     pendingRequests--;
+                    updateProgress();
                     if (pendingRequests === 0) {
                         $('#createJob, #addToJob').prop('disabled', false).removeClass(busyClass);
                     }
@@ -497,6 +507,17 @@ if ($post instanceof WP_Post) {
             let relationsLoaded = false;
             let level2RelationsLoaded = false;
             let pendingRequests = 0;
+            let totalRequests = 0;
+
+            const updateProgress = function() {
+                const progress = totalRequests > 0 ? ((totalRequests - pendingRequests) / totalRequests) * 100 : 0;
+                $('#progress-bar').css('width', progress + '%');
+                $('#progress-text').text(`Loading relations: ${totalRequests - pendingRequests} of ${totalRequests} completed`);
+
+                if (pendingRequests === 0 && totalRequests > 0) {
+                    setTimeout(() => $('#progress-indicator').addClass('hidden'), 1000);
+                }
+            };
 
             const loadRelationsOnce = function() {
                 if (!relationsLoaded) {
@@ -539,10 +560,12 @@ if ($post instanceof WP_Post) {
                     relationsLoaded = false;
                     level2RelationsLoaded = false;
                     pendingRequests = 0;
+                    totalRequests = 0;
                     l1Relations = {references: []};
                     l2Relations = {references: []};
                     depthSelector.val('0');
                     $("#relatedContent").html("");
+                    $('#progress-indicator').addClass('hidden');
                     $('#createJob, #addToJob').prop('disabled', false).removeClass(busyClass);
                 });
             }
