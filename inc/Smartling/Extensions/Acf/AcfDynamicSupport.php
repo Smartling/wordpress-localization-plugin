@@ -133,6 +133,8 @@ class AcfDynamicSupport
                             $defs[$fieldKey] = [
                                 'global_type' => 'field',
                                 'type' => $field['type'],
+                                'name' => $field['name'],
+                                'parent' => $field['parent'],
                             ];
 
                             if ('clone' === $field['type']) {
