@@ -784,6 +784,10 @@ class ContentRelationsDiscoveryService
                             // fallthrough intentional
                         case 'page':
                         case 'post':
+                            $post = $this->wordpressProxy->get_post($id);
+                            if ($post === null) {
+                                continue 2;
+                            }
                             $title = $this->wordpressProxy->get_post($id)->post_title;
                             $url = $this->wordpressProxy->get_edit_post_link($id);
                             break;
@@ -792,6 +796,8 @@ class ContentRelationsDiscoveryService
                             if ($term instanceof \WP_Term) {
                                 $title = $term->name;
                                 $url = $this->wordpressProxy->get_edit_term_link($id, $type);
+                            } else {
+                                continue 2;
                             }
                     }
                 } catch (\Exception) {

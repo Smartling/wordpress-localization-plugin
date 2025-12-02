@@ -67,6 +67,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
     use Smartling\Tuner\MediaAttachmentRulesManager;
     use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
+    use stdClass;
 
     class ContentRelationsDiscoveryServiceTest extends TestCase
     {
@@ -620,7 +621,7 @@ namespace Smartling\Tests\Services {
             $wordpressProxy = $this->createMock(WordpressFunctionProxyHelper::class);
             $wordpressProxy->method('get_current_blog_id')->willReturn(1);
             $wordpressProxy->method('get_post_type')->willReturn('page');
-
+            $wordpressProxy->method('get_post')->willReturn(new StdClass());
 
             $fieldFilterHelper = new FieldsFilterHelper(
                 $this->createMock(AcfDynamicSupport::class),
@@ -875,6 +876,7 @@ namespace Smartling\Tests\Services {
             $wordpressProxy = $this->createMock(WordpressFunctionProxyHelper::class);
             $wordpressProxy->method('get_current_blog_id')->willReturn(1);
             $wordpressProxy->method('get_post_type')->willReturn($contentType);
+            $wordpressProxy->method('get_post')->willReturn(new StdClass());
 
             $x = $this->getContentRelationDiscoveryService(
                 contentHelper: $contentHelper,

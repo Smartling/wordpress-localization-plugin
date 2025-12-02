@@ -3,11 +3,11 @@ let added = false;
 const addSmartlingGutenbergLockAttributes = function () {
     const registerBlockTypeHookName = 'blocks.registerBlockType';
     const namespace = 'smartling/connector/lockAttributes';
-    if (wp && wp.hasOwnProperty('hooks') && wp.hooks.hasOwnProperty('hasFilter') && wp.hooks.hasFilter(registerBlockTypeHookName, namespace)) {
+    if (typeof(wp) !== 'undefined' && wp.hasOwnProperty('hooks') && wp.hooks.hasOwnProperty('hasFilter') && wp.hooks.hasFilter(registerBlockTypeHookName, namespace)) {
         added = true;
         return;
     }
-    if (wp && wp.hasOwnProperty('hooks') && wp.hooks.hasOwnProperty('addFilter')) {
+    if (typeof(wp) !== 'undefined' && wp.hasOwnProperty('hooks') && wp.hooks.hasOwnProperty('addFilter')) {
         wp.hooks.addFilter(registerBlockTypeHookName, namespace, (settings) => {
             if (settings.attributes) {
                 settings.attributes['smartlingLocked'] = {

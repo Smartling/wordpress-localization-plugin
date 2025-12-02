@@ -133,37 +133,40 @@ $needWrapper = ($tag instanceof WP_Term);
                                 </div>
                             </td>
                         </tr>
-                        <?php if (!$isBulkSubmitPage) { ?>
-                            <tr>
-                                <th>Related content</th>
-                                <td>
-                                    <?= HtmlTagGeneratorHelper::tag(
-                                        'select',
-                                        HtmlTagGeneratorHelper::renderSelectOptions(
-                                            GlobalSettingsManager::getRelatedContentSelectState(),
-                                            [
-                                                0 => 'Don\'t send  related content',
-                                                1 => 'Send related content one level deep',
-                                                2 => 'Send related content two levels deep',
-                                            ]
-                                        ),
+                        <tr>
+                            <th>Related content</th>
+                            <td>
+                                <?= HtmlTagGeneratorHelper::tag(
+                                    'select',
+                                    HtmlTagGeneratorHelper::renderSelectOptions(
+                                        GlobalSettingsManager::getRelatedContentSelectState(),
                                         [
-                                            'id' => 'depth',
-                                            'name' => 'depth',
-                                        ],
-                                    )?>
-                                </td>
-                            </tr>
-                            <tr id="relationsInfo">
-                                <th>Related content to be uploaded:</th>
-                                <td id="relatedContent">
-                                </td>
-                            </tr>
-
-                        <?php } ?>
+                                            0 => 'Don\'t send  related content',
+                                            1 => 'Send related content one level deep',
+                                            2 => 'Send related content two levels deep',
+                                        ]
+                                    ),
+                                    [
+                                        'id' => 'depth',
+                                        'name' => 'depth',
+                                    ],
+                                )?>
+                            </td>
+                        </tr>
+                        <tr id="relationsInfo">
+                            <th>Related content to be uploaded:</th>
+                            <td id="relatedContent">
+                            </td>
+                        </tr>
                         <tr>
                             <th class="center" colspan="2">
                                 <div id="error-messages"></div>
+                                <div id="progress-indicator" class="hidden" style="margin: 10px 0;">
+                                    <div style="background: #f0f0f0; border-radius: 4px; overflow: hidden; height: 20px;">
+                                        <div id="progress-bar" style="background: #2271b1; height: 100%; width: 0; transition: width 0.3s;"></div>
+                                    </div>
+                                    <div id="progress-text" style="margin-top: 5px; font-size: 12px;"></div>
+                                </div>
                                 <div id="loader-image" class="hidden"><span class="loader"></span></div>
                                 <button class="button button-primary components-button is-primary" id="createJob"
                                         title="Create a new job and add content into it">Create Job
@@ -449,25 +452,38 @@ if ($post instanceof WP_Post) {
 
             const loadRelations = function loadRelations(contentType, contentId, level = 1) {
                 const url = `${ajaxurl}?action=<?= ContentRelationsHandler::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
+                pendingRequests++;
+                totalRequests++;
+                $('#progress-indicator').removeClass('hidden');
+                updateProgress();
                 $('#createJob, #addToJob').prop('disabled', true).addClass(busyClass);
 
                 $.get(url, function loadData(data) {
                     if (data.response.data) {
                         switch (level) {
                             case 1:
-                                l1Relations = data.response.data;
+                                const newReferences = data.response.data.references;
+                                const existingKeys = new Set(l1Relations.references.map(r => `${r.contentType}-${r.id}`));
+                                const uniqueReferences = newReferences.filter(r => !existingKeys.has(`${r.contentType}-${r.id}`));
+                                l1Relations.references = l1Relations.references.concat(uniqueReferences);
                                 window.relationsInfo = data.response.data;
                                 break;
                             case 2:
                                 const references = data.response.data.references;
-                                l2Relations.references = (l2Relations.references).concat(references);
+                                const existingL2Keys = new Set(l2Relations.references.map(r => `${r.contentType}-${r.id}`));
+                                const uniqueL2References = references.filter(r => !existingL2Keys.has(`${r.contentType}-${r.id}`));
+                                l2Relations.references = l2Relations.references.concat(uniqueL2References);
                                 break;
                         }
 
                         recalculateRelations();
                     }
                 }).always(() => {
-                    $('#createJob, #addToJob').prop('disabled', false).removeClass(busyClass);
+                    pendingRequests--;
+                    updateProgress();
+                    if (pendingRequests === 0) {
+                        $('#createJob, #addToJob').prop('disabled', false).removeClass(busyClass);
+                    }
                 });
             };
 
@@ -490,11 +506,32 @@ if ($post instanceof WP_Post) {
 
             let relationsLoaded = false;
             let level2RelationsLoaded = false;
+            let pendingRequests = 0;
+            let totalRequests = 0;
+
+            const updateProgress = function() {
+                const progress = totalRequests > 0 ? ((totalRequests - pendingRequests) / totalRequests) * 100 : 0;
+                $('#progress-bar').css('width', progress + '%');
+                $('#progress-text').text(`Loading relations: ${totalRequests - pendingRequests} of ${totalRequests} completed`);
+
+                if (pendingRequests === 0 && totalRequests > 0) {
+                    setTimeout(() => $('#progress-indicator').addClass('hidden'), 1000);
+                }
+            };
 
             const loadRelationsOnce = function() {
                 if (!relationsLoaded) {
                     relationsLoaded = true;
-                    loadRelations(currentContent.contentType, currentContent.id, 1);
+                    if (isBulkSubmitPage) {
+                        $("input.bulkaction[type=checkbox]:checked").each(function () {
+                            var parts = $(this).attr("id").split("-");
+                            var id = parseInt(parts.shift());
+                            var contentType = parts.join("-");
+                            loadRelations(contentType, id, 1);
+                        });
+                    } else {
+                        loadRelations(currentContent.contentType, currentContent.id, 1);
+                    }
                 }
 
                 const depth = depthSelector.val();
@@ -506,17 +543,30 @@ if ($post instanceof WP_Post) {
                 }
             };
 
-            if (!isBulkSubmitPage) {
-                if (depthSelector.val() !== "0") {
+            if (depthSelector.val() !== "0") {
+                loadRelationsOnce();
+            }
+
+            $('.job-wizard input.mcheck, .job-wizard a').on('click', recalculateRelations);
+            depthSelector.on('change', function() {
+                if ($(this).val() !== "0") {
                     loadRelationsOnce();
                 }
+                recalculateRelations();
+            });
 
-                $('.job-wizard input.mcheck, .job-wizard a').on('click', recalculateRelations);
-                depthSelector.on('change', function() {
-                    if ($(this).val() !== "0") {
-                        loadRelationsOnce();
-                    }
-                    recalculateRelations();
+            if (isBulkSubmitPage) {
+                $(document).on('change', 'input.bulkaction[type=checkbox]', function() {
+                    relationsLoaded = false;
+                    level2RelationsLoaded = false;
+                    pendingRequests = 0;
+                    totalRequests = 0;
+                    l1Relations = {references: []};
+                    l2Relations = {references: []};
+                    depthSelector.val('0');
+                    $("#relatedContent").html("");
+                    $('#progress-indicator').addClass('hidden');
+                    $('#createJob, #addToJob').prop('disabled', false).removeClass(busyClass);
                 });
             }
             var hasProp = function (obj, prop) {
@@ -560,38 +610,35 @@ if ($post instanceof WP_Post) {
                     targetBlogIds: blogIds.join(","),
                 };
 
-                if (!isBulkSubmitPage) {
-                    const prepareRequest = () => {
-                        const selectedRelations = {};
+                const prepareRequest = () => {
+                    const selectedRelations = {};
 
-                        // Get selected target blog IDs
-                        const targetBlogIds = [];
-                        $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
-                            targetBlogIds.push(this.dataset.blogId);
+                    const targetBlogIds = [];
+                    $(".job-wizard input.mcheck[type=checkbox]:checked").each(function () {
+                        targetBlogIds.push(this.dataset.blogId);
+                    });
+
+                    $(".relation-checkbox:checked").each(function () {
+                        const contentType = this.dataset.contentType;
+                        const id = parseInt(this.dataset.id);
+
+                        targetBlogIds.forEach(blogId => {
+                            if (!selectedRelations[blogId]) {
+                                selectedRelations[blogId] = {};
+                            }
+                            if (!selectedRelations[blogId][contentType]) {
+                                selectedRelations[blogId][contentType] = [];
+                            }
+                            if (!selectedRelations[blogId][contentType].includes(id)) {
+                                selectedRelations[blogId][contentType].push(id);
+                            }
                         });
+                    });
 
-                        $(".relation-checkbox:checked").each(function () {
-                            const contentType = this.dataset.contentType;
-                            const id = parseInt(this.dataset.id);
+                    return selectedRelations;
+                };
 
-                            targetBlogIds.forEach(blogId => {
-                                if (!selectedRelations[blogId]) {
-                                    selectedRelations[blogId] = {};
-                                }
-                                if (!selectedRelations[blogId][contentType]) {
-                                    selectedRelations[blogId][contentType] = [];
-                                }
-                                if (!selectedRelations[blogId][contentType].includes(id)) {
-                                    selectedRelations[blogId][contentType].push(id);
-                                }
-                            });
-                        });
-
-                        return selectedRelations;
-                    };
-
-                    data.relations = prepareRequest();
-                }
+                data.relations = prepareRequest();
 
                 if (isBulkSubmitPage) {
                     data.ids = [];
@@ -642,9 +689,6 @@ if ($post instanceof WP_Post) {
 
                 var message = "Failed adding content to upload queue.";
                 $.post(url, data, function (d) {
-                    if (!isBulkSubmitPage) {
-                        loadRelations(currentContent.contentType, currentContent.id, localeList);
-                    }
                     switch (d.status) {
                         case "<?= BaseAjaxServiceAbstract::RESPONSE_SUCCESS ?>":
                             uiShowMessage(d.status, "Content successfully added to upload queue.");

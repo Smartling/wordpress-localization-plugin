@@ -329,9 +329,7 @@ class AcfDynamicSupport
 
             if ($definition['global_type'] === 'field') {
                 $local = $localDefinitions[$key];
-                if ($local['type'] !== $definition['type'] || $local['name'] !== $definition['name'] ||
-                    $local['parent'] !== $definition['parent']
-                ) {
+                if ($local['type'] !== $definition['type']) {
                     // ACF Option Pages has internal issue in definition, so skip it:
                     if ('group_572b269b668a4' !== $local['parent']) {
                         return false;
