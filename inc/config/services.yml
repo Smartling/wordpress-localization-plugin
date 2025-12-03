@@ -184,6 +184,7 @@ services:
   entrypoint:
     class: Smartling\Base\SmartlingCore
     arguments:
+      - "@acf.dynamic.support"
       - "@manager.content.external"
       - "@file.uri.helper"
       - "@helper.gutenberg"

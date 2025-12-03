@@ -8,6 +8,7 @@ use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingExceptionAbstract;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileUriHelper;
@@ -27,6 +28,7 @@ class SmartlingCore extends SmartlingCoreAbstract
     use CommonLogMessagesTrait;
 
     public function __construct(
+        private AcfDynamicSupport $acfDynamicSupport,
         private ExternalContentManager $externalContentManager,
         private FileUriHelper $fileUriHelper,
         private GutenbergBlockHelper $gutenbergBlockHelper,
