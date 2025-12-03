@@ -432,15 +432,6 @@ class Bootstrap
 
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
-        add_action($action, function () {
-            /**
-             * Initializing ACF and ACF Option Pages support.
-             */
-            $acf = $this->fromContainer('acf.dynamic.support');
-            assert($acf instanceof AcfDynamicSupport);
-            $acf->run();
-        });
-
         /**
          * Post types and taxonomies are registered on 'init' hook, but this code is executed on 'plugins_loaded' hook,
          * so we need to postpone dynamic handlers execution
