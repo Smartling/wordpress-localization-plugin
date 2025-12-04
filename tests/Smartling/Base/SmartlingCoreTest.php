@@ -5,7 +5,6 @@ namespace Smartling\Tests\Smartling\Base;
 use PHPUnit\Framework\TestCase;
 use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\UploadQueueManager;
-use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
@@ -120,11 +119,6 @@ class SmartlingCoreTest extends TestCase
 
     public function readLockedTranslationFieldsBySubmissionDataProvider(): array
     {
-        try {
-            SubmissionEntity::fromArray([], $this->getLogger());
-        } catch (SmartlingDirectRunRuntimeException) {
-            $this->markTestSkipped('Requires active wordpress');
-        }
         return [
             'test with new content' => [
                 [
