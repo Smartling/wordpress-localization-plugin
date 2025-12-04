@@ -61,6 +61,7 @@ class SmartlingCoreTest extends TestCase
 
 
         $this->core = new SmartlingCore(
+            $acf,
             new ExternalContentManager(new FieldsFilterHelper(
                 $acf,
                 $this->createMock(ContentSerializationHelper::class),
