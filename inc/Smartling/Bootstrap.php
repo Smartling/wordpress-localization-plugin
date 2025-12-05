@@ -430,6 +430,19 @@ class Bootstrap
         (new Taxonomies($di->getParameter('ignoredTypes')['taxonomies'] ?? []))->registerHookHandler();
         (new PostTypes($di->getParameter('ignoredTypes')['posts'] ?? []))->registerHookHandler();
 
+        add_action('admin_enqueue_scripts', static function () {
+            wp_enqueue_script('wp-element');
+            wp_enqueue_script('wp-components');
+            wp_enqueue_script(
+                'smartling-react-app',
+                plugin_dir_url(__FILE__) . '../../js/app.js',
+                ['wp-element', 'wp-components'],
+                static::$pluginVersion . random_int(0, 10000),
+                true,
+            );
+            wp_enqueue_style('wp-components');
+        });
+
         $action = defined('DOING_CRON') && true === DOING_CRON ? 'wp_loaded' : 'admin_init';
 
         /**

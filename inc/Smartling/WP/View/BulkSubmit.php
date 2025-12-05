@@ -49,6 +49,7 @@ $widgetName = 'bulk-submit-locales';
         <?php }?>
         <?php $bulkSubmitTable->display() ?>
         <div id="error-messages" class="tab"></div>
+        <div id="smartling-app"></div>
         <div class="postbox-container">
             <div id="panel-box" class="postbox hndle"><h2><span>Content actions</span></h2>
                 <div class="inside">
