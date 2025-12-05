@@ -74,7 +74,9 @@ trait SmartlingCoreDownloadTrait
                     $entity->getTargetLocale(),
                 ])
             );
-            $this->acfDynamicSupport->run();
+            if ($this->acfDynamicSupport->getDefinitions() === null) {
+                $this->acfDynamicSupport->run();
+            }
             $this->applyXML($entity, $data, $this->xmlHelper, $this->postContentHelper);
             LiveNotificationController::pushNotification(
                 $this
