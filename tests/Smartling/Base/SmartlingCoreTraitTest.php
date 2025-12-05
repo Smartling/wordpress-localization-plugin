@@ -7,6 +7,7 @@ use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\DbAl\WordpressContentEntities\Entity;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -29,6 +30,7 @@ class SmartlingCoreTraitTest extends TestCase
         $wpProxy->method('apply_filters')->willReturnArgument(2);
 
         $x = new SmartlingCore(
+            $this->createMock(AcfDynamicSupport::class),
             $this->createMock(ExternalContentManager::class),
             $this->createMock(FileUriHelper::class),
             $this->createMock(GutenbergBlockHelper::class),

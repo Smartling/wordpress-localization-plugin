@@ -3,11 +3,8 @@
 namespace Smartling\Tests\Smartling\Base;
 
 use PHPUnit\Framework\TestCase;
-use Smartling\ApiWrapper;
 use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\UploadQueueManager;
-use Smartling\Exception\SmartlingDbException;
-use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
@@ -20,9 +17,7 @@ use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\XmlHelper;
-use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Replacers\ReplacerFactory;
-use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
@@ -37,7 +32,6 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\Tuner\MediaAttachmentRulesManager;
-use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class SmartlingCoreTest extends TestCase
 {
@@ -53,8 +47,9 @@ class SmartlingCoreTest extends TestCase
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
         $wpProxy = new WordpressFunctionProxyHelper();
+        $acf = $this->createMock(AcfDynamicSupport::class);
         $gutenbergBlockHelper = new GutenbergBlockHelper(
-            $this->createMock(AcfDynamicSupport::class),
+            $acf,
             $this->createMock(ContentSerializationHelper::class),
             $this->createMock(MediaAttachmentRulesManager::class),
             $this->createMock(ReplacerFactory::class),
@@ -65,8 +60,9 @@ class SmartlingCoreTest extends TestCase
 
 
         $this->core = new SmartlingCore(
+            $acf,
             new ExternalContentManager(new FieldsFilterHelper(
-                $this->createMock(AcfDynamicSupport::class),
+                $acf,
                 $this->createMock(ContentSerializationHelper::class),
                 $this->createMock(SettingsManager::class),
                 $wpProxy,
@@ -123,11 +119,6 @@ class SmartlingCoreTest extends TestCase
 
     public function readLockedTranslationFieldsBySubmissionDataProvider(): array
     {
-        try {
-            SubmissionEntity::fromArray([], $this->getLogger());
-        } catch (SmartlingDirectRunRuntimeException) {
-            $this->markTestSkipped('Requires active wordpress');
-        }
         return [
             'test with new content' => [
                 [
@@ -367,7 +358,7 @@ class SmartlingCoreTest extends TestCase
                 $s->setLastError($msg);
                 return $s;
             });
-        
+
         $obj->setSubmissionManager($submissionManager);
 
         $submission = new SubmissionEntity();
