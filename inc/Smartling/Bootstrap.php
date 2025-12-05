@@ -433,10 +433,11 @@ class Bootstrap
         add_action('admin_enqueue_scripts', static function () {
             wp_enqueue_script('wp-element');
             wp_enqueue_script('wp-components');
+            wp_enqueue_script('wp-date');
             wp_enqueue_script(
                 'smartling-react-app',
                 plugin_dir_url(__FILE__) . '../../js/app.js',
-                ['wp-element', 'wp-components'],
+                ['wp-element', 'wp-components', 'wp-date'],
                 static::$pluginVersion . random_int(0, 10000),
                 true,
             );
