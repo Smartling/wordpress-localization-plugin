@@ -6,8 +6,6 @@ use Smartling\Settings\Locale;
 
 class ArrayHelper
 {
-    private const NESTED_KEY_SEPARATOR = '.';
-
     /**
      * Retrieves the value of an array element or object property with the given key or property name.
      * If the key does not exist in the array or object, the default value will be returned instead.
@@ -30,18 +28,17 @@ class ArrayHelper
      * // using dot format to retrieve the property of embedded object
      * $street = \yii\helpers\ArrayHelper::getValue($users, 'address.street');
      * ~~~
-     *
-     * @param array|object    $array   array or object to extract value from
-     * @param string|\Closure $key     key name of the array element, or property name of the object,
-     *                                 or an anonymous function returning the value. The anonymous function signature
-     *                                 should be:
-     *                                 `function($array, $defaultValue)`.
-     * @param mixed           $default the default value to be returned if the specified array key does not exist. Not
-     *                                 used when getting value from an object.
-     *
+     * @param array|object    $array     array or object to extract value from
+     * @param string|\Closure $key       key name of the array element, or property name of the object,
+     *                                   or an anonymous function returning the value. The anonymous function signature
+     *                                   should be:
+     *                                   `function($array, $defaultValue)`.
+     * @param mixed           $default   the default value to be returned if the specified array key does not exist. Not
+     *                                   used when getting value from an object.
+     * @param string          $separator separator for nested keys
      * @return mixed the value of the element if found, default value otherwise
      */
-    public static function getValue(array|object $array, string|\Closure $key, mixed $default = null): mixed
+    public static function getValue(array|object $array, string|\Closure $key, mixed $default = null, string $separator = '.'): mixed
     {
         if ($key instanceof \Closure) {
             return $key($array, $default);
@@ -51,8 +48,8 @@ class ArrayHelper
             return $array[$key];
         }
 
-        if (($pos = strrpos($key, self::NESTED_KEY_SEPARATOR)) !== false) {
-            $array = static::getValue($array, substr($key, 0, $pos), $default);
+        if (($pos = strrpos($key, $separator)) !== false) {
+            $array = static::getValue($array, substr($key, 0, $pos), $default, $separator);
             $key = substr($key, $pos + 1);
         }
 
@@ -67,16 +64,16 @@ class ArrayHelper
         return $default;
     }
 
-    public function setValue(array $array, string $key, mixed $value): array
+    public function setValue(array $array, string $key, mixed $value, string $separator = '.'): array
     {
         $result = $array;
-        $parts = explode(self::NESTED_KEY_SEPARATOR, $key);
+        $parts = explode($separator, $key);
         if (count($parts) > 1) {
             $index = array_shift($parts);
             if (!array_key_exists($index, $result)) {
                 $result[$index] = [];
             }
-            $result[$index] = $this->setValue($result[$index], implode(self::NESTED_KEY_SEPARATOR, $parts), $value);
+            $result[$index] = $this->setValue($result[$index], implode($separator, $parts), $value, $separator);
         } else {
             $result[$key] = $value;
         }
