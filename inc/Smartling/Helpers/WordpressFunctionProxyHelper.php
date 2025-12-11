@@ -41,6 +41,11 @@ class WordpressFunctionProxyHelper
         return plugin_dir_url(...func_get_args());
     }
 
+    public function updatePostMeta(int $postId, string $metaKey, mixed $metaValue)
+    {
+        return update_post_meta($postId, $metaKey, $metaValue);
+    }
+
     public function get_post_type()
     {
         return get_post_type(...func_get_args());

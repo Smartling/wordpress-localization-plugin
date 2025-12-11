@@ -10,7 +10,6 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
-use Smartling\Models\RelatedContentItem;
 
 class Unknown extends ElementAbstract {
     use LoggerSafeTrait;
@@ -69,48 +68,5 @@ class Unknown extends ElementAbstract {
     public function getType(): string
     {
         return ElementFactory::UNKNOWN_ELEMENT;
-    }
-
-    /**
-     * @return RelatedContentItem[]
-     */
-    public function getRelatedFromDynamic(array $dynamic, string $path): array
-    {
-        $return = [];
-        $dynamicTagsManager = $this->getDynamicTagsManager();
-        foreach ($dynamic as $property => $value) {
-            try {
-                $related = $dynamicTagsManager->parse_tag_text($value, [], function ($id, $name, $settings): ?Content {
-                    if (is_array($settings)) {
-                        return $this->getKnownDynamicContent($name, $settings);
-                    }
-
-                    return null;
-                });
-                if ($related !== null) {
-                    $return[] = new RelatedContentItem($related, $this->id, "$path/$property");
-                }
-            } catch (\Throwable $e) {
-                $this->getLogger()->notice("Failed to get related id for property=$property, tag=$value: {$e->getMessage()}");
-                continue;
-            }
-        }
-
-        return $return;
-    }
-
-    private function getKnownDynamicContent(string $name, array $settings): ?Content
-    {
-        if ($name === self::DYNAMIC_POPUP && array_key_exists(self::DYNAMIC_POPUP, $settings)) {
-            return new Content((int)$settings[self::DYNAMIC_POPUP], ContentTypeHelper::CONTENT_TYPE_UNKNOWN);
-        }
-        if ($name === self::DYNAMIC_INTERNAL_URL && ($settings['type'] ?? '') === 'post' && array_key_exists('post_id', $settings)) {
-            return new Content((int)$settings['post_id'], ContentTypeHelper::CONTENT_TYPE_POST);
-        }
-        if ($name === self::DYNAMIC_POST_FEATURED_IMAGE && array_key_exists('fallback', $settings) && array_key_exists('id', $settings['fallback'])) {
-            return new Content((int)$settings['fallback']['id'], ContentTypeHelper::POST_TYPE_ATTACHMENT);
-        }
-
-        return null;
     }
 }

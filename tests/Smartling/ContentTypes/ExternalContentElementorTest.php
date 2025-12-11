@@ -313,6 +313,25 @@ and management of:',
                 ['7bb0b763/no_posts_found' => 'No posts found'],
                 [ContentTypeHelper::CONTENT_TYPE_UNKNOWN => [1531]],
             ],
+            'image carousel' => [
+                '[{"id":"37c9ffc","elType":"widget","settings":{"carousel":[{"id":552,"url":"https://example.com/image1.jpg"},{"id":553,"url":"https://example.com/image2.jpg"}]},"elements":[],"widgetType":"image-carousel"}]',
+                [],
+                [ContentTypeHelper::POST_TYPE_ATTACHMENT => [552, 553]],
+            ],
+            'button with icon' => [
+                '[{"id":"abc123","elType":"widget","settings":{"text":"Click Me","selected_icon":{"value":{"id":789}}},"elements":[],"widgetType":"button"}]',
+                ['abc123/text' => 'Click Me'],
+                [ContentTypeHelper::POST_TYPE_ATTACHMENT => [789]],
+            ],
+            'dynamic content in elements' => [
+                file_get_contents(__DIR__ . '/wp-975.json'),
+                [],
+                [
+                    ContentTypeHelper::POST_TYPE_ATTACHMENT => [
+                        13574,
+                    ]
+                ],
+            ]
         ];
     }
 
