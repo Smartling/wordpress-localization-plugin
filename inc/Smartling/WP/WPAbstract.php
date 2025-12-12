@@ -382,13 +382,13 @@ class WPAbstract
         return $output . HtmlTagGeneratorHelper::tag('span', vsprintf('%s / %s', [$check, $unCheck]));
     }
 
-    public static function settingsPageTsargetLocaleCheckbox(
+    public static function settingsPageTargetLocaleCheckbox(
         ConfigurationProfileEntity $profile,
-        $displayName,
-        $blogId,
-        $smartlingName = '',
-        $enabled = false
-    )
+        string $displayName,
+        int $blogId,
+        string $smartlingName = '',
+        bool $enabled = false,
+    ): string
     {
         $parts = [];
 
@@ -410,10 +410,8 @@ class WPAbstract
             HtmlTagGeneratorHelper::tag('label', implode('', $parts), ['class' => 'radio-label']),
         ];
 
-        /**
-         * @var SmartlingCore $ep
-         */
         $ep = Bootstrap::getContainer()->get('entrypoint');
+        assert($ep instanceof SmartlingCore);
 
         $locales = $ep->getProjectLocales($profile);
 
