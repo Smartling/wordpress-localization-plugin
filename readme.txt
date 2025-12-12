@@ -62,7 +62,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
-= 5.2.0 =
+= 5.1.3 =
 * Reworked Elementor save hook to preserve dynamic widget settings
 * Added support for Elementor image carousel widget
 * Added support for icons in Elementor button widgets
