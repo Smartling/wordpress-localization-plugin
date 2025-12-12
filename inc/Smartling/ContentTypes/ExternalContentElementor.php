@@ -81,12 +81,13 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
             $documentsManager = $this->getDocumentsManager();
             if ($supportLevel !== Pluggable::NOT_SUPPORTED && $documentsManager !== null) {
                 $this->getLogger()->debug(sprintf('Processing Elementor after content written hook, contentType=%s, sourceBlogId=%d, sourceId=%d, submissionId=%d, targetBlogId=%d, targetId=%d, supportLevel=%s', $submission->getContentType(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $supportLevel));
-                $this->userHelper->asAdministratorOrEditor(function () use ($documentsManager, $submission) {
+                $data = $this->getDataFromPostMeta($submission->getTargetId());
+                $this->userHelper->asAdministratorOrEditor(function () use ($data, $documentsManager, $submission) {
                     try {
                         /** @noinspection PhpParamsInspection */
                         $documentsManager->ajax_save([
                             'editor_post_id' => $submission->getTargetId(),
-                            'elements' => json_decode($this->getDataFromPostMeta($submission->getTargetId()),
+                            'elements' => json_decode($data,
                                 true,
                                 512,
                                 JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE),
@@ -96,6 +97,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                         $this->getLogger()->notice(sprintf("Unable to do Elementor save actions for contentType=%s, submissionId=%d, targetBlogId=%d, targetId=%d: %s (%s)", $submission->getContentType(), $submission->getId(), $submission->getTargetBlogId(), $submission->getTargetId(), $e->getMessage(), $e->getTraceAsString()));
                     }
                 });
+                $this->wpProxy->updatePostMeta($submission->getTargetId(), self::META_FIELD_NAME, addslashes($data));
             }
         });
         $this->getLogger()->info("Done processing Elementor after content written hook");

@@ -1,0 +1,21 @@
+[
+  {
+    "id": "4423296",
+    "elType": "container",
+    "settings": {},
+    "elements": [
+      {
+        "id": "50c5c61",
+        "elType": "widget",
+        "settings": {
+          "__dynamic__": {
+            "image": "[elementor-tag id=\"\" name=\"post-featured-image\" settings=\"%7B%22fallback%22%3A%7B%22url%22%3A%22http%3A%2F%2Fexample.com%2Fwp-content%2Fuploads%2F2025%2F02%2FPlaceholder.webp%22%2C%22id%22%3A13574%2C%22size%22%3A%22%22%2C%22alt%22%3A%22%22%2C%22source%22%3A%22library%22%7D%7D\"]"
+          }
+        },
+        "elements": [],
+        "widgetType": "fictionary-unknown-element-with-dynamic-content"
+      }
+    ],
+    "isInner": false
+  }
+]

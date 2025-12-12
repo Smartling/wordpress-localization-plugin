@@ -8,7 +8,9 @@ use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Models\Content;
+use Smartling\Models\ElementorDynamicTagProcessor;
 use Smartling\Models\RelatedContentInfo;
+use Smartling\Models\RelatedContentItem;
 use Smartling\Submissions\SubmissionEntity;
 
 abstract class ElementAbstract implements Element {
@@ -41,6 +43,34 @@ abstract class ElementAbstract implements Element {
     public function getId(): string
     {
         return $this->id;
+    }
+
+    /**
+     * @return RelatedContentItem[]
+     */
+    public function getRelatedFromDynamic(array $dynamic, string $path): array
+    {
+        $return = [];
+        $dynamicTagsManager = $this->getDynamicTagsManager();
+        foreach ($dynamic as $property => $value) {
+            try {
+                $related = $dynamicTagsManager->parse_tag_text($value, [], function ($id, $name, $settings): ?Content {
+                    if (is_array($settings)) {
+                        return $this->getKnownDynamicContent($name, $settings);
+                    }
+
+                    return null;
+                });
+                if ($related !== null) {
+                    $return[] = new RelatedContentItem($related, $this->id, "$path/$property");
+                }
+            } catch (\Throwable $e) {
+                $this->getLogger()->notice("Failed to get related id for property=$property, tag=$value: {$e->getMessage()}");
+                continue;
+            }
+        }
+
+        return $return;
     }
 
     protected function getIntSettingByKey(string $key, array $settings): ?int
@@ -160,6 +190,24 @@ abstract class ElementAbstract implements Element {
             $this->raw = $this->setRelations($content, $externalContentElementor, $path, $submission)->toArray();
         }
 
+        if (is_array($this->settings[self::SETTING_KEY_DYNAMIC] ?? false)) {
+            foreach ($this->settings[self::SETTING_KEY_DYNAMIC] as $index => $tag) {
+                $manager = $this->getDynamicTagsManager();
+                $processor = $this->getDynamicTagProcessor($manager->tag_text_to_tag_data($tag)['name'] ?? '');
+                if ($processor !== null) {
+                    $this->getLogger()->debug("Got processor for $tag (id=$this->id}, manager=" . $manager::class);
+                    foreach ($this->getRelatedFromDynamic($this->settings[self::SETTING_KEY_DYNAMIC], $index) as $content) {
+                        $this->raw = $this->setRelations(
+                            $content->getContent(),
+                            $externalContentElementor,
+                            'settings/' . self::SETTING_KEY_DYNAMIC . "/$index",
+                            $submission,
+                        )->toArray();
+                    }
+                }
+            }
+        }
+
         return new static($this->raw);
     }
 
@@ -201,6 +249,19 @@ abstract class ElementAbstract implements Element {
         return new DynamicTagsManagerShim();
     }
 
+    private function getDynamicTagProcessor(string $name): ?ElementorDynamicTagProcessor
+    {
+        return match ($name) {
+            self::DYNAMIC_INTERNAL_URL => new ElementorDynamicTagProcessor('settings/post_id'),
+            self::DYNAMIC_POPUP => new ElementorDynamicTagProcessor('settings/' . self::DYNAMIC_POPUP),
+            self::DYNAMIC_POST_FEATURED_IMAGE => new ElementorDynamicTagProcessor(
+                'settings/fallback/id',
+                fn(string $value) => (int)$value,
+            ),
+            default => null,
+        };
+    }
+
     // $value must be string to be converted back to tag
     public function replaceDynamicTagSetting(string $tag, string $value): string
     {
@@ -211,25 +272,29 @@ abstract class ElementAbstract implements Element {
             $this->getLogger()->warning("Unable to convert Elementor tagText=\"$tag\" to array, value=\"$value\": {$e->getMessage()}");
             return $tag;
         }
-        switch ($tagData['name'] ?? '') {
-            case self::DYNAMIC_INTERNAL_URL:
-                $tagData['settings']['post_id'] = $value;
-                break;
-            case self::DYNAMIC_POPUP:
-                $tagData['settings'][self::DYNAMIC_POPUP] = $value;
-                break;
-            case self::DYNAMIC_POST_FEATURED_IMAGE:
-                $tagData['settings']['fallback']['id'] = (int)$value;
-                break;
-            default:
-                $this->getLogger()->warning("Unknown Elementor tag encountered, skipping replacement, tagText=\"$tag\"");
-                return $tag;
+        $processor = $this->getDynamicTagProcessor($tagData['name'] ?? '');
+        if ($processor === null) {
+            $this->getLogger()->warning("Unknown Elementor tag encountered, skipping replacement, tagText=\"$tag\"");
+            return $tag;
         }
+        $arrayHelper = new ArrayHelper();
+        $tagData = $arrayHelper->setValue(
+            $tagData,
+            $processor->getPath(),
+            $processor->getCallable() === null ? $value : $processor->getCallable()($value),
+            '/',
+        );
         try {
             $tagText = $dynamicTagsManager->tag_data_to_tag_text(...array_values($tagData));
             if ($tagText === '') {
                 $this->getLogger()->debug('No tag text returned by manager, fallback tag text creation');
-                $tagText = sprintf('[%1$s id="%2$s" name="%3$s" settings="%4$s"]', Manager::TAG_LABEL, $tagData['id'] ?? '', $tagData['name'] ?? '', urlencode(json_encode($tagData['settings'] ?? [], JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT)));
+                $tagText = sprintf(
+                    '[%1$s id="%2$s" name="%3$s" settings="%4$s"]',
+                    'elementor-tag',
+                    $tagData['id'] ?? '',
+                    $tagData['name'] ?? '',
+                    urlencode(json_encode($tagData['settings'] ?? [], JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT)),
+                );
             }
 
             return $tagText;
@@ -238,5 +303,20 @@ abstract class ElementAbstract implements Element {
         }
 
         return $tag;
+    }
+
+    protected function getKnownDynamicContent(string $name, array $settings): ?Content
+    {
+        if ($name === self::DYNAMIC_POPUP && array_key_exists(self::DYNAMIC_POPUP, $settings)) {
+            return new Content((int)$settings[self::DYNAMIC_POPUP], ContentTypeHelper::CONTENT_TYPE_UNKNOWN);
+        }
+        if ($name === self::DYNAMIC_INTERNAL_URL && ($settings['type'] ?? '') === 'post' && array_key_exists('post_id', $settings)) {
+            return new Content((int)$settings['post_id'], ContentTypeHelper::CONTENT_TYPE_POST);
+        }
+        if ($name === self::DYNAMIC_POST_FEATURED_IMAGE && array_key_exists('fallback', $settings) && array_key_exists('id', $settings['fallback'])) {
+            return new Content((int)$settings['fallback']['id'], ContentTypeHelper::POST_TYPE_ATTACHMENT);
+        }
+
+        return null;
     }
 }
