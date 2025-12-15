@@ -252,11 +252,6 @@ class SmartlingCore extends SmartlingCoreAbstract
         }
     }
 
-    public function getProjectLocales(ConfigurationProfileEntity $profile): array
-    {
-        return $this->getApiWrapper()->getSupportedLocales($profile);
-    }
-
     public function handleBadBlogId(SubmissionEntity $submission)
     {
         $profileMainId = $submission->getSourceBlogId();
