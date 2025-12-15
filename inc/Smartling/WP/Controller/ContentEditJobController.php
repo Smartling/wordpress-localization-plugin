@@ -10,7 +10,9 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Settings\SettingsManager;
 use Smartling\Vendor\Smartling\Jobs\JobStatus;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -60,67 +62,52 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
         $this->servedContentType = $servedContentType;
     }
 
-    public function initJobApiProxy()
+    public function initJobApiProxy(): void
     {
         add_action('wp_ajax_' . self::SMARTLING_JOB_API_PROXY, function () {
-
             $data =& $_POST;
 
             $result = [
                 'status' => 200,
             ];
 
-            $wrapper = Bootstrap::getContainer()->get('api.wrapper.with.retries');
-            /**
-             * @var ApiWrapper $wrapper
-             */
-
-            $siteHelper = Bootstrap::getContainer()->get('site.helper');
-            /**
-             * @var SiteHelper $siteHelper
-             */
-
-            $settingsManager = Bootstrap::getContainer()->get('manager.settings');
-            /**
-             * @var SettingsManager $settingsManager
-             */
-
-            $curSiteId = $siteHelper->getCurrentBlogId();
-            $profile = $settingsManager->getSingleSettingsProfile($curSiteId);
+            $profile = $this->settingsManager->getSingleSettingsProfile($this->siteHelper->getCurrentBlogId());
             $params = &$data['params'];
 
-            $validateRequires = function ($fieldName) use (&$result, $params) {
-                if (array_key_exists($fieldName, $params) && '' !== ($value = trim($params[$fieldName]))) {
-                    return $value;
-                } else {
+            $validateRequires = static function ($fieldName) use (&$result, $params) {
+                $value = trim($params[$fieldName] ?? '');
+
+                if (!array_key_exists($fieldName, $params) || $value === '') {
                     $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
                     Bootstrap::getLogger()->warning($msg);
                     $result['status'] = 400;
                     $result['message'][$fieldName] = $msg;
                 }
+
+                return $value;
             };
 
             if (array_key_exists('innerAction', $data)) {
                 switch ($data['innerAction']) {
                     case 'list-jobs' :
-                        $jobs = $wrapper->listJobs($profile, null, [
+                        $jobs = $this->api->listJobs($profile, null, [
                             JobStatus::AWAITING_AUTHORIZATION,
                             JobStatus::IN_PROGRESS,
                             JobStatus::COMPLETED,
                         ]);
-                        $preparcedJobs = [];
-                        if (is_array($jobs) && array_key_exists('items', $jobs) &&
-                            array_key_exists('totalCount', $jobs) && 0 < (int)$jobs['totalCount']) {
-                            foreach ($jobs['items'] as $job) {
-                                if (!empty($job['dueDate'])) {
-                                    $job['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $job['dueDate'])
-                                        ->format(DateTimeHelper::DATE_TIME_FORMAT_JOB);
-                                }
-
-                                $preparcedJobs[] = $job;
-                            }
+                        $parsedJobs = [];
+                        if (!array_key_exists('items', $jobs)) {
+                            throw new \RuntimeException('Jobs api response is invalid.');
                         }
-                        $result['data'] = $preparcedJobs;
+                        foreach ($jobs['items'] as $job) {
+                            if (!empty($job['dueDate'])) {
+                                $job['dueDate'] = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $job['dueDate'])
+                                    ->format(DateTimeHelper::DATE_TIME_FORMAT_JOB);
+                            }
+
+                            $parsedJobs[] = $job;
+                        }
+                        $result['data'] = $parsedJobs;
                         break;
                     case 'create-job':
                         $jobName = $validateRequires('jobName');
@@ -130,9 +117,8 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                         $jobLocalesRaw = explode(',', $validateRequires('locales'));
                         $jobLocales = [];
                         foreach ($jobLocalesRaw as $blogId) {
-                            $jobLocales[] = $settingsManager->getSmartlingLocaleIdBySettingsProfile($profile, (int)$blogId);
+                            $jobLocales[] = $this->settingsManager->getSmartlingLocaleIdBySettingsProfile($profile, (int)$blogId);
                         }
-                        $debug['status'] = $result['status'];
                         if ($result['status'] === 200) {
                             try {
                                 // Convert user's time to UTC.
@@ -143,7 +129,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                                     $utcDateTime->setTimeZone(new DateTimeZone('UTC'));
                                 }
 
-                                $res = $wrapper->createJob($profile, [
+                                $res = $this->api->createJob($profile, [
                                     'name'        => $jobName,
                                     'description' => $jobDescription,
                                     'dueDate'     => $utcDateTime,

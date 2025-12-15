@@ -17,14 +17,17 @@ use Smartling\WP\WPHookInterface;
 
 class SubmissionsPageController extends WPAbstract implements WPHookInterface
 {
-    private ApiWrapperInterface $apiWrapper;
-    private Queue $queue;
-
-    public function __construct(ApiWrapperInterface $apiWrapper, LocalizationPluginProxyInterface $connector, PluginInfo $pluginInfo, SettingsManager $settingsManager, SiteHelper $siteHelper, SubmissionManager $manager, Cache $cache, Queue $queue)
-    {
-        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
-        $this->apiWrapper = $apiWrapper;
-        $this->queue = $queue;
+    public function __construct(
+        protected ApiWrapperInterface $api,
+        LocalizationPluginProxyInterface $connector,
+        PluginInfo $pluginInfo,
+        SettingsManager $settingsManager,
+        SiteHelper $siteHelper,
+        SubmissionManager $manager,
+        Cache $cache,
+        private Queue $queue,
+    ) {
+        parent::__construct($api, $connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
 
     public function register(): void
@@ -56,7 +59,7 @@ class SubmissionsPageController extends WPAbstract implements WPHookInterface
 
     public function renderPage(): void
     {
-        $table = new SubmissionTableWidget($this->apiWrapper, $this->localizationPluginProxy, $this->settingsManager, $this->siteHelper, $this->getManager(), $this->queue);
+        $table = new SubmissionTableWidget($this->api, $this->localizationPluginProxy, $this->settingsManager, $this->siteHelper, $this->getManager(), $this->queue);
         $table->prepare_items();
         $this->view($table);
     }

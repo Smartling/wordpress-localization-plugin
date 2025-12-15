@@ -356,6 +356,7 @@ services:
   wp.settings.edit:
     class: Smartling\WP\Controller\ConfigurationProfileFormController
     arguments:
+      - "@api.wrapper.with.retries"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@manager.settings"
@@ -378,6 +379,7 @@ services:
   wp.taxonomy.linker:
     class: Smartling\WP\Controller\TaxonomyLinksController
     arguments:
+      - "@api.wrapper.with.retries"
       - "@plugin.info"
       - "@manager.settings"
       - "@multilang.proxy"
@@ -402,6 +404,7 @@ services:
   wp.checkStatus:
       class: Smartling\WP\Controller\CheckStatusController
       arguments:
+        - "@api.wrapper.with.retries"
         - "@multilang.proxy"
         - "@plugin.info"
         - "@manager.settings"
@@ -566,6 +569,7 @@ services:
   wp.translation.lock:
     class: Smartling\WP\Controller\TranslationLockController
     arguments:
+      - "@api.wrapper.with.retries"
       - "@multilang.proxy"
       - "@plugin.info"
       - "@manager.settings"

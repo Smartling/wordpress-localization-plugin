@@ -67,6 +67,7 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
             $tag = 'wp.taxonomy.' . static::getSystemName();
             $di
                 ->register($tag, TaxonomyWidgetController::class)
+                ->addArgument($di->getDefinition('api.wrapper.with.retries'))
                 ->addArgument($di->getDefinition('multilang.proxy'))
                 ->addArgument($di->getDefinition('plugin.info'))
                 ->addArgument($di->getDefinition('manager.settings'))
@@ -87,6 +88,7 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
 
         $di
             ->register($tag, ContentEditJobController::class)
+            ->addArgument($di->getDefinition('api.wrapper.with.retries'))
             ->addArgument($di->getDefinition('multilang.proxy'))
             ->addArgument($di->getDefinition('plugin.info'))
             ->addArgument($di->getDefinition('manager.settings'))

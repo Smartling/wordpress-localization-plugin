@@ -88,6 +88,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
 
         $di
             ->register($tag, ContentEditJobController::class)
+            ->addArgument($di->getDefinition('api.wrapper.with.retries'))
             ->addArgument($di->getDefinition('multilang.proxy'))
             ->addArgument($di->getDefinition('plugin.info'))
             ->addArgument($di->getDefinition('manager.settings'))

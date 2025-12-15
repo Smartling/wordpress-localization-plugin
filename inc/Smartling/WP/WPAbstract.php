@@ -2,6 +2,7 @@
 
 namespace Smartling\WP;
 
+use Smartling\ApiWrapperInterface;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
@@ -89,6 +90,7 @@ class WPAbstract
     }
 
     public function __construct(
+        protected ApiWrapperInterface $api,
         LocalizationPluginProxyInterface $connector,
         PluginInfo $pluginInfo,
         SettingsManager $settingsManager,

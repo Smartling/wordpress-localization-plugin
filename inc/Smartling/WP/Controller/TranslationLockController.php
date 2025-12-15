@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
@@ -20,19 +21,17 @@ use Smartling\WP\WPHookInterface;
 
 class TranslationLockController extends WPAbstract implements WPHookInterface
 {
-    private ContentHelper $contentHelper;
-
     public function __construct(
+        protected ApiWrapperInterface $api,
         LocalizationPluginProxyInterface $connector,
         PluginInfo $pluginInfo,
         SettingsManager $settingsManager,
         SiteHelper $siteHelper,
         SubmissionManager $manager,
         Cache $cache,
-        ContentHelper $contentHelper,
+        private ContentHelper $contentHelper,
     ) {
-        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
-        $this->contentHelper = $contentHelper;
+        parent::__construct($api, $connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
 
     /**

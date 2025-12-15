@@ -20,7 +20,55 @@ $data = $this->getViewData();
 $profile = $data['profile'];
 $widgetName = 'bulk-submit-locales';
 
-?>
+$isBulkSubmitPage = get_current_screen()?->id === 'smartling_page_smartling-bulk-submit';
+global $tag;
+$needWrapper = ($tag instanceof WP_Term);
+
+$id = 0;
+$baseType = 'unknown';
+global $post;
+if ($post instanceof WP_Post) {
+    $id = $post->ID;
+    $baseType = 'post';
+} else {
+    if ($tag instanceof WP_Term) {
+        $id = $tag->term_id;
+        $baseType = 'taxonomy';
+    }
+}
+
+$locales = $profile->getTargetLocales();
+ArrayHelper::sortLocales($locales);
+$localesData = array_map(function($locale) {
+    return [
+        'blogId' => $locale->getBlogId(),
+        'label' => $locale->getLabel(),
+        'smartlingLocale' => $locale->getSmartlingLocale(),
+        'enabled' => $locale->isEnabled()
+    ];
+}, array_filter($locales, fn($l) => $l->isEnabled()));
+
+if (!$isBulkSubmitPage) : ?>
+<?php if ($needWrapper) : ?>
+<div class="postbox-container" style="width: 550px">
+    <div id="panel-box" class="postbox hndle"><h2><span>Translate content</span></h2>
+        <div class="inside">
+<?php endif; ?>
+            <div id="smartling-app" 
+                 data-bulk-submit="false"
+                 data-content-type="<?= $data['contentType'] ?? $baseType ?>"
+                 data-content-id="<?= $id ?>"
+                 data-locales='<?= htmlspecialchars(json_encode(array_values($localesData), JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>'
+                 data-ajax-url="<?= admin_url('admin-ajax.php') ?>"
+                 data-admin-url="<?= admin_url('admin-ajax.php') ?>"></div>
+<?php if ($needWrapper) : ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+<?php endif; ?>
+
+<div style="display:none;">
 <style>
 .relations-list {
     max-height: 200px;
@@ -35,9 +83,6 @@ $widgetName = 'bulk-submit-locales';
 }
 </style>
 <?php
-$isBulkSubmitPage = get_current_screen()?->id === 'smartling_page_smartling-bulk-submit';
-global $tag;
-$needWrapper = ($tag instanceof WP_Term);
 ?>
 
 <script>
@@ -47,7 +92,7 @@ $needWrapper = ($tag instanceof WP_Term);
     let globalButton;
 </script>
 
-<?php if ($needWrapper) : ?>
+<?php if ($needWrapper && false) : ?>
 <div class="postbox-container" style="width: 550px">
     <div id="panel-box" class="postbox hndle"><h2><span>Translate content</span></h2>
         <div class="inside">

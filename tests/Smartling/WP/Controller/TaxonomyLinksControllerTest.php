@@ -28,6 +28,7 @@ namespace {
 namespace Smartling\Tests\Smartling\WP\Controller {
 
     use PHPUnit\Framework\TestCase;
+    use Smartling\ApiWrapperInterface;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
     use Smartling\Helpers\WpObjectCache;
     use Smartling\Helpers\PluginInfo;
@@ -43,6 +44,7 @@ namespace Smartling\Tests\Smartling\WP\Controller {
         public function testGetTerms()
         {
             $x = new TaxonomyLinksController(
+                $this->createMock(ApiWrapperInterface::class),
                 $this->getMockBuilder(PluginInfo::class)->disableOriginalConstructor()->getMock(),
                 $this->createMock(SettingsManager::class),
                 $this->createMock(LocalizationPluginProxyInterface::class),

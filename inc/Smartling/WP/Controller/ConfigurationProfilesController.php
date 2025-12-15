@@ -30,7 +30,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
     public const MENU_SLUG = 'smartling_configuration_profile_list';
 
     public function __construct(
-        private ApiWrapperInterface $api,
+        protected ApiWrapperInterface $api,
         LocalizationPluginProxyInterface $connector,
         PluginInfo $pluginInfo,
         SettingsManager $settingsManager,
@@ -41,7 +41,7 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
         private UploadQueueManager $uploadQueueManager,
         private WordpressFunctionProxyHelper $wpProxy,
     ) {
-        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
+        parent::__construct($api, $connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
 
     public function wp_enqueue(): void

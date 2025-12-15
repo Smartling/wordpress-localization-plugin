@@ -49,7 +49,26 @@ $widgetName = 'bulk-submit-locales';
         <?php }?>
         <?php $bulkSubmitTable->display() ?>
         <div id="error-messages" class="tab"></div>
-        <div class="postbox-container">
+        <?php
+        $locales = $data->getProfile()->getTargetLocales();
+        ArrayHelper::sortLocales($locales);
+        $localesData = array_map(function($locale) {
+            return [
+                'blogId' => $locale->getBlogId(),
+                'label' => $locale->getLabel(),
+                'smartlingLocale' => $locale->getSmartlingLocale(),
+                'enabled' => $locale->isEnabled()
+            ];
+        }, array_filter($locales, fn($l) => $l->isEnabled()));
+        ?>
+        <div id="smartling-app" 
+             data-bulk-submit="true"
+             data-content-type=""
+             data-content-id="0"
+             data-locales='<?= htmlspecialchars(json_encode(array_values($localesData), JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG), ENT_QUOTES, 'UTF-8') ?>'
+             data-ajax-url="<?= admin_url('admin-ajax.php') ?>"
+             data-admin-url="<?= admin_url('admin-ajax.php') ?>"></div>
+        <div class="postbox-container" style="display:none;">
             <div id="panel-box" class="postbox hndle"><h2><span>Content actions</span></h2>
                 <div class="inside">
                     <div id="action-tabs">
