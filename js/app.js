@@ -1,6 +1,5 @@
 const { render, createElement: el, useState, useEffect, useCallback } = wp.element;
-const { Button, Card, CardBody, CardHeader, TabPanel, TextControl, TextareaControl, CheckboxControl, SelectControl, Spinner, Notice, Flex, ProgressBar, __experimentalVStack: VStack } = wp.components;
-const { DateTimePicker } = wp.components.__experimentalDateTimePicker ? wp.components : { DateTimePicker: null };
+const { Button, Card, CardBody, CardHeader, TabPanel, TextControl, TextareaControl, CheckboxControl, SelectControl, Spinner, Notice, Flex, ProgressBar, __experimentalVStack: VStack, DateTimePicker } = wp.components;
 
 function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl, adminUrl }) {
     const [activeTab, setActiveTab] = useState('new');
@@ -203,7 +202,19 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                 tab.name !== 'clone' && el('div', {},
                     el(TextControl, { label: 'Name', value: jobName, onChange: setJobName }),
                     el(TextareaControl, { label: 'Description', value: description, onChange: setDescription, rows: 3 }),
-                    el(TextControl, { label: 'Due Date (YYYY-MM-DD HH:mm)', type: 'text', value: dueDate, onChange: setDueDate, placeholder: '2025-12-31 23:59' }),
+                    el('div', { style: { marginBottom: '16px' } },
+                        el('label', { style: { display: 'block', marginBottom: '8px', fontWeight: 600 } }, 'Due Date'),
+                        DateTimePicker ? el(DateTimePicker, {
+                            currentDate: dueDate,
+                            onChange: setDueDate,
+                            is12Hour: false
+                        }) : el(TextControl, { 
+                            type: 'datetime-local', 
+                            value: dueDate, 
+                            onChange: setDueDate,
+                            placeholder: '2025-12-31T23:59'
+                        })
+                    ),
                     el(CheckboxControl, { label: 'Authorize Job', checked: authorize, onChange: setAuthorize }),
 
                     el('fieldset', { style: { marginTop: '16px', border: '1px solid #ddd', padding: '12px', borderRadius: '4px' } },
