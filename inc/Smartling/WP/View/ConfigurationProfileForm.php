@@ -492,8 +492,7 @@ if (0 === $profileId) {
                             ?>
 
                             <tr>
-                                <?= WPAbstract::settingsPageTargetLocaleCheckbox($profile, $label, $blogId,
-                                                                                  $smartlingLocale, $enabled) ?>
+                                <?= $this->renderLocales($profile, $label, $blogId, $smartlingLocale, $enabled) ?>
                             </tr>
                             <?php
                         }
