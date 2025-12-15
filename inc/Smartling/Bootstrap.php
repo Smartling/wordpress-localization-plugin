@@ -15,7 +15,6 @@ use Smartling\ContentTypes\CustomTaxonomyType;
 use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\Exception\SmartlingBootException;
 use Smartling\Exception\SmartlingConfigException;
-use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\PluginHelper;

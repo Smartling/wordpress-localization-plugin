@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 5.1.4 =
 * Removed caching of profile settings locales
+* Updated UI
 
 = 5.1.3 =
 * Reworked Elementor save hook to preserve dynamic widget settings
