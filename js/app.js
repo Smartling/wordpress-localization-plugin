@@ -22,11 +22,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
     const [l1Relations, setL1Relations] = useState([]);
     const [l2Relations, setL2Relations] = useState([]);
 
-    useEffect(() => {
-        loadJobs();
-    }, []);
-
-    const loadJobs = async () => {
+    const loadJobs = useCallback(async () => {
         try {
             const response = await jQuery.post(adminUrl, {
                 action: 'smartling_job_api_proxy',
@@ -41,7 +37,11 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
         } finally {
             setLoading(false);
         }
-    };
+    }, [adminUrl]);
+
+    useEffect(() => {
+        loadJobs();
+    }, [loadJobs]);
 
     const loadRelations = useCallback(async (type, id, level = 1) => {
         const localeList = locales.map(l => l.blogId).join(',');

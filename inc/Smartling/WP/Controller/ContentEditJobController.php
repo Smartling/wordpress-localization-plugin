@@ -75,9 +75,9 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
             $params = &$data['params'];
 
             $validateRequires = static function ($fieldName) use (&$result, $params) {
-                $value = trim($params[$fieldName]);
+                $value = trim($params[$fieldName] ?? '');
 
-                if (!array_key_exists($fieldName, $params) || $value !== '') {
+                if (!array_key_exists($fieldName, $params) || $value === '') {
                     $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
                     Bootstrap::getLogger()->warning($msg);
                     $result['status'] = 400;
@@ -95,7 +95,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                             JobStatus::IN_PROGRESS,
                             JobStatus::COMPLETED,
                         ]);
-                        $result = [];
+                        $parsedJobs = [];
                         if (!array_key_exists('items', $jobs)) {
                             throw new \RuntimeException('Jobs api response is invalid.');
                         }
@@ -105,9 +105,9 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                                     ->format(DateTimeHelper::DATE_TIME_FORMAT_JOB);
                             }
 
-                            $result[] = $job;
+                            $parsedJobs[] = $job;
                         }
-                        $result['data'] = $result;
+                        $result['data'] = $parsedJobs;
                         break;
                     case 'create-job':
                         $jobName = $validateRequires('jobName');
