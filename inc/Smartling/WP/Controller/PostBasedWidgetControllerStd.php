@@ -2,25 +2,18 @@
 
 namespace Smartling\WP\Controller;
 
-use Smartling\ApiWrapperInterface;
 use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
-use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
-use Smartling\Helpers\Cache;
 use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
-use Smartling\Helpers\PluginInfo;
-use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\JobEntityWithBatchUid;
-use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
-use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -63,18 +56,6 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     private array $mutedTypes = [
         'attachment',
     ];
-
-    public function __construct(
-        private ApiWrapperInterface $apiWrapper,
-        LocalizationPluginProxyInterface $connector,
-        PluginInfo $pluginInfo,
-        SettingsManager $settingsManager,
-        SiteHelper $siteHelper,
-        private SubmissionManager $submissionManager,
-        Cache $cache,
-    ) {
-        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $submissionManager, $cache);
-    }
 
     private function isMuted()
     {
@@ -160,7 +141,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             if ($profile !== null) {
                 try {
                     $requestDescription = 'User request to download submissions';
-                    $this->apiWrapper->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, ['submissions' => $logSubmissions]);
+                    $this->api->createAuditLogRecord($profile, CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, ['submissions' => $logSubmissions]);
                 } catch (\Exception) {
                     $this->getLogger()->error(sprintf('Failed to create audit log record actionType=%s, requestDescription="%s", submissions="%s"', CreateRecordParameters::ACTION_TYPE_DOWNLOAD, $requestDescription, json_encode($logSubmissions)));
                 }

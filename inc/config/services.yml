@@ -378,6 +378,7 @@ services:
   wp.taxonomy.linker:
     class: Smartling\WP\Controller\TaxonomyLinksController
     arguments:
+      - "@api.wrapper.with.retries"
       - "@plugin.info"
       - "@manager.settings"
       - "@multilang.proxy"

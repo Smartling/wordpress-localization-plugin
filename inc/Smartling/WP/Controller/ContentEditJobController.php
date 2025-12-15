@@ -10,7 +10,9 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Settings\SettingsManager;
 use Smartling\Vendor\Smartling\Jobs\JobStatus;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -70,11 +72,6 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                 'status' => 200,
             ];
 
-            $wrapper = Bootstrap::getContainer()->get('api.wrapper.with.retries');
-            /**
-             * @var ApiWrapper $wrapper
-             */
-
             $siteHelper = Bootstrap::getContainer()->get('site.helper');
             /**
              * @var SiteHelper $siteHelper
@@ -103,7 +100,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
             if (array_key_exists('innerAction', $data)) {
                 switch ($data['innerAction']) {
                     case 'list-jobs' :
-                        $jobs = $wrapper->listJobs($profile, null, [
+                        $jobs = $this->api->listJobs($profile, null, [
                             JobStatus::AWAITING_AUTHORIZATION,
                             JobStatus::IN_PROGRESS,
                             JobStatus::COMPLETED,
@@ -143,7 +140,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                                     $utcDateTime->setTimeZone(new DateTimeZone('UTC'));
                                 }
 
-                                $res = $wrapper->createJob($profile, [
+                                $res = $this->api->createJob($profile, [
                                     'name'        => $jobName,
                                     'description' => $jobDescription,
                                     'dueDate'     => $utcDateTime,

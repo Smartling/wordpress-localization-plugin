@@ -23,7 +23,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
 {
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,
-        private ApiWrapperInterface $apiWrapper,
+        protected ApiWrapperInterface $api,
         LocalizationPluginProxyInterface $connector,
         PluginInfo $pluginInfo,
         SettingsManager $settingsManager,
@@ -33,7 +33,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
         private UploadQueueManager $uploadQueueManager,
         Cache $cache,
     ) {
-        parent::__construct($connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
+        parent::__construct($api, $connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
 
     public function register(): void
@@ -83,7 +83,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
             $profile = ArrayHelper::first($applicableProfiles);
             $table = new BulkSubmitTableWidget(
                 $this->acfDynamicSupport,
-                $this->apiWrapper,
+                $this->api,
                 $this->localizationPluginProxy,
                 $this->siteHelper,
                 $this->core,

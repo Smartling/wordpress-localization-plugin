@@ -38,26 +38,20 @@ class TestRunController extends WPAbstract implements WPHookInterface
     public const ACTION_CLEAR_FLAG = 'clear_flag';
     public const SLUG = 'smartling_test_run';
 
-    private ContentRelationsDiscoveryService $contentRelationDiscoveryService;
-    private ApiWrapperInterface $apiWrapper;
-    private SubmissionManager $submissionManager;
     private int $uploadCronInterval;
 
     public function __construct(
         PluginInfo $pluginInfo,
         LocalizationPluginProxyInterface $localizationPluginProxy,
         SiteHelper $siteHelper,
-        SubmissionManager $submissionManager,
+        private SubmissionManager $submissionManager,
         Cache $cache,
-        ContentRelationsDiscoveryService $contentRelationDiscoveryService,
-        ApiWrapperInterface $apiWrapper,
+        private ContentRelationsDiscoveryService $contentRelationDiscoveryService,
+        protected ApiWrapperInterface $api,
         SettingsManager $settingsManager,
         string $uploadCronInterval
     ) {
-        parent::__construct($localizationPluginProxy, $pluginInfo, $settingsManager, $siteHelper, $submissionManager, $cache);
-        $this->apiWrapper = $apiWrapper;
-        $this->contentRelationDiscoveryService = $contentRelationDiscoveryService;
-        $this->submissionManager = $submissionManager;
+        parent::__construct($api, $localizationPluginProxy, $pluginInfo, $settingsManager, $siteHelper, $submissionManager, $cache);
         if (!preg_match('~^\d+m$~', $uploadCronInterval)) {
             throw new SmartlingConfigException('Upload job cron interval must be specified in minutes (e. g. 5m), with no extra symbols');
         }
@@ -204,7 +198,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
 
     private function getJob(ConfigurationProfileEntity $profile): JobEntity
     {
-        $response = $this->apiWrapper->listJobs($profile, self::TEST_RUN_JOB_NAME, [
+        $response = $this->api->listJobs($profile, self::TEST_RUN_JOB_NAME, [
             JobStatus::AWAITING_AUTHORIZATION,
             JobStatus::IN_PROGRESS,
             JobStatus::COMPLETED,
@@ -213,7 +207,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
         if (!empty($response['items'])) {
             $jobUId = $response['items'][0]['translationJobUid'];
         } else {
-            $result = $this->apiWrapper->createJob($profile, [
+            $result = $this->api->createJob($profile, [
                     'name' => self::TEST_RUN_JOB_NAME,
                     'description' => 'Test run job',
             ]);

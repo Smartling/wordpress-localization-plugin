@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
@@ -18,14 +19,18 @@ use Smartling\WP\WPHookInterface;
 
 class TaxonomyLinksController extends WPAbstract implements WPHookInterface
 {
-    private $submissionManager;
-    private $wordpressProxy;
-
-    public function __construct(PluginInfo $pluginInfo, SettingsManager $settingsManager, LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionManager $submissionManager, WordpressFunctionProxyHelper $wordpressProxy, Cache $cache)
+    public function __construct(
+        protected ApiWrapperInterface $api,
+        PluginInfo $pluginInfo,
+        SettingsManager $settingsManager,
+        LocalizationPluginProxyInterface $localizationPluginProxy,
+        SiteHelper $siteHelper,
+        private SubmissionManager $submissionManager,
+        private WordpressFunctionProxyHelper $wordpressProxy,
+        Cache $cache,
+    )
     {
-        parent::__construct($localizationPluginProxy, $pluginInfo, $settingsManager, $siteHelper, $submissionManager, $cache);
-        $this->submissionManager = $submissionManager;
-        $this->wordpressProxy = $wordpressProxy;
+        parent::__construct($api, $localizationPluginProxy, $pluginInfo, $settingsManager, $siteHelper, $submissionManager, $cache);
     }
 
     public function buildViewData()
