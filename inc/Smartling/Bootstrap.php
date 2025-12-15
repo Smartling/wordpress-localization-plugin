@@ -438,7 +438,7 @@ class Bootstrap
                 'smartling-react-app',
                 plugin_dir_url(__FILE__) . '../../js/app.js',
                 ['wp-element', 'wp-components', 'wp-date'],
-                static::$pluginVersion . random_int(0, 10000),
+                static::$pluginVersion,
                 true,
             );
             wp_enqueue_style('wp-components');
