@@ -77,7 +77,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
             $validateRequires = static function ($fieldName) use (&$result, $params) {
                 $value = trim($params[$fieldName]);
 
-                if (!array_key_exists($fieldName, $params) || $value !== '') {
+                if (!array_key_exists($fieldName, $params) || $value === '') {
                     $msg = vsprintf('The field \'%s\' cannot be empty', [$fieldName]);
                     Bootstrap::getLogger()->warning($msg);
                     $result['status'] = 400;

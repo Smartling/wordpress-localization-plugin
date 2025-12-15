@@ -149,13 +149,16 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                     }
                 });
 
-                if (jobResponse.status > 300) {
+                if (jobResponse.status >= 400) {
                     throw new Error(jobResponse.message?.global || 'Failed to create job');
                 }
                 data.job.id = jobResponse.data.translationJobUid;
             }
 
-            await jQuery.post(url, data);
+            const submissionResponse = await jQuery.post(url, data);
+            if (submissionResponse.status && submissionResponse.status > 300) {
+                throw new Error(submissionResponse.message?.global || 'Failed to add content to upload queue.');
+            }
             setSuccess('Content successfully added to upload queue.');
         } catch (e) {
             setError(e.message || 'Failed adding content to upload queue.');

@@ -65,7 +65,7 @@ $widgetName = 'bulk-submit-locales';
              data-bulk-submit="true"
              data-content-type=""
              data-content-id="0"
-             data-locales='<?= json_encode(array_values($localesData)) ?>'
+             data-locales='<?= htmlspecialchars(json_encode(array_values($localesData), JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG), ENT_QUOTES, 'UTF-8') ?>'
              data-ajax-url="<?= admin_url('admin-ajax.php') ?>"
              data-admin-url="<?= admin_url('admin-ajax.php') ?>"></div>
         <div class="postbox-container" style="display:none;">
