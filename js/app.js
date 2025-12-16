@@ -98,7 +98,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
         setSuccess('');
 
         const blogIds = selectedLocales.join(',');
-        const url = `${ajaxUrl}?action=smartling_create_submissions`;
+        const url = `${ajaxUrl}?action=smartling-create-submissions`;
 
         const data = {
             formAction: activeTab === 'clone' ? 'clone' : 'upload',
@@ -171,8 +171,9 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
 
     if (loading) return el(Flex, { justify: 'center', style: { padding: '40px' } }, el(Spinner));
 
-    return el(Card, { size: 'large', style: { maxWidth: '800px', margin: '20px auto' } },
-        el(CardHeader, {}, el('h2', { style: { margin: 0 } }, 'Content actions')),
+    return el('div', { style: { margin: '20px auto' } },
+        el('style', {}, '#smartling-upload-widget-card div:first-child { height: auto; }'),
+        el(Card, { id: 'smartling-upload-widget-card' },
         el(CardBody, {},
             el(TabPanel, {
                 activeClass: 'is-active',
@@ -180,7 +181,6 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                 tabs: [
                     { name: 'new', title: 'New Job' },
                     { name: 'existing', title: 'Existing Job' },
-                    ...(isBulkSubmitPage ? [] : [{ name: 'clone', title: 'Clone' }])
                 ]
             }, (tab) => el(VStack || 'div', { spacing: 4, style: { marginTop: '16px' } },
                 error && el(Notice, { status: 'error', isDismissible: true, onRemove: () => setError('') }, error),
@@ -196,19 +196,20 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                         if (job) {
                             setJobName(job.jobName);
                             setDescription(job.description || '');
-                            setDueDate(job.dueDate || '');
-                            setSelectedLocales(job.targetLocaleIds || []);
+                            setDueDate(job.dueDate ? new Date(job.dueDate).toISOString().slice(0, 16) : '');
+                            setSelectedLocales((job.targetLocaleIds || [])
+                                .map(localeCode => locales.find(l => l.smartlingLocale === localeCode)?.blogId));
                         }
                     }
                 }),
 
                 tab.name !== 'clone' && el('div', {},
-                    el(TextControl, { label: 'Name', value: jobName, onChange: setJobName }),
+                    tab.name === 'new' && el(TextControl, { label: 'Name', value: jobName, onChange: setJobName }),
                     el(TextareaControl, { label: 'Description', value: description, onChange: setDescription, rows: 3 }),
                     el(TextControl, {
                         label: 'Due Date',
                         type: 'datetime-local',
-                        value: dueDate ? new Date(dueDate).toISOString().slice(0, 16) : '',
+                        value: dueDate,
                         onChange: setDueDate,
                         placeholder: '2025-12-31T23:59'
                     }),
@@ -228,14 +229,16 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                                 onClick: () => setSelectedLocales([])
                             }, 'Uncheck All')
                         ),
-                        locales.map(locale => el(CheckboxControl, {
-                            key: locale.blogId,
-                            label: locale.label,
-                            checked: selectedLocales.includes(locale.blogId),
-                            onChange: (checked) => {
-                                setSelectedLocales(prev => checked ? [...prev, locale.blogId] : prev.filter(id => id !== locale.blogId));
-                            }
-                        }))
+                        el('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '12px' } },
+                            locales.map(locale => el(CheckboxControl, {
+                                key: locale.blogId,
+                                label: locale.label,
+                                checked: selectedLocales.includes(locale.blogId),
+                                onChange: (checked) => {
+                                    setSelectedLocales(prev => checked ? [...prev, locale.blogId] : prev.filter(id => id !== locale.blogId));
+                                }
+                            }))
+                        )
                     ),
 
                     el(SelectControl, {
@@ -292,7 +295,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                 )
             ))
         )
-    );
+    ));
 }
 
 if (document.getElementById('smartling-app')) {

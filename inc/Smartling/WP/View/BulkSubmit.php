@@ -71,7 +71,7 @@ $widgetName = 'bulk-submit-locales';
              data-ajax-url="<?= admin_url('admin-ajax.php') ?>"
              data-admin-url="<?= admin_url('admin-ajax.php') ?>"></div>
         <div class="postbox-container" style="display:none;">
-            <div id="panel-box" class="postbox hndle"><h2><span>Content actions</span></h2>
+            <div id="panel-box" class="postbox hndle">
                 <div class="inside">
                     <div id="action-tabs">
                         <span class="active" data-action="translate">Translate</span>
@@ -80,13 +80,10 @@ $widgetName = 'bulk-submit-locales';
                     <div class="tab-panel">
                         <div id="translate" class="tab">
                             <?php
-                            // Render job wizard.
-                            $this->setViewData(
-                                [
-                                    'profile'     => $bulkSubmitTable->getProfile(),
-                                    'contentType' => '',
-                                ]
-                            );
+                            $this->viewData = [
+                                'profile' => $bulkSubmitTable->getProfile(),
+                                'contentType' => '',
+                            ];
                             $this->renderViewScript('ContentEditJob.php');
                             ?>
                         </div>

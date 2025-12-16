@@ -125,7 +125,10 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                                 $utcDateTime = '';
 
                                 if (!empty($jobDueDate)) {
-                                    $utcDateTime = \DateTime::createFromFormat(DateTimeHelper::DATE_TIME_FORMAT_JOB, $jobDueDate, new DateTimeZone($timezone));
+                                    $utcDateTime = \DateTime::createFromFormat('Y-m-d\TH:i', $jobDueDate, new DateTimeZone($timezone));
+                                    if (!$utcDateTime) {
+                                        throw new \RuntimeException('Invalid due date format.');
+                                    }
                                     $utcDateTime->setTimeZone(new DateTimeZone('UTC'));
                                 }
 

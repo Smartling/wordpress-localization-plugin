@@ -8,11 +8,12 @@ use Smartling\Services\GlobalSettingsManager;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\Controller\ContentEditJobController;
-use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 
+/**
+ * @var WPAbstract $this
+ */
 $data = $this->viewData;
-assert($this instanceof ContentEditJobController);
 $profile = $data['profile'];
 assert($profile instanceof ConfigurationProfileEntity);
 $widgetName = 'bulk-submit-locales';
@@ -55,7 +56,7 @@ if (!$isBulkSubmitPage) : ?>
                  data-bulk-submit="false"
                  data-content-type="<?= $data['contentType'] ?? $baseType ?>"
                  data-content-id="<?= $id ?>"
-                 data-locales='<?= htmlspecialchars(json_encode(array_values($localesData), JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>'
+                 data-locales='<?= htmlspecialchars(json_encode(array_values($localesData), JSON_THROW_ON_ERROR | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>'
                  data-ajax-url="<?= admin_url('admin-ajax.php') ?>"
                  data-admin-url="<?= admin_url('admin-ajax.php') ?>"></div>
 <?php if ($needWrapper) : ?>
