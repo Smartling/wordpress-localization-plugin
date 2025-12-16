@@ -8,7 +8,6 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\StringHelper;
-use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\TargetLocale;
 use Smartling\WP\WPAbstract;
@@ -252,11 +251,11 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
     }
 
     protected function renderLocales(
-        ConfigurationProfileEntity $profile,
+        array $locales,
         string $displayName,
         int $blogId,
-        string $smartlingName = '',
-        bool $enabled = false,
+        string $smartlingName,
+        bool $enabled,
     ): string {
         $parts = [];
 
@@ -275,8 +274,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         $parts = [
             HtmlTagGeneratorHelper::tag('label', implode('', $parts), ['class' => 'radio-label']),
         ];
-
-        $locales = $this->api->getSupportedLocales($profile);
 
         if (0 === count($locales)) {
             $sLocale = HtmlTagGeneratorHelper::tag(

@@ -472,6 +472,7 @@ if (0 === $profileId) {
                     <table id="target-locale-block">
                         <?php
                         $targetLocales = $profile->getTargetLocales();
+                        $supportedLocales = $this->api->getSupportedLocales($profile);
                         foreach ($locales as $blogId => $label) {
                             if ($blogId === $profile->getSourceLocale()
                                     ->getBlogId()
@@ -479,7 +480,7 @@ if (0 === $profileId) {
                                 continue;
                             }
 
-                            $smartlingLocale = -1;
+                            $smartlingLocale = '';
                             $enabled = false;
 
                             foreach ($targetLocales as $targetLocale) {
@@ -492,7 +493,7 @@ if (0 === $profileId) {
                             ?>
 
                             <tr>
-                                <?= $this->renderLocales($profile, $label, $blogId, $smartlingLocale, $enabled) ?>
+                                <?= $this->renderLocales($supportedLocales, $label, $blogId, $smartlingLocale, $enabled) ?>
                             </tr>
                             <?php
                         }
