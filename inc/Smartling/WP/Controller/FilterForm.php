@@ -36,11 +36,9 @@ class FilterForm extends ControllerAbstract implements WPHookInterface
 
     public function pageHandler(): void
     {
-        $this->setViewData(
-            [
-                'manager' => new FilterManager(),
-            ]
-        );
+        $this->viewData = [
+            'manager' => new FilterManager(),
+        ];
         $this->renderScript();
     }
 

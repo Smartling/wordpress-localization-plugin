@@ -27,9 +27,8 @@ use Smartling\WP\WPAbstract;
 <?php
 /**
  * @var WPAbstract $this
- * @var WPAbstract self
  */
-$data = $this->getViewData();
+$data = $this->viewData;
 $widgetName = TaxonomyWidgetController::WIDGET_DATA_NAME;
 
 /**

@@ -6,11 +6,11 @@ use Smartling\WP\Controller\TaxonomyLinksController;
 /**
  * @var TaxonomyLinksController $this
  */
-$blogs = $this->getViewData()['blogs'];
+$blogs = $this->viewData['blogs'];
 ?>
 <script>
-    let submissions = <?= json_encode($this->getViewData()['submissions'])?>;
-    const terms = <?= json_encode($this->getViewData()['terms'])?>;
+    let submissions = <?= json_encode($this->viewData['submissions'], JSON_THROW_ON_ERROR)?>;
+    const terms = <?= json_encode($this->viewData['terms'], JSON_THROW_ON_ERROR)?>;
 </script>
 <p>This section allows linking of taxonomy terms between different blogs to avoid target blog terms duplication upon translation.</p>
 <p>Linked items will not be sent for translation.</p>

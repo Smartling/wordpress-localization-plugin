@@ -7,9 +7,9 @@ use Smartling\WP\Controller\TestRunController;
 
 /**
  * @var TestRunController $this
- * @var TestRunViewData $viewData
  */
-$viewData = $this->getViewData();
+$viewData = $this->viewData;
+assert($viewData instanceof TestRunViewData);
 ?>
 <h1>Test run</h1> <!--needed for admin notices-->
 <p>Send all posts and pages and their related content one level deep for pseudo translation, and check the result for known issues. After a test run completes you should check it too, to see any issues that were not detected. Expected result after a test run is that all text and media content gets translated.</p>

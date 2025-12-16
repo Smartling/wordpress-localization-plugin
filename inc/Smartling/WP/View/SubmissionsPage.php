@@ -2,13 +2,13 @@
 
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\UiMessageHelper;
+use Smartling\WP\Controller\SubmissionsPageController;
 use Smartling\WP\Table\SubmissionTableWidget;
-use Smartling\WP\WPAbstract;
 
 /**
- * @var WPAbstract $this
+ * @var SubmissionsPageController $this
  */
-$data = $this->getViewData();
+$data = $this->viewData;
 ?>
 <?php if (!DiagnosticsHelper::isBlocked()) : ?>
     <div class="wrap">

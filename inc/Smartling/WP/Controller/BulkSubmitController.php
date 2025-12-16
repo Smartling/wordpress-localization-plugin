@@ -46,9 +46,9 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
 
     public function wp_enqueue()
     {
-        $resPath = $this->getPluginInfo()->getUrl();
+        $resPath = $this->pluginInfo->getUrl();
         $jsPath = $resPath . 'js/';
-        $ver = $this->getPluginInfo()->getVersion();
+        $ver = $this->pluginInfo->getVersion();
         wp_enqueue_script('jquery');
         $jsFiles = [
             $jsPath . 'bulk-submit.js',
@@ -87,7 +87,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
                 $this->localizationPluginProxy,
                 $this->siteHelper,
                 $this->core,
-                $this->getManager(),
+                $this->submissionManager,
                 $this->uploadQueueManager,
                 $profile
             );

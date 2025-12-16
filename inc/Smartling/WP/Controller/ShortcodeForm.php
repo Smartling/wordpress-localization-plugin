@@ -36,11 +36,9 @@ class ShortcodeForm extends ControllerAbstract implements WPHookInterface
 
     public function pageHandler(): void
     {
-        $this->setViewData(
-            [
-                'manager' => new ShortcodeManager(),
-            ]
-        );
+        $this->viewData = [
+            'manager' => new ShortcodeManager(),
+        ];
         $this->renderScript();
     }
 

@@ -1,7 +1,11 @@
 <?php
 
+use Smartling\WP\Controller\DuplicateSubmissionsCleaner;
 use Smartling\WP\Table\DuplicateSubmissions;
 
+/**
+ * @var DuplicateSubmissionsCleaner $this
+ */
 ?>
 <div class="wrap">
     <h2><?= get_admin_page_title() ?></h2>
@@ -11,7 +15,7 @@ use Smartling\WP\Table\DuplicateSubmissions;
         <li>If the target content ID is 0, it is safe to remove.</li>
     </ul>
     <?php
-    $duplicates = $this->getViewData()['duplicates'];
+    $duplicates = $this->viewData['duplicates'];
     foreach ($duplicates as $set) {
         assert($set instanceof DuplicateSubmissions);
         $details = $set->getDuplicateSubmissionDetails();

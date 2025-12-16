@@ -8,6 +8,9 @@ use Smartling\WP\Table\LocalizationRulesTableWidget;
 use Smartling\WP\Table\MediaAttachmentTableWidget;
 use Smartling\WP\Table\ShortcodeTableClass;
 
+/**
+ * @var AdminPage $this
+ */
 ?>
 <style>
     span.nonmanaged {
@@ -19,18 +22,12 @@ use Smartling\WP\Table\ShortcodeTableClass;
     <h2><?= get_admin_page_title(); ?></h2>
     <h3>Custom Shortcodes</h3>
     <?php
-    /**
-     * @var ShortcodeTableClass $shortcodeTable
-     */
-    $shortcodeTable = $this->getViewData()['shortcodes'];
-    /**
-     * @var LocalizationRulesTableWidget $filterTable
-     */
-    $filterTable = $this->getViewData()['filters'];
-    /**
-     * @var MediaAttachmentTableWidget $mediaTable
-     */
-    $mediaTable = $this->getViewData()['media'];
+    $shortcodeTable = $this->viewData['shortcodes'];
+    assert($shortcodeTable instanceof ShortcodeTableClass);
+    $filterTable = $this->viewData['filters'];
+    assert($filterTable instanceof LocalizationRulesTableWidget);
+    $mediaTable = $this->viewData['media'];
+    assert($mediaTable instanceof MediaAttachmentTableWidget);
 
     foreach ([$shortcodeTable, $filterTable, $mediaTable] as $widget) {
         if (!$widget instanceof WP_List_Table) {

@@ -122,7 +122,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             $profile = null;
             $submissionIds = explode(',', $_POST['submissionIds']);
             foreach ($submissionIds as $submissionId) {
-                $submission = $this->getManager()->getEntityById($submissionId);
+                $submission = $this->submissionManager->getEntityById($submissionId);
                 if ($submission !== null) {
                     $submissions[] = $submission;
                     if ($profile === null) {
@@ -460,9 +460,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                     ], 1)) > 0) {
                     wp_enqueue_script(
                         'smartling-block-sidebar',
-                        $this->getPluginInfo()->getUrl() . 'js/smartling-block-sidebar.js',
+                        $this->pluginInfo->getUrl() . 'js/smartling-block-sidebar.js',
                         ['wp-blocks', 'wp-i18n', 'wp-element', 'wp-editor'],
-                        $this->getPluginInfo()->getVersion(),
+                        $this->pluginInfo->getVersion(),
                         true
                     );
                 }

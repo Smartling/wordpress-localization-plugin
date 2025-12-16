@@ -1,13 +1,15 @@
 <?php
 
 use Smartling\Helpers\ArrayHelper;
+use Smartling\WP\Controller\BulkSubmitController;
 use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 
-$data = $this->getViewData();
-if (!$data instanceof BulkSubmitTableWidget) {
-    throw new \LogicException(BulkSubmitTableWidget::class . ' expected');
-}
+/**
+ * @var BulkSubmitController $this
+ */
+$data = $this->viewData;
+assert($data instanceof BulkSubmitTableWidget);
 $widgetName = 'bulk-submit-locales';
 
 ?>
@@ -61,7 +63,7 @@ $widgetName = 'bulk-submit-locales';
             ];
         }, array_filter($locales, fn($l) => $l->isEnabled()));
         ?>
-        <div id="smartling-app" 
+        <div id="smartling-app"
              data-bulk-submit="true"
              data-content-type=""
              data-content-id="0"

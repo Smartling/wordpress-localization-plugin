@@ -44,7 +44,7 @@ class TestRunController extends WPAbstract implements WPHookInterface
         PluginInfo $pluginInfo,
         LocalizationPluginProxyInterface $localizationPluginProxy,
         SiteHelper $siteHelper,
-        private SubmissionManager $submissionManager,
+        protected SubmissionManager $submissionManager,
         Cache $cache,
         private ContentRelationsDiscoveryService $contentRelationDiscoveryService,
         protected ApiWrapperInterface $api,
@@ -91,17 +91,17 @@ class TestRunController extends WPAbstract implements WPHookInterface
     public function wp_enqueue(): void
     {
         wp_enqueue_script(
-            $this->getPluginInfo()->getName() . 'admin',
-            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin.js', ['jquery'],
-            $this->getPluginInfo()->getVersion(),
+            $this->pluginInfo->getName() . 'admin',
+            $this->pluginInfo->getUrl() . 'js/smartling-connector-admin.js', ['jquery'],
+            $this->pluginInfo->getVersion(),
             false,
         );
         wp_register_style(
-            $this->getPluginInfo()->getName(),
-            $this->getPluginInfo()->getUrl() . 'css/smartling-connector-admin.css', [],
-            $this->getPluginInfo()->getVersion(),
+            $this->pluginInfo->getName(),
+            $this->pluginInfo->getUrl() . 'css/smartling-connector-admin.css', [],
+            $this->pluginInfo->getVersion(),
         );
-        wp_enqueue_style($this->getPluginInfo()->getName());
+        wp_enqueue_style($this->pluginInfo->getName());
     }
 
     public function register(): void

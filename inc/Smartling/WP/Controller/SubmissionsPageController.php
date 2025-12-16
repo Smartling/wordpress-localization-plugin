@@ -59,7 +59,14 @@ class SubmissionsPageController extends WPAbstract implements WPHookInterface
 
     public function renderPage(): void
     {
-        $table = new SubmissionTableWidget($this->api, $this->localizationPluginProxy, $this->settingsManager, $this->siteHelper, $this->getManager(), $this->queue);
+        $table = new SubmissionTableWidget(
+            $this->api,
+            $this->localizationPluginProxy,
+            $this->settingsManager,
+            $this->siteHelper,
+            $this->submissionManager,
+            $this->queue,
+        );
         $table->prepare_items();
         $this->view($table);
     }

@@ -10,11 +10,6 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Class CheckStatusController
- *
- * @package Smartling\WP\Controller
- */
 class CheckStatusController extends WPAbstract implements WPHookInterface
 {
     const SUBMISSION_CHECKED_KEY = "smartling-page-checked-items";
@@ -23,8 +18,8 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
 
     public function wp_enqueue()
     {
-        wp_enqueue_script($this->getPluginInfo()->getName() . "submission", $this->getPluginInfo()
-                ->getUrl() . 'js/smartling-submissions-check.js', ['jquery'], $this->getPluginInfo()
+        wp_enqueue_script($this->pluginInfo->getName() . "submission", $this->pluginInfo
+                ->getUrl() . 'js/smartling-submissions-check.js', ['jquery'], $this->pluginInfo
             ->getVersion(), false);
     }
 
@@ -74,9 +69,8 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
     public function checkItems(array $items)
     {
         $result = [];
-        $cache = $this->getCache();
 
-        $cachedItems = $cache->get(self::SUBMISSION_CHECKED_KEY);
+        $cachedItems = $this->cache->get(self::SUBMISSION_CHECKED_KEY);
 
         $now = new \DateTime("now");
         $slide = new \DateTime("now");
@@ -103,7 +97,7 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
             }
         }
 
-        $cache->set(self::SUBMISSION_CHECKED_KEY, $cachedItems, self::CACHE_EXPIRATION);
+        $this->cache->set(self::SUBMISSION_CHECKED_KEY, $cachedItems, self::CACHE_EXPIRATION);
 
         return $result;
     }

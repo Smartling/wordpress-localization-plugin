@@ -25,7 +25,7 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
         SettingsManager $settingsManager,
         LocalizationPluginProxyInterface $localizationPluginProxy,
         SiteHelper $siteHelper,
-        private SubmissionManager $submissionManager,
+        protected SubmissionManager $submissionManager,
         private WordpressFunctionProxyHelper $wordpressProxy,
         Cache $cache,
     )
@@ -41,23 +41,23 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
     public function wp_enqueue()
     {
         wp_enqueue_script(
-            $this->getPluginInfo()->getName() . 'settings',
-            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-taxonomy-links.js', ['jquery'],
-            $this->getPluginInfo()->getVersion(),
+            $this->pluginInfo->getName() . 'settings',
+            $this->pluginInfo->getUrl() . 'js/smartling-connector-taxonomy-links.js', ['jquery'],
+            $this->pluginInfo->getVersion(),
             false
         );
         wp_enqueue_script(
-            $this->getPluginInfo()->getName() . 'admin',
-            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin.js', ['jquery'],
-            $this->getPluginInfo()->getVersion(),
+            $this->pluginInfo->getName() . 'admin',
+            $this->pluginInfo->getUrl() . 'js/smartling-connector-admin.js', ['jquery'],
+            $this->pluginInfo->getVersion(),
             false
         );
         wp_register_style(
-            $this->getPluginInfo()->getName(),
-            $this->getPluginInfo()->getUrl() . 'css/smartling-connector-admin.css', [],
-            $this->getPluginInfo()->getVersion(), 'all'
+            $this->pluginInfo->getName(),
+            $this->pluginInfo->getUrl() . 'css/smartling-connector-admin.css', [],
+            $this->pluginInfo->getVersion(), 'all'
         );
-        wp_enqueue_style($this->getPluginInfo()->getName());
+        wp_enqueue_style($this->pluginInfo->getName());
     }
 
     public function register(): void

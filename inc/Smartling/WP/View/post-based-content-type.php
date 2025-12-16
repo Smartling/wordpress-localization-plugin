@@ -11,9 +11,8 @@ use Smartling\WP\WPAbstract;
 
 /**
  * @var WPAbstract $this
- * @var WPAbstract self
  */
-$data = $this->getViewData();
+$data = $this->viewData;
 $widgetName = PostBasedWidgetControllerStd::WIDGET_DATA_NAME;
 
 /**
@@ -44,7 +43,7 @@ if (!empty($locales)) {
     <div id="smartling-post-widget">
     <div class="fields">
 
-        <h3><?= $this->getWidgetHeader() ?></h3>
+        <h3><?= $this->widgetHeader ?></h3>
         <?= WPAbstract::checkUncheckBlock($widgetName) ?>
         <div class="locale-list">
             <?php
@@ -88,7 +87,7 @@ if (!empty($locales)) {
                             if (0 !== (int) $item->getTargetId()) {
                                 $editUrl = WordpressContentTypeHelper::getEditUrl($item);
                             }
-                            
+
                             /**
                              * Disable download checkbox for new state
                              */

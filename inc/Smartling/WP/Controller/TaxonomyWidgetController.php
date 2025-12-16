@@ -13,6 +13,7 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
 
@@ -100,7 +101,7 @@ class TaxonomyWidgetController extends WPAbstract implements WPHookInterface
                 $applicableProfiles = $this->settingsManager->findEntityByMainLocale($curBlogId);
 
                 if (0 < count($applicableProfiles)) {
-                    $submissions = $this->getManager()
+                    $submissions = $this->submissionManager
                         ->find([
                                    SubmissionEntity::FIELD_SOURCE_BLOG_ID => $curBlogId,
                                    SubmissionEntity::FIELD_SOURCE_ID      => $term->term_id,

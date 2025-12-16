@@ -86,7 +86,7 @@ class DuplicateSubmissionsCleaner extends ControllerAbstract implements WPHookIn
         foreach($this->getDuplicatesAndCache($getFromCacheFirst) as $set) {
             $duplicateSets[] = new DuplicateSubmissions($this->contentHelper, $this->siteHelper, $this->submissionManager, $set, $nonce);
         }
-        $this->setViewData(['duplicates' => $duplicateSets]);
+        $this->viewData = ['duplicates' => $duplicateSets];
         $this->renderScript();
     }
 

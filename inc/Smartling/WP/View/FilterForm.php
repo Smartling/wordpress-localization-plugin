@@ -11,9 +11,10 @@
     use Smartling\Helpers\HtmlTagGeneratorHelper;
     use Smartling\Tuner\FilterManager;
     use Smartling\WP\Controller\FilterForm;
-
-    $data = $this->getViewData();
-
+    /**
+     * @var FilterForm $this
+     */
+    $data = $this->viewData;
 
     /**
      * @var FilterManager $manager

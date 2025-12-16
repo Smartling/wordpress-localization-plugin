@@ -12,7 +12,10 @@
     use Smartling\Tuner\ShortcodeManager;
     use Smartling\WP\Controller\ShortcodeForm;
 
-    $data = $this->getViewData();
+    /**
+     * @var ShortcodeForm $this
+     */
+    $data = $this->viewData;
 
     /**
      * @var ShortcodeManager $manager

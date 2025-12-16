@@ -1,4 +1,9 @@
 <?php
+
+use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Submissions\SubmissionEntity;
+use Smartling\WP\Table\TranslationLockTableWidget;
+
 defined('IFRAME_REQUEST') || define('IFRAME_REQUEST', true);
 defined('WP_ADMIN') || define('WP_ADMIN', true);
 require_once(ABSPATH . '/wp-load.php');
@@ -51,23 +56,18 @@ include(ABSPATH . 'wp-admin/admin-header.php');
     <?php
     /**
      * @var WPAbstract $this
-     * @var WPAbstract self
      */
-    $data = $this->getViewData();
-    /**
-     * @var \Smartling\WP\Table\TranslationLockTableWidget $table
-     */
+    $data = $this->viewData;
     $table = $data['table'];
-    /**
-     * @var \Smartling\Submissions\SubmissionEntity $submission
-     */
+    assert($table instanceof TranslationLockTableWidget);
     $submission = $data['submission'];
+    assert($submission instanceof SubmissionEntity);
     ?>
 
     <form method="post">
         <div>
             <?=
-            \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+            HtmlTagGeneratorHelper::tag(
                 'label',
                 __('Lock all fields'),
                 [
@@ -88,12 +88,12 @@ include(ABSPATH . 'wp-admin/admin-header.php');
             ?>
 
             <?=
-            \Smartling\Helpers\HtmlTagGeneratorHelper::tag('input', '', $options);
+            HtmlTagGeneratorHelper::tag('input', '', $options);
             ?>
         </div>
 
-        <?= $table->display(); ?>
-        <?= \Smartling\Helpers\HtmlTagGeneratorHelper::tag(
+        <?php $table->display() ?>
+        <?= HtmlTagGeneratorHelper::tag(
             'input',
             '',
             [

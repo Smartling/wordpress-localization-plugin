@@ -11,13 +11,10 @@ use Smartling\WP\Controller\ContentEditJobController;
 use Smartling\WP\Table\BulkSubmitTableWidget;
 use Smartling\WP\WPAbstract;
 
-/**
- * @var WPAbstract $this
- * @var BulkSubmitTableWidget $data
- * @var ConfigurationProfileEntity $profile
- */
-$data = $this->getViewData();
+$data = $this->viewData;
+assert($this instanceof ContentEditJobController);
 $profile = $data['profile'];
+assert($profile instanceof ConfigurationProfileEntity);
 $widgetName = 'bulk-submit-locales';
 
 $isBulkSubmitPage = get_current_screen()?->id === 'smartling_page_smartling-bulk-submit';
@@ -54,7 +51,7 @@ if (!$isBulkSubmitPage) : ?>
     <div id="panel-box" class="postbox hndle"><h2><span>Translate content</span></h2>
         <div class="inside">
 <?php endif; ?>
-            <div id="smartling-app" 
+            <div id="smartling-app"
                  data-bulk-submit="false"
                  data-content-type="<?= $data['contentType'] ?? $baseType ?>"
                  data-content-id="<?= $id ?>"

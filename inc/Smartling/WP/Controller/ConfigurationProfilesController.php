@@ -47,27 +47,27 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
     public function wp_enqueue(): void
     {
         wp_enqueue_script(
-            $this->getPluginInfo()->getName() . 'settings',
-            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-admin.js', ['jquery'],
-            $this->getPluginInfo()->getVersion(),
+            $this->pluginInfo->getName() . 'settings',
+            $this->pluginInfo->getUrl() . 'js/smartling-connector-admin.js', ['jquery'],
+            $this->pluginInfo->getVersion(),
             false
         );
         wp_enqueue_script(
-            $this->getPluginInfo()->getName() . 'settings-admin-footer',
-            $this->getPluginInfo()->getUrl() . 'js/smartling-connector-gutenberg-lock-attributes.js',
+            $this->pluginInfo->getName() . 'settings-admin-footer',
+            $this->pluginInfo->getUrl() . 'js/smartling-connector-gutenberg-lock-attributes.js',
             [],
-            $this->getPluginInfo()->getVersion(),
+            $this->pluginInfo->getVersion(),
             false
         );
-        wp_localize_script($this->getPluginInfo()->getName() . 'settings-admin-footer', 'smartling', [
+        wp_localize_script($this->pluginInfo->getName() . 'settings-admin-footer', 'smartling', [
             'addLockIdAttributeOnSave' => GlobalSettingsManager::isGenerateLockIdsEnabled(),
         ]);
         wp_register_style(
-            $this->getPluginInfo()->getName(),
-            $this->getPluginInfo()->getUrl() . 'css/smartling-connector-admin.css', [],
-            $this->getPluginInfo()->getVersion(), 'all'
+            $this->pluginInfo->getName(),
+            $this->pluginInfo->getUrl() . 'css/smartling-connector-admin.css', [],
+            $this->pluginInfo->getVersion(), 'all'
         );
-        wp_enqueue_style($this->getPluginInfo()->getName());
+        wp_enqueue_style($this->pluginInfo->getName());
     }
 
     /**
@@ -194,12 +194,12 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
     public function listProfiles(): void
     {
         $this->view([
-            'profilesTable' => new ConfigurationProfilesWidget($this->getPluginInfo()->getSettingsManager()),
+            'profilesTable' => new ConfigurationProfilesWidget($this->pluginInfo->getSettingsManager()),
             'cnqTable' => new QueueManagerTableWidget(
                 $this->api,
                 $this->queue,
                 $this->settingsManager,
-                $this->getManager(),
+                $this->submissionManager,
                 $this->uploadQueueManager,
                 $this->wpProxy,
             ),

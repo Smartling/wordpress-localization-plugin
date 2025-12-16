@@ -134,13 +134,11 @@ class AdminPage extends ControllerAbstract implements WPHookInterface
             $this->processAction();
         }
 
-        $this->setViewData(
-            [
-                'shortcodes' => new ShortcodeTableClass(new ShortcodeManager()),
-                'filters' => new LocalizationRulesTableWidget(new FilterManager()),
-                'media' => new MediaAttachmentTableWidget($this->mediaAttachmentRulesManager, $this->replacerFactory),
-            ]
-        );
+        $this->viewData = [
+            'shortcodes' => new ShortcodeTableClass(new ShortcodeManager()),
+            'filters' => new LocalizationRulesTableWidget(new FilterManager()),
+            'media' => new MediaAttachmentTableWidget($this->mediaAttachmentRulesManager, $this->replacerFactory),
+        ];
         $this->renderScript();
     }
 }

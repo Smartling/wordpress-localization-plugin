@@ -11,7 +11,7 @@ use Smartling\Vendor\Symfony\Component\Yaml\Yaml;
 /**
  * @var ConfigurationProfilesController $this
  */
-$data = $this->getViewData();
+$data = $this->viewData;
 ?>
 <div class="wrap">
     <h2><?= get_admin_page_title(); ?></h2>

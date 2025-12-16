@@ -19,9 +19,9 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
     public function wp_enqueue(): void
     {
-        $resPath = $this->getPluginInfo()->getUrl();
+        $resPath = $this->pluginInfo->getUrl();
         $jsPath = $resPath . 'js/';
-        $ver = $this->getPluginInfo()->getVersion();
+        $ver = $this->pluginInfo->getVersion();
         wp_enqueue_script('jquery');
         $jsFiles = [
             $jsPath . 'jquery-validate-min.js',

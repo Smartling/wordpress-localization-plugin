@@ -12,11 +12,10 @@ use Smartling\WP\WPAbstract;
 
 /**
  * @var ConfigurationProfileFormController $this
- * @var SettingsManager $settingsManager
  */
-$settingsManager = $this->getViewData();
+$settingsManager = $this->settingsManager;
 
-$pluginInfo = $this->getPluginInfo();
+$pluginInfo = $this->pluginInfo;
 $domain = $pluginInfo->getDomain();
 
 $profileId = 0;

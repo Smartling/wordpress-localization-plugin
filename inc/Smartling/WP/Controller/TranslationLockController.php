@@ -112,7 +112,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
 
     private function getSubmission(int $postId, string $postType): ?SubmissionEntity
     {
-        return $this->getManager()->findOne([
+        return $this->submissionManager->findOne([
             SubmissionEntity::FIELD_TARGET_BLOG_ID => $this->siteHelper->getCurrentBlogId(),
             SubmissionEntity::FIELD_TARGET_ID => $postId,
             SubmissionEntity::FIELD_CONTENT_TYPE => $postType
@@ -144,7 +144,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         if (false !== $submission) {
             $submission->setLockedFields(array_keys($_POST['lockField'] ?? []));
             $submission->setIsLocked(array_key_exists('lock_page', $_POST) ? 1 : 0);
-            $this->getManager()->storeEntity($submission);
+            $this->submissionManager->storeEntity($submission);
         }
     }
 
@@ -178,7 +178,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
     {
         $submissionId = (int)$this->getQueryParam('submission', 0);
         if (0 < $submissionId) {
-            $searchResult = $this->getManager()->findByIds([$submissionId]);
+            $searchResult = $this->submissionManager->findByIds([$submissionId]);
             if (0 < count($searchResult)) {
                 /**
                  * @var SubmissionEntity $submission

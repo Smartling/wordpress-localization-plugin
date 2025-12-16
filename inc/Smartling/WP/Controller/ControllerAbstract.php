@@ -27,17 +27,7 @@ abstract class ControllerAbstract
         require_once $script;
     }
 
-    private array $viewData;
-
-    public function getViewData(): array
-    {
-        return $this->viewData;
-    }
-
-    public function setViewData(array $viewData): void
-    {
-        $this->viewData = $viewData;
-    }
+    protected array $viewData;
 
     /**
      * @return resource

@@ -9,135 +9,31 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exception\SmartlingIOException;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
-use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class WPAbstract
 {
+    use LoggerSafeTrait;
+    protected mixed $viewData;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-
-    /**
-     * @var PluginInfo
-     */
-    private $pluginInfo;
-
-    protected LocalizationPluginProxyInterface $localizationPluginProxy;
-    protected SettingsManager $settingsManager;
-    protected SiteHelper $siteHelper;
-
-    /**
-     * @var SubmissionManager
-     */
-    private $manager;
-
-    /**
-     * @var Cache
-     */
-    private $cache;
-
-    /**
-     * @var string
-     */
-    private $widgetHeader = '';
-
-    /**
-     * @var mixed
-     */
-    private $viewData;
-
-    /**
-     * @return mixed
-     */
-    public function getViewData()
-    {
-        return $this->viewData;
-    }
-
-    /**
-     * @param mixed $viewData
-     */
-    public function setViewData($viewData)
-    {
-        $this->viewData = $viewData;
-    }
-
-
-    /**
-     * @return string
-     */
-    public function getWidgetHeader()
-    {
-        return $this->widgetHeader;
-    }
-
-    /**
-     * @param string $widgetHeader
-     */
-    public function setWidgetHeader($widgetHeader)
-    {
-        $this->widgetHeader = $widgetHeader;
-    }
+    protected string $widgetHeader = '';
 
     public function __construct(
         protected ApiWrapperInterface $api,
-        LocalizationPluginProxyInterface $connector,
-        PluginInfo $pluginInfo,
-        SettingsManager $settingsManager,
-        SiteHelper $siteHelper,
-        SubmissionManager $manager,
-        Cache $cache
-    )
-    {
-        $this->logger = MonologWrapper::getLogger(get_called_class());
-        $this->localizationPluginProxy = $connector;
-        $this->pluginInfo = $pluginInfo;
-        $this->settingsManager = $settingsManager;
-        $this->siteHelper = $siteHelper;
-        $this->manager = $manager;
-        $this->cache = $cache;
-    }
-
-    /**
-     * @return Cache
-     */
-    public function getCache()
-    {
-        return $this->cache;
-    }
-
-    /**
-     * @return SubmissionManager
-     */
-    public function getManager()
-    {
-        return $this->manager;
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    /**
-     * @return PluginInfo
-     */
-    public function getPluginInfo()
-    {
-        return $this->pluginInfo;
+        protected LocalizationPluginProxyInterface $localizationPluginProxy,
+        protected PluginInfo $pluginInfo,
+        protected SettingsManager $settingsManager,
+        protected SiteHelper $siteHelper,
+        protected SubmissionManager $submissionManager,
+        protected Cache $cache
+    ) {
     }
 
     /**
@@ -148,30 +44,21 @@ class WPAbstract
         return $this->settingsManager->findEntityByMainLocale($this->siteHelper->getCurrentBlogId());
     }
 
-    /**
-     * @param mixed $data
-     */
-    public function view($data = null)
+    public function view(mixed $data = null): void
     {
-        $this->setViewData($data);
-        $class = get_called_class();
-        $class = str_replace('Smartling\\WP\\Controller\\', '', $class);
-
-        $class = str_replace('Controller', '', $class);
-
-        $this->renderViewScript($class . '.php');
+        $this->viewData = $data;
+        $this->renderViewScript(str_replace(['Smartling\\WP\\Controller\\', 'Controller'], '', static::class) . '.php');
     }
 
-    public function renderViewScript($script)
+    public function renderViewScript($script): void
     {
         $filename = plugin_dir_path(__FILE__) . 'View/' . $script;
 
         if (!file_exists($filename) || !is_file($filename) || !is_readable($filename)) {
             throw new SmartlingIOException(vsprintf('Requested view file (%s) not found.', [$filename]));
-        } else {
-            /** @noinspection PhpIncludeInspection */
-            require_once $filename;
         }
+
+        require_once $filename;
     }
 
     public static function bulkSubmitSendButton($id = 'submit', $name = 'submit', $text = 'Add to Upload Queue', $title = 'Add selected submissions to Upload queue')

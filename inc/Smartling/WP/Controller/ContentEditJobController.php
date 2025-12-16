@@ -194,10 +194,10 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
 
     public function wp_enqueue()
     {
-        $resPath = $this->getPluginInfo()->getUrl();
+        $resPath = $this->pluginInfo->getUrl();
         $jsPath = $resPath . 'js/';
         $cssPath = $resPath . 'css/';
-        $ver = $this->getPluginInfo()->getVersion();
+        $ver = $this->pluginInfo->getVersion();
 
         $jsFiles = [
             'select2.min.js',
