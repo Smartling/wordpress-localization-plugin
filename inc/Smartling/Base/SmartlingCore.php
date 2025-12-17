@@ -252,24 +252,6 @@ class SmartlingCore extends SmartlingCoreAbstract
         }
     }
 
-    /**
-     * @param ConfigurationProfileEntity $profile
-     *
-     * @return array
-     */
-    public function getProjectLocales(ConfigurationProfileEntity $profile)
-    {
-        $cacheKey = 'profile.locales.' . $profile->getId();
-        $cached = $this->getCache()->get($cacheKey);
-
-        if (false === $cached) {
-            $cached = $this->getApiWrapper()->getSupportedLocales($profile);
-            $this->getCache()->set($cacheKey, $cached);
-        }
-
-        return $cached;
-    }
-
     public function handleBadBlogId(SubmissionEntity $submission)
     {
         $profileMainId = $submission->getSourceBlogId();

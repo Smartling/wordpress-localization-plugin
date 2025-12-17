@@ -5,6 +5,7 @@ namespace Smartling\WP\Controller;
 use Smartling\Bootstrap;
 use Smartling\Exception\BlogNotFoundException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\StringHelper;
 use Smartling\Settings\Locale;
@@ -247,6 +248,62 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         } elseif ($profile->getId() > 0) {
             wp_redirect(get_admin_url(null, 'admin.php?page=smartling_configuration_profile_setup&error=' . self::ERROR_TARGET_LOCALES . '&action=edit&profile=' . $profile->getId()));
         }
+    }
+
+    protected function renderLocales(
+        array $locales,
+        string $displayName,
+        int $blogId,
+        string $smartlingName,
+        bool $enabled,
+    ): string {
+        $parts = [];
+
+        $checkboxProperties = [
+            'type' => 'checkbox',
+            'class' => 'mcheck',
+            'name' => sprintf('smartling_settings[targetLocales][%s][enabled]', $blogId),
+        ];
+
+        if (true === $enabled) {
+            $checkboxProperties['checked'] = 'checked';
+        }
+
+        $parts[] = HtmlTagGeneratorHelper::tag('input', '', $checkboxProperties);
+        $parts[] = HtmlTagGeneratorHelper::tag('span', htmlspecialchars($displayName));
+        $parts = [
+            HtmlTagGeneratorHelper::tag('label', implode('', $parts), ['class' => 'radio-label']),
+        ];
+
+        if (0 === count($locales)) {
+            $sLocale = HtmlTagGeneratorHelper::tag(
+                'input',
+                '',
+                [
+                    'name' => sprintf('smartling_settings[targetLocales][%s][target]', $blogId),
+                    'type' => 'text',
+                ]);
+        } else {
+            $sLocale = HtmlTagGeneratorHelper::tag(
+                'select',
+                HtmlTagGeneratorHelper::renderSelectOptions(
+                    $smartlingName,
+                    $locales
+                ),
+                [
+                    'name' => sprintf('smartling_settings[targetLocales][%s][target]', $blogId),
+                ]);
+        }
+
+        $parts = [
+            HtmlTagGeneratorHelper::tag('td', implode('', $parts), ['style' => 'display:table-cell;']),
+        ];
+        $parts[] = HtmlTagGeneratorHelper::tag('td', $sLocale, [
+            'style' => 'display:table-cell',
+            'class' => 'targetLocaleSelectCell',
+        ]);
+
+        return implode('', $parts);
     }
 
     private function validateTargetLocales(array $targetLocales): bool {
