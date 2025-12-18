@@ -789,13 +789,13 @@ class ContentRelationsDiscoveryService
                                 continue 2;
                             }
                             $title = $this->wordpressProxy->get_post($id)->post_title;
-                            $url = $this->wordpressProxy->get_edit_post_link($id);
+                            $url = $this->wordpressProxy->get_edit_post_link($id, 'raw');
                             break;
                         default:
                             $term = $this->wordpressProxy->get_term($id);
                             if ($term instanceof \WP_Term) {
                                 $title = $term->name;
-                                $url = $this->wordpressProxy->get_edit_term_link($id, $type);
+                                $url = $this->wordpressProxy->get_edit_term_link($id, $type, 'raw');
                             } else {
                                 continue 2;
                             }

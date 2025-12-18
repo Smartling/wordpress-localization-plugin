@@ -274,12 +274,29 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                         el('div', { style: { maxHeight: '200px', overflowY: 'auto' } },
                             relations.map(rel => {
                                 const key = `${rel.contentType}-${rel.id}`;
-                                return el(CheckboxControl, {
-                                    key,
-                                    label: `${rel.contentType} #${rel.id} (${rel.status}) - ${rel.title || 'Untitled'}`,
-                                    checked: selectedRelations[key] || false,
-                                    onChange: (checked) => setSelectedRelations(prev => ({ ...prev, [key]: checked }))
-                                });
+                                const titleLink = rel.url ? 
+                                    el('a', { href: rel.url, target: '_blank', style: { textDecoration: 'none' }, onClick: (e) => e.stopPropagation() }, rel.title || 'Untitled') : 
+                                    (rel.title || 'Untitled');
+                                const thumbnail = rel.contentType === 'attachment' && rel.thumbnailUrl ?
+                                    el('img', { 
+                                        src: rel.thumbnailUrl, 
+                                        alt: 'Preview', 
+                                        style: { width: '30px', height: '30px', objectFit: 'cover', verticalAlign: 'middle', marginLeft: '5px' }
+                                    }) : null;
+                                
+                                return el('label', { key, style: { display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' } },
+                                    el('input', {
+                                        type: 'checkbox',
+                                        checked: selectedRelations[key] || false,
+                                        onChange: (e) => setSelectedRelations(prev => ({ ...prev, [key]: e.target.checked })),
+                                        style: { marginRight: '8px' }
+                                    }),
+                                    el('span', {},
+                                        `${rel.contentType} #${rel.id} (${rel.status}) - `,
+                                        titleLink,
+                                        thumbnail
+                                    )
+                                );
                             })
                         )
                     )
