@@ -608,7 +608,7 @@ class ContentRelationsDiscoveryService
         }
 
         foreach (array_merge($references[self::TERM_BASED_PROCESSOR] ?? [], $references[ContentTypeHelper::CONTENT_TYPE_TAXONOMY] ?? []) as $termTypeId) {
-            $term = get_term($termTypeId, '', \ARRAY_A);
+            $term = $this->wordpressProxy->getTerm((int)$termTypeId);
             if (is_array($term)) {
                 $result[$term['taxonomy']][] = $termTypeId;
             }
