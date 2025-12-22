@@ -38,4 +38,40 @@ class LoopCarouselTest extends TestCase
             )->toArray()['settings']['template_id'],
         );
     }
+
+    public function testTermIdRelatedContent(): void
+    {
+        $relatedList = (new LoopCarousel([
+            'settings' => [
+                'post_query_include_term_ids' => ['14', '15', '16']
+            ]
+        ]))->getRelated()->getRelatedContentList();
+
+        $this->assertArrayHasKey(ContentTypeHelper::CONTENT_TYPE_TAXONOMY, $relatedList);
+        $this->assertEquals(['14', '15', '16'], $relatedList[ContentTypeHelper::CONTENT_TYPE_TAXONOMY]);
+    }
+
+    public function testTermIdTranslation(): void
+    {
+        $termSourceId = 14;
+        $termTargetId = 28;
+
+        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor->method('getTargetId')
+            ->with(0, $termSourceId, 0, ContentTypeHelper::CONTENT_TYPE_TAXONOMY)->willReturn($termTargetId);
+
+        $this->assertEquals(
+            $termTargetId,
+            (new LoopCarousel([
+                'settings' => [
+                    'post_query_include_term_ids' => ['14', '15', '16']
+                ]
+            ]))->setRelations(
+                new Content($termSourceId, ContentTypeHelper::CONTENT_TYPE_TAXONOMY),
+                $externalContentElementor,
+                'settings/post_query_include_term_ids/0',
+                $this->createMock(SubmissionEntity::class),
+            )->toArray()['settings']['post_query_include_term_ids'][0],
+        );
+    }
 }

@@ -17,7 +17,11 @@ class Unknown extends ElementAbstract {
     public function getRelated(): RelatedContentInfo
     {
         $return = new RelatedContentInfo();
-        $keys = ['background_image/id'];
+        $keys = [
+            'background_image/id',
+            'background_overlay_image/id',
+            'background_overlay_image_mobile/id',
+        ];
         foreach ($this->elements as $element) {
             if ($element instanceof Element) {
                 $return = $return->include($element->getRelated(), $this->id);

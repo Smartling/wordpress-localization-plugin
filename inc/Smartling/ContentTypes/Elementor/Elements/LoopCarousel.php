@@ -3,10 +3,8 @@
 namespace Smartling\ContentTypes\Elementor\Elements;
 
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
-use Smartling\Submissions\SubmissionEntity;
 
 class LoopCarousel extends Unknown {
     public function getType(): string
@@ -21,6 +19,12 @@ class LoopCarousel extends Unknown {
         $id = $this->getIntSettingByKey($key, $this->settings);
         if ($id !== null) {
             $return->addContent(new Content($id, ContentTypeHelper::CONTENT_TYPE_POST), $this->id, "settings/$key");
+        }
+
+        foreach ($this->settings['post_query_include_term_ids'] ?? [] as $index => $termId) {
+            if (is_numeric($termId)) {
+                $return->addContent(new Content((int)$termId, ContentTypeHelper::CONTENT_TYPE_TAXONOMY), $this->id, "settings/post_query_include_term_ids/$index");
+            }
         }
 
         return $return;

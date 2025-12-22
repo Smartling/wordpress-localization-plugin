@@ -131,11 +131,19 @@ abstract class ElementAbstract implements Element {
     ): static {
         $arrayHelper = new ArrayHelper();
         $result = clone $this;
-        $contentType = $content->getType() === ContentTypeHelper::CONTENT_TYPE_POST ?
-            $externalContentElementor->getWpProxy()->get_post_type($content->getId()) :
-            $content->getType();
+
+        $wpProxy = $externalContentElementor->getWpProxy();
+        if ($content->getType() === ContentTypeHelper::CONTENT_TYPE_POST) {
+            $contentType = $wpProxy->get_post_type($content->getId());
+        } elseif ($content->getType() === ContentTypeHelper::CONTENT_TYPE_TAXONOMY) {
+            $term = $wpProxy->getTerm($content->getId());
+            $contentType = (is_array($term) && isset($term['taxonomy'])) ? $term['taxonomy'] : $content->getType();
+        } else {
+            $contentType = $content->getType();
+        }
+
         if ($contentType === false) {
-            $this->getLogger()->debug("Unable to get post type for contentId={$content->getId()}, proceeding with unknown type");
+            $this->getLogger()->debug("Unable to get content type for contentId={$content->getId()}, proceeding with unknown type");
             $contentType = ContentTypeHelper::CONTENT_TYPE_UNKNOWN;
         }
         $targetId = $externalContentElementor->getTargetId(

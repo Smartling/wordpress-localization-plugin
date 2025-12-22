@@ -65,6 +65,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 = 5.1.4 =
 * Removed caching of profile settings locales
 * Updated UI
+* Added support for Elementor video attachments
+* Added support for Elementor loop carousel query tags
+* Added support for Elementor widget background overlay image attachments
 
 = 5.1.3 =
 * Reworked Elementor save hook to preserve dynamic widget settings

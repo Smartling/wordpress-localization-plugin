@@ -40,9 +40,6 @@ class RelatedContentInfo {
         });
     }
 
-    /**
-     * @return Content[]
-     */
     public function getRelatedContentList(): array
     {
         $flat = $this->arrayHelper->flatten($this->info);

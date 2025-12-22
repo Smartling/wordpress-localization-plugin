@@ -5,9 +5,7 @@ namespace Smartling\ContentTypes\Elementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\Elementor\Elements\ImageGallery;
-use Smartling\ContentTypes\Elementor\Elements\LoopCarousel;
 use Smartling\ContentTypes\ExternalContentElementor;
-use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\Content;
 use Smartling\Submissions\SubmissionEntity;
 

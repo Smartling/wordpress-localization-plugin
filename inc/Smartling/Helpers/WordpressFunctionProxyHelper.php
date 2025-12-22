@@ -161,6 +161,11 @@ class WordpressFunctionProxyHelper
         return get_term(...func_get_args());
     }
 
+    public function getTerm(int $termId): array|null|\WP_Error
+    {
+        return get_term($termId, '', ARRAY_A);
+    }
+
     public function get_edit_post_link()
     {
         return get_edit_post_link(...func_get_args());
