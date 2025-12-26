@@ -2,7 +2,7 @@
 Contributors: smartling
 Tags: translation, localization, multilingual, internationalization, smartling
 Requires at least: 5.5
-Tested up to: 6.6.2
+Tested up to: 6.9
 Requires PHP: 8.0
 Stable tag: 5.1.4
 License: GPLv2 or later
