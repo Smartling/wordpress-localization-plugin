@@ -1,8 +1,7 @@
 # Notes for developers
 ## Dealing with scoped dependencies
-For now, scoping is handled with ilab/namespacer
 ```shell
-namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc
+./inc/third-party/vsolovei-smartling/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace "Smartling\Vendor" inc && php fix-double-namespace.php
 ```
 generates scoped files that are actually used in the plugin.
 This step needs to be done after changing composer dependencies.
