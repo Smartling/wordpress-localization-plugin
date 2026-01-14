@@ -15,7 +15,6 @@ use Smartling\DbAl\WordpressContentEntities\EntityWithMetadata;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
-use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
@@ -297,14 +296,10 @@ class ContentRelationsDiscoveryService
                     $submission->setSourceTitle($title);
                 }
 
-                try {
-                    $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
-                    $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
-                    $fileUris[] = $submission->getFileUri();
-                    $queueIds[] = $submission->getId();
-                } catch (SmartlingInvalidFactoryArgumentException) {
-                    $this->getLogger()->info("Skipping submission because no mapper was found: contentType={$submission->getContentType()} sourceBlogId={$submission->getSourceBlogId()}, sourceId={$submission->getSourceId()}, targetBlogId={$submission->getTargetBlogId()}");
-                }
+                $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
+                $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
+                $fileUris[] = $submission->getFileUri();
+                $queueIds[] = $submission->getId();
             }
         }
         $this->uploadQueueManager->enqueue($queueIds, $this->apiWrapper->createBatch(
@@ -648,7 +643,8 @@ class ContentRelationsDiscoveryService
     public function getTitle(SubmissionEntity $submission): string
     {
         try {
-            return $this->contentHelper->readSourceContent($submission)->getTitle();
+            return $this->contentHelper->getHandler($submission->getContentType())->get($submission->getSourceId())
+                ->getTitle();
         } catch (\Exception $e) {
             $this->getLogger()->notice(sprintf('Unable to get content title for submissionId=%d, sourceBlogId=%d, sourceId=%d, type="%s"', $submission->getId(), $submission->getSourceBlogId(), $submission->getSourceId(), $submission->getContentType()));
             $this->getLogger()->debug('Exception: ' . $e->getMessage());
@@ -774,28 +770,18 @@ class ContentRelationsDiscoveryService
                 $url = '';
                 $thumbnailUrl = '';
                 try {
-                    switch ($type) {
-                        /** @noinspection PhpMissingBreakStatementInspection */
-                        case 'attachment':
-                            $thumbnailUrl = $this->wordpressProxy->wp_get_attachment_image_url($id) ?: '';
-                            // fallthrough intentional
-                        case 'page':
-                        case 'post':
-                            $post = $this->wordpressProxy->get_post($id);
-                            if ($post === null) {
-                                continue 2;
-                            }
-                            $title = $this->wordpressProxy->get_post($id)->post_title;
-                            $url = $this->wordpressProxy->get_edit_post_link($id, 'raw');
-                            break;
-                        default:
-                            $term = $this->wordpressProxy->get_term($id);
-                            if ($term instanceof \WP_Term) {
-                                $title = $term->name;
-                                $url = $this->wordpressProxy->get_edit_term_link($id, $type, 'raw');
-                            } else {
-                                continue 2;
-                            }
+                    if ($type === 'attachment') {
+                        $thumbnailUrl = $this->wordpressProxy->wp_get_attachment_image_url($id) ?: '';
+                    }
+
+                    $handler = $this->contentHelper->getHandler($type);
+                    try {
+                        $entity = $handler->get($id);
+                        $title = $entity->getTitle();
+                        $url = $entity->getEditLink();
+                    }
+                    catch (EntityNotFoundException) {
+                        continue;
                     }
                 } catch (\Exception) {
                     // Ignore errors, use empty title/url/thumbnailUrl

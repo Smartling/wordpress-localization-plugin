@@ -11,6 +11,7 @@ use Smartling\DbAl\WordpressContentEntities\PostEntityStd;
 use Smartling\DbAl\WordpressContentEntities\TaxonomyEntityStd;
 use Smartling\DbAl\WordpressContentEntities\VirtualEntityAbstract;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
 use Smartling\Processors\ContentEntitiesIOFactory;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -79,14 +80,36 @@ class ContentHelper
         }
     }
 
+    /**
+     * @throws SmartlingInvalidFactoryArgumentException
+     */
     public function getWrapper(string $contentType): EntityHandler
     {
-        $return = clone $this->getIoFactory()->getHandler($contentType);
-        if (!$return instanceof EntityHandler) {
-            throw new \RuntimeException("Handler for $contentType expected to be " . EntityHandler::class . ", factory returned " . get_class($return));
+        try {
+            $return = clone $this->getIoFactory()->getHandler($contentType);
+            if (!$return instanceof EntityHandler) {
+                throw new \RuntimeException("Handler for $contentType expected to be " . EntityHandler::class . ", factory returned " . get_class($return));
+            }
+        } catch (SmartlingInvalidFactoryArgumentException $e) {
+            try {
+                return $this->getHandler($contentType);
+            } catch (\RuntimeException) {
+                throw $e;
+            }
         }
 
         return $return;
+    }
+
+    public function getHandler(string $type): PostEntityStd|TaxonomyEntityStd
+    {
+        if ($this->wordpressFunctionProxyHelper->post_type_exists($type)) {
+            return new PostEntityStd($type, wordpressFunctionProxyHelper: $this->wordpressFunctionProxyHelper);
+        }
+        if ($this->wordpressFunctionProxyHelper->taxonomy_exists($type)) {
+            return new TaxonomyEntityStd($type, wordpressProxy: $this->wordpressFunctionProxyHelper);
+        }
+        throw new \RuntimeException("Unknown content type: $type");
     }
 
     /**

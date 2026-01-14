@@ -262,7 +262,7 @@ services:
   file.uri.helper:
     class: Smartling\Helpers\FileUriHelper
     arguments:
-      - "@factory.contentIO"
+      - "@content.helper"
       - "@site.helper"
 
   site.helper:

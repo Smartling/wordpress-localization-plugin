@@ -51,6 +51,16 @@ class WordpressFunctionProxyHelper
         return get_post_type(...func_get_args());
     }
 
+    public function post_type_exists()
+    {
+        return post_type_exists(...func_get_args());
+    }
+
+    public function taxonomy_exists()
+    {
+        return taxonomy_exists(...func_get_args());
+    }
+
     public function get_post_types()
     {
         return get_post_types(...func_get_args());

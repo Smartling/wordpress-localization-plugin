@@ -38,7 +38,6 @@ use Smartling\WP\View\BulkSubmitScreenRow;
  */
 class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, EntityWithMetadata
 {
-    private WordpressFunctionProxyHelper $wordpressFunctionProxyHelper;
     /**
      * Standard 'post' content-type fields
      */
@@ -68,8 +67,11 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
         'comment_count',
     ];
 
-    public function __construct($type = 'post', array $related = [], ?WordpressFunctionProxyHelper $wordpressFunctionProxyHelper = null)
-    {
+    public function __construct(
+        string $type = 'post',
+        array $related = [],
+        private ?WordpressFunctionProxyHelper $wordpressFunctionProxyHelper = null,
+    ) {
         parent::__construct();
         $this->setType($type);
 
@@ -97,6 +99,11 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
     public function getContentTypeProperty(): string
     {
         return 'post_type';
+    }
+
+    public function getEditLink(): ?string
+    {
+        return $this->wordpressFunctionProxyHelper->get_edit_post_link($this->ID);
     }
 
     public function getId(): ?int

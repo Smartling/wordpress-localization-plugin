@@ -37,6 +37,11 @@ class TaxonomyEntityStd extends EntityAbstract implements EntityWithMetadata
 
     private WordpressFunctionProxyHelper $wordpressProxy;
 
+    public function getEditLink(): ?string
+    {
+        return $this->wordpressProxy->get_edit_term_link($this->getPK());
+    }
+
     public function getMetadata(): array
     {
         $metadata = $this->wordpressProxy->get_term_meta($this->getPK());
