@@ -7,16 +7,12 @@
   "repositories": [
     {
       "type": "github",
-      "url": "https://github.com/vsolovei-smartling/retry"
-    },
-    {
-      "type": "github",
       "url": "https://github.com/vsolovei-smartling/namespacer"
     }
   ],
   "require": {
     "galbar/jsonpath": "^2.0",
-    "vsolovei-smartling/retry": "^2.0.1",
+    "jralph/retry": "3.0.0",
     "php": ">=8.0",
     "monolog/monolog": "~1",
     "symfony/dependency-injection": "~5.4",
@@ -49,6 +45,8 @@
     "post-install-cmd": [
     ],
     "post-update-cmd": [
+      "./inc/third-party/vsolovei-smartling/namespacer/bin/namespacer --composer ./composer.json --package smartling-connector --namespace \"Smartling\\Vendor\" inc",
+      "php fix-double-namespace.php"
     ]
   }
 }
