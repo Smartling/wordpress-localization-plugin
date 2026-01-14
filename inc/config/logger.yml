@@ -1,8 +1,8 @@
 parameters:
   logger.buffer.limit: 1000
   logger.channel: default
-  logger.filehandler.standard.filename.default: %%plugin.dir%%/logs/logfile
-  logger.filehandler.standard.filename: %%plugin.dir%%/logs/logfile
+  logger.filehandler.standard.filename.default: "%%plugin.dir%%/logs/logfile"
+  logger.filehandler.standard.filename: "%%plugin.dir%%/logs/logfile"
   logger.filehandler.standard.loglevel: DEBUG
   logger.filehandler.standard.maxfiles: 1
 

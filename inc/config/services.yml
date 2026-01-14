@@ -300,7 +300,7 @@ services:
       arguments:
         - "%plugin.name%"
         - "%plugin.version%"
-        - "%plugin.url%"
+        - "@=service('wp.proxy').plugin_dir_url(constant('SMARTLING_PLUGIN_DIR')~constant('DIRECTORY_SEPARATOR')~'..')"
         - "%plugin.domain%"
         - "@manager.settings"
 
