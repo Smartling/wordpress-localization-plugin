@@ -21,26 +21,13 @@ class FileUriHelper
     private const UNTITLED = 'UNTITLED';
 
     public function __construct(
-        private ContentEntitiesIOFactory $ioFactory,
+        private ContentHelper $contentHelper,
         private SiteHelper $siteHelper,
     ) {
     }
 
-    /**
-     * @throws SmartlingInvalidFactoryArgumentException
-     * @throws SmartlingConfigException
-     */
     private function buildFileUri(Submission $submission): string {
-        try {
-            $wrapper = $this->ioFactory->getMapper($submission->getContentType());
-        } catch (SmartlingInvalidFactoryArgumentException $e) {
-            $this->getLogger()->notice(sprintf(
-                'ContentType=%s is not registered, expected one of %s',
-                $submission->getContentType(),
-                implode(',' , array_keys($this->ioFactory->getCollection()))
-            ));
-            throw $e;
-        }
+        $wrapper = $this->contentHelper->getHandler($submission->getContentType());
         if ($wrapper instanceof TaxonomyEntityStd) {
             $permalink = $this->preparePermalink(get_term_link($submission->getSourceId()), $submission->getSourceTitle());
         } elseif ($wrapper instanceof PostEntityStd) {
@@ -59,9 +46,7 @@ class FileUriHelper
     }
 
     /**
-     * @throws SmartlingInvalidFactoryArgumentException
      * @throws BlogNotFoundException
-     * @throws SmartlingConfigException
      * @throws SmartlingDirectRunRuntimeException
      */
     public function generateFileUri(Submission $submission): string {

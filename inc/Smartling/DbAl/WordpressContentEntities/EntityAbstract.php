@@ -126,6 +126,11 @@ abstract class EntityAbstract extends EntityBase implements EntityHandler
         }
     }
 
+    public function getEditLink(): ?string
+    {
+        return null;
+    }
+
     abstract public function getTitle(): string;
 
     abstract public function getContentTypeProperty(): string;
