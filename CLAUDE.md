@@ -9,7 +9,7 @@ This is the **Smartling Connector** WordPress plugin - a translation and localiz
 ## Key Development Commands
 
 ### Testing
-- **Unit tests**: `./inc/third-party/phpunit/phpunit/phpunit --configuration ./phpunit.xml.dist`
+- **Unit tests**: `./inc/third-party/phpunit/phpunit/phpunit --testsuite "smartling-connector WordPress plugin test" --bootstrap ./tests/IntegrationTests/includes/bootstrap_units.php --configuration ./tests/phpunit.xml`
 
 ### Build & Release
 - **Build plugin**: `./build.sh` - Creates production-ready `smartling-connector.zip`
