@@ -209,6 +209,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
             'smartling.dtpicker.conflict.resolver.js',
             'moment.js',
             'moment-timezone-with-data.js',
+            'instant-translation.js',
         ];
         foreach ($jsFiles as $jFile) {
             $jFile = $jsPath . $jFile;

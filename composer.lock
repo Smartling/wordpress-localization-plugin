@@ -4,8 +4,85 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ee7a6a4da8518625450d130a38feb3d1",
+    "content-hash": "5504d9f0a6e6ec4fb046431bf5d8ed86",
     "packages": [
+        {
+            "name": "composer/semver",
+            "version": "3.4.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/composer/semver.git",
+                "reference": "198166618906cb2de69b95d7d47e5fa8aa1b2b95"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/composer/semver/zipball/198166618906cb2de69b95d7d47e5fa8aa1b2b95",
+                "reference": "198166618906cb2de69b95d7d47e5fa8aa1b2b95",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^5.3.2 || ^7.0 || ^8.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^1.11",
+                "symfony/phpunit-bridge": "^3 || ^7"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Composer\\Semver\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nils Adermann",
+                    "email": "naderman@naderman.de",
+                    "homepage": "http://www.naderman.de"
+                },
+                {
+                    "name": "Jordi Boggiano",
+                    "email": "j.boggiano@seld.be",
+                    "homepage": "http://seld.be"
+                },
+                {
+                    "name": "Rob Bast",
+                    "email": "rob.bast@gmail.com",
+                    "homepage": "http://robbast.nl"
+                }
+            ],
+            "description": "Semver library that offers utilities, version constraint parsing and validation.",
+            "keywords": [
+                "semantic",
+                "semver",
+                "validation",
+                "versioning"
+            ],
+            "support": {
+                "irc": "ircs://irc.libera.chat:6697/composer",
+                "issues": "https://github.com/composer/semver/issues",
+                "source": "https://github.com/composer/semver/tree/3.4.4"
+            },
+            "funding": [
+                {
+                    "url": "https://packagist.com",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/composer",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-08-20T19:15:30+00:00"
+        },
         {
             "name": "galbar/jsonpath",
             "version": "2.1",
@@ -734,26 +811,27 @@
         },
         {
             "name": "smartling/api-sdk-php",
-            "version": "3.9.2",
+            "version": "5.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Smartling/api-sdk-php.git",
-                "reference": "0065a8b5b534b0b1578992a46d3d5f85bda86a3d"
+                "reference": "ebf56d4039c002d34fd7358c51ca40bc37e1d168"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Smartling/api-sdk-php/zipball/0065a8b5b534b0b1578992a46d3d5f85bda86a3d",
-                "reference": "0065a8b5b534b0b1578992a46d3d5f85bda86a3d",
+                "url": "https://api.github.com/repos/Smartling/api-sdk-php/zipball/ebf56d4039c002d34fd7358c51ca40bc37e1d168",
+                "reference": "ebf56d4039c002d34fd7358c51ca40bc37e1d168",
                 "shasum": ""
             },
             "require": {
+                "composer/semver": "^3.4.2",
                 "ext-json": "*",
-                "guzzlehttp/guzzle": "~6",
-                "php": ">=5.5",
-                "psr/log": "~1.0"
+                "guzzlehttp/guzzle": "^6.0.0 || ^7.0.0",
+                "php": "^7.3 || ^8.0",
+                "psr/log": "^1.0.0 || ^3.0.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "~4"
+                "phpunit/phpunit": "~8"
             },
             "type": "library",
             "autoload": {
@@ -775,9 +853,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Smartling/api-sdk-php/issues",
-                "source": "https://github.com/Smartling/api-sdk-php/tree/3.9.2"
+                "source": "https://github.com/Smartling/api-sdk-php/tree/5.0.5"
             },
-            "time": "2022-01-20T14:42:36+00:00"
+            "time": "2026-02-03T16:00:08+00:00"
         },
         {
             "name": "symfony/cache",

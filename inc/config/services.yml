@@ -88,6 +88,25 @@ services:
     arguments:
       - "@wrapper.sdk.api.smartling"
 
+  fts.api.wrapper:
+    class: Smartling\FTS\FtsApiWrapper
+    arguments:
+      - "@manager.settings"
+      - "%plugin.name%"
+      - "%plugin.version%"
+
+  fts.service:
+    class: Smartling\FTS\FtsService
+    arguments:
+      - "@fts.api.wrapper"
+      - "@api.wrapper.with.retries"
+      - "@manager.submission"
+      - "@content.helper"
+      - "@entrypoint"
+      - "@manager.settings"
+      - "@helper.xml"
+      - "@helper.post.content"
+
   queue.db:
     class: Smartling\Queue\Queue
     arguments:
@@ -432,6 +451,12 @@ services:
       - "@manager.submission"
       - "@manager.upload.queue"
       - "@site.cache"
+
+  wp.instant.translation:
+    class: Smartling\WP\Controller\InstantTranslationController
+    arguments:
+      - "@fts.service"
+      - "@manager.submission"
 
   helper.gutenberg:
     class: Smartling\Helpers\GutenbergBlockHelper

@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 5.3.0 =
+* Added support for instant machine translation
+
 = 5.2.0 =
 * Added support for Synced Patterns (Reusable blocks)
 

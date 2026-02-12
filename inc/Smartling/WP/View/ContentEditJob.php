@@ -102,10 +102,11 @@ if (!$isBulkSubmitPage) : ?>
                     <div id="job-tabs">
                         <span class="active" data-action="new">New Job</span>
                         <span data-action="existing">Existing Job</span>
+                        <span data-action="instant">Instant Translation</span>
                         <?= $isBulkSubmitPage ? '' : '<span data-action="clone">Clone</span>'?>
                     </div>
                     <table>
-                        <tr id="jobList" class="hidden hideWhenCloning">
+                        <tr id="jobList" class="hidden hideWhenCloning hideWhenInstant">
                             <th>
                                 <label for="jobSelect">Existing jobs</label>
                             </th>
@@ -113,23 +114,27 @@ if (!$isBulkSubmitPage) : ?>
                                 <select id="jobSelect"></select>
                             </td>
                         </tr>
-                        <tr class="hideWhenCloning">
+                        <tr class="hideWhenCloning hideWhenInstant">
                             <th><label for="name-sm">Name</label></th>
                             <td><input id="name-sm" name="jobName" type="text"/></td>
                         </tr>
-                        <tr class="hideWhenCloning">
+                        <tr class="hideWhenCloning hideWhenInstant">
                             <th><label for="description-sm">Description</label</th>
                             <td><textarea id="description-sm" name="description-sm"></textarea></td>
                         </tr>
-                        <tr class="hideWhenCloning">
+                        <tr class="hideWhenCloning hideWhenInstant">
                             <th><label for="dueDate">Due Date</label</th>
                             <td><input type="text" id="dueDate" name="dueDate"/></td>
                         </tr>
-                        <tr class="hideWhenCloning">
+                        <tr class="hideWhenCloning hideWhenInstant">
                             <th><label for="cbAuthorize">Authorize Job</label</th>
                             <td><input type="checkbox" class="authorize" id="cbAuthorize"
                                        name="cbAuthorize" <?= $profile->getAutoAuthorize() ? 'checked="checked"' : '' ?>/>
                             </td>
+                        </tr>
+                        <tr class="hideWhenCloning hideWhenInstant">
+                            <th>&nbsp;</th>
+                            <td><em>Instant Translation provides immediate translation without creating a job. Translation will complete in approximately 2 minutes.</em></td>
                         </tr>
 
                         <?php
@@ -204,6 +209,12 @@ if (!$isBulkSubmitPage) : ?>
                         <tr>
                             <th class="center" colspan="2">
                                 <div id="error-messages"></div>
+                                <div id="instant-status" class="hidden" style="margin: 10px 0; padding: 10px; background: #f0f0f1; border-radius: 4px;">
+                                    <div id="instant-status-text" style="margin-bottom: 10px;"></div>
+                                    <div style="background: #fff; border-radius: 4px; overflow: hidden; height: 20px;">
+                                        <div id="instant-progress-bar" style="background: #2271b1; height: 100%; width: 0; transition: width 0.3s;"></div>
+                                    </div>
+                                </div>
                                 <div id="progress-indicator" class="hidden" style="margin: 10px 0;">
                                     <div style="background: #f0f0f0; border-radius: 4px; overflow: hidden; height: 20px;">
                                         <div id="progress-bar" style="background: #2271b1; height: 100%; width: 0; transition: width 0.3s;"></div>
@@ -218,6 +229,9 @@ if (!$isBulkSubmitPage) : ?>
                                         title="Add content into your chosen job">Add to selected Job
                                 </button>
                                 <button class="button button-primary components-button is-primary hidden" id="cloneButton">Clone</button>
+                                <button class="button button-primary components-button is-primary hidden" id="instantTranslateButton"
+                                        title="Request instant translation (completes in ~2 minutes)">Request Instant Translation
+                                </button>
                             </th>
                         </tr>
                         <input type="hidden" id="timezone-sm" name="timezone-sm" value="UTC"/>
@@ -408,22 +422,38 @@ if ($post instanceof WP_Post) {
                 $(this).addClass("active");
                 const hideWhenCloning = $('.hideWhenCloning');
                 const cloneButton = $('#cloneButton');
+                const instantButton = $('#instantTranslateButton');
+                const hideWhenInstant = $('.hideWhenInstant');
                 switch ($(this).attr("data-action")) {
                     case "new":
                         Helper.ui.createJobForm.show();
                         hideWhenCloning.show();
+                        hideWhenInstant.show();
                         cloneButton.addClass('hidden');
+                        instantButton.addClass('hidden');
                         break;
                     case "clone":
                         Helper.ui.createJobForm.hide();
                         hideWhenCloning.hide();
+                        hideWhenInstant.show();
                         $('#addToJob').addClass('hidden');
                         cloneButton.removeClass('hidden');
+                        instantButton.addClass('hidden');
+                        break;
+                    case "instant":
+                        Helper.ui.createJobForm.hide();
+                        hideWhenCloning.hide();
+                        hideWhenInstant.hide();
+                        $('#addToJob').addClass('hidden');
+                        cloneButton.addClass('hidden');
+                        instantButton.removeClass('hidden');
                         break;
                     case "existing":
                         Helper.ui.createJobForm.hide();
                         hideWhenCloning.show();
+                        hideWhenInstant.show();
                         cloneButton.addClass('hidden');
+                        instantButton.addClass('hidden');
                         break;
                     default:
                 }
