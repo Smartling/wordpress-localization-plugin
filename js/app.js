@@ -21,8 +21,6 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
     const [totalRequests, setTotalRequests] = useState(0);
     const [l1Relations, setL1Relations] = useState([]);
     const [l2Relations, setL2Relations] = useState([]);
-
-    // Instant translation state
     const [instantPolling, setInstantPolling] = useState(false);
     const [instantProgress, setInstantProgress] = useState(0);
     const [instantStatus, setInstantStatus] = useState('');
@@ -99,7 +97,6 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
         setRelations(unique);
     }, [depth, l1Relations, l2Relations]);
 
-    // Instant translation handler
     const handleInstantTranslation = async () => {
         setSubmitting(true);
         setError('');
@@ -113,52 +110,45 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
             return;
         }
 
-        if (selectedLocales.length > 1) {
-            setError('Instant translation supports one target locale at a time. Please select only one locale.');
-            setSubmitting(false);
-            return;
-        }
-
-        const targetBlogId = selectedLocales[0];
-
-        // Collect all items to translate (main content + related content)
-        const itemsToTranslate = [{ contentType, contentId }];
-
-        // Add selected related content
-        relations.forEach(rel => {
-            if (selectedRelations[`${rel.contentType}-${rel.id}`]) {
-                itemsToTranslate.push({ contentType: rel.contentType, contentId: rel.id });
-            }
+        const relationsData = {};
+        selectedLocales.forEach(blogId => {
+            relationsData[blogId] = {};
+            relations.filter(r => selectedRelations[`${r.contentType}-${r.id}`]).forEach(r => {
+                if (!relationsData[blogId][r.contentType]) {
+                    relationsData[blogId][r.contentType] = [];
+                }
+                relationsData[blogId][r.contentType].push(r.id);
+            });
         });
 
-        const submissionIds = [];
+        const relatedItemsSet = new Set();
+        relations.forEach(rel => {
+            if (selectedRelations[`${rel.contentType}-${rel.id}`]) {
+                relatedItemsSet.add(`${rel.contentType}-${rel.id}`);
+            }
+        });
+        const itemCount = 1 + relatedItemsSet.size;
+        const localeCount = selectedLocales.length;
 
         try {
-            // Create instant translation requests for all items
-            for (const item of itemsToTranslate) {
-                const response = await jQuery.post(ajaxUrl, {
-                    action: 'smartling_instant_translation',
-                    contentType: item.contentType,
-                    contentId: item.contentId,
-                    targetBlogId: targetBlogId
-                });
+            // Single AJAX call with relations
+            const response = await jQuery.post(ajaxUrl, {
+                action: 'smartling_instant_translation',
+                contentType: contentType,
+                contentId: contentId,
+                targetBlogIds: selectedLocales,
+                relations: relationsData
+            });
 
-                if (response.success && response.data?.submissionId) {
-                    submissionIds.push(response.data.submissionId);
-                } else {
-                    throw new Error(response.data?.message || 'Failed to start instant translation.');
-                }
-            }
-
-            if (submissionIds.length > 0) {
+            if (response.success && response.data?.submissionIds) {
+                const submissionIds = response.data.submissionIds;
                 setInstantSubmissionIds(submissionIds);
                 setInstantPolling(true);
                 setInstantProgress(5);
-                setInstantStatus(`Translating ${submissionIds.length} item${submissionIds.length > 1 ? 's' : ''}... This will take approximately 2 minutes.`);
+                setInstantStatus(`Translating ${itemCount} item${itemCount > 1 ? 's' : ''} to ${localeCount} locale${localeCount > 1 ? 's' : ''}...`);
                 startInstantPolling(submissionIds, Date.now());
             } else {
-                setError('No items to translate.');
-                setSubmitting(false);
+                throw new Error(response.data?.message || 'Failed to start instant translation.');
             }
         } catch (e) {
             setError(e.message || 'Failed to start instant translation.');
@@ -175,7 +165,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
 
         if (elapsed >= TIMEOUT) {
             setInstantPolling(false);
-            setError('Translation request timed out after 2 minutes. Please check the submission status manually.');
+            setError('Translation request timed out. Please check the submission status manually.');
             setSubmitting(false);
             return;
         }
@@ -189,7 +179,6 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
         let errorMessage = '';
 
         try {
-            // Poll all submissions
             const statusPromises = submissionIds.map(submissionId =>
                 jQuery.post(ajaxUrl, {
                     action: 'smartling_instant_translation_status',
@@ -213,34 +202,24 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                             hasError = true;
                             errorMessage = response.data.message || 'Translation failed.';
                             break;
-
-                        case 'in_progress':
-                        case 'pending':
-                            // Still in progress
-                            break;
                     }
                 }
             });
 
-            // Update completed count
             setInstantCompletedCount(completedCount);
 
-            // Update status message
             if (submissionIds.length > 1) {
                 setInstantStatus(`Translating ${submissionIds.length} items... ${completedCount} completed.`);
             }
 
-            // Check if all completed
             if (completedCount === submissionIds.length) {
                 setInstantPolling(false);
                 setInstantProgress(100);
                 setSuccess(`All ${submissionIds.length} item${submissionIds.length > 1 ? 's' : ''} translated successfully!`);
                 setSubmitting(false);
-                setTimeout(() => window.location.reload(), 2000);
                 return;
             }
 
-            // Check if any failed
             if (failedCount > 0 && (completedCount + failedCount) === submissionIds.length) {
                 setInstantPolling(false);
                 setError(`${failedCount} translation(s) failed. ${completedCount} completed successfully. ${errorMessage}`);
@@ -376,7 +355,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                 tab.name === 'instant' && el('div', { style: { padding: '12px', background: '#f0f0f1', borderRadius: '4px', marginBottom: '16px' } },
                     el('p', { style: { margin: 0, fontSize: '14px' } },
                         el('strong', {}, 'Instant Translation'),
-                        ' provides immediate translation without creating a job. Translation will complete in approximately 2 minutes.'
+                        ' provides immediate translation without creating a job.'
                     )
                 ),
 

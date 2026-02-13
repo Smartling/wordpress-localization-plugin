@@ -91,6 +91,7 @@ services:
   fts.api.wrapper:
     class: Smartling\FTS\FtsApiWrapper
     arguments:
+      - "@api.wrapper.with.retries"
       - "@manager.settings"
       - "%plugin.name%"
       - "%plugin.version%"
@@ -98,14 +99,14 @@ services:
   fts.service:
     class: Smartling\FTS\FtsService
     arguments:
-      - "@fts.api.wrapper"
       - "@api.wrapper.with.retries"
-      - "@manager.submission"
-      - "@content.helper"
-      - "@entrypoint"
-      - "@manager.settings"
-      - "@helper.xml"
+      - "@fts.api.wrapper"
       - "@helper.post.content"
+      - "@manager.settings"
+      - "@site.helper"
+      - "@manager.submission"
+      - "@entrypoint"
+      - "@helper.xml"
 
   queue.db:
     class: Smartling\Queue\Queue
@@ -457,6 +458,8 @@ services:
     arguments:
       - "@fts.service"
       - "@manager.submission"
+      - "@factory.submission"
+      - "@file.uri.helper"
 
   helper.gutenberg:
     class: Smartling\Helpers\GutenbergBlockHelper

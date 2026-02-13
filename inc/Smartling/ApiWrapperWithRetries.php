@@ -30,6 +30,13 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
+    public function getSourceLocale(ConfigurationProfileEntity $profile): string
+    {
+        return $this->withRetry(function () use ($profile) {
+            return $this->base->getSourceLocale($profile);
+        });
+    }
+
     public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
         return $this->withRetry(function () use ($profile, $key, $ttlSeconds) {

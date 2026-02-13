@@ -1,15 +1,13 @@
 <?php
 
-namespace Smartling\Tests\FTS;
+namespace Smartling\FTS;
 
 use PHPUnit\Framework\TestCase;
-use Smartling\FTS\FtsApiWrapper;
+use Smartling\ApiWrapperInterface;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Unit tests for FtsApiWrapper
- */
 class FtsApiWrapperTest extends TestCase
 {
     private FtsApiWrapper $ftsApiWrapper;
@@ -22,46 +20,41 @@ class FtsApiWrapperTest extends TestCase
         $this->settingsManager = $this->createMock(SettingsManager::class);
 
         $this->ftsApiWrapper = new FtsApiWrapper(
+            $this->createMock(ApiWrapperInterface::class),
             $this->settingsManager,
             'test-plugin',
             '1.0.0'
         );
     }
 
-    public function testConstructor(): void
-    {
-        $this->assertInstanceOf(FtsApiWrapper::class, $this->ftsApiWrapper);
-    }
-
     public function testUploadFileRequiresConfiguration(): void
     {
-        $this->expectException(\Smartling\Exception\SmartlingDbException::class);
+        $this->expectException(SmartlingDbException::class);
 
         $submission = $this->createMock(SubmissionEntity::class);
         $submission->method('getSourceBlogId')->willReturn(1);
 
         $this->settingsManager
             ->method('getSingleSettingsProfile')
-            ->willThrowException(new \Smartling\Exception\SmartlingDbException('No profile found'));
+            ->willThrowException(new SmartlingDbException('No profile found'));
 
         $this->ftsApiWrapper->uploadFile(
             $submission,
             '/tmp/test.xml',
             'test.xml',
-            'xml'
         );
     }
 
     public function testSubmitForInstantTranslationRequiresConfiguration(): void
     {
-        $this->expectException(\Smartling\Exception\SmartlingDbException::class);
+        $this->expectException(SmartlingDbException::class);
 
         $submission = $this->createMock(SubmissionEntity::class);
         $submission->method('getSourceBlogId')->willReturn(1);
 
         $this->settingsManager
             ->method('getSingleSettingsProfile')
-            ->willThrowException(new \Smartling\Exception\SmartlingDbException('No profile found'));
+            ->willThrowException(new SmartlingDbException('No profile found'));
 
         $this->ftsApiWrapper->submitForInstantTranslation(
             $submission,
@@ -73,14 +66,14 @@ class FtsApiWrapperTest extends TestCase
 
     public function testPollTranslationStatusRequiresConfiguration(): void
     {
-        $this->expectException(\Smartling\Exception\SmartlingDbException::class);
+        $this->expectException(SmartlingDbException::class);
 
         $submission = $this->createMock(SubmissionEntity::class);
         $submission->method('getSourceBlogId')->willReturn(1);
 
         $this->settingsManager
             ->method('getSingleSettingsProfile')
-            ->willThrowException(new \Smartling\Exception\SmartlingDbException('No profile found'));
+            ->willThrowException(new SmartlingDbException('No profile found'));
 
         $this->ftsApiWrapper->pollTranslationStatus(
             $submission,
@@ -91,14 +84,14 @@ class FtsApiWrapperTest extends TestCase
 
     public function testDownloadTranslatedFileRequiresConfiguration(): void
     {
-        $this->expectException(\Smartling\Exception\SmartlingDbException::class);
+        $this->expectException(SmartlingDbException::class);
 
         $submission = $this->createMock(SubmissionEntity::class);
         $submission->method('getSourceBlogId')->willReturn(1);
 
         $this->settingsManager
             ->method('getSingleSettingsProfile')
-            ->willThrowException(new \Smartling\Exception\SmartlingDbException('No profile found'));
+            ->willThrowException(new SmartlingDbException('No profile found'));
 
         $this->ftsApiWrapper->downloadTranslatedFile(
             $submission,
