@@ -133,65 +133,23 @@ class FtsService
                 $targetLocales,
             );
 
-            $this->getLogger()->info(
-                "Batch translation request created, fileUid=$fileUid, mtUid=$mtUid, sourceLocale=$sourceLocale, targetLocales=" .
-                implode(',', $targetLocales)
-            );
-
-            $pollResult = $this->pollUntilComplete($firstSubmission, $fileUid, $mtUid);
-
-            if ($pollResult['status'] === self::STATE_COMPLETED) {
-                $succeededSubmissions = [];
-                $failedSubmissions = [];
-
-                foreach ($submissions as $submission) {
-                    try {
-                        $this->downloadAndApply($submission, $fileUid, $mtUid);
-                        $succeededSubmissions[] = $submission->getId();
-                        $this->getLogger()->info("Translation applied for submission {$submission->getId()}");
-                    } catch (\Exception $e) {
-                        $failedSubmissions[] = [
-                            'id' => $submission->getId(),
-                            'error' => $e->getMessage()
-                        ];
-                        $this->getLogger()->error(
-                            "Failed to apply translation for submission {$submission->getId()}: {$e->getMessage()}"
-                        );
-                        $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-                        $submission->setLastError($e->getMessage());
-                        $this->submissionManager->storeEntity($submission);
-                    }
-                }
-
-                $allSucceeded = empty($failedSubmissions);
-
-                $this->getLogger()->info(
-                    "Batch instant translation completed, succeeded=" . count($succeededSubmissions) .
-                    ", failed=" . count($failedSubmissions) . ", submissionIds=" . implode(',', $submissionIds)
-                );
-
-                return [
-                    'success' => $allSucceeded,
-                    'status' => $allSucceeded ? self::STATE_COMPLETED : 'partial_success',
-                    'succeeded' => $succeededSubmissions,
-                    'failed' => $failedSubmissions,
-                    'fileUid' => $fileUid,
-                    'mtUid' => $mtUid,
-                ];
-            }
-
             foreach ($submissions as $submission) {
-                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
-                $submission->setLastError($pollResult['message'] ?? 'Translation failed');
+                $submission->setFileUri("$fileUid:$mtUid");
+                $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
                 $this->submissionManager->storeEntity($submission);
             }
 
+            $this->getLogger()->info(
+                "Batch translation request created and stored, fileUid=$fileUid, mtUid=$mtUid, sourceLocale=$sourceLocale, " .
+                "targetLocales=" . implode(',', $targetLocales) . ", submissionIds=" . implode(',', $submissionIds)
+            );
+
             return [
-                'success' => false,
-                'status' => $pollResult['status'],
-                'message' => $pollResult['message'],
+                'success' => true,
+                'status' => 'submitted',
                 'fileUid' => $fileUid,
                 'mtUid' => $mtUid,
+                'submissionIds' => $submissionIds,
             ];
 
         } catch (\Exception $e) {
@@ -208,6 +166,99 @@ class FtsService
 
             return [
                 'success' => false,
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    public function checkAndApplyTranslation(SubmissionEntity $submission): array
+    {
+        $fileUri = $submission->getFileUri();
+        if (empty($fileUri) || !str_contains($fileUri, ':')) {
+            $this->getLogger()->error("Invalid or missing fileUri for submission {$submission->getId()}, fileUri=$fileUri");
+            return [
+                'status' => 'error',
+                'message' => 'Missing translation metadata',
+            ];
+        }
+
+        [$fileUid, $mtUid] = explode(':', $fileUri, 2);
+
+        $this->getLogger()->debug(
+            "Checking translation status, submissionId={$submission->getId()}, fileUid=$fileUid, mtUid=$mtUid"
+        );
+
+        try {
+            $response = $this->ftsApiWrapper->pollTranslationStatus($submission, $fileUid, $mtUid);
+            $state = $response['state'] ?? '';
+
+            $this->getLogger()->debug(
+                "Translation status checked, submissionId={$submission->getId()}, state=$state"
+            );
+
+            switch ($state) {
+                case self::STATE_COMPLETED:
+                    try {
+                        $this->downloadAndApply($submission, $fileUid, $mtUid);
+
+                        return [
+                            'status' => 'completed',
+                        ];
+                    } catch (\Exception $e) {
+                        $this->getLogger()->error(
+                            "Failed to apply translation for submission {$submission->getId()}: {$e->getMessage()}"
+                        );
+                        $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                        $submission->setLastError($e->getMessage());
+                        $this->submissionManager->storeEntity($submission);
+
+                        return [
+                            'status' => 'failed',
+                            'message' => $e->getMessage(),
+                        ];
+                    }
+
+                case self::STATE_FAILED:
+                    $error = $response['error'] ?? 'Translation request failed';
+                    $errorMessage = is_array($error) ? ($error['message'] ?? 'Unknown error') : $error;
+
+                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_FAILED);
+                    $submission->setLastError($errorMessage);
+                    $this->submissionManager->storeEntity($submission);
+
+                    $this->getLogger()->error("Translation failed, submissionId={$submission->getId()}, error=$errorMessage");
+
+                    return [
+                        'status' => 'failed',
+                        'message' => $errorMessage,
+                    ];
+
+                case self::STATE_CANCELLED:
+                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_CANCELLED);
+                    $submission->setLastError('Translation request was cancelled');
+                    $this->submissionManager->storeEntity($submission);
+
+                    $this->getLogger()->info("Translation cancelled, submissionId={$submission->getId()}");
+
+                    return [
+                        'status' => 'failed',
+                        'message' => 'Translation request was cancelled',
+                    ];
+
+                case self::STATE_PROCESSING:
+                case self::STATE_QUEUED:
+                default:
+                    return [
+                        'status' => 'in_progress',
+                    ];
+            }
+        } catch (\Exception $e) {
+            $this->getLogger()->error(
+                "Failed to check translation status for submission {$submission->getId()}: {$e->getMessage()}"
+            );
+
+            return [
                 'status' => 'error',
                 'message' => $e->getMessage(),
             ];
@@ -363,6 +414,7 @@ class FtsService
 
         $this->core->applyXML($submission, $translatedXml, $this->xmlHelper, $this->postContentHelper);
 
+        $this->core->renewContentHash($submission);
         $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
         $submission->setCompletedStringCount($submission->getWordCount());
         $submission->setAppliedDate(DateTimeHelper::nowAsString());

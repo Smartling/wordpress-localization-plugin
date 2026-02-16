@@ -38,13 +38,6 @@ class InstantTranslationController implements WPHookInterface
     {
         $this->wpProxy->check_ajax_referer('smartling_instant_translation', '_wpnonce');
 
-        if (!$this->wpProxy->current_user_can('publish_posts')) {
-            $this->wpProxy->wp_send_json_error([
-                'message' => 'Insufficient permissions'
-            ], 403);
-            return;
-        }
-
         try {
             $contentType = $this->wpProxy->sanitize_text_field($this->wpProxy->wp_unslash($_POST['contentType'] ?? ''));
             $contentId = (int)($_POST['contentId'] ?? 0);
@@ -123,12 +116,12 @@ class InstantTranslationController implements WPHookInterface
                     )
                 ]);
                 return;
-            } else {
-                $this->wpProxy->wp_send_json_error([
-                    'message' => 'Failed to start instant translation for all items'
-                ], 500);
-                return;
             }
+
+            $this->wpProxy->wp_send_json_error([
+                'message' => 'Failed to start instant translation for all items'
+            ], 500);
+            return;
         } catch (\Exception $e) {
             $this->getLogger()->error('Instant translation request failed: ' . $e->getMessage());
 
@@ -141,13 +134,6 @@ class InstantTranslationController implements WPHookInterface
     public function handlePollStatus(): void
     {
         $this->wpProxy->check_ajax_referer('smartling_instant_translation', '_wpnonce');
-
-        if (!$this->wpProxy->current_user_can('publish_posts')) {
-            $this->wpProxy->wp_send_json_error([
-                'message' => 'Insufficient permissions'
-            ], 403);
-            return;
-        }
 
         try {
             $submissionId = (int)($_POST['submissionId'] ?? 0);
@@ -162,6 +148,19 @@ class InstantTranslationController implements WPHookInterface
             if ($submission === null) {
                 $this->wpProxy->wp_send_json_error(['message' => 'Submission not found'], 404);
                 return;
+            }
+
+            if ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS) {
+                $result = $this->ftsService->checkAndApplyTranslation($submission);
+
+                $submission = $this->submissionManager->getEntityById($submissionId);
+
+                if ($result['status'] === 'error') {
+                    $this->wpProxy->wp_send_json_error([
+                        'message' => $result['message'] ?? 'Failed to check translation status'
+                    ], 500);
+                    return;
+                }
             }
 
             $this->wpProxy->wp_send_json_success([
