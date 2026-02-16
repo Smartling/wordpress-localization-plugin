@@ -460,6 +460,7 @@ services:
       - "@manager.submission"
       - "@factory.submission"
       - "@file.uri.helper"
+      - "@wp.proxy"
 
   helper.gutenberg:
     class: Smartling\Helpers\GutenbergBlockHelper

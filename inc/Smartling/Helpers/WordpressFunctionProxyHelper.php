@@ -240,6 +240,11 @@ class WordpressFunctionProxyHelper
         return wp_send_json_error(...func_get_args());
     }
 
+    public function wp_send_json_success()
+    {
+        return wp_send_json_success(...func_get_args());
+    }
+
     public function wp_set_current_user(int $id, string $name = '')
     {
         return wp_set_current_user($id, $name);

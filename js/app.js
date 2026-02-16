@@ -131,7 +131,6 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
         const localeCount = selectedLocales.length;
 
         try {
-            // Single AJAX call with relations
             const response = await jQuery.post(ajaxUrl, {
                 action: 'smartling_instant_translation',
                 contentType: contentType,

@@ -6,6 +6,7 @@ use Smartling\FTS\FtsService;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionFactory;
 use Smartling\Submissions\SubmissionManager;
@@ -23,6 +24,7 @@ class InstantTranslationController implements WPHookInterface
         private SubmissionManager $submissionManager,
         private SubmissionFactory $submissionFactory,
         private FileUriHelper $fileUriHelper,
+        private WordpressFunctionProxyHelper $wpProxy,
     ) {
     }
 
@@ -41,7 +43,7 @@ class InstantTranslationController implements WPHookInterface
             $targetBlogIds = array_map('intval', $_POST['targetBlogIds'] ?? []);
 
             if (empty($contentType) || empty($contentId) || empty($targetBlogIds)) {
-                wp_send_json_error([
+                $this->wpProxy->wp_send_json_error([
                     'message' => 'Missing required parameters: contentType, contentId, or targetBlogIds'
                 ], 400);
             }
@@ -52,7 +54,7 @@ class InstantTranslationController implements WPHookInterface
                 "targetBlogIds=" . implode(',', $targetBlogIds) . ", relatedItemsCount=$relatedCount"
             );
 
-            $sourceBlogId = get_current_blog_id();
+            $sourceBlogId = $this->wpProxy->get_current_blog_id();
 
             $allSubmissions = $this->buildSubmissions(
                 $contentType,
@@ -63,7 +65,7 @@ class InstantTranslationController implements WPHookInterface
             );
 
             if (empty($allSubmissions)) {
-                wp_send_json_error([
+                $this->wpProxy->wp_send_json_error([
                     'message' => 'Failed to create submissions for translation'
                 ], 500);
             }
@@ -101,7 +103,7 @@ class InstantTranslationController implements WPHookInterface
             if (!empty($allSubmissionIds)) {
                 $uniqueSourceCount = count($submissionsBySource);
 
-                wp_send_json_success([
+                $this->wpProxy->wp_send_json_success([
                     'submissionIds' => $allSubmissionIds,
                     'message' => sprintf(
                         'Instant translation started for %d item(s) across %d locale(s)',
@@ -110,14 +112,14 @@ class InstantTranslationController implements WPHookInterface
                     )
                 ]);
             } else {
-                wp_send_json_error([
+                $this->wpProxy->wp_send_json_error([
                     'message' => 'Failed to start instant translation for all items'
                 ], 500);
             }
         } catch (\Exception $e) {
             $this->getLogger()->error('Instant translation request failed: ' . $e->getMessage());
 
-            wp_send_json_error([
+            $this->wpProxy->wp_send_json_error([
                 'message' => 'Failed to start instant translation: ' . $e->getMessage()
             ], 500);
         }
@@ -129,23 +131,23 @@ class InstantTranslationController implements WPHookInterface
             $submissionId = (int)($_POST['submissionId'] ?? 0);
 
             if ($submissionId === 0) {
-                wp_send_json_error(['message' => 'Missing required parameter: submissionId'], 400);
+                $this->wpProxy->wp_send_json_error(['message' => 'Missing required parameter: submissionId'], 400);
             }
 
             $submission = $this->submissionManager->getEntityById($submissionId);
 
             if ($submission === null) {
-                wp_send_json_error(['message' => 'Submission not found'], 404);
+                $this->wpProxy->wp_send_json_error(['message' => 'Submission not found'], 404);
             }
 
-            wp_send_json_success([
+            $this->wpProxy->wp_send_json_success([
                 'status' => $this->mapSubmissionStatus($submission->getStatus()),
                 'progress' => $submission->getCompletionPercentage(),
                 'message' => $submission->getLastError() ?: '',
             ]);
         } catch (\Exception $e) {
             $this->getLogger()->error("Status poll failed, submissionId=$submissionId: " . $e->getMessage());
-            wp_send_json_error(['message' => 'Failed to get translation status: ' . $e->getMessage()], 500);
+            $this->wpProxy->wp_send_json_error(['message' => 'Failed to get translation status: ' . $e->getMessage()], 500);
         }
     }
 
