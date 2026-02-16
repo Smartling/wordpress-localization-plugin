@@ -65,12 +65,20 @@ class FtsApiWrapper
     ): string {
         $this->getLogger()->info("Uploading file for instant translation, submissionId={$submission->getId()}, fileType=$fileType, fileName=$fileName");
 
-        $fileUid = $this->getFileTranslationsApi($this->getConfigurationProfile($submission))
-            ->uploadFile($filePath, $fileName, $fileType)['fileUid'] ?? null;
+        $response = $this->getFileTranslationsApi($this->getConfigurationProfile($submission))
+            ->uploadFile($filePath, $fileName, $fileType);
+
+        $fileUid = $response['fileUid'] ?? null;
 
         if (empty($fileUid)) {
-            throw new \RuntimeException('Failed to get fileUid from upload response');
+            $errorMessage = $response['error'] ?? $response['message'] ?? 'Unknown error';
+            $this->getLogger()->error(
+                "Failed to get fileUid from upload response, submissionId={$submission->getId()}, " .
+                "apiResponse=" . json_encode($response)
+            );
+            throw new \RuntimeException("Failed to upload file for translation: $errorMessage");
         }
+
         return $fileUid;
     }
 
@@ -90,10 +98,18 @@ class FtsApiWrapper
 
         $this->getLogger()->info("Submitting file for instant translation, submissionId={$submission->getId()}, fileUid=$fileUid, sourceLocaleId=$sourceLocaleId, targetLocaleIds=" . implode(',', $targetLocaleIds));
 
-        $mtUid = $this->getFileTranslationsApi($this->getConfigurationProfile($submission))
-            ->translateFile($fileUid, $params)['mtUid'] ?? null;
+        $response = $this->getFileTranslationsApi($this->getConfigurationProfile($submission))
+            ->translateFile($fileUid, $params);
+
+        $mtUid = $response['mtUid'] ?? null;
+
         if (empty($mtUid)) {
-            throw new \RuntimeException('Failed to get mtUid from translation response');
+            $errorMessage = $response['error'] ?? $response['message'] ?? 'Unknown error';
+            $this->getLogger()->error(
+                "Failed to get mtUid from translation response, submissionId={$submission->getId()}, fileUid=$fileUid, " .
+                "apiResponse=" . json_encode($response)
+            );
+            throw new \RuntimeException("Failed to submit file for translation: $errorMessage");
         }
 
         return $mtUid;

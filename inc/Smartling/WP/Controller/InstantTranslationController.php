@@ -30,22 +30,32 @@ class InstantTranslationController implements WPHookInterface
 
     public function register(): void
     {
-        add_action('wp_ajax_' . self::ACTION_REQUEST_TRANSLATION, [$this, 'handleRequestTranslation']);
-        add_action('wp_ajax_' . self::ACTION_POLL_STATUS, [$this, 'handlePollStatus']);
+        $this->wpProxy->add_action('wp_ajax_' . self::ACTION_REQUEST_TRANSLATION, [$this, 'handleRequestTranslation']);
+        $this->wpProxy->add_action('wp_ajax_' . self::ACTION_POLL_STATUS, [$this, 'handlePollStatus']);
     }
 
     public function handleRequestTranslation(): void
     {
+        $this->wpProxy->check_ajax_referer('smartling_instant_translation', '_wpnonce');
+
+        if (!$this->wpProxy->current_user_can('publish_posts')) {
+            $this->wpProxy->wp_send_json_error([
+                'message' => 'Insufficient permissions'
+            ], 403);
+            return;
+        }
+
         try {
-            $contentType = $_POST['contentType'] ?? '';
+            $contentType = $this->wpProxy->sanitize_text_field($this->wpProxy->wp_unslash($_POST['contentType'] ?? ''));
             $contentId = (int)($_POST['contentId'] ?? 0);
-            $relations = $_POST['relations'] ?? [];
+            $relations = $this->wpProxy->map_deep($this->wpProxy->wp_unslash($_POST['relations'] ?? []), 'sanitize_text_field');
             $targetBlogIds = array_map('intval', $_POST['targetBlogIds'] ?? []);
 
             if (empty($contentType) || empty($contentId) || empty($targetBlogIds)) {
                 $this->wpProxy->wp_send_json_error([
                     'message' => 'Missing required parameters: contentType, contentId, or targetBlogIds'
                 ], 400);
+                return;
             }
 
             $relatedCount = $this->countRelatedItems($relations);
@@ -68,6 +78,7 @@ class InstantTranslationController implements WPHookInterface
                 $this->wpProxy->wp_send_json_error([
                     'message' => 'Failed to create submissions for translation'
                 ], 500);
+                return;
             }
 
             $submissionsBySource = [];
@@ -111,10 +122,12 @@ class InstantTranslationController implements WPHookInterface
                         count($targetBlogIds),
                     )
                 ]);
+                return;
             } else {
                 $this->wpProxy->wp_send_json_error([
                     'message' => 'Failed to start instant translation for all items'
                 ], 500);
+                return;
             }
         } catch (\Exception $e) {
             $this->getLogger()->error('Instant translation request failed: ' . $e->getMessage());
@@ -127,17 +140,28 @@ class InstantTranslationController implements WPHookInterface
 
     public function handlePollStatus(): void
     {
+        $this->wpProxy->check_ajax_referer('smartling_instant_translation', '_wpnonce');
+
+        if (!$this->wpProxy->current_user_can('publish_posts')) {
+            $this->wpProxy->wp_send_json_error([
+                'message' => 'Insufficient permissions'
+            ], 403);
+            return;
+        }
+
         try {
             $submissionId = (int)($_POST['submissionId'] ?? 0);
 
-            if ($submissionId === 0) {
-                $this->wpProxy->wp_send_json_error(['message' => 'Missing required parameter: submissionId'], 400);
+            if ($submissionId <= 0) {
+                $this->wpProxy->wp_send_json_error(['message' => 'Invalid submission ID'], 400);
+                return;
             }
 
             $submission = $this->submissionManager->getEntityById($submissionId);
 
             if ($submission === null) {
                 $this->wpProxy->wp_send_json_error(['message' => 'Submission not found'], 404);
+                return;
             }
 
             $this->wpProxy->wp_send_json_success([
@@ -145,8 +169,9 @@ class InstantTranslationController implements WPHookInterface
                 'progress' => $submission->getCompletionPercentage(),
                 'message' => $submission->getLastError() ?: '',
             ]);
+            return;
         } catch (\Exception $e) {
-            $this->getLogger()->error("Status poll failed, submissionId=$submissionId: " . $e->getMessage());
+            $this->getLogger()->error("Status poll failed: " . $e->getMessage());
             $this->wpProxy->wp_send_json_error(['message' => 'Failed to get translation status: ' . $e->getMessage()], 500);
         }
     }

@@ -114,4 +114,22 @@ class FtsServiceTest extends TestCase
         $this->assertEquals('error', $result['status']);
         $this->assertStringContainsString('Test batch exception', $result['message']);
     }
+
+    public function testRequestInstantTranslationBatchRejectsMixedSources(): void
+    {
+        $submission1 = $this->createMock(SubmissionEntity::class);
+        $submission1->method('getId')->willReturn(123);
+        $submission1->method('getSourceId')->willReturn(100);
+
+        $submission2 = $this->createMock(SubmissionEntity::class);
+        $submission2->method('getId')->willReturn(124);
+        $submission2->method('getSourceId')->willReturn(200); // Different source
+
+        $result = $this->ftsService->requestInstantTranslationBatch([$submission1, $submission2]);
+
+        $this->assertIsArray($result);
+        $this->assertFalse($result['success']);
+        $this->assertEquals('Same source submissions expected', $result['message']);
+    }
+
 }

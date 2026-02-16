@@ -1,7 +1,7 @@
 const { render, createElement: el, useState, useEffect, useCallback } = wp.element;
 const { Button, Card, CardBody, CardHeader, TabPanel, TextControl, TextareaControl, CheckboxControl, SelectControl, Spinner, Notice, Flex, __experimentalVStack: VStack } = wp.components;
 
-function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl, adminUrl }) {
+function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl, adminUrl, nonce }) {
     const [activeTab, setActiveTab] = useState('new');
     const [jobs, setJobs] = useState([]);
     const [selectedJob, setSelectedJob] = useState('');
@@ -133,6 +133,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
         try {
             const response = await jQuery.post(ajaxUrl, {
                 action: 'smartling_instant_translation',
+                _wpnonce: nonce,
                 contentType: contentType,
                 contentId: contentId,
                 targetBlogIds: selectedLocales,
@@ -181,13 +182,14 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
             const statusPromises = submissionIds.map(submissionId =>
                 jQuery.post(ajaxUrl, {
                     action: 'smartling_instant_translation_status',
+                    _wpnonce: nonce,
                     submissionId: submissionId
                 })
             );
 
             const responses = await Promise.all(statusPromises);
 
-            responses.forEach((response, index) => {
+            responses.forEach((response) => {
                 if (response.success && response.data) {
                     const status = response.data.status;
 
@@ -487,9 +489,10 @@ if (document.getElementById('smartling-app')) {
     const locales = JSON.parse(container.dataset.locales || '[]');
     const ajaxUrl = container.dataset.ajaxUrl || '';
     const adminUrl = container.dataset.adminUrl || '';
+    const nonce = container.dataset.nonce || '';
 
     render(
-        el(JobWizard, { isBulkSubmitPage, contentType, contentId, locales, ajaxUrl, adminUrl }),
+        el(JobWizard, { isBulkSubmitPage, contentType, contentId, locales, ajaxUrl, adminUrl, nonce }),
         container
     );
 }

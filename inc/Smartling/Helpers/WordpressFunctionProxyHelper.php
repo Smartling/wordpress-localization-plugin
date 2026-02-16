@@ -245,6 +245,31 @@ class WordpressFunctionProxyHelper
         return wp_send_json_success(...func_get_args());
     }
 
+    public function sanitize_text_field()
+    {
+        return sanitize_text_field(...func_get_args());
+    }
+
+    public function wp_unslash()
+    {
+        return wp_unslash(...func_get_args());
+    }
+
+    public function map_deep()
+    {
+        return map_deep(...func_get_args());
+    }
+
+    public function check_ajax_referer()
+    {
+        return check_ajax_referer(...func_get_args());
+    }
+
+    public function current_user_can()
+    {
+        return current_user_can(...func_get_args());
+    }
+
     public function wp_set_current_user(int $id, string $name = '')
     {
         return wp_set_current_user($id, $name);

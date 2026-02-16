@@ -141,11 +141,19 @@ class FtsService
             $pollResult = $this->pollUntilComplete($firstSubmission, $fileUid, $mtUid);
 
             if ($pollResult['status'] === self::STATE_COMPLETED) {
+                $succeededSubmissions = [];
+                $failedSubmissions = [];
+
                 foreach ($submissions as $submission) {
                     try {
                         $this->downloadAndApply($submission, $fileUid, $mtUid);
+                        $succeededSubmissions[] = $submission->getId();
                         $this->getLogger()->info("Translation applied for submission {$submission->getId()}");
                     } catch (\Exception $e) {
+                        $failedSubmissions[] = [
+                            'id' => $submission->getId(),
+                            'error' => $e->getMessage()
+                        ];
                         $this->getLogger()->error(
                             "Failed to apply translation for submission {$submission->getId()}: {$e->getMessage()}"
                         );
@@ -155,13 +163,18 @@ class FtsService
                     }
                 }
 
+                $allSucceeded = empty($failedSubmissions);
+
                 $this->getLogger()->info(
-                    "Batch instant translation completed, submissionIds=" . implode(',', $submissionIds)
+                    "Batch instant translation completed, succeeded=" . count($succeededSubmissions) .
+                    ", failed=" . count($failedSubmissions) . ", submissionIds=" . implode(',', $submissionIds)
                 );
 
                 return [
-                    'success' => true,
-                    'status' => self::STATE_COMPLETED,
+                    'success' => $allSucceeded,
+                    'status' => $allSucceeded ? self::STATE_COMPLETED : 'partial_success',
+                    'succeeded' => $succeededSubmissions,
+                    'failed' => $failedSubmissions,
                     'fileUid' => $fileUid,
                     'mtUid' => $mtUid,
                 ];
@@ -267,6 +280,7 @@ class FtsService
     private function pollUntilComplete(SubmissionEntity $submission, string $fileUid, string $mtUid): array
     {
         $startTime = microtime(true);
+        $waitMs = null;
 
         $this->getLogger()->debug("Starting polling for instant translation, submissionId={$submission->getId()}, fileUid=$fileUid, mtUid=$mtUid");
 
@@ -286,7 +300,6 @@ class FtsService
             $state = $response['state'] ?? '';
 
             $this->getLogger()->debug("Polled translation status, submissionId={$submission->getId()}, fileUid=$fileUid, mtUid=$mtUid, state=$state");
-            $waitMs = null;
 
             switch ($state) {
                 case self::STATE_COMPLETED:
@@ -295,7 +308,7 @@ class FtsService
                         'data' => $response,
                     ];
                 case self::STATE_FAILED:
-                    $error = $data['error'] ?? 'Translation request failed';
+                    $error = $response['error'] ?? 'Translation request failed';
                     return [
                         'status' => self::STATE_FAILED,
                         'message' => is_array($error) ? ($error['message'] ?? 'Unknown error') : $error,
