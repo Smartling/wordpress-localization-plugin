@@ -4,7 +4,7 @@ Tags: translation, localization, multilingual, internationalization, smartling
 Requires at least: 5.5
 Tested up to: 6.9
 Requires PHP: 8.0
-Stable tag: 5.2.0
+Stable tag: 5.3.0
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.

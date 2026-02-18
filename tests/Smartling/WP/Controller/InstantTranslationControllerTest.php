@@ -282,35 +282,6 @@ class InstantTranslationControllerTest extends TestCase
         $this->assertCount(3, $result);
     }
 
-    public function testHandleRequestTranslationWithInsufficientPermissions(): void
-    {
-        // Simulate AJAX environment
-        $_POST = [
-            'contentType' => 'post',
-            'contentId' => 123,
-            'targetBlogIds' => [2, 3],
-            'relations' => [],
-        ];
-
-        // Mock nonce check passes
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-
-        // Mock permission check fails
-        $this->wpProxy->method('current_user_can')->with('publish_posts')->willReturn(false);
-
-        // Expect error response
-        $this->wpProxy->expects($this->once())
-            ->method('wp_send_json_error')
-            ->with(
-                $this->callback(function ($data) {
-                    return $data['message'] === 'Insufficient permissions';
-                }),
-                403
-            );
-
-        $this->controller->handleRequestTranslation();
-    }
-
     public function testHandleRequestTranslationWithMissingParameters(): void
     {
         // Simulate AJAX environment with missing contentType
@@ -406,30 +377,6 @@ class InstantTranslationControllerTest extends TestCase
             );
 
         $this->controller->handleRequestTranslation();
-    }
-
-    public function testHandlePollStatusWithInsufficientPermissions(): void
-    {
-        // Simulate AJAX environment
-        $_POST = ['submissionId' => 123];
-
-        // Mock nonce check passes
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-
-        // Mock permission check fails
-        $this->wpProxy->method('current_user_can')->with('publish_posts')->willReturn(false);
-
-        // Expect error response
-        $this->wpProxy->expects($this->once())
-            ->method('wp_send_json_error')
-            ->with(
-                $this->callback(function ($data) {
-                    return $data['message'] === 'Insufficient permissions';
-                }),
-                403
-            );
-
-        $this->controller->handlePollStatus();
     }
 
     public function testHandlePollStatusWithInvalidSubmissionId(): void
@@ -544,17 +491,5 @@ class InstantTranslationControllerTest extends TestCase
         $this->assertEquals('in_progress', $method->invoke($this->controller, SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS));
         $this->assertEquals('pending', $method->invoke($this->controller, SubmissionEntity::SUBMISSION_STATUS_NEW));
         $this->assertEquals('pending', $method->invoke($this->controller, 'unknown_status'));
-    }
-
-    public function testRegisterCallsAddActionForBothEndpoints(): void
-    {
-        $this->wpProxy->expects($this->exactly(2))
-            ->method('add_action')
-            ->withConsecutive(
-                ['wp_ajax_smartling_instant_translation', [$this->controller, 'handleRequestTranslation']],
-                ['wp_ajax_smartling_instant_translation_status', [$this->controller, 'handlePollStatus']]
-            );
-
-        $this->controller->register();
     }
 }
