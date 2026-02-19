@@ -33,7 +33,6 @@ cd "$LOCAL_GIT_DIR"
 $COMPOSER_BIN update
 
 svn -q checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
-cp -r trunk/inc/lib ./inc
 
 chown -R mysql:mysql /var/lib/mysql && service mysql start
 
@@ -74,6 +73,7 @@ cd trunk
 cp ../readme.txt ../smartling-connector.php .
 cp -r ../css .
 cp -r ../inc/config ./inc
+cp -r ../inc/lib ./inc
 cp -r ../inc/Smartling ./inc
 cp -r ../js .
 cp -r ../languages .
