@@ -50,6 +50,8 @@ interface ApiWrapperInterface
      */
     public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime;
 
+    public function getSourceLocale(ConfigurationProfileEntity $profile): string;
+
     /**
      * @throws SmartlingApiException
      */

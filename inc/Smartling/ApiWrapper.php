@@ -109,6 +109,22 @@ class ApiWrapper implements ApiWrapperInterface
             ->acquireLock("{$profile->getProjectId()}-$key", $ttlSeconds);
     }
 
+    /**
+     * @throws SmartlingApiException
+     */
+    public function getSourceLocale(ConfigurationProfileEntity $profile): string
+    {
+        $api = ProjectApi::create(
+            $this->getAuthProvider($profile),
+            $profile->getProjectId(),
+            $this->getLogger()
+        );
+
+        $details = $api->getProjectDetails();
+
+        return $details['sourceLocaleId'];
+    }
+
     public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
     {
         return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())

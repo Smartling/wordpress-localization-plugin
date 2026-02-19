@@ -34,7 +34,7 @@ use Smartling\WP\Controller\LiveNotificationController;
 
 trait SmartlingCoreUploadTrait
 {
-    private function renewContentHash(SubmissionEntity $submission): SubmissionEntity
+    public function renewContentHash(SubmissionEntity $submission): SubmissionEntity
     {
         $content = $this->getContentHelper()->readSourceContent($submission);
         $newHash = $this->getContentSerializationHelper()->calculateHash($submission);

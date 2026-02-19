@@ -1,7 +1,7 @@
 {
   "name": "smartling/wordpress-connector",
   "license": "GPL-2.0-or-later",
-  "version": "5.2.0",
+  "version": "5.3.0",
   "description": "",
   "type": "wordpress-plugin",
   "repositories": [
@@ -19,7 +19,7 @@
     "symfony/expression-language": "~5.4",
     "symfony/config": "~5.4",
     "symfony/yaml": "~5.4",
-    "smartling/api-sdk-php": "3.9.2",
+    "smartling/api-sdk-php": "5.0.5",
     "ext-dom": "*",
     "ext-libxml": "*",
     "ext-json": "*"
