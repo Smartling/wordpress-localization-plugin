@@ -264,7 +264,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
             return self::MESSAGE_RUNNING;
         }
 
-        throw $e;
+        return '<strong>' . __('API error (check credentials)') . ':</strong> ' . esc_html($e->getMessage());
     }
 
     /**
