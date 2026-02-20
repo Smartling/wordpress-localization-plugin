@@ -30,7 +30,90 @@ COMPOSER_BIN="$COMPOSER_INSTALL_DIR/composer"
 chown -R mysql:mysql /var/lib/mysql && service mysql start
 
 cd "$LOCAL_GIT_DIR"
-$COMPOSER_BIN update
+$COMPOSER_BIN update --no-scripts
+
+# Run namespacer entirely in /tmp to avoid Docker overlay fs stat() failures.
+# inc/third-party/ is gitignored and freshly created by 'composer update' above.
+# Docker's overlay filesystem causes stat()/lstat() to return ENOENT for newly-
+# created files in volume-mounted directories, breaking both shell 'cp -r' and
+# PHP's Filesystem::mirror(). Running 'composer install' and namespacer entirely
+# in /tmp means packages are installed and processed on the container's own
+# filesystem where stat() works correctly; the final inc/lib/ is then copied back.
+NS_WORK="$(mktemp -d)"
+mkdir -p "$NS_WORK/inc"
+# Use the original composer.json so its hash matches composer.lock — a mismatch
+# would make Composer fall back to full re-resolution (which fails because it
+# can't find vsolovei-smartling/namespacer without the GitHub repository entry).
+cp "$LOCAL_GIT_DIR/composer.json" "$NS_WORK/"
+cp "$LOCAL_GIT_DIR/composer.lock" "$NS_WORK/"
+cp "$LOCAL_GIT_DIR/namespacer.config.php" "$NS_WORK/"
+cp "$LOCAL_GIT_DIR/fix-double-namespace.php" "$NS_WORK/"
+
+# Install prod packages directly into /tmp (not copied from Docker volume) so all
+# package files are in /tmp and readable by namespacer without stat() issues.
+# --no-dev: skips vsolovei-smartling/namespacer (dev dep) without needing GitHub.
+# --no-scripts: prevents post-install-cmd (empty anyway) from running.
+# The namespacer binary itself comes from LOCAL_GIT_DIR (installed by the first
+# 'composer update --no-scripts' above, executed via PHP's open() not stat()).
+cd "$NS_WORK"
+$COMPOSER_BIN install --no-scripts --no-dev --no-interaction
+
+echo "--- DIAG: deprecation-contracts after outer composer install ---"
+ls -la "$NS_WORK/inc/third-party/symfony/deprecation-contracts/" 2>&1 || echo "MISSING: $NS_WORK/inc/third-party/symfony/deprecation-contracts/"
+
+# Replace composer.json with a stripped version before running namespacer so that
+# namespacer's inner 'composer update --no-dev' doesn't inherit:
+#   - 'scripts': would try to run namespacer recursively → exit 127
+#   - 'repositories': would include the GitHub URL; inner composer only needs the
+#     path repos that namespacer itself provides, so GitHub can be removed.
+#   - 'require-dev'/'autoload-dev': inner composer would try to find
+#     vsolovei-smartling/namespacer which isn't resolvable without GitHub repo.
+php -r "\$c=json_decode(file_get_contents('$LOCAL_GIT_DIR/composer.json'),true); unset(\$c['scripts'],\$c['repositories'],\$c['require-dev'],\$c['autoload-dev']); file_put_contents('$NS_WORK/composer.json', json_encode(\$c, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));"
+
+# Namespacer's Package.process() uses 'cp -r src/ dst/' expecting the macOS
+# behaviour (copy CONTENTS into dst).  On Linux, 'cp -r src/ dst/' copies the
+# directory itself, creating dst/src_leaf/ — one nesting level too deep.
+# Shim cp so that trailing-slash source paths are rewritten to use '/.' which
+# copies contents on both Linux and macOS.
+NS_BIN="$(mktemp -d)"
+cat > "$NS_BIN/cp" << 'CPEOF'
+#!/bin/bash
+args=()
+last=$(($# - 1))
+i=0
+for arg; do
+    if [[ $i -lt $last && "$arg" != -* && "$arg" == */ ]]; then
+        args+=("${arg}.")
+    else
+        args+=("$arg")
+    fi
+    ((i++))
+done
+exec /bin/cp "${args[@]}"
+CPEOF
+chmod +x "$NS_BIN/cp"
+
+PATH="$NS_BIN:$COMPOSER_INSTALL_DIR:$PATH" \
+    "$LOCAL_GIT_DIR/inc/third-party/vsolovei-smartling/namespacer/bin/namespacer" \
+    --source . \
+    --package smartling-connector \
+    --namespace "Smartling\\Vendor" \
+    --config ./namespacer.config.php \
+    inc
+php fix-double-namespace.php
+rm -rf "$NS_BIN"
+
+echo "--- DIAG: deprecation-contracts after namespacer ---"
+ls -la "$NS_WORK/inc/lib/smartling-connector-symfony/deprecation-contracts/" 2>&1 || echo "MISSING: $NS_WORK/inc/lib/smartling-connector-symfony/deprecation-contracts/"
+
+rm -rf "$LOCAL_GIT_DIR/inc/lib"
+cp -r "$NS_WORK/inc/lib" "$LOCAL_GIT_DIR/inc/"
+rm -rf "$NS_WORK"
+
+echo "--- DIAG: deprecation-contracts after cp to LOCAL_GIT_DIR ---"
+ls -la "$LOCAL_GIT_DIR/inc/lib/smartling-connector-symfony/deprecation-contracts/" 2>&1 || echo "MISSING: $LOCAL_GIT_DIR/inc/lib/smartling-connector-symfony/deprecation-contracts/"
+
+cd "$LOCAL_GIT_DIR"
 
 svn -q checkout https://plugins.svn.wordpress.org/smartling-connector/trunk trunk
 
