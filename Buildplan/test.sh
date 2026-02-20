@@ -46,7 +46,6 @@ mkdir -p "$NS_WORK/inc"
 # can't find vsolovei-smartling/namespacer without the GitHub repository entry).
 cp "$LOCAL_GIT_DIR/composer.json" "$NS_WORK/"
 cp "$LOCAL_GIT_DIR/composer.lock" "$NS_WORK/"
-cp "$LOCAL_GIT_DIR/namespacer.config.php" "$NS_WORK/"
 cp "$LOCAL_GIT_DIR/fix-double-namespace.php" "$NS_WORK/"
 
 # Install prod packages directly into /tmp (not copied from Docker volume) so all
@@ -57,9 +56,6 @@ cp "$LOCAL_GIT_DIR/fix-double-namespace.php" "$NS_WORK/"
 # 'composer update --no-scripts' above, executed via PHP's open() not stat()).
 cd "$NS_WORK"
 $COMPOSER_BIN install --no-scripts --no-dev --no-interaction
-
-echo "--- DIAG: deprecation-contracts after outer composer install ---"
-ls -la "$NS_WORK/inc/third-party/symfony/deprecation-contracts/" 2>&1 || echo "MISSING: $NS_WORK/inc/third-party/symfony/deprecation-contracts/"
 
 # Replace composer.json with a stripped version before running namespacer so that
 # namespacer's inner 'composer update --no-dev' doesn't inherit:
@@ -98,20 +94,13 @@ PATH="$NS_BIN:$COMPOSER_INSTALL_DIR:$PATH" \
     --source . \
     --package smartling-connector \
     --namespace "Smartling\\Vendor" \
-    --config ./namespacer.config.php \
     inc
 php fix-double-namespace.php
 rm -rf "$NS_BIN"
 
-echo "--- DIAG: deprecation-contracts after namespacer ---"
-ls -la "$NS_WORK/inc/lib/smartling-connector-symfony/deprecation-contracts/" 2>&1 || echo "MISSING: $NS_WORK/inc/lib/smartling-connector-symfony/deprecation-contracts/"
-
 rm -rf "$LOCAL_GIT_DIR/inc/lib"
 cp -r "$NS_WORK/inc/lib" "$LOCAL_GIT_DIR/inc/"
 rm -rf "$NS_WORK"
-
-echo "--- DIAG: deprecation-contracts after cp to LOCAL_GIT_DIR ---"
-ls -la "$LOCAL_GIT_DIR/inc/lib/smartling-connector-symfony/deprecation-contracts/" 2>&1 || echo "MISSING: $LOCAL_GIT_DIR/inc/lib/smartling-connector-symfony/deprecation-contracts/"
 
 cd "$LOCAL_GIT_DIR"
 
