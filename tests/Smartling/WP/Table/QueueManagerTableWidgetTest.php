@@ -87,14 +87,29 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
             $wpProxy->method('get_current_blog_id')->willReturn(1);
 
-            return new QueueManagerTableWidget(
+            // Use an anonymous subclass to bypass WP_List_Table::__construct(), which
+            // calls convert_to_screen() / get_current_screen() and requires a fully
+            // initialised WordPress admin environment that is unavailable in unit tests.
+            return new class(
                 $api,
                 $queue,
                 $settingsManager,
                 $submissionManager,
                 $uploadQueueManager,
                 $wpProxy,
-            );
+            ) extends QueueManagerTableWidget {
+                /** @noinspection PhpMissingParentConstructorInspection */
+                public function __construct(
+                    protected ApiWrapperInterface $api,
+                    protected QueueInterface $queue,
+                    protected SettingsManager $settingsManager,
+                    protected SubmissionManager $submissionManager,
+                    protected UploadQueueManager $uploadQueueManager,
+                    protected WordpressFunctionProxyHelper $wpProxy,
+                ) {
+                    $this->setSource([]);
+                }
+            };
         }
 
         public function testPrepareItemsDoesNotThrowWhenApiCredentialsAreInvalid(): void

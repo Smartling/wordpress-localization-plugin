@@ -32,12 +32,12 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
     }
 
     public function __construct(
-        private ApiWrapperInterface $api,
-        private QueueInterface $queue,
-        private SettingsManager $settingsManager,
-        private SubmissionManager $submissionManager,
-        private UploadQueueManager $uploadQueueManager,
-        private WordpressFunctionProxyHelper $wpProxy,
+        protected ApiWrapperInterface $api,
+        protected QueueInterface $queue,
+        protected SettingsManager $settingsManager,
+        protected SubmissionManager $submissionManager,
+        protected UploadQueueManager $uploadQueueManager,
+        protected WordpressFunctionProxyHelper $wpProxy,
     )
     {
         $this->setSource($_REQUEST);
