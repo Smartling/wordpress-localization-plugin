@@ -1,0 +1,10 @@
+---
+name: bump-version
+description: Increase version number
+---
+
+1. Examine changes in the current git branch compared to master.
+2. Decide if changes are minor, major or patch.
+3. Update the smartling-connector.php comment that starts with `Version:` with the new version number.
+4. Update the composer.json version with the new version number.
+5. Update the readme.txt `Stable tag:` with the new version number and add the release notes.
