@@ -130,6 +130,16 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
         $categorySubmission = ArrayHelper::first($submissions);
 
         $expectedMetadata = $this->getMetadata($categorySubmission->getTargetId(), $attachmentSubmission->getTargetId());
+        $translatedFields = [
+            'text_field',
+            'html_field',
+            'repeater_field_0_repeater_text_field',
+            'flexible_content_field_0_flexible_content_text_field',
+            'flexible_content_field_1_flexible_content_text_field',
+        ];
+        foreach ($translatedFields as $field) {
+            unset($expectedMetadata[$field]);
+        }
 
         $submissions = $this->getSubmissionManager()->find(
             [
@@ -147,6 +157,11 @@ class AdvancedCustomFieldsTest extends SmartlingUnitTestCaseAbstract
             $realMetadatum = maybe_unserialize(maybe_unserialize($realMetadatum));
         }
         unset($realMetadatum);
+
+        foreach ($translatedFields as $translatedField) {
+            self::assertArrayHasKey($translatedField, $realMetadata, "$translatedField must exist in target metadata after translation");
+            self::assertNotEmpty($realMetadata[$translatedField], "$translatedField must be non-empty after translation");
+        }
 
         foreach ($expectedMetadata as $eKey => $eValue) {
             self::assertArrayHasKey($eKey, $realMetadata);

@@ -687,10 +687,12 @@ class AcfDynamicSupport
     {
         $fields = [];
         foreach ($posts as $post) {
-            $configuration = unserialize($post->post_content);
-            $fields[$post->post_name] = [
-                'type' => $configuration['type'],
-            ];
+            $configuration = unserialize($post->post_content, ['allowed_classes' => false]);
+            $fieldData = ['type' => $configuration['type']];
+            if ($configuration['type'] === 'clone' && array_key_exists('clone', $configuration)) {
+                $fieldData['clone'] = $configuration['clone'];
+            }
+            $fields[$post->post_name] = $fieldData;
             $subFields = $this->rawReadFields($post->ID);
             if (0 < count($subFields)) {
                 $fields = array_merge($fields, $subFields);
