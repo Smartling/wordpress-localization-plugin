@@ -323,6 +323,16 @@ and management of:',
                 ['abc123/text' => 'Click Me'],
                 [ContentTypeHelper::POST_TYPE_ATTACHMENT => [789]],
             ],
+            'gallery widget' => [
+                '[{"id":"14d5abc","elType":"widget","settings":{"gallery":[{"id":21161,"url":"https://example.com/1.webp"},{"id":21162,"url":"https://example.com/2.webp"}],"galleries":[{"gallery_title":"New Gallery","_id":"04c68ec"}]},"elements":[],"widgetType":"gallery"}]',
+                ['14d5abc/galleries/04c68ec/gallery_title' => 'New Gallery'],
+                [ContentTypeHelper::POST_TYPE_ATTACHMENT => [21161, 21162]],
+            ],
+            'nested accordion with svg icons' => [
+                '[{"id":"cf8c5a0","elType":"widget","settings":{"accordion_item_title_icon":{"value":{"url":"https://example.com/plus.svg","id":329},"library":"svg"},"accordion_item_title_icon_active":{"value":{"url":"https://example.com/minus.svg","id":330},"library":"svg"}},"elements":[],"widgetType":"nested-accordion"}]',
+                [],
+                [ContentTypeHelper::POST_TYPE_ATTACHMENT => [329, 330]],
+            ],
             'dynamic content in elements' => [
                 file_get_contents(__DIR__ . '/wp-975.json'),
                 [],
