@@ -72,8 +72,8 @@ RUN service mysql start && cd ${WP_INSTALL_DIR} && \
     ${WPCLI} core multisite-convert && \
     IFS=',' read -a array <<< "${SITES}"; for site in "${array[@]}"; do ${WPCLI} site create --slug="${site##*\:}" --title="${site%%\:*}" --email=test@wp.org; done && \
     IFS=';' read -a array <<< "${DEPENDENCIES}"; for plugin_name in "${array[@]}"; do ${WPCLI} plugin install $plugin_name --activate-network; done && \
-    if [ "latest" != "${ACF_PRO_VERSION}" ]; then DLINK="${DLINK}&t=${ACF_PRO_VERSION}"; fi && \
     DLINK="https://connect.advancedcustomfields.com/index.php?a=download&p=pro&k=${ACFPRO_KEY}" && \
+    if [ "latest" != "${ACF_PRO_VERSION}" ]; then DLINK="${DLINK}&t=${ACF_PRO_VERSION}"; fi && \
     BUILD_FQFN="${WP_INSTALL_DIR}/advanced-custom-fields-pro.zip" && \
     curl ${DLINK} --output ${BUILD_FQFN} && \
     ${WPCLI} plugin install ${BUILD_FQFN} --activate-network && \
