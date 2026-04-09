@@ -69,8 +69,7 @@ class MegaMenu extends Unknown {
         RelatedContentInfo $info,
         array $strings,
         SubmissionEntity $submission,
-    ): static
-    {
+    ): static {
         $this->raw = parent::setTargetContent($externalContentElementor, $info, $strings, $submission)->toArray();
         $this->settings = $this->raw['settings'] ?? [];
 
