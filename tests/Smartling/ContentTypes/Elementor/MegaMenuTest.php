@@ -158,6 +158,42 @@ class MegaMenuTest extends TestCase
         $this->assertEquals('Lösungen', $result['settings']['menu_items'][1]['item_title']);
     }
 
+    public function testSetTargetContentAppliesTranslatedMenuNameAndItemTitlesTogether(): void
+    {
+        $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor->method('getWpProxy')->willReturn($proxy);
+
+        $widget = $this->makeWidget([
+            'menu_name' => 'Menu',
+            'menu_items' => [
+                ['_id' => 'c819dfc', 'item_title' => 'Products'],
+                ['_id' => '88cdd5a', 'item_title' => 'Solutions'],
+            ],
+        ]);
+
+        $strings = [
+            '7399cf4' => [
+                'menu_name' => 'Menü',
+                'menu_items' => [
+                    'c819dfc' => ['item_title' => 'Produkte'],
+                    '88cdd5a' => ['item_title' => 'Lösungen'],
+                ],
+            ],
+        ];
+
+        $result = $widget->setTargetContent(
+            $externalContentElementor,
+            new RelatedContentInfo([]),
+            $strings,
+            $this->createMock(SubmissionEntity::class),
+        )->toArray();
+
+        $this->assertEquals('Menü', $result['settings']['menu_name']);
+        $this->assertEquals('Produkte', $result['settings']['menu_items'][0]['item_title']);
+        $this->assertEquals('Lösungen', $result['settings']['menu_items'][1]['item_title']);
+    }
+
     public function testSetTargetContentUpdatesIconId(): void
     {
         $sourceId = 21340;
