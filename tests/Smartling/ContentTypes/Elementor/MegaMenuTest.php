@@ -7,7 +7,6 @@ use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\Elementor\Elements\MegaMenu;
 use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
 

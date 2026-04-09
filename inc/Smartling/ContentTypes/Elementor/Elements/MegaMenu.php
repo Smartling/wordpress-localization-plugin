@@ -8,8 +8,7 @@ use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
 
-class MegaMenu extends Unknown
-{
+class MegaMenu extends Unknown {
     public function getType(): string
     {
         return 'mega-menu';
@@ -20,11 +19,11 @@ class MegaMenu extends Unknown
         $return = parent::getRelated();
 
         foreach ([
-                     'menu_item_icon/value/id',
-                     'menu_item_icon_active/value/id',
-                     'menu_toggle_icon_normal/value/id',
-                     'menu_toggle_icon_active/value/id',
-                 ] as $key) {
+            'menu_item_icon/value/id',
+            'menu_item_icon_active/value/id',
+            'menu_toggle_icon_normal/value/id',
+            'menu_toggle_icon_active/value/id',
+        ] as $key) {
             $id = $this->getIntSettingByKey($key, $this->settings);
             if ($id !== null) {
                 $return->addContent(new Content($id, ContentTypeHelper::POST_TYPE_ATTACHMENT), $this->id, "settings/$key");
@@ -52,7 +51,11 @@ class MegaMenu extends Unknown
         }
 
         foreach ($this->settings['menu_items'] ?? [] as $item) {
-            $key = 'menu_items/' . ($item['_id']);
+            if (!array_key_exists('_id', $item)) {
+                $this->getLogger()->warning("Missing _id for menu item in $this->id");
+                continue;
+            }
+            $key = "menu_items/{$item['_id']}";
             if (array_key_exists('item_title', $item)) {
                 $return[$this->id][$key]['item_title'] = $item['item_title'];
             }
