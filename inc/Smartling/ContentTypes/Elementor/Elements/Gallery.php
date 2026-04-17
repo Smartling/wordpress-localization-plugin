@@ -43,6 +43,9 @@ class Gallery extends Unknown {
 
     public function setTargetContent(ExternalContentElementor $externalContentElementor, RelatedContentInfo $info, array $strings, SubmissionEntity $submission): static
     {
+        $this->raw = parent::setTargetContent($externalContentElementor, $info, $strings, $submission)->toArray();
+        $this->settings = $this->raw['settings'] ?? [];
+
         foreach ($strings[$this->id] ?? [] as $array) {
             if (is_array($array)) {
                 foreach ($array as $id => $values) {
