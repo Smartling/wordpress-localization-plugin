@@ -280,6 +280,7 @@ and management of:',
                     'b966541/0841fb9/2dd1556/7399cf4/menu_items/d7e704f/item_title' => 'Company',
                     'b966541/0841fb9/2dd1556/7399cf4/menu_items/730c97a/item_title' => 'Contact Us',
                     'b966541/0841fb9/06f836b/9131e8d/text' => 'Contact Us',
+                    'b966541/4d3dabf/bb7ea95/shortcode' => '[wpdreams_ajaxsearchlite]',
                 ],
                 [
                     ContentTypeHelper::POST_TYPE_ATTACHMENT => [
