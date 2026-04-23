@@ -74,6 +74,42 @@ class PostsTest extends TestCase
         $this->assertEquals([], $related->getRelatedContentList());
     }
 
+    public function testGetRelatedReturnsTermIds(): void
+    {
+        $related = $this->makeWidget(['posts_include_term_ids' => [42, 99]])->getRelated();
+
+        $this->assertEquals(
+            [ContentTypeHelper::CONTENT_TYPE_TAXONOMY => [42, 99]],
+            $related->getRelatedContentList()
+        );
+    }
+
+    public function testGetRelatedSkipsNonNumericTermIds(): void
+    {
+        $related = $this->makeWidget(['posts_include_term_ids' => ['invalid', 42]])->getRelated();
+
+        $this->assertEquals(
+            [ContentTypeHelper::CONTENT_TYPE_TAXONOMY => [42]],
+            $related->getRelatedContentList()
+        );
+    }
+
+    public function testGetRelatedReturnsBothTemplateAndTermIds(): void
+    {
+        $related = $this->makeWidget([
+            'custom_skin_template' => '9165',
+            'posts_include_term_ids' => ["42", 99],
+        ])->getRelated();
+
+        $this->assertEquals(
+            [
+                ContentTypeHelper::CONTENT_TYPE_UNKNOWN => [9165],
+                ContentTypeHelper::CONTENT_TYPE_TAXONOMY => [42, 99],
+            ],
+            $related->getRelatedContentList()
+        );
+    }
+
     public function testSetTargetContent(): void
     {
         $result = $this->makeWidget([
