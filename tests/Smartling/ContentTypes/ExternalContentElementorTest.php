@@ -354,7 +354,21 @@ and management of:',
                         13574,
                     ]
                 ],
-            ]
+            ],
+            'posts widget' => [
+                '[{"id":"7a0e323","elType":"widget","settings":{"_skin":"custom","classic_read_more_text":"Read More »","cards_read_more_text":"Read More »","custom_skin_template":"9165","pagination_prev_label":"« Previous","pagination_next_label":"Next »","text":"Load More","load_more_no_posts_custom_message":"No more posts to show","loadmore_text":"Load More","loadmore_loading_text":"Loading..."},"elements":[],"widgetType":"posts"}]',
+                [
+                    '7a0e323/classic_read_more_text' => 'Read More »',
+                    '7a0e323/cards_read_more_text' => 'Read More »',
+                    '7a0e323/pagination_prev_label' => '« Previous',
+                    '7a0e323/pagination_next_label' => 'Next »',
+                    '7a0e323/text' => 'Load More',
+                    '7a0e323/load_more_no_posts_custom_message' => 'No more posts to show',
+                    '7a0e323/loadmore_text' => 'Load More',
+                    '7a0e323/loadmore_loading_text' => 'Loading...',
+                ],
+                [ContentTypeHelper::CONTENT_TYPE_UNKNOWN => [9165]],
+            ],
         ];
     }
 
