@@ -16,6 +16,7 @@ use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Extensions\Acf\AcfTypeDetector;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -702,8 +703,8 @@ class ContentRelationsDiscoveryService
             }
             $type = $this->acfDynamicSupport->getReferencedTypeByKey($value);
             if (in_array($type, [
-                AcfDynamicSupport::REFERENCED_TYPE_MEDIA,
-                AcfDynamicSupport::REFERENCED_TYPE_POST,
+                AcfTypeDetector::REFERENCED_TYPE_MEDIA,
+                AcfTypeDetector::REFERENCED_TYPE_POST,
             ], true)) {
                 $referencedValue = $block->getAttributes()['data'][substr($attribute, 1)] ?? null;
                 if (is_array($referencedValue)) {

@@ -13,69 +13,20 @@ use Smartling\Submissions\SubmissionEntity;
 class AcfTypeDetector
 {
     public const ACF_FIELD_GROUP_REGEX = '#(field|group)_([0-9a-f]){13}#';
-    /**
-     * Default cache time (1 day)
-     * @var int
-     */
-    public static $cacheExpireSec = 84600;
+    public const REFERENCED_TYPE_POST = 'post';
+    public const REFERENCED_TYPE_MEDIA = 'media';
+    public const REFERENCED_TYPE_NONE = 'none';
+    public const REFERENCED_TYPE_TAXONOMY = 'taxonomy';
 
-    /**
-     * @var Cache
-     */
-    private $cache;
+    private const CACHE_EXPIRE_SEC = 84600;
 
-    /**
-     * @var ContentHelper
-     */
-    private $contentHelper;
-
-    /**
-     * @return Cache
-     */
-    public function getCache()
+    private function getCacheKeyByFieldName(string $fieldName): string
     {
-        return $this->cache;
+        return "acf-field-type-cache-$fieldName";
     }
 
-    /**
-     * @param Cache $cache
-     */
-    public function setCache($cache)
+    public function __construct(private AcfDynamicSupport $acfDynamicSupport, private ContentHelper $contentHelper, private Cache $cache)
     {
-        $this->cache = $cache;
-    }
-
-    /**
-     * @return ContentHelper
-     */
-    public function getContentHelper()
-    {
-        return $this->contentHelper;
-    }
-
-    /**
-     * @param ContentHelper $contentHelper
-     */
-    public function setContentHelper($contentHelper)
-    {
-        $this->contentHelper = $contentHelper;
-    }
-
-    private function getCacheKeyByFieldName($fieldName)
-    {
-        return vsprintf('acf-field-type-cache-%s', [$fieldName]);
-    }
-
-    /**
-     * AcfTypeDetector constructor.
-     *
-     * @param ContentHelper $contentHelper
-     * @param Cache         $cache
-     */
-    public function __construct(ContentHelper $contentHelper, Cache $cache)
-    {
-        $this->setCache($cache);
-        $this->setContentHelper($contentHelper);
     }
 
     /**
@@ -86,8 +37,8 @@ class AcfTypeDetector
      */
     private function getFieldKeyFieldName($fieldName, SubmissionEntity $submission)
     {
-        if (false === $fieldKey = $this->getCache()->get($this->getCacheKeyByFieldName($fieldName))) {
-            $sourceMeta = $this->getContentHelper()->readSourceMetadata($submission);
+        if (false === $fieldKey = $this->cache->get($this->getCacheKeyByFieldName($fieldName))) {
+            $sourceMeta = $this->contentHelper->readSourceMetadata($submission);
             return $this->getFieldKeyFieldNameByMetaFields($fieldName, $sourceMeta);
         }
         return $fieldKey;
@@ -95,12 +46,12 @@ class AcfTypeDetector
 
     private function getFieldKeyFieldNameByMetaFields($fieldName, array $metadata)
     {
-        if (false === $fieldKey = $this->getCache()->get($this->getCacheKeyByFieldName($fieldName))) {
+        if (false === $fieldKey = $this->cache->get($this->getCacheKeyByFieldName($fieldName))) {
             $matches = [];
             $_realFieldName = preg_match('#^(?:meta/)?([^/]+)#i', $fieldName, $matches) ? $matches[1] : $fieldName;
             if (array_key_exists('_' . $_realFieldName, $metadata)) {
                 $fieldKey = $metadata['_' . $_realFieldName];
-                $this->getCache()->set($this->getCacheKeyByFieldName($fieldName), $fieldKey, static::$cacheExpireSec);
+                $this->cache->set($this->getCacheKeyByFieldName($fieldName), $fieldKey, self::CACHE_EXPIRE_SEC);
             } else {
                 return false;
             }
@@ -112,15 +63,36 @@ class AcfTypeDetector
     public function getProcessorByFieldKey($key, $fieldName)
     {
         if (!array_key_exists($key, AcfDynamicSupport::$acfReverseDefinitionAction)) {
-            MonologWrapper::getLogger(__CLASS__)
-                ->info(vsprintf('No definition found for field \'%s\', key \'%s\'', [$fieldName, $key]));
+            $conf = $this->getConfFromAcf($key);
+            if ($conf === null) {
+                MonologWrapper::getLogger(__CLASS__)
+                    ->info(vsprintf('No definition found for field \'%s\', key \'%s\'', [$fieldName, $key]));
 
-            return false;
+                return false;
+            }
+        } else {
+            $conf = AcfDynamicSupport::$acfReverseDefinitionAction[$key];
         }
-        $conf = AcfDynamicSupport::$acfReverseDefinitionAction[$key];
         $config = array_merge($conf, ['pattern' => vsprintf('^%s$', [$fieldName])]);
 
         return CustomFieldFilterHandler::getProcessor(Bootstrap::getContainer(), $config);
+    }
+
+    private function getConfFromAcf(string $key): ?array
+    {
+        if (!function_exists('acf_get_field')) {
+            return null;
+        }
+        $field = acf_get_field($key);
+        if (!is_array($field)) {
+            return null;
+        }
+        $type = $this->acfDynamicSupport->getReferencedType($field['type'] ?? '');
+        if ($type === self::REFERENCED_TYPE_NONE) {
+            return null;
+        }
+
+        return ['action' => 'localize', 'value' => 'reference', 'serialization' => 'none', 'type' => $type];
     }
 
     public function getProcessor($field, SubmissionEntity $submission)

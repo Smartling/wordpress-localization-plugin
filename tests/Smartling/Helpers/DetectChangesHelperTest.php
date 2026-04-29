@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
+use Smartling\Extensions\Acf\AcfTypeDetector;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\DetectChangesHelper;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -104,7 +105,7 @@ class DetectChangesHelperTest extends TestCase
         $submissionManager->expects($this->once())->method('storeSubmissions')->with([$submission]);
 
         $this->getHelper($settingsManager, $submissionManager)
-            ->detectChanges(1, 2, AcfDynamicSupport::REFERENCED_TYPE_POST);
+            ->detectChanges(1, 2, AcfTypeDetector::REFERENCED_TYPE_POST);
     }
 
     public function testAcfFieldGroupNoSubmissionStatusChange()

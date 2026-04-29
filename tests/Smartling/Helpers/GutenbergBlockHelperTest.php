@@ -60,6 +60,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     use PHPUnit\Framework\TestCase;
     use Smartling\Exception\EntityNotFoundException;
     use Smartling\Extensions\Acf\AcfDynamicSupport;
+    use Smartling\Extensions\Acf\AcfTypeDetector;
     use Smartling\Helpers\ArrayHelper;
     use Smartling\Helpers\ContentSerializationHelper;
     use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
@@ -481,9 +482,9 @@ namespace Smartling\Tests\Smartling\Helpers {
             ->getMock();
         $acfDynamicSupport->method('getReferencedTypeByKey')->willReturnCallback(static function(string $key): string {
             if ($key === 'field_6006a62721335') {
-                return AcfDynamicSupport::REFERENCED_TYPE_MEDIA;
+                return AcfTypeDetector::REFERENCED_TYPE_MEDIA;
             }
-            return AcfDynamicSupport::REFERENCED_TYPE_NONE;
+            return AcfTypeDetector::REFERENCED_TYPE_NONE;
         });
         $acfDynamicSupport->method('validateAcfStores')->willReturn(true);
         $replacer = $this->createMock(ReplacerInterface::class);
