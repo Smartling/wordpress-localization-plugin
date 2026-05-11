@@ -27,7 +27,6 @@
   },
   "require-dev": {
     "phpunit/phpunit": "~9",
-    "clue/graph-composer": "*",
     "vsolovei-smartling/namespacer": "dev-master"
   },
   "config": {
