@@ -1,7 +1,7 @@
 {
   "name": "smartling/wordpress-connector",
   "license": "GPL-2.0-or-later",
-  "version": "5.3.6",
+  "version": "5.4.0",
   "description": "",
   "type": "wordpress-plugin",
   "repositories": [
@@ -27,6 +27,7 @@
   },
   "require-dev": {
     "phpunit/phpunit": "~9",
+    "clue/graph-composer": "*",
     "vsolovei-smartling/namespacer": "dev-master"
   },
   "config": {

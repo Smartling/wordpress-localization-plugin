@@ -58,7 +58,7 @@ class ExternalContentElementor3Test extends TestCase {
                 [ContentTypeHelper::POST_TYPE_ATTACHMENT => [597]],
             ],
             'icon' => [
-                file_get_contents(__DIR__ . '/icon.json'),
+                file_get_contents(__DIR__ . '/fixtures/icon.json'),
                 [],
                 [ContentTypeHelper::POST_TYPE_ATTACHMENT => [1033]],
             ],
@@ -79,7 +79,7 @@ class ExternalContentElementor3Test extends TestCase {
                 ],
             ],
             'realistic content with background images' => [
-                file_get_contents(__DIR__ . '/wp-834.json'),
+                file_get_contents(__DIR__ . '/fixtures/wp-834.json'),
                 [
                     '10733aaf/215ff951/background_image/alt' => '',
                     '10733aaf/43212dc7/14c1dc16/title' => 'Now in Company Wallet and Company: Breezy and secure workforce access.',
@@ -132,7 +132,7 @@ Yes, please.',
                 ],
             ],
             'realistic content with icon lists' => [
-                file_get_contents(__DIR__ . '/wp-836.json'),
+                file_get_contents(__DIR__ . '/fixtures/wp-836.json'),
                 [
                     '6ff0959b/160f1f6a/background_image/alt' => '',
                     '6ff0959b/1e8393/7a705d82/title' => 'Connect physical assets to identities. Securely.',
@@ -243,7 +243,7 @@ and management of:',
                 ],
             ],
             'Social icons widget, menus, icons, templates' => [
-                file_get_contents(__DIR__ . '/wp-952.json'),
+                file_get_contents(__DIR__ . '/fixtures/wp-952.json'),
                 [
                     'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/5ad501f/fbb4f70/title' => 'Products',
                     'b966541/0841fb9/2dd1556/7399cf4/85f7501/259735a/5ad501f/f530aca/editor' => '<p>System Integration Automation.</p>',
@@ -308,7 +308,7 @@ and management of:',
                 ]
             ],
             'Unlimited Elements addon Logo Marquee' => [
-                file_get_contents(__DIR__ . '/wp-944.json'),
+                file_get_contents(__DIR__ . '/fixtures/wp-944.json'),
                 [],
                 [
                     'attachment' => [
@@ -322,7 +322,7 @@ and management of:',
                 ],
             ],
             'Unlimited Elements addon Listing Grid' => [
-                file_get_contents(__DIR__ . '/ucaddon_ue_listing_grid.json'),
+                file_get_contents(__DIR__ . '/fixtures/ucaddon_ue_listing_grid.json'),
                 ['7bb0b763/no_posts_found' => 'No posts found'],
                 [ContentTypeHelper::CONTENT_TYPE_UNKNOWN => [1531]],
             ],
@@ -347,7 +347,7 @@ and management of:',
                 [ContentTypeHelper::POST_TYPE_ATTACHMENT => [329, 330]],
             ],
             'dynamic content in elements' => [
-                file_get_contents(__DIR__ . '/wp-975.json'),
+                file_get_contents(__DIR__ . '/fixtures/wp-975.json'),
                 [],
                 [
                     ContentTypeHelper::POST_TYPE_ATTACHMENT => [

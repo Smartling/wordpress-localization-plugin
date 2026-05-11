@@ -6,6 +6,7 @@ use Elementor\Core\Documents_Manager;
 use ElementorPro\Plugin;
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\Elementor\DocumentsManagerWrapper;
+use Smartling\ContentTypes\Elementor\ElementFactory;
 use Smartling\ContentTypes\Elementor\ElementFactory3;
 use Smartling\ContentTypes\Elementor\ExternalContentElementorInterface;
 use Smartling\Extensions\Pluggable;
@@ -52,7 +53,7 @@ abstract class ExternalContentElementorAbstract extends ExternalContentAbstract 
 
     public function __construct(
         private ContentTypeHelper $contentTypeHelper,
-        protected ElementFactory3 $elementFactory,
+        protected ElementFactory $elementFactory,
         private FieldsFilterHelper $fieldsFilterHelper,
         PluginHelper $pluginHelper,
         private SiteHelper $siteHelper,
@@ -85,7 +86,6 @@ abstract class ExternalContentElementorAbstract extends ExternalContentAbstract 
                 $data = $this->getDataFromPostMeta($submission->getTargetId());
                 $this->userHelper->asAdministratorOrEditor(function () use ($data, $documentsManager, $submission) {
                     try {
-                        /** @noinspection PhpParamsInspection */
                         $documentsManager->ajax_save([
                             'editor_post_id' => $submission->getTargetId(),
                             'elements' => json_decode($data,

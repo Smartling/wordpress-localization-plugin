@@ -2,7 +2,8 @@
 
 namespace Smartling\ContentTypes\Elementor;
 
-class ElementFactory3 {
+class ElementFactory3 implements ElementFactory
+{
     public const UNKNOWN_ELEMENT = 'unknown';
     private const ELEMENTS = 'Elements';
     /**
