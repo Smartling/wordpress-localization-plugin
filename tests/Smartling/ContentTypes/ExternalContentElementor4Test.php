@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\Elementor\ElementFactory4;
 use Smartling\ContentTypes\ExternalContentElementor4;
+use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
 use Smartling\Helpers\LinkProcessor;
 use Smartling\Helpers\PluginHelper;
@@ -57,6 +58,19 @@ class ExternalContentElementor4Test extends TestCase
         $submission = $this->createMock(SubmissionEntity::class);
         $submission->method('getSourceId')->willReturn(1);
         return $submission;
+    }
+
+    public function testCanHandle(): void
+    {
+        $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $proxy->method('getPostMeta')->willReturnOnConsecutiveCalls('', json_encode([[
+            'id' => 'c1', 'elType' => 'e-flexbox', 'settings' => [], 'elements' => [],
+            'isInner' => false, 'styles' => [], 'interactions' => [], 'editor_settings' => [], 'version' => '0.0',
+        ]]));
+        $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => ['Version' => '4.0.0']]);
+        $proxy->method('is_plugin_active')->willReturn(true);
+        $this->assertEquals(Pluggable::NOT_SUPPORTED, $this->getHandler($proxy)->getSupportLevel('post', 1));
+        $this->assertEquals(Pluggable::SUPPORTED, $this->getHandler($proxy)->getSupportLevel('post', 1));
     }
 
     public function testExtractsHeadingTitle(): void
