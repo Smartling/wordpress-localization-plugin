@@ -5,7 +5,6 @@ namespace Smartling\ContentTypes\Elementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\Elementor\Elements\MegaMenu;
-use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
@@ -105,7 +104,7 @@ class MegaMenuTest extends TestCase
     public function testSetTargetContentAppliesTranslatedMenuName(): void
     {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementorInterface::class);
         $externalContentElementor->method('getWpProxy')->willReturn($proxy);
 
         $widget = $this->makeWidget(['menu_name' => 'Menu']);
@@ -127,7 +126,7 @@ class MegaMenuTest extends TestCase
     public function testSetTargetContentAppliesTranslatedItemTitles(): void
     {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementorInterface::class);
         $externalContentElementor->method('getWpProxy')->willReturn($proxy);
 
         $widget = $this->makeWidget([
@@ -160,7 +159,7 @@ class MegaMenuTest extends TestCase
     public function testSetTargetContentAppliesTranslatedMenuNameAndItemTitlesTogether(): void
     {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementorInterface::class);
         $externalContentElementor->method('getWpProxy')->willReturn($proxy);
 
         $widget = $this->makeWidget([
@@ -199,7 +198,7 @@ class MegaMenuTest extends TestCase
         $targetId = 99999;
 
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementorInterface::class);
         $externalContentElementor->method('getTargetId')
             ->with(0, $sourceId, 0, ContentTypeHelper::POST_TYPE_ATTACHMENT)
             ->willReturn($targetId);

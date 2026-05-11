@@ -4,7 +4,6 @@ namespace Smartling\ContentTypes\Elementor;
 
 use Elementor\Core\DynamicTags\Manager;
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Models\Content;
@@ -32,7 +31,7 @@ abstract class ElementAbstract implements Element {
         $this->id = $array['id'] ?? '';
         $this->raw = $array;
         $this->settings = $array['settings'] ?? [];
-        $this->type = $array['elType'] ?? ElementFactory::UNKNOWN_ELEMENT;
+        $this->type = $array['elType'] ?? ElementFactory3::UNKNOWN_ELEMENT;
     }
 
     public function fromArray(array $array): static
@@ -125,7 +124,7 @@ abstract class ElementAbstract implements Element {
 
     public function setRelations(
         Content $content,
-        ExternalContentElementor $externalContentElementor,
+        ExternalContentElementorInterface $externalContentElementor,
         string $path,
         SubmissionEntity $submission,
     ): static {
@@ -142,7 +141,7 @@ abstract class ElementAbstract implements Element {
             $contentType = $content->getType();
         }
 
-        if ($contentType === false) {
+        if (!is_string($contentType)) {
             $this->getLogger()->debug("Unable to get content type for contentId={$content->getId()}, proceeding with unknown type");
             $contentType = ContentTypeHelper::CONTENT_TYPE_UNKNOWN;
         }
@@ -169,7 +168,7 @@ abstract class ElementAbstract implements Element {
     }
 
     public function setTargetContent(
-        ExternalContentElementor $externalContentElementor,
+        ExternalContentElementorInterface $externalContentElementor,
         RelatedContentInfo $info,
         array $strings,
         SubmissionEntity $submission,

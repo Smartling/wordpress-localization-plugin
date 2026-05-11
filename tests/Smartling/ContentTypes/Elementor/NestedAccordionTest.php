@@ -5,7 +5,6 @@ namespace Smartling\ContentTypes\Elementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\Elementor\Elements\NestedAccordion;
-use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
@@ -57,7 +56,7 @@ class NestedAccordionTest extends TestCase
         $targetId = 500;
 
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementorInterface::class);
         $externalContentElementor->method('getTargetId')->willReturn($targetId);
         $externalContentElementor->method('getWpProxy')->willReturn($proxy);
 
@@ -92,7 +91,7 @@ class NestedAccordionTest extends TestCase
     public function testSetTargetContentAppliesTranslatedItemTitles(): void
     {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementorInterface::class);
         $externalContentElementor->method('getWpProxy')->willReturn($proxy);
 
         $widget = $this->makeWidget([
@@ -128,7 +127,7 @@ class NestedAccordionTest extends TestCase
         $targetId = 500;
 
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementorInterface::class);
         $externalContentElementor->method('getTargetId')
             ->with(0, $sourceId, 0, ContentTypeHelper::POST_TYPE_ATTACHMENT)
             ->willReturn($targetId);

@@ -1,0 +1,612 @@
+[
+  {
+    "id": "3a1c5ee",
+    "elType": "e-flexbox",
+    "settings": [],
+    "elements": [
+      {
+        "id": "9ef487f",
+        "elType": "widget",
+        "settings": {
+          "title": {
+            "$$type": "html-v3",
+            "value": {
+              "content": {
+                "$$type": "string",
+                "value": "Atomic heading"
+              },
+              "children": []
+            }
+          }
+        },
+        "elements": [],
+        "widgetType": "e-heading",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "f4176fc",
+        "elType": "widget",
+        "settings": {
+          "paragraph": {
+            "$$type": "html-v3",
+            "value": {
+              "content": {
+                "$$type": "string",
+                "value": "Atomic paragraph"
+              },
+              "children": []
+            }
+          },
+          "link": {
+            "$$type": "link",
+            "value": []
+          }
+        },
+        "elements": [],
+        "widgetType": "e-paragraph",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      }
+    ],
+    "isInner": false,
+    "styles": [],
+    "interactions": [],
+    "editor_settings": [],
+    "version": "0.0"
+  },
+  {
+    "id": "e666e8e",
+    "elType": "e-flexbox",
+    "settings": [],
+    "elements": [
+      {
+        "id": "b1c6de9",
+        "elType": "widget",
+        "settings": {
+          "image": {
+            "$$type": "image",
+            "value": {
+              "src": {
+                "$$type": "image-src",
+                "value": {
+                  "id": {
+                    "$$type": "image-attachment-id",
+                    "value": 23
+                  },
+                  "url": null
+                }
+              }
+            }
+          },
+          "link": {
+            "$$type": "link",
+            "value": []
+          },
+          "attributes": {
+            "$$type": "attributes",
+            "value": [
+              {
+                "$$type": "key-value",
+                "value": {
+                  "key": {
+                    "$$type": "string",
+                    "value": ""
+                  },
+                  "value": {
+                    "$$type": "string",
+                    "value": ""
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "elements": [],
+        "widgetType": "e-image",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      }
+    ],
+    "isInner": false,
+    "styles": [],
+    "interactions": [],
+    "editor_settings": [],
+    "version": "0.0"
+  },
+  {
+    "id": "292753b",
+    "elType": "e-flexbox",
+    "settings": [],
+    "elements": [
+      {
+        "id": "48c6c32",
+        "elType": "widget",
+        "settings": {
+          "text": {
+            "$$type": "html-v3",
+            "value": {
+              "content": {
+                "$$type": "string",
+                "value": "Text"
+              },
+              "children": []
+            }
+          },
+          "link": {
+            "$$type": "link",
+            "value": []
+          }
+        },
+        "elements": [],
+        "widgetType": "e-button",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      }
+    ],
+    "isInner": false,
+    "styles": [],
+    "interactions": [],
+    "editor_settings": [],
+    "version": "0.0"
+  },
+  {
+    "id": "04bc392",
+    "elType": "e-form",
+    "settings": [],
+    "elements": [
+      {
+        "id": "e4bc94d",
+        "elType": "widget",
+        "settings": {
+          "text": {
+            "$$type": "html-v3",
+            "value": {
+              "content": {
+                "$$type": "string",
+                "value": "First name"
+              },
+              "children": []
+            }
+          },
+          "input-id": {
+            "$$type": "string",
+            "value": "e-form-first-name"
+          }
+        },
+        "elements": [],
+        "widgetType": "e-form-label",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "270be38",
+        "elType": "widget",
+        "settings": {
+          "placeholder": {
+            "$$type": "string",
+            "value": "First name"
+          },
+          "type": {
+            "$$type": "string",
+            "value": "text"
+          },
+          "_cssid": {
+            "$$type": "string",
+            "value": "e-form-first-name"
+          }
+        },
+        "elements": [],
+        "widgetType": "e-form-input",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "acffba9",
+        "elType": "widget",
+        "settings": {
+          "text": {
+            "$$type": "html-v3",
+            "value": {
+              "content": {
+                "$$type": "string",
+                "value": "Last name"
+              },
+              "children": []
+            }
+          },
+          "input-id": {
+            "$$type": "string",
+            "value": "e-form-last-name"
+          }
+        },
+        "elements": [],
+        "widgetType": "e-form-label",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "0b28a8e",
+        "elType": "widget",
+        "settings": {
+          "placeholder": {
+            "$$type": "string",
+            "value": "Last name"
+          },
+          "type": {
+            "$$type": "string",
+            "value": "text"
+          },
+          "_cssid": {
+            "$$type": "string",
+            "value": "e-form-last-name"
+          }
+        },
+        "elements": [],
+        "widgetType": "e-form-input",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "0665d2b",
+        "elType": "widget",
+        "settings": {
+          "text": {
+            "$$type": "html-v3",
+            "value": {
+              "content": {
+                "$$type": "string",
+                "value": "Email"
+              },
+              "children": []
+            }
+          },
+          "input-id": {
+            "$$type": "string",
+            "value": "e-form-email"
+          }
+        },
+        "elements": [],
+        "widgetType": "e-form-label",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "0f9061b",
+        "elType": "widget",
+        "settings": {
+          "placeholder": {
+            "$$type": "string",
+            "value": "your@mail.com"
+          },
+          "type": {
+            "$$type": "string",
+            "value": "email"
+          },
+          "_cssid": {
+            "$$type": "string",
+            "value": "e-form-email"
+          }
+        },
+        "elements": [],
+        "widgetType": "e-form-input",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "2461de4",
+        "elType": "widget",
+        "settings": {
+          "text": {
+            "$$type": "html-v3",
+            "value": {
+              "content": {
+                "$$type": "string",
+                "value": "Message"
+              },
+              "children": []
+            }
+          },
+          "input-id": {
+            "$$type": "string",
+            "value": "e-form-message"
+          }
+        },
+        "elements": [],
+        "widgetType": "e-form-label",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "fbae7a5",
+        "elType": "widget",
+        "settings": {
+          "placeholder": {
+            "$$type": "string",
+            "value": "Your message"
+          },
+          "rows": {
+            "$$type": "number",
+            "value": 4
+          },
+          "_cssid": {
+            "$$type": "string",
+            "value": "e-form-message"
+          }
+        },
+        "elements": [],
+        "widgetType": "e-form-textarea",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "d761cbf",
+        "elType": "e-flexbox",
+        "settings": {
+          "classes": {
+            "$$type": "classes",
+            "value": [
+              "e-form-checkbox-row"
+            ]
+          }
+        },
+        "elements": [
+          {
+            "id": "15ae248",
+            "elType": "widget",
+            "settings": {
+              "_cssid": {
+                "$$type": "string",
+                "value": "e-form-checkbox"
+              }
+            },
+            "elements": [],
+            "widgetType": "e-form-checkbox",
+            "styles": [],
+            "interactions": [],
+            "editor_settings": [],
+            "version": "0.0"
+          },
+          {
+            "id": "c861e12",
+            "elType": "widget",
+            "settings": {
+              "text": {
+                "$$type": "html-v3",
+                "value": {
+                  "content": {
+                    "$$type": "string",
+                    "value": "Checkbox"
+                  },
+                  "children": []
+                }
+              },
+              "input-id": {
+                "$$type": "string",
+                "value": "e-form-checkbox"
+              }
+            },
+            "elements": [],
+            "widgetType": "e-form-label",
+            "styles": [],
+            "interactions": [],
+            "editor_settings": [],
+            "version": "0.0"
+          }
+        ],
+        "isInner": false,
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "a4d4a36",
+        "elType": "widget",
+        "settings": [],
+        "elements": [],
+        "widgetType": "e-form-submit-button",
+        "styles": [],
+        "interactions": [],
+        "editor_settings": [],
+        "version": "0.0"
+      },
+      {
+        "id": "940c446",
+        "elType": "e-form-success-message",
+        "settings": {
+          "attributes": {
+            "$$type": "attributes",
+            "value": [
+              {
+                "$$type": "key-value",
+                "value": []
+              }
+            ]
+          }
+        },
+        "elements": [
+          {
+            "id": "143f87f",
+            "elType": "widget",
+            "settings": {
+              "paragraph": {
+                "$$type": "html-v3",
+                "value": {
+                  "content": {
+                    "$$type": "string",
+                    "value": "Great! We\u2019ve received your information."
+                  },
+                  "children": []
+                }
+              }
+            },
+            "elements": [],
+            "widgetType": "e-paragraph",
+            "styles": [],
+            "interactions": [],
+            "editor_settings": [],
+            "version": "0.0"
+          }
+        ],
+        "isInner": false,
+        "isLocked": true,
+        "styles": [],
+        "interactions": [],
+        "editor_settings": {
+          "title": "Success message"
+        },
+        "version": "0.0"
+      },
+      {
+        "id": "687e6c7",
+        "elType": "e-form-error-message",
+        "settings": {
+          "attributes": {
+            "$$type": "attributes",
+            "value": [
+              {
+                "$$type": "key-value",
+                "value": []
+              }
+            ]
+          }
+        },
+        "elements": [
+          {
+            "id": "4c3ef3f",
+            "elType": "widget",
+            "settings": {
+              "paragraph": {
+                "$$type": "html-v3",
+                "value": {
+                  "content": {
+                    "$$type": "string",
+                    "value": "We couldn\u2019t process your submission. Please retry"
+                  },
+                  "children": []
+                }
+              }
+            },
+            "elements": [],
+            "widgetType": "e-paragraph",
+            "styles": [],
+            "interactions": [],
+            "editor_settings": [],
+            "version": "0.0"
+          }
+        ],
+        "isInner": false,
+        "isLocked": true,
+        "styles": [],
+        "interactions": [],
+        "editor_settings": {
+          "title": "Error message"
+        },
+        "version": "0.0"
+      }
+    ],
+    "isInner": false,
+    "styles": [],
+    "interactions": [],
+    "editor_settings": [],
+    "version": "0.0"
+  },
+  {
+    "id": "c622ee0",
+    "elType": "container",
+    "settings": [],
+    "elements": [
+      {
+        "id": "46f859d",
+        "elType": "widget",
+        "settings": {
+          "template_id": 2120
+        },
+        "elements": [],
+        "widgetType": "loop-carousel"
+      }
+    ],
+    "isInner": false
+  },
+  {
+    "id": "a1a362d",
+    "elType": "container",
+    "settings": [],
+    "elements": [
+      {
+        "id": "1c323bf",
+        "elType": "widget",
+        "settings": {
+          "gallery": [
+            {
+              "id": 24,
+              "url": "http:\/\/localhost\/wp-content\/uploads\/2026\/03\/467-536x354-1.jpg"
+            },
+            {
+              "id": 23,
+              "url": "http:\/\/localhost\/wp-content\/uploads\/2026\/03\/6-536x354-1.jpg"
+            },
+            {
+              "id": 21,
+              "url": "http:\/\/localhost\/wp-content\/uploads\/2026\/03\/522-536x354-1.jpg"
+            }
+          ],
+          "galleries": [
+            {
+              "gallery_title": "New Gallery",
+              "_id": "251389a"
+            }
+          ],
+          "show_all_galleries_label": "All"
+        },
+        "elements": [],
+        "widgetType": "gallery"
+      }
+    ],
+    "isInner": false
+  },
+  {
+    "id": "781aef5",
+    "elType": "container",
+    "settings": [],
+    "elements": [
+      {
+        "id": "a67ac4d",
+        "elType": "widget",
+        "settings": {
+          "blockquote_content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut elit tellus, luctus nec ullamcorper mattis, pulvinar dapibus leo.Lorem ipsum dolor sit amet consectetur adipiscing elit dolor",
+          "author_name": "John Doe",
+          "tweet_button_label": "Tweet"
+        },
+        "elements": [],
+        "widgetType": "blockquote"
+      }
+    ],
+    "isInner": false
+  }
+]

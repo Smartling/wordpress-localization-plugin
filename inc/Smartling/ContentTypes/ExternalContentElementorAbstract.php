@@ -7,6 +7,8 @@ use ElementorPro\Plugin;
 use Smartling\Base\ExportedAPI;
 use Smartling\ContentTypes\Elementor\DocumentsManagerWrapper;
 use Smartling\ContentTypes\Elementor\ElementFactory;
+use Smartling\ContentTypes\Elementor\ElementFactory3;
+use Smartling\ContentTypes\Elementor\ExternalContentElementorInterface;
 use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -21,7 +23,7 @@ use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-class ExternalContentElementor extends ExternalContentAbstract implements ContentTypeModifyingInterface
+abstract class ExternalContentElementorAbstract extends ExternalContentAbstract implements ContentTypeModifyingInterface, ExternalContentElementorInterface
 {
     use LoggerSafeTrait;
 
@@ -51,7 +53,7 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
 
     public function __construct(
         private ContentTypeHelper $contentTypeHelper,
-        private ElementFactory $elementFactory,
+        protected ElementFactory $elementFactory,
         private FieldsFilterHelper $fieldsFilterHelper,
         PluginHelper $pluginHelper,
         private SiteHelper $siteHelper,
@@ -84,7 +86,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
                 $data = $this->getDataFromPostMeta($submission->getTargetId());
                 $this->userHelper->asAdministratorOrEditor(function () use ($data, $documentsManager, $submission) {
                     try {
-                        /** @noinspection PhpParamsInspection */
                         $documentsManager->ajax_save([
                             'editor_post_id' => $submission->getTargetId(),
                             'elements' => json_decode($data,
@@ -158,16 +159,6 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
         return json_decode($this->getDataFromPostMeta($id), true, 512, JSON_THROW_ON_ERROR);
     }
 
-    public function getMaxVersion(): string
-    {
-        return '3';
-    }
-
-    public function getMinVersion(): string
-    {
-        return '3';
-    }
-
     public function getPluginId(): string
     {
         return 'elementor';
@@ -186,11 +177,12 @@ class ExternalContentElementor extends ExternalContentAbstract implements Conten
     private function mergeElementorData(array $original, array $strings, SubmissionEntity $submission): array
     {
         $result = [];
+        $relatedContentInfo = $this->getData($original)->getRelatedContentInfo();
         foreach ($original as $array) {
             $element = $this->elementFactory->fromArray($array);
             $result[] = $element->setTargetContent(
                 $this,
-                $this->getData($original)->getRelatedContentInfo(),
+                $relatedContentInfo,
                 $strings,
                 $submission,
             )->toArray();
