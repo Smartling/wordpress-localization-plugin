@@ -103,7 +103,7 @@ class PostEntityStd extends EntityAbstract implements EntityWithPostStatus, Enti
 
     public function getEditLink(): ?string
     {
-        return $this->wordpressFunctionProxyHelper->get_edit_post_link($this->ID);
+        return $this->wordpressFunctionProxyHelper->get_edit_post_link($this->ID, 'edit');
     }
 
     public function getId(): ?int
