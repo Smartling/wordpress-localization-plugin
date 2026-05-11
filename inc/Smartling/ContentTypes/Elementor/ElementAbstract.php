@@ -141,7 +141,7 @@ abstract class ElementAbstract implements Element {
             $contentType = $content->getType();
         }
 
-        if (is_string($contentType)) {
+        if (!is_string($contentType)) {
             $this->getLogger()->debug("Unable to get content type for contentId={$content->getId()}, proceeding with unknown type");
             $contentType = ContentTypeHelper::CONTENT_TYPE_UNKNOWN;
         }
