@@ -71,6 +71,6 @@ class Unknown extends ElementAbstract {
 
     public function getType(): string
     {
-        return ElementFactory::UNKNOWN_ELEMENT;
+        return ElementFactory3::UNKNOWN_ELEMENT;
     }
 }

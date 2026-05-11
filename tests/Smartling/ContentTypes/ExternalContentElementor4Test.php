@@ -350,7 +350,7 @@ class ExternalContentElementor4Test extends TestCase
 
     public function testSourceJsonExtractsAllExpectedStrings(): void
     {
-        $data = file_get_contents(__DIR__ . '/../../../issues/WP-1000/source.json');
+        $data = file_get_contents(__DIR__ . '/wp-1000.json');
         $this->assertNotFalse($data);
 
         $proxy = $this->makeProxy($data);
@@ -377,7 +377,7 @@ class ExternalContentElementor4Test extends TestCase
 
     public function testSourceJsonExtractsImageAttachment(): void
     {
-        $data = file_get_contents(__DIR__ . '/../../../issues/WP-1000/source.json');
+        $data = file_get_contents(__DIR__ . '/wp-1000.json');
         $this->assertNotFalse($data);
 
         $proxy = $this->makeProxy($data);
