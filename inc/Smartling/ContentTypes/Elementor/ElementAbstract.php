@@ -4,7 +4,6 @@ namespace Smartling\ContentTypes\Elementor;
 
 use Elementor\Core\DynamicTags\Manager;
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Models\Content;
@@ -32,7 +31,7 @@ abstract class ElementAbstract implements Element {
         $this->id = $array['id'] ?? '';
         $this->raw = $array;
         $this->settings = $array['settings'] ?? [];
-        $this->type = $array['elType'] ?? ElementFactory::UNKNOWN_ELEMENT;
+        $this->type = $array['elType'] ?? ElementFactory3::UNKNOWN_ELEMENT;
     }
 
     public function fromArray(array $array): static
@@ -125,10 +124,11 @@ abstract class ElementAbstract implements Element {
 
     public function setRelations(
         Content $content,
-        ExternalContentElementor $externalContentElementor,
+        ExternalContentElementorInterface $externalContentElementor,
         string $path,
         SubmissionEntity $submission,
     ): static {
+        $this->getLogger()->debug("Set relations for contentType={$content->getType()} contentId={$content->getId()} path=$path");
         $arrayHelper = new ArrayHelper();
         $result = clone $this;
 
@@ -136,8 +136,11 @@ abstract class ElementAbstract implements Element {
         if ($content->getType() === ContentTypeHelper::CONTENT_TYPE_POST) {
             $contentType = $wpProxy->get_post_type($content->getId());
         } elseif ($content->getType() === ContentTypeHelper::CONTENT_TYPE_TAXONOMY) {
+            $this->getLogger()->debug("Getting content type for taxonomy id={$content->getId()}");
             $term = $wpProxy->getTerm($content->getId());
+            $this->getLogger()->debug(json_encode($term));
             $contentType = (is_array($term) && isset($term['taxonomy'])) ? $term['taxonomy'] : $content->getType();
+            $this->getLogger()->debug("Got content type for taxonomy id={$content->getId()}: $contentType");
         } else {
             $contentType = $content->getType();
         }
@@ -152,6 +155,7 @@ abstract class ElementAbstract implements Element {
             $submission->getTargetBlogId(),
             $contentType,
         );
+        $this->getLogger()->debug("Got targetId for contentId={$content->getId()}: $targetId");
         if ($targetId !== null) {
             if (is_string($this->getSettingByKey($path, $this->raw ?? []))) {
                 $targetId = (string)$targetId;
@@ -169,7 +173,7 @@ abstract class ElementAbstract implements Element {
     }
 
     public function setTargetContent(
-        ExternalContentElementor $externalContentElementor,
+        ExternalContentElementorInterface $externalContentElementor,
         RelatedContentInfo $info,
         array $strings,
         SubmissionEntity $submission,

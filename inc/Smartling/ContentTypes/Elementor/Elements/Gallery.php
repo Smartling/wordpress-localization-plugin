@@ -3,7 +3,7 @@
 namespace Smartling\ContentTypes\Elementor\Elements;
 
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\ExternalContentElementor;
+use Smartling\ContentTypes\Elementor\ExternalContentElementorInterface;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
@@ -41,7 +41,7 @@ class Gallery extends Unknown {
         return [$this->getId() => $return];
     }
 
-    public function setTargetContent(ExternalContentElementor $externalContentElementor, RelatedContentInfo $info, array $strings, SubmissionEntity $submission): static
+    public function setTargetContent(ExternalContentElementorInterface $externalContentElementor, RelatedContentInfo $info, array $strings, SubmissionEntity $submission): static
     {
         $this->raw = parent::setTargetContent($externalContentElementor, $info, $strings, $submission)->toArray();
         $this->settings = $this->raw['settings'] ?? [];

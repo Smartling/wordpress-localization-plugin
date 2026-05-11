@@ -133,11 +133,11 @@ services:
       - "@manager.submission"
       - "@wp.proxy"
 
-  content.elementor:
-    class: Smartling\ContentTypes\ExternalContentElementor
+  content.elementor3:
+    class: Smartling\ContentTypes\ExternalContentElementor3
     arguments:
       - "@content.type.helper"
-      - "@elementor.factory"
+      - "@elementor.factory3"
       - "@fields-filter.helper"
       - "@helper.plugins"
       - "@site.helper"
@@ -146,8 +146,24 @@ services:
       - "@wp.proxy"
       - "@link.processor"
 
-  elementor.factory:
-    class: Smartling\ContentTypes\Elementor\ElementFactory
+  elementor.factory3:
+    class: Smartling\ContentTypes\Elementor\ElementFactory3
+
+  content.elementor4:
+    class: Smartling\ContentTypes\ExternalContentElementor4
+    arguments:
+      - "@content.type.helper"
+      - "@elementor.factory4"
+      - "@fields-filter.helper"
+      - "@helper.plugins"
+      - "@site.helper"
+      - "@manager.submission"
+      - "@helper.user"
+      - "@wp.proxy"
+      - "@link.processor"
+
+  elementor.factory4:
+    class: Smartling\ContentTypes\Elementor\ElementFactory4
 
   content.gravity.forms:
     class: Smartling\ContentTypes\ExternalContentGravityForms
@@ -241,7 +257,8 @@ services:
     calls:
       - ["addHandler", ["@content.aioseo"]]
       - ["addHandler", ["@content.beaver.builder"]]
-      - ["addHandler", ["@content.elementor"]]
+      - ["addHandler", ["@content.elementor3"]]
+      - ["addHandler", ["@content.elementor4"]]
       - ["addHandler", ["@content.gravity.forms"]]
       - ["addHandler", ["@content.yoast"]]
 

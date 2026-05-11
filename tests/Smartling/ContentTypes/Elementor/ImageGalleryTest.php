@@ -5,7 +5,6 @@ namespace Smartling\ContentTypes\Elementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\Elementor\Elements\ImageGallery;
-use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\Content;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -16,7 +15,7 @@ class ImageGalleryTest extends TestCase
         $imageSourceId = 7;
         $imageTargetId = 11;
 
-        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementorInterface::class);
         $externalContentElementor->method('getTargetId')
             ->with(0, $imageSourceId, 0, ContentTypeHelper::POST_TYPE_ATTACHMENT)->willReturn($imageTargetId);
 

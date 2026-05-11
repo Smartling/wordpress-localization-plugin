@@ -2,20 +2,26 @@
 
 namespace Smartling\ContentTypes\Elementor;
 
-class ElementFactory {
+class ElementFactory3 {
     public const UNKNOWN_ELEMENT = 'unknown';
     private const ELEMENTS = 'Elements';
     /**
      * @var Element[]
      */
-    private array $elements = [];
+    protected array $elements = [];
 
     public function __construct()
     {
-        foreach (new \DirectoryIterator(__DIR__ . DIRECTORY_SEPARATOR . self::ELEMENTS) as $fileInfo) {
+        $this->loadElements(__DIR__ . DIRECTORY_SEPARATOR . self::ELEMENTS);
+    }
+
+    protected function loadElements(string $directory): void
+    {
+        $namespace = basename($directory);
+        foreach (new \DirectoryIterator($directory) as $fileInfo) {
             if ($fileInfo->isFile() && $fileInfo->getExtension() === 'php') {
                 $className = $fileInfo->getFileInfo()->getBasename('.php');
-                $element = new (implode('\\', [__NAMESPACE__, self::ELEMENTS, $className]));
+                $element = new (implode('\\', [__NAMESPACE__, $namespace, $className]));
                 if ($element instanceof Element) {
                     $this->elements[$element->getType()] = $element;
                 }

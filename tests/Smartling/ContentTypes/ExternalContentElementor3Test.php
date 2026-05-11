@@ -3,8 +3,8 @@
 namespace Smartling\Tests\Smartling\ContentTypes;
 
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\Elementor\ElementFactory;
-use Smartling\ContentTypes\ExternalContentElementor;
+use Smartling\ContentTypes\Elementor\ElementFactory3;
+use Smartling\ContentTypes\ExternalContentElementor3;
 use PHPUnit\Framework\TestCase;
 use Smartling\Extensions\Pluggable;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -16,7 +16,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 
-class ExternalContentElementorTest extends TestCase {
+class ExternalContentElementor3Test extends TestCase {
     public function testCanHandle()
     {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
@@ -425,18 +425,18 @@ JSON;
                 'post_content' => 'irrelevant',
             ],
             'meta' => [
-                ExternalContentElementor::META_FIELD_NAME => $elementorData,
+                ExternalContentElementor3::META_FIELD_NAME => $elementorData,
             ],
         ];
 
         $this->assertEquals(
             str_replace($sourceAttachmentId, $targetAttachmentId, $elementorData),
             $this->getExternalContentElementor($proxy, $submissionManager)
-                ->setContentFields($original, $original, $submission)['meta'][ExternalContentElementor::META_FIELD_NAME]
+                ->setContentFields($original, $original, $submission)['meta'][ExternalContentElementor3::META_FIELD_NAME]
         );
     }
 
-    private function getExternalContentElementor(?WordpressFunctionProxyHelper $proxy = null, ?SubmissionManager $submissionManager = null): ExternalContentElementor
+    private function getExternalContentElementor(?WordpressFunctionProxyHelper $proxy = null, ?SubmissionManager $submissionManager = null): ExternalContentElementor3
     {
         $contentTypeHelper = $this->createMock(ContentTypeHelper::class);
         $contentTypeHelper->method('isPost')->willReturn(true);
@@ -452,9 +452,9 @@ JSON;
 
         $siteHelper = $this->createPartialMock(SiteHelper::class, ['restoreBlogId', 'switchBlogId']);
 
-        return new ExternalContentElementor(
+        return new ExternalContentElementor3(
             $contentTypeHelper,
-            new ElementFactory(),
+            new ElementFactory3(),
             $fieldsFilterHelper,
             $pluginHelper,
             $siteHelper,

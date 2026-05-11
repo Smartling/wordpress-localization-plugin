@@ -3,7 +3,7 @@
 namespace Smartling\ContentTypes\Elementor\Elements;
 
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\ExternalContentElementor;
+use Smartling\ContentTypes\Elementor\ExternalContentElementorInterface;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
@@ -65,7 +65,7 @@ class MegaMenu extends Unknown {
     }
 
     public function setTargetContent(
-        ExternalContentElementor $externalContentElementor,
+        ExternalContentElementorInterface $externalContentElementor,
         RelatedContentInfo $info,
         array $strings,
         SubmissionEntity $submission,
