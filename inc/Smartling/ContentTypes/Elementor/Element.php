@@ -2,7 +2,6 @@
 
 namespace Smartling\ContentTypes\Elementor;
 
-use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
@@ -15,12 +14,12 @@ interface Element {
     public function getType(): string;
     public function setRelations(
         Content $content,
-        ExternalContentElementor $externalContentElementor,
+        ExternalContentElementorInterface $externalContentElementor,
         string $path,
         SubmissionEntity $submission,
     ): self;
     public function setTargetContent(
-        ExternalContentElementor $externalContentElementor,
+        ExternalContentElementorInterface $externalContentElementor,
         RelatedContentInfo $info,
         array $strings,
         SubmissionEntity $submission,

@@ -5,7 +5,6 @@ namespace Smartling\ContentTypes\Elementor;
 use PHPUnit\Framework\TestCase;
 use Smartling\ContentTypes\ContentTypeHelper;
 use Smartling\ContentTypes\Elementor\Elements\LoopCarousel;
-use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\Content;
 use Smartling\Submissions\SubmissionEntity;
@@ -20,7 +19,7 @@ class LoopCarouselTest extends TestCase
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $proxy->expects($this->once())->method('get_post_type')->with($templateSourceId)->willReturn('post');
 
-        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementorInterface::class);
         $externalContentElementor->method('getTargetId')->willReturn($templateTargetId);
         $externalContentElementor->method('getWpProxy')->willReturn($proxy);
 
@@ -56,7 +55,7 @@ class LoopCarouselTest extends TestCase
         $termSourceId = 14;
         $termTargetId = 28;
 
-        $externalContentElementor = $this->createMock(ExternalContentElementor::class);
+        $externalContentElementor = $this->createMock(ExternalContentElementorInterface::class);
         $externalContentElementor->method('getTargetId')
             ->with(0, $termSourceId, 0, ContentTypeHelper::CONTENT_TYPE_TAXONOMY)->willReturn($termTargetId);
 

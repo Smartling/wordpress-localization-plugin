@@ -4,7 +4,6 @@ namespace Smartling\ContentTypes\Elementor;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\ContentTypes\Elementor\Elements\Shortcode;
-use Smartling\ContentTypes\ExternalContentElementor;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -47,7 +46,7 @@ class ShortcodeTest extends TestCase
 
         $result = $this->makeWidget(['shortcode' => '[contact-form-7 id="123" title="Contact form 1"]'])
             ->setTargetContent(
-                $this->createMock(ExternalContentElementor::class),
+                $this->createMock(ExternalContentElementorInterface::class),
                 new RelatedContentInfo([]),
                 ['abc123' => ['shortcode' => $translatedShortcode]],
                 $this->createMock(SubmissionEntity::class),
