@@ -107,93 +107,55 @@ class AcfDynamicSupport
     private function getDatabaseDefinitions(): array
     {
         $defs = [];
-        $this->getLogger()->debug('Looking for ACF definitions in the database');
-        $blogsToSearch = $this->getBlogListForSearch();
-        foreach ($blogsToSearch as $blog) {
-            $this->getLogger()->debug(vsprintf('Collecting ACF definitions for blog = \'%s\'...', [$blog]));
+        $this->getLogger()->debug('Looking for ACF definitions via ACF API');
+        foreach ($this->getBlogListForSearch() as $blog) {
             try {
-                $this->getLogger()->debug(vsprintf('Looking for profiles for blog %s', [$blog]));
-                $applicableProfiles = $this->settingsManager->findEntityByMainLocale($blog);
-                if (0 === count($applicableProfiles)) {
-                    $this->getLogger()->debug(vsprintf('No suitable profile found for this blog %s', [$blog]));
-                } else {
-                    $groups = $this->getGroups($blog);
-                    if (0 < count($groups)) {
-                        foreach ($groups as $groupKey => $group) {
-                            $defs[$groupKey] = [
-                                'global_type' => 'group',
-                                'active' => 1,
-                            ];
-                        }
-                        foreach ($this->getFields($blog, array_map(static fn($item) => $item['post_id'], $groups)) as $fieldKey => $field) {
-                            $defs[$fieldKey] = [
-                                'global_type' => 'field',
-                                'type' => $field['type'],
-                            ];
-
-                            if ('clone' === $field['type']) {
-                                if (array_key_exists('clone', $field)) {
-                                    $defs[$fieldKey]['clone'] = $field['clone'];
-                                } else {
-                                    $this->getLogger()->debug('ACF field fieldType="clone" has no target. ' . json_encode($field));
-                                }
-                            }
-                        }
-                    }
+                if (0 === count($this->settingsManager->findEntityByMainLocale($blog))) {
+                    $this->getLogger()->debug("No suitable profile found for blog $blog");
+                    continue;
                 }
+                $defs = array_merge(
+                    $defs,
+                    $this->siteHelper->withBlog($blog, fn(): array => $this->collectAcfDefinitions()),
+                );
             } catch (\Exception $e) {
-                $this->getLogger()->warning(vsprintf('ACF Filter generation failed: %s', [$e->getMessage()]));
+                $this->getLogger()->warning("ACF Filter generation failed: {$e->getMessage()}");
             }
         }
 
         return $defs;
     }
 
-    protected function getGroups($blogId): array
+    private function collectAcfDefinitions(): array
     {
-        $dbGroups   = [];
-        $needChange = $this->siteHelper->getCurrentBlogId() !== $blogId;
-        try {
-            if ($needChange) {
-                $this->siteHelper->switchBlogId($blogId);
-            }
-            $dbGroups = $this->rawReadGroups();
-        } catch (\Exception $e) {
-            $this->getLogger()->warning(
-                vsprintf('Error occurred while reading ACF data from blog %s. Message: %s', [$blogId, $e->getMessage()])
-            );
-        } finally {
-            if ($needChange) {
-                $this->siteHelper->restoreBlogId();
-            }
-        }
-
-        return $dbGroups;
-    }
-
-    /**
-     * Reads the list of groups from database
-     */
-    private function rawReadGroups(): array
-    {
-        $posts = (new \WP_Query(
-            [
-                'post_type' => self::POST_TYPE_GROUP,
-                'suppress_filters' => true,
-                'posts_per_page'   => -1,
-                'post_status'      => 'publish',
-            ]
-        ))->get_posts();
-
-        $groups = [];
-        foreach ($posts as $post) {
-            $groups[$post->post_name] = [
-                'title'   => $post->post_title,
-                'post_id' => $post->ID,
+        $defs = [];
+        foreach (acf_get_field_groups() as $group) {
+            $defs[$group['key']] = [
+                'global_type' => 'group',
+                'active' => $group['active'] ?? 1,
             ];
+            $stack = [$group];
+            while (null !== ($parent = array_shift($stack))) {
+                foreach (acf_get_fields($parent) as $field) {
+                    if (!is_array($field) || !isset($field['key'], $field['type'])) {
+                        continue;
+                    }
+                    $defs[$field['key']] = ['global_type' => 'field', 'type' => $field['type']];
+                    if ('clone' === $field['type']) {
+                        if (array_key_exists('clone', $field)) {
+                            $defs[$field['key']]['clone'] = $field['clone'];
+                        } else {
+                            $this->getLogger()->debug('ACF field fieldType="clone" has no target. ' . json_encode($field));
+                        }
+                    }
+                    if (in_array($field['type'], ['repeater', 'group', 'flexible_content'], true)) {
+                        $stack[] = $field;
+                    }
+                }
+            }
         }
 
-        return $groups;
+        return $defs;
     }
 
     public function getReferencedType(string $type): string
@@ -204,18 +166,6 @@ class AcfDynamicSupport
             'taxonomy' => AcfTypeDetector::REFERENCED_TYPE_TAXONOMY,
             default => AcfTypeDetector::REFERENCED_TYPE_NONE,
         };
-    }
-
-    private function rawReadFields($parentId): array
-    {
-        return $this->getFieldsFromPosts($this->getQueryByParentId($parentId)->get_posts());
-    }
-
-    private function getFields(int $blogId, array $parentIds): array
-    {
-        return $this->siteHelper->withBlog($blogId, function () use ($parentIds): array {
-            return $this->getFieldsFromPosts($this->getQueryByParentIds($parentIds)->get_posts());
-        });
     }
 
     protected function extractGroupsDefinitions(array $groups): array
@@ -662,42 +612,4 @@ class AcfDynamicSupport
         return array_pop($matches[0]) ?? $key;
     }
 
-    private function getQueryByParentId($parentId): \WP_Query
-    {
-        return new \WP_Query(array_merge($this->getQueryArray(), ['post_parent' => $parentId]));
-    }
-
-    private function getQueryByParentIds(array $parentIds): \WP_Query
-    {
-        return new \WP_Query(array_merge($this->getQueryArray(), ['post_parent__in' => $parentIds]));
-    }
-
-    private function getQueryArray(): array
-    {
-        return [
-            'post_type' => self::POST_TYPE_FIELD,
-            'suppress_filters' => true,
-            'posts_per_page' => -1,
-            'post_status' => 'publish',
-        ];
-    }
-
-    private function getFieldsFromPosts(array $posts): array
-    {
-        $fields = [];
-        foreach ($posts as $post) {
-            $configuration = unserialize($post->post_content, ['allowed_classes' => false]);
-            $fieldData = ['type' => $configuration['type']];
-            if ($configuration['type'] === 'clone' && array_key_exists('clone', $configuration)) {
-                $fieldData['clone'] = $configuration['clone'];
-            }
-            $fields[$post->post_name] = $fieldData;
-            $subFields = $this->rawReadFields($post->ID);
-            if (0 < count($subFields)) {
-                $fields = array_merge($fields, $subFields);
-            }
-        }
-
-        return $fields;
-    }
 }
