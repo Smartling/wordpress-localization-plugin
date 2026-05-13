@@ -16,6 +16,7 @@ use Smartling\Queue\QueueInterface;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\GuzzleHttp\Exception\RequestException;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 use Smartling\WP\Controller\ConfigurationProfilesController;
 use Smartling\WP\Controller\SmartlingListTable;
@@ -260,11 +261,23 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
 
     private function getRunningMessage(SmartlingApiException $e): string
     {
-        if (count($e->getErrorsByKey('resource.locked')) > 0) {
+        if ($this->isResourceLocked($e)) {
             return self::MESSAGE_RUNNING;
         }
 
         return '<strong>' . __('API error (check credentials)') . ':</strong> ' . esc_html($e->getMessage());
+    }
+
+    private function isResourceLocked(SmartlingApiException $e): bool
+    {
+        if (count($e->getErrorsByKey('resource.locked')) > 0) {
+            return true;
+        }
+
+        $previous = $e->getPrevious();
+        return $previous instanceof RequestException
+            && $previous->hasResponse()
+            && $previous->getResponse()->getStatusCode() === 423;
     }
 
     /**

@@ -48,14 +48,14 @@ interface ApiWrapperInterface
     /**
      * @throws SmartlingApiException
      */
-    public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime;
+    public function acquireLock(ConfigurationProfileEntity $profile, string $key, float $ttlSeconds): \DateTime;
 
     public function getSourceLocale(ConfigurationProfileEntity $profile): string;
 
     /**
      * @throws SmartlingApiException
      */
-    public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime;
+    public function renewLock(ConfigurationProfileEntity $profile, string $key, float $ttlSeconds): \DateTime;
 
     /**
      * @throws SmartlingApiException
