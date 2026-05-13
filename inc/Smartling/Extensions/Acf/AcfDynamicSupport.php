@@ -26,6 +26,10 @@ class AcfDynamicSupport
 
     public const POST_TYPE_FIELD = 'acf-field';
     public const POST_TYPE_GROUP = 'acf-field-group';
+    public const REFERENCED_TYPE_NONE = 'none';
+    public const REFERENCED_TYPE_MEDIA = 'media';
+    public const REFERENCED_TYPE_POST = 'post';
+    public const REFERENCED_TYPE_TAXONOMY = 'taxonomy';
 
     public static array $acfReverseDefinitionAction = [];
 
@@ -161,10 +165,10 @@ class AcfDynamicSupport
     public function getReferencedType(string $type): string
     {
         return match ($type) {
-            'image', 'image_aspect_ratio_crop', 'file', 'gallery' => AcfTypeDetector::REFERENCED_TYPE_MEDIA,
-            'post_object', 'page_link', 'relationship' => AcfTypeDetector::REFERENCED_TYPE_POST,
-            'taxonomy' => AcfTypeDetector::REFERENCED_TYPE_TAXONOMY,
-            default => AcfTypeDetector::REFERENCED_TYPE_NONE,
+            'image', 'image_aspect_ratio_crop', 'file', 'gallery' => self::REFERENCED_TYPE_MEDIA,
+            'post_object', 'page_link', 'relationship' => self::REFERENCED_TYPE_POST,
+            'taxonomy' => self::REFERENCED_TYPE_TAXONOMY,
+            default => self::REFERENCED_TYPE_NONE,
         };
     }
 
@@ -611,5 +615,4 @@ class AcfDynamicSupport
 
         return array_pop($matches[0]) ?? $key;
     }
-
 }

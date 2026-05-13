@@ -40,7 +40,6 @@ namespace Smartling\Tests\Services {
     use Smartling\Helpers\FileUriHelper;
     use Smartling\Helpers\GutenbergBlockHelper;
     use Smartling\Helpers\GutenbergReplacementRule;
-    use Smartling\Extensions\Acf\AcfTypeDetector;
     use Smartling\Helpers\MetaFieldProcessor\BulkProcessors\PostBasedProcessor;
     use Smartling\Helpers\MetaFieldProcessor\DefaultMetaFieldProcessor;
     use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorManager;
@@ -772,11 +771,11 @@ namespace Smartling\Tests\Services {
                         case 1:
                             $this->assertEquals($attachmentKey, $key);
 
-                            return AcfTypeDetector::REFERENCED_TYPE_MEDIA;
+                            return AcfDynamicSupport::REFERENCED_TYPE_MEDIA;
                         case 2:
                             $this->assertEquals($irrelevantKey, $key);
 
-                            return AcfTypeDetector::REFERENCED_TYPE_NONE;
+                            return AcfDynamicSupport::REFERENCED_TYPE_NONE;
                     }
                     $this->fail('Expected two calls');
                 });
@@ -804,7 +803,7 @@ namespace Smartling\Tests\Services {
         public function testAcfReferencesArraysDetected() {
             $acfDynamicSupport = $this->createMock(AcfDynamicSupport::class);
             $acfDynamicSupport->expects($this->once())->method('getReferencedTypeByKey')
-                ->willReturn(AcfTypeDetector::REFERENCED_TYPE_POST);
+                ->willReturn(AcfDynamicSupport::REFERENCED_TYPE_POST);
 
             $x = $this->getContentRelationDiscoveryService(
                 $this->createMock(ApiWrapper::class),

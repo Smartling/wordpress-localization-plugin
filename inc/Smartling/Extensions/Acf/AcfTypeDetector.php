@@ -13,10 +13,6 @@ use Smartling\Submissions\SubmissionEntity;
 class AcfTypeDetector
 {
     public const ACF_FIELD_GROUP_REGEX = '#(field|group)_([0-9a-f]){13}#';
-    public const REFERENCED_TYPE_POST = 'post';
-    public const REFERENCED_TYPE_MEDIA = 'media';
-    public const REFERENCED_TYPE_NONE = 'none';
-    public const REFERENCED_TYPE_TAXONOMY = 'taxonomy';
 
     private const CACHE_EXPIRE_SEC = 84600;
 
@@ -25,7 +21,7 @@ class AcfTypeDetector
         return "acf-field-type-cache-$fieldName";
     }
 
-    public function __construct(private AcfDynamicSupport $acfDynamicSupport, private ContentHelper $contentHelper, private Cache $cache)
+    public function __construct(private ContentHelper $contentHelper, private Cache $cache)
     {
     }
 
@@ -63,36 +59,15 @@ class AcfTypeDetector
     public function getProcessorByFieldKey($key, $fieldName)
     {
         if (!array_key_exists($key, AcfDynamicSupport::$acfReverseDefinitionAction)) {
-            $conf = $this->getConfFromAcf($key);
-            if ($conf === null) {
-                MonologWrapper::getLogger(__CLASS__)
-                    ->info(vsprintf('No definition found for field \'%s\', key \'%s\'', [$fieldName, $key]));
+            MonologWrapper::getLogger(__CLASS__)
+                ->info(vsprintf('No definition found for field \'%s\', key \'%s\'', [$fieldName, $key]));
 
-                return false;
-            }
-        } else {
-            $conf = AcfDynamicSupport::$acfReverseDefinitionAction[$key];
+            return false;
         }
+        $conf = AcfDynamicSupport::$acfReverseDefinitionAction[$key];
         $config = array_merge($conf, ['pattern' => vsprintf('^%s$', [$fieldName])]);
 
         return CustomFieldFilterHandler::getProcessor(Bootstrap::getContainer(), $config);
-    }
-
-    private function getConfFromAcf(string $key): ?array
-    {
-        if (!function_exists('acf_get_field')) {
-            return null;
-        }
-        $field = acf_get_field($key);
-        if (!is_array($field)) {
-            return null;
-        }
-        $type = $this->acfDynamicSupport->getReferencedType($field['type'] ?? '');
-        if ($type === self::REFERENCED_TYPE_NONE) {
-            return null;
-        }
-
-        return ['action' => 'localize', 'value' => 'reference', 'serialization' => 'none', 'type' => $type];
     }
 
     public function getProcessor($field, SubmissionEntity $submission)

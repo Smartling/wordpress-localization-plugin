@@ -703,8 +703,8 @@ class ContentRelationsDiscoveryService
             }
             $type = $this->acfDynamicSupport->getReferencedTypeByKey($value);
             if (in_array($type, [
-                AcfTypeDetector::REFERENCED_TYPE_MEDIA,
-                AcfTypeDetector::REFERENCED_TYPE_POST,
+                AcfDynamicSupport::REFERENCED_TYPE_MEDIA,
+                AcfDynamicSupport::REFERENCED_TYPE_POST,
             ], true)) {
                 $referencedValue = $block->getAttributes()['data'][substr($attribute, 1)] ?? null;
                 if (is_array($referencedValue)) {
