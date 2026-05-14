@@ -58,7 +58,7 @@ trait SmartlingCoreDownloadTrait
                     $entity->getFileUri(),
                 ])
             );
-            $data = (string)$this->getApiWrapper()->downloadFile($entity);
+            $data = $this->getApiWrapper()->downloadFile($entity);
             $msg = vsprintf('Downloaded file for submission id = \'%s\'. Dump: %s', [$entity->getId(),
                                                                                      base64_encode($data)]);
             $this->getLogger()->debug($msg);
@@ -74,9 +74,7 @@ trait SmartlingCoreDownloadTrait
                     $entity->getTargetLocale(),
                 ])
             );
-            if (count($this->acfDynamicSupport->getDefinitions()) === 0) {
-                $this->acfDynamicSupport->run();
-            }
+            $this->acfDynamicSupport->runIfRequired();
             $this->applyXML($entity, $data, $this->xmlHelper, $this->postContentHelper);
             LiveNotificationController::pushNotification(
                 $this
@@ -122,12 +120,12 @@ trait SmartlingCoreDownloadTrait
         }
     }
 
-    public function downloadTranslationBySubmissionId($id)
+    public function downloadTranslationBySubmissionId($id): void
     {
         do_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, $this->loadSubmissionEntityById($id));
     }
 
-    public function downloadTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null)
+    public function downloadTranslation($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity = null): void
     {
         $submission = $this->getTranslationHelper()
             ->prepareSubmission($contentType, $sourceBlog, $sourceEntity, $targetBlog, $targetEntity);

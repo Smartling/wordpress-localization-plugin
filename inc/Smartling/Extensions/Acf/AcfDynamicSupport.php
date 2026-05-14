@@ -4,7 +4,6 @@ namespace Smartling\Extensions\Acf;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
-use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\ArrayHelper;
@@ -31,7 +30,7 @@ class AcfDynamicSupport
     public const REFERENCED_TYPE_POST = 'post';
     public const REFERENCED_TYPE_TAXONOMY = 'taxonomy';
 
-    public static array $acfReverseDefinitionAction = [];
+    private array $filterConfigurations = [];
 
     private ?array $definitions = null;
 
@@ -45,20 +44,6 @@ class AcfDynamicSupport
     public function getDefinitions(): array
     {
         return $this->definitions ?? [];
-    }
-
-    /**
-     * @throws SmartlingConfigException
-     */
-    private function getAcf(): mixed
-    {
-        global $acf;
-
-        if (!isset($acf)) {
-            throw new SmartlingConfigException('ACF plugin is not installed or activated.');
-        }
-
-        return $acf;
     }
 
     public function __construct(
@@ -108,7 +93,7 @@ class AcfDynamicSupport
     /**
      * @throws SmartlingDirectRunRuntimeException
      */
-    private function getDatabaseDefinitions(): array
+    private function loadDefinitions(): array
     {
         $defs = [];
         $this->getLogger()->debug('Looking for ACF definitions via ACF API');
@@ -130,36 +115,65 @@ class AcfDynamicSupport
         return $defs;
     }
 
+    public function getFilterConfiguration(string $key): ?array
+    {
+        return $this->filterConfigurations[$key] ?? null;
+    }
+
     private function collectAcfDefinitions(): array
     {
         $defs = [];
-        foreach (acf_get_field_groups() as $group) {
+        foreach (acf_get_raw_field_groups() as $group) {
+            if (!is_array($group) || !isset($group['key'], $group['ID'])) {
+                continue;
+            }
             $defs[$group['key']] = [
                 'global_type' => 'group',
                 'active' => $group['active'] ?? 1,
             ];
-            $stack = [$group];
-            while (null !== ($parent = array_shift($stack))) {
-                foreach (acf_get_fields($parent) as $field) {
-                    if (!is_array($field) || !isset($field['key'], $field['type'])) {
-                        continue;
-                    }
-                    $defs[$field['key']] = ['global_type' => 'field', 'type' => $field['type']];
-                    if ('clone' === $field['type']) {
-                        if (array_key_exists('clone', $field)) {
-                            $defs[$field['key']]['clone'] = $field['clone'];
-                        } else {
-                            $this->getLogger()->debug('ACF field fieldType="clone" has no target. ' . json_encode($field));
-                        }
-                    }
-                    if (in_array($field['type'], ['repeater', 'group', 'flexible_content'], true)) {
-                        $stack[] = $field;
-                    }
-                }
+            foreach (acf_get_raw_fields($group['ID']) as $field) {
+                $this->addAcfFieldToDefs($field, $defs);
             }
         }
 
         return $defs;
+    }
+
+    private function addAcfFieldToDefs(mixed $field, array &$defs): void
+    {
+        if (!is_array($field) || !isset($field['key'], $field['type'])) {
+            return;
+        }
+        $defs[$field['key']] = ['global_type' => 'field', 'type' => $field['type']];
+        if ('clone' === $field['type']) {
+            if (array_key_exists('clone', $field)) {
+                $defs[$field['key']]['clone'] = $field['clone'];
+            } else {
+                $this->getLogger()->debug('ACF field fieldType="clone" has no target. ' . json_encode($field));
+            }
+        }
+        if (!in_array($field['type'], ['repeater', 'group', 'flexible_content'], true)) {
+            return;
+        }
+        if (isset($field['ID']) && (int)$field['ID'] > 0) {
+            foreach (acf_get_raw_fields((int)$field['ID']) as $child) {
+                $this->addAcfFieldToDefs($child, $defs);
+            }
+        }
+        if (isset($field['sub_fields']) && is_array($field['sub_fields'])) {
+            foreach ($field['sub_fields'] as $child) {
+                $this->addAcfFieldToDefs($child, $defs);
+            }
+        }
+        if (isset($field['layouts']) && is_array($field['layouts'])) {
+            foreach ($field['layouts'] as $layout) {
+                if (is_array($layout) && isset($layout['sub_fields']) && is_array($layout['sub_fields'])) {
+                    foreach ($layout['sub_fields'] as $child) {
+                        $this->addAcfFieldToDefs($child, $defs);
+                    }
+                }
+            }
+        }
     }
 
     public function getReferencedType(string $type): string
@@ -172,134 +186,6 @@ class AcfDynamicSupport
         };
     }
 
-    protected function extractGroupsDefinitions(array $groups): array
-    {
-        $defs = [];
-        foreach ($groups as $group) {
-            $defs[$group['key']] = [
-                'global_type' => 'group',
-            ];
-            if (array_key_exists('active', $group)) {
-                $defs[$group['key']]['active'] = $group['active'];
-            }
-        }
-
-        return $defs;
-    }
-
-    protected function extractFieldDefinitions(array $fields): array
-    {
-        $defs = [];
-
-        foreach ($fields as $field) {
-            $defs[$field['key']] = [
-                'global_type' => 'field',
-                'type'        => $field['type'],
-                'name'        => $field['name'],
-                'parent'      => $field['parent'],
-            ];
-
-            if ('clone' === $field['type']) {
-                $defs[$field['key']]['clone'] = $field['clone'];
-            }
-        }
-
-        return $defs;
-    }
-
-    /**
-     * Get local definitions for ACF Pro ver < 5.7.12
-     */
-    private function getLocalDefinitionsOld(): array
-    {
-        $defs = [];
-        try {
-            $acf = (array)$this->getAcf();
-        } catch (SmartlingConfigException $e) {
-            $this->getLogger()->warning($e->getMessage());
-            $this->getLogger()->warning('Unable to load old type local ACF definitions.');
-
-            return $defs;
-        }
-
-        if (array_key_exists('local', $acf)) {
-            if ($acf['local'] instanceof \acf_local) {
-                $local = $acf['local'];
-
-                $defs = array_merge($defs, $this->extractGroupsDefinitions($local->groups));
-                $defs = array_merge($defs, $this->extractFieldDefinitions($local->fields));
-
-            }
-        }
-
-        return $defs;
-    }
-
-    protected function validateAcfStores(): bool
-    {
-        global $acf_stores;
-
-        return is_array($acf_stores)
-            && array_key_exists('local-groups', $acf_stores)
-            && ($acf_stores['local-groups'] instanceof \ACF_Data)
-            && array_key_exists('local-fields', $acf_stores)
-            && ($acf_stores['local-fields'] instanceof \ACF_Data);
-    }
-
-    /**
-     * Get local definitions for ACF Pro ver 5.7.12+
-     */
-    private function getLocalDefinitionsNew(): array
-    {
-        $defs = [];
-
-        if ($this->validateAcfStores()) {
-            global $acf_stores;
-
-            $defs = array_merge($defs, $this->extractGroupsDefinitions($acf_stores['local-groups']->get_data()));
-            $defs = array_merge($defs, $this->extractFieldDefinitions($acf_stores['local-fields']->get_data()));
-
-        } else {
-            $this->getLogger()->warning('Unable to load new type local ACF definitions.');
-        }
-
-        return $defs;
-    }
-
-    /**
-     * Reads local (PHP and JSON) ACF Definitions
-     */
-    private function getLocalDefinitions(): array
-    {
-        $defs = $this->getLocalDefinitionsOld();
-
-        if (empty($defs)) {
-            $defs = $this->getLocalDefinitionsNew();
-        }
-
-        return $defs;
-    }
-
-    private function verifyDefinitions(array $localDefinitions, array $dbDefinitions): bool
-    {
-        foreach ($dbDefinitions as $key => $definition) {
-            if (!array_key_exists($key, $localDefinitions)) {
-                return false;
-            }
-
-            if ($definition['global_type'] === 'field') {
-                $local = $localDefinitions[$key];
-                if ($local['type'] !== $definition['type']) {
-                    // ACF Option Pages has internal issue in definition, so skip it:
-                    if ('group_572b269b668a4' !== $local['parent']) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
-    }
 
     private function tryRegisterACFOptions(): void
     {
@@ -399,31 +285,16 @@ class AcfDynamicSupport
         $this->getLogger()->debug('Checking if ACF presents...');
         if ($this->isAcfActive()) {
             $this->getLogger()->debug('ACF detected.');
-            $localDefinitions = $this->getLocalDefinitions();
-
             try {
-                $dbDefinitions = $this->getDatabaseDefinitions();
+                $this->definitions = $this->loadDefinitions();
             } catch (SmartlingDirectRunRuntimeException $e) {
-                $dbDefinitions = [];
+                $this->definitions = [];
                 DiagnosticsHelper::addDiagnosticsMessage(
-                    'Failed to get ACF definitions from database.' .
+                    'Failed to get ACF definitions. ' .
                     'Please ensure that WordPress network is set up properly.<br>' .
                     "Exception message: {$e->getMessage()}"
                 );
             }
-
-            if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
-                $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
-                $msg = [
-                    'ACF Configuration has been changed.',
-                    'Please update groups and fields definitions for all sites (As PHP generated code).',
-                    vsprintf('Use <strong><a href="%s">this</a></strong> page to generate export code and add it to your theme or extra plugin.',
-                        [$url]),
-                ];
-                DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
-            }
-
-            $this->definitions = array_merge($localDefinitions, $dbDefinitions);
             $this->buildRules();
             $this->prepareFilters();
         } else {
@@ -435,6 +306,13 @@ class AcfDynamicSupport
     {
         $this->tryRegisterACFOptions();
         $this->tryRegisterACF();
+    }
+
+    public function runIfRequired(): void
+    {
+        if (count($this->getDefinitions()) === 0) {
+            $this->run();
+        }
     }
 
     private function prepareFilters(): void
@@ -468,7 +346,7 @@ class AcfDynamicSupport
             }
         }
 
-        static::$acfReverseDefinitionAction = $rules;
+        $this->filterConfigurations = $rules;
     }
 
     public function getReplacerIdForField(array $attributes, string $key): ?string

@@ -5,13 +5,14 @@ namespace Smartling\Extensions\Acf;
 use Smartling\Bootstrap;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\MetaFieldProcessor\CustomFieldFilterHandler;
 use Smartling\Helpers\MetaFieldProcessor\MetaFieldProcessorInterface;
-use Smartling\MonologWrapper\MonologWrapper;
 use Smartling\Submissions\SubmissionEntity;
 
 class AcfTypeDetector
 {
+    use LoggerSafeTrait;
     public const ACF_FIELD_GROUP_REGEX = '#(field|group)_([0-9a-f]){13}#';
 
     private const CACHE_EXPIRE_SEC = 84600;
@@ -21,17 +22,15 @@ class AcfTypeDetector
         return "acf-field-type-cache-$fieldName";
     }
 
-    public function __construct(private ContentHelper $contentHelper, private Cache $cache)
+    public function __construct(
+        private AcfDynamicSupport $acfDynamicSupport,
+        private Cache $cache,
+        private ContentHelper $contentHelper,
+    )
     {
     }
 
-    /**
-     * @param string           $fieldName
-     * @param SubmissionEntity $submission
-     *
-     * @return false|string
-     */
-    private function getFieldKeyFieldName($fieldName, SubmissionEntity $submission)
+    private function getFieldKeyFieldName(string $fieldName, SubmissionEntity $submission): ?string
     {
         if (false === $fieldKey = $this->cache->get($this->getCacheKeyByFieldName($fieldName))) {
             $sourceMeta = $this->contentHelper->readSourceMetadata($submission);
@@ -40,7 +39,7 @@ class AcfTypeDetector
         return $fieldKey;
     }
 
-    private function getFieldKeyFieldNameByMetaFields($fieldName, array $metadata)
+    private function getFieldKeyFieldNameByMetaFields(string $fieldName, array $metadata): ?string
     {
         if (false === $fieldKey = $this->cache->get($this->getCacheKeyByFieldName($fieldName))) {
             $matches = [];
@@ -49,47 +48,43 @@ class AcfTypeDetector
                 $fieldKey = $metadata['_' . $_realFieldName];
                 $this->cache->set($this->getCacheKeyByFieldName($fieldName), $fieldKey, self::CACHE_EXPIRE_SEC);
             } else {
-                return false;
+                return null;
             }
         }
 
         return $fieldKey;
     }
 
-    public function getProcessorByFieldKey($key, $fieldName)
+    public function getProcessorByFieldKey(string $key, string $fieldName): ?MetaFieldProcessorInterface
     {
-        if (!array_key_exists($key, AcfDynamicSupport::$acfReverseDefinitionAction)) {
-            MonologWrapper::getLogger(__CLASS__)
-                ->info(vsprintf('No definition found for field \'%s\', key \'%s\'', [$fieldName, $key]));
+        $this->acfDynamicSupport->runIfRequired();
+        $configuration = $this->acfDynamicSupport->getFilterConfiguration($key);
+        if ($configuration === null) {
+            $this->getLogger()->info(sprintf('No definition found for fieldName="%s", key="%s"', $fieldName, $key));
 
-            return false;
+            return null;
         }
-        $conf = AcfDynamicSupport::$acfReverseDefinitionAction[$key];
-        $config = array_merge($conf, ['pattern' => vsprintf('^%s$', [$fieldName])]);
 
-        return CustomFieldFilterHandler::getProcessor(Bootstrap::getContainer(), $config);
+        $configuration['pattern'] = sprintf('^%s$', $fieldName);
+        $result = CustomFieldFilterHandler::getProcessor(Bootstrap::getContainer(), $configuration);
+        return $result ?: null;
     }
 
-    public function getProcessor($field, SubmissionEntity $submission)
+    public function getProcessor(string $field, SubmissionEntity $submission): ?MetaFieldProcessorInterface
     {
         return $this->getAcfProcessor($field, $this->getFieldKeyFieldName($field, $submission));
     }
 
-    public function getProcessorByMetaFields($field, array $metaFields)
+    public function getProcessorByMetaFields($field, array $metaFields): ?MetaFieldProcessorInterface
     {
         return $this->getAcfProcessor($field, $this->getFieldKeyFieldNameByMetaFields($field, $metaFields));
     }
 
-    /**
-     * @param string $field
-     * @param array $fields
-     * @return bool|MetaFieldProcessorInterface
-     */
-    public function getProcessorForGutenberg($field, array $fields)
+    public function getProcessorForGutenberg(string $field, array $fields): ?MetaFieldProcessorInterface
     {
         $parts = explode('/', $field);
         $lastPart = end($parts);
-        if ($lastPart !== false && strpos($lastPart, '_') !== 0) {
+        if (!str_starts_with($lastPart, '_')) {
             $parts[count($parts) - 1] = "_$lastPart";
             $acfField = implode('/', $parts);
             if (array_key_exists($acfField, $fields) && is_string($fields[$acfField])) {
@@ -97,10 +92,10 @@ class AcfTypeDetector
             }
         }
 
-        return false;
+        return null;
     }
 
-    private function getAcfProcessor($field, $key)
+    private function getAcfProcessor($field, $key): ?MetaFieldProcessorInterface
     {
         $matches = [];
         preg_match_all(self::ACF_FIELD_GROUP_REGEX, $key, $matches);
@@ -109,6 +104,6 @@ class AcfTypeDetector
             return $this->getProcessorByFieldKey($fieldKey, $field);
         }
 
-        return false;
+        return null;
     }
 }

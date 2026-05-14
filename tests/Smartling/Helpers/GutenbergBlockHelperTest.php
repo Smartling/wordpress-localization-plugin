@@ -454,13 +454,6 @@ namespace Smartling\Tests\Smartling\Helpers {
 
     public function testTranslationAttributesWithRelations()
     {
-        global $acf_stores; // validated in AcfDynamicSupport
-        $acf_stores = [
-            'local-fields' => new ACFish_Data(
-                [['key' => 'field_6006a62721335', 'type' => 'image', 'name' => '', 'parent' => '']],
-            ),
-            'local-groups' => new ACFish_Data(),
-        ];
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $wpProxy->method('get_post_types')->willReturn([
             'acf-field' => 'acf-field',
@@ -476,7 +469,7 @@ namespace Smartling\Tests\Smartling\Helpers {
             ])
             ->onlyMethods([
                 'getReferencedTypeByKey',
-                'validateAcfStores',
+                'getReplacerIdForField',
             ])
             ->getMock();
         $acfDynamicSupport->method('getReferencedTypeByKey')->willReturnCallback(static function(string $key): string {
@@ -485,7 +478,13 @@ namespace Smartling\Tests\Smartling\Helpers {
             }
             return AcfDynamicSupport::REFERENCED_TYPE_NONE;
         });
-        $acfDynamicSupport->method('validateAcfStores')->willReturn(true);
+        $acfDynamicSupport->method('getReplacerIdForField')->willReturnCallback(static function(array $attributes, string $key): ?string {
+            $pointer = preg_replace('#(^|/)([^/]+)$#', '$1_$2', $key);
+            if (($attributes[$pointer] ?? null) === 'field_6006a62721335') {
+                return ReplacerFactory::REPLACER_RELATED;
+            }
+            return null;
+        });
         $replacer = $this->createMock(ReplacerInterface::class);
         $replacer->expects($this->exactly(2))->method('processAttributeOnDownload')->willReturnCallback(static function($originalValue) {
             $replacements = [

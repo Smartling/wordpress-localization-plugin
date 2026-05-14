@@ -101,7 +101,7 @@ class MetaFieldProcessorManager extends SmartlingFactoryAbstract implements WPHo
     {
         if (in_array(get_class($processor), [DefaultMetaFieldProcessor::class, PostContentProcessor::class], true)) {
             $_processor = $this->getAcfTypeDetector()->getProcessor($fieldName, $submission);
-            if (false !== $_processor) {
+            if ($_processor !== null) {
                 return $_processor;
             }
         }

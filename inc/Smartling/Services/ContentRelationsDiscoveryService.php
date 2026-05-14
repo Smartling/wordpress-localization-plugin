@@ -16,7 +16,6 @@ use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
-use Smartling\Extensions\Acf\AcfTypeDetector;
 use Smartling\Helpers\AbsoluteLinkedAttachmentCoreHelper;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
@@ -519,7 +518,7 @@ class ContentRelationsDiscoveryService
                     $this->getLogger()->debug(vsprintf('Trying to treat \'%s\' field as ACF', [$fName]));
                     $acfTypeDetector = $this->metaFieldProcessorManager->getAcfTypeDetector();
                     $processor = $acfTypeDetector->getProcessorByMetaFields($fName, $content['meta']);
-                    if ($processor === false) {
+                    if ($processor === null) {
                         $processor = $acfTypeDetector->getProcessorForGutenberg($fName, $fields);
                     }
                 }
