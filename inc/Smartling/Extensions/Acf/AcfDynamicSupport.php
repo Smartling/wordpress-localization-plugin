@@ -137,7 +137,7 @@ class AcfDynamicSupport
                 // which we intentionally don't read from. Skip child enumeration for this group.
                 continue;
             }
-            foreach (acf_get_raw_fields($groupId) as $field) {
+            foreach (acf_get_fields($group) as $field) {
                 $this->addAcfFieldToDefs($field, $defs);
             }
         }
@@ -147,7 +147,7 @@ class AcfDynamicSupport
 
     private const MAX_ACF_FIELD_DEPTH = 16;
 
-    private function addAcfFieldToDefs(array $field, array &$defs, int $depth = 0): void
+    protected function addAcfFieldToDefs(array $field, array &$defs, int $depth = 0): void
     {
         if (!isset($field['key'], $field['type'])) {
             return;
@@ -172,7 +172,7 @@ class AcfDynamicSupport
             return;
         }
         if (isset($field['ID']) && (int)$field['ID'] > 0) {
-            foreach (acf_get_raw_fields((int)$field['ID']) as $child) {
+            foreach (acf_get_fields($field) as $child) {
                 $this->addAcfFieldToDefs($child, $defs, $depth + 1);
             }
         }

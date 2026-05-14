@@ -95,7 +95,7 @@ class AcfTypeDetector
         return null;
     }
 
-    private function getAcfProcessor($field, $key): ?MetaFieldProcessorInterface
+    private function getAcfProcessor(string $field, ?string $key): ?MetaFieldProcessorInterface
     {
         $matches = [];
         preg_match_all(self::ACF_FIELD_GROUP_REGEX, $key, $matches);
