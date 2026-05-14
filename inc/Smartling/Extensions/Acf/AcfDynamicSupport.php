@@ -123,15 +123,21 @@ class AcfDynamicSupport
     private function collectAcfDefinitions(): array
     {
         $defs = [];
-        foreach (acf_get_raw_field_groups() as $group) {
-            if (!is_array($group) || !isset($group['key'], $group['ID'])) {
+        foreach (acf_get_field_groups() as $group) {
+            if (!is_array($group) || !isset($group['key'])) {
                 continue;
             }
             $defs[$group['key']] = [
                 'global_type' => 'group',
                 'active' => $group['active'] ?? 1,
             ];
-            foreach (acf_get_raw_fields($group['ID']) as $field) {
+            $groupId = (int)($group['ID'] ?? 0);
+            if ($groupId <= 0) {
+                // Local-only field group (no DB post) — children live only in the local store,
+                // which we intentionally don't read from. Skip child enumeration for this group.
+                continue;
+            }
+            foreach (acf_get_raw_fields($groupId) as $field) {
                 $this->addAcfFieldToDefs($field, $defs);
             }
         }
