@@ -43,12 +43,12 @@ class AcfTypeDetectorTest extends TestCase
         $x = $this->getMockBuilder(AcfTypeDetector::class)
             ->setConstructorArgs([
                 $this->createMock(AcfDynamicSupport::class),
+                $cache,
                 new ContentHelper(
                     $this->createMock(ContentEntitiesIOFactory::class),
                     $this->createMock(SiteHelper::class),
                     new WordpressFunctionProxyHelper()
                 ),
-                $cache,
             ])
             ->onlyMethods(["getProcessorByFieldKey"])
             ->getMock();

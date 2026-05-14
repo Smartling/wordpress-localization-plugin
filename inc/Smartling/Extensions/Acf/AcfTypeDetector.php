@@ -15,7 +15,7 @@ class AcfTypeDetector
     use LoggerSafeTrait;
     public const ACF_FIELD_GROUP_REGEX = '#(field|group)_([0-9a-f]){13}#';
 
-    private const CACHE_EXPIRE_SEC = 84600;
+    private const CACHE_EXPIRE_SEC = 86400;
 
     private function getCacheKeyByFieldName(string $fieldName): string
     {

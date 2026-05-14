@@ -139,9 +139,19 @@ class AcfDynamicSupport
         return $defs;
     }
 
-    private function addAcfFieldToDefs(mixed $field, array &$defs): void
+    private const MAX_ACF_FIELD_DEPTH = 16;
+
+    private function addAcfFieldToDefs(array $field, array &$defs, int $depth = 0): void
     {
-        if (!is_array($field) || !isset($field['key'], $field['type'])) {
+        if (!isset($field['key'], $field['type'])) {
+            return;
+        }
+        if ($depth > self::MAX_ACF_FIELD_DEPTH) {
+            $this->getLogger()->error(sprintf(
+                'ACF field tree exceeded depth limit %d at field key "%s"; aborting recursion.',
+                self::MAX_ACF_FIELD_DEPTH,
+                $field['key'],
+            ));
             return;
         }
         $defs[$field['key']] = ['global_type' => 'field', 'type' => $field['type']];
@@ -157,19 +167,19 @@ class AcfDynamicSupport
         }
         if (isset($field['ID']) && (int)$field['ID'] > 0) {
             foreach (acf_get_raw_fields((int)$field['ID']) as $child) {
-                $this->addAcfFieldToDefs($child, $defs);
+                $this->addAcfFieldToDefs($child, $defs, $depth + 1);
             }
         }
         if (isset($field['sub_fields']) && is_array($field['sub_fields'])) {
             foreach ($field['sub_fields'] as $child) {
-                $this->addAcfFieldToDefs($child, $defs);
+                $this->addAcfFieldToDefs($child, $defs, $depth + 1);
             }
         }
         if (isset($field['layouts']) && is_array($field['layouts'])) {
             foreach ($field['layouts'] as $layout) {
                 if (is_array($layout) && isset($layout['sub_fields']) && is_array($layout['sub_fields'])) {
                     foreach ($layout['sub_fields'] as $child) {
-                        $this->addAcfFieldToDefs($child, $defs);
+                        $this->addAcfFieldToDefs($child, $defs, $depth + 1);
                     }
                 }
             }
@@ -185,7 +195,6 @@ class AcfDynamicSupport
             default => self::REFERENCED_TYPE_NONE,
         };
     }
-
 
     private function tryRegisterACFOptions(): void
     {
@@ -310,7 +319,7 @@ class AcfDynamicSupport
 
     public function runIfRequired(): void
     {
-        if (count($this->getDefinitions()) === 0) {
+        if ($this->definitions === null) {
             $this->run();
         }
     }
@@ -373,7 +382,7 @@ class AcfDynamicSupport
         return null;
     }
 
-    public function getReferencedTypeByKey($key): string
+    public function getReferencedTypeByKey(string $key): string
     {
         if ($this->definitions === null) {
             $this->run();
