@@ -32,7 +32,8 @@ class AcfTypeDetector
 
     private function getFieldKeyFieldName(string $fieldName, SubmissionEntity $submission): ?string
     {
-        if (false === $fieldKey = $this->cache->get($this->getCacheKeyByFieldName($fieldName))) {
+        $fieldKey = $this->cache->get($this->getCacheKeyByFieldName($fieldName));
+        if (!$fieldKey) {
             $sourceMeta = $this->contentHelper->readSourceMetadata($submission);
             return $this->getFieldKeyFieldNameByMetaFields($fieldName, $sourceMeta);
         }
