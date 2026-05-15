@@ -23,7 +23,7 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
     {
     }
 
-    public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
+    public function acquireLock(ConfigurationProfileEntity $profile, string $key, float $ttlSeconds): \DateTime
     {
         return $this->withRetry(function () use ($profile, $key, $ttlSeconds) {
             return $this->base->acquireLock($profile, $key, $ttlSeconds);
@@ -37,7 +37,7 @@ class ApiWrapperWithRetries implements ApiWrapperInterface {
         });
     }
 
-    public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
+    public function renewLock(ConfigurationProfileEntity $profile, string $key, float $ttlSeconds): \DateTime
     {
         return $this->withRetry(function () use ($profile, $key, $ttlSeconds) {
             return $this->base->renewLock($profile, $key, $ttlSeconds);

@@ -103,7 +103,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $authProvider;
     }
 
-    public function acquireLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
+    public function acquireLock(ConfigurationProfileEntity $profile, string $key, float $ttlSeconds): \DateTime
     {
         return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), new NullLogger())
             ->acquireLock("{$profile->getProjectId()}-$key", $ttlSeconds);
@@ -125,7 +125,7 @@ class ApiWrapper implements ApiWrapperInterface
         return $details['sourceLocaleId'];
     }
 
-    public function renewLock(ConfigurationProfileEntity $profile, string $key, int $ttlSeconds): \DateTime
+    public function renewLock(ConfigurationProfileEntity $profile, string $key, float $ttlSeconds): \DateTime
     {
         return DistributedLockServiceApi::create($this->getAuthProvider($profile), $profile->getProjectId(), $this->getLogger())
             ->renewLock("{$profile->getProjectId()}-$key", $ttlSeconds);

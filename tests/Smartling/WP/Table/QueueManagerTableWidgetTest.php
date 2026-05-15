@@ -52,6 +52,9 @@ namespace Smartling\Tests\Smartling\WP\Table {
     use Smartling\Settings\Locale;
     use Smartling\Settings\SettingsManager;
     use Smartling\Submissions\SubmissionManager;
+    use Smartling\Vendor\GuzzleHttp\Exception\RequestException;
+    use Smartling\Vendor\GuzzleHttp\Psr7\Request;
+    use Smartling\Vendor\GuzzleHttp\Psr7\Response;
     use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
     use Smartling\WP\Table\QueueManagerTableWidget;
 
@@ -148,6 +151,32 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
             $uploadRow = $widget->items[0];
             $this->assertStringContainsString('Running', $uploadRow['run_cron']);
+        }
+
+        public function testPrepareItemsShowsRunningMessageWhenSdkWrapsGuzzle423(): void
+        {
+            // Reproduces the real SDK behavior: BaseApiAbstract::sendRequest() catches
+            // Guzzle's ClientException for a 423 Locked response and wraps it in a
+            // SmartlingApiException whose errors array is empty (only the message is set).
+            $guzzleException = new RequestException(
+                'Client error: `POST https://api.smartling.com/distributed-lock-api/v2/projects/x/locks` resulted in a `423 Locked` response',
+                new Request('POST', 'https://api.smartling.com/distributed-lock-api/v2/projects/x/locks'),
+                new Response(423, [], '{"response":{"code":"RESOURCE_LOCKED","errors":[{"key":"resource.locked","message":"Failed to acquire a lock"}]}}'),
+            );
+            $api = $this->createMock(ApiWrapperInterface::class);
+            $api->method('acquireLock')->willThrowException(new SmartlingApiException(
+                'Guzzle:RequestException: ' . $guzzleException->getMessage(),
+                0,
+                $guzzleException,
+            ));
+
+            $widget = $this->buildWidget($api, uploadQueueCount: 3);
+
+            $widget->prepare_items();
+
+            $uploadRow = $widget->items[0];
+            $this->assertStringContainsString('Running', $uploadRow['run_cron']);
+            $this->assertStringNotContainsString('API error', $uploadRow['run_cron']);
         }
     }
 }

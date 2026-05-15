@@ -193,7 +193,6 @@ abstract class ElementAbstract implements Element {
         }
         $this->raw['elements'] = $this->elements;
         foreach ($info->getOwnRelatedContent($this->id) as $path => $content) {
-            assert($content instanceof Content);
             $this->raw = $this->setRelations($content, $externalContentElementor, $path, $submission)->toArray();
         }
 
