@@ -57,7 +57,6 @@ class AcfTypeDetector
 
     public function getProcessorByFieldKey(string $key, string $fieldName): ?MetaFieldProcessorInterface
     {
-        $this->acfDynamicSupport->runIfRequired();
         $configuration = $this->acfDynamicSupport->getFilterConfiguration($key);
         if ($configuration === null) {
             $this->getLogger()->info(sprintf('No definition found for fieldName="%s", key="%s"', $fieldName, $key));

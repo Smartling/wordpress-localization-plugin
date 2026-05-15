@@ -44,6 +44,7 @@ class AcfDynamicSupport
 
     public function getDefinitions(): array
     {
+        $this->runIfRequired();
         return $this->definitions ?? [];
     }
 
@@ -118,6 +119,7 @@ class AcfDynamicSupport
 
     public function getFilterConfiguration(string $key): ?array
     {
+        $this->runIfRequired();
         return $this->filterConfigurations[$key] ?? null;
     }
 
@@ -322,7 +324,7 @@ class AcfDynamicSupport
         $this->tryRegisterACF();
     }
 
-    public function runIfRequired(): void
+    private function runIfRequired(): void
     {
         if ($this->definitions === null) {
             $this->run();
@@ -365,9 +367,7 @@ class AcfDynamicSupport
 
     public function getReplacerIdForField(array $attributes, string $key): ?string
     {
-        if ($this->definitions === null) {
-            $this->run();
-        }
+        $this->runIfRequired();
         $parts = array_reverse(explode(FieldsFilterHelper::ARRAY_DIVIDER, $key));
         if (is_numeric($parts[0]) && count($parts) > 1) {
             array_shift($parts);
@@ -389,9 +389,7 @@ class AcfDynamicSupport
 
     public function getReferencedTypeByKey(string $key): string
     {
-        if ($this->definitions === null) {
-            $this->run();
-        }
+        $this->runIfRequired();
         return $this->getReferencedType($this->definitions[$this->getRuleId($key)]['type'] ?? '');
     }
 
@@ -400,9 +398,7 @@ class AcfDynamicSupport
         if (!array_key_exists('meta', $data)) {
             return $data;
         }
-        if ($this->definitions === null) {
-            $this->run();
-        }
+        $this->runIfRequired();
 
         foreach ($data['meta'] as $key => $value) {
             if (str_starts_with($key, '_') && in_array($value, $this->rules['copy'], true)) {

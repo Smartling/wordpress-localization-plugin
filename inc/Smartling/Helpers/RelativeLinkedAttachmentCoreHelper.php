@@ -60,10 +60,7 @@ class RelativeLinkedAttachmentCoreHelper implements WPHookInterface
     public function processor(AfterDeserializeContentEventParameters $params): void
     {
         $this->setParams($params);
-        if (count($this->acfDefinitions) === 0) {
-            $this->acfDynamicSupport->run();
-            $this->acfDefinitions = $this->acfDynamicSupport->getDefinitions();
-        }
+        $this->acfDefinitions = $this->acfDynamicSupport->getDefinitions();
 
         $fields = &$params->getTranslatedFields();
 
