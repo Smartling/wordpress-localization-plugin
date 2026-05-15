@@ -41,7 +41,8 @@ class AcfTypeDetector
 
     private function getFieldKeyFieldNameByMetaFields(string $fieldName, array $metadata): ?string
     {
-        if (false === $fieldKey = $this->cache->get($this->getCacheKeyByFieldName($fieldName))) {
+        $fieldKey = $this->cache->get($this->getCacheKeyByFieldName($fieldName));
+        if (!$fieldKey) {
             $matches = [];
             $_realFieldName = preg_match('#^(?:meta/)?([^/]+)#i', $fieldName, $matches) ? $matches[1] : $fieldName;
             if (array_key_exists('_' . $_realFieldName, $metadata)) {
