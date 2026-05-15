@@ -19,7 +19,7 @@ class AcfDynamicSupportTest extends TestCase
         parent::setUp();
     }
 
-    public function testGetReplacerIdForField()
+    public function testGetReplacerIdForField(): void
     {
         $x = new class(
             new ArrayHelper(),
@@ -39,7 +39,7 @@ class AcfDynamicSupportTest extends TestCase
         ));
     }
 
-    public function testSyncFieldGroup()
+    public function testSyncFieldGroup(): void
     {
         $sourceBlogId = 1;
         $targetBlogId = 7;
@@ -137,7 +137,7 @@ class AcfDynamicSupportTest extends TestCase
         $x->syncAcfData($fieldGroupSubmission);
     }
 
-    public function testGetRuleId()
+    public function testGetRuleId(): void
     {
         $x = new AcfDynamicSupport(
             $this->createMock(ArrayHelper::class),
@@ -150,13 +150,13 @@ class AcfDynamicSupportTest extends TestCase
         $this->assertEquals('field_66d08bd321aee', $x->getRuleId('field_66d0680a343ff_field_66d08bd321aee'), 'Should return last part of complex rule id');
     }
 
-    public function testAddAcfFieldToDefsRecursesInlineSubFieldsAndLayouts()
+    public function testAddAcfFieldToDefsRecursesInlineSubFieldsAndLayouts(): void
     {
         $x = $this->getAcfDynamicSupportWithExposedAddField();
 
-        // Repeater carrying its sub_fields inline (Bluebeam-style import where children
-        // are not stored as separate acf-field posts). ID is 0 so the DB recursion is
-        // skipped and we exercise only the inline path.
+        // Repeater carrying its sub_fields inline (Children
+        // are not stored as separate acf-field posts). ID is 0, so the DB recursion is
+        // skipped, and we exercise only the inline path.
         $field = [
             'key'  => 'field_repeater',
             'type' => 'repeater',
@@ -192,12 +192,10 @@ class AcfDynamicSupportTest extends TestCase
         );
     }
 
-    public function testAddAcfFieldToDefsHonoursDepthGuard()
+    public function testAddAcfFieldToDefsHonoursDepthGuard(): void
     {
         $x = $this->getAcfDynamicSupportWithExposedAddField();
 
-        // Build a pathologically deep repeater chain (20 levels — exceeds MAX_ACF_FIELD_DEPTH=16).
-        // The deepest leaf must NOT make it into defs.
         $leafKey = 'field_too_deep_leaf';
         $field = ['key' => $leafKey, 'type' => 'image'];
         for ($i = 19; $i >= 0; $i--) {
@@ -212,7 +210,7 @@ class AcfDynamicSupportTest extends TestCase
         $x->callAddAcfFieldToDefs($field, $defs);
 
         $this->assertArrayHasKey('field_level_0', $defs, 'top-level container should be in defs');
-        $this->assertArrayHasKey('field_level_16', $defs, 'fields up to MAX depth should be in defs');
+        $this->assertArrayHasKey('field_level_10', $defs, 'fields up to MAX depth should be in defs');
         $this->assertArrayNotHasKey($leafKey, $defs, 'leaf beyond depth limit must be dropped');
     }
 

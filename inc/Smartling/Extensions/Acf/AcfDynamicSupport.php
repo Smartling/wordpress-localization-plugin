@@ -25,6 +25,7 @@ class AcfDynamicSupport
 
     public const POST_TYPE_FIELD = 'acf-field';
     public const POST_TYPE_GROUP = 'acf-field-group';
+    private const MAX_ACF_FIELD_DEPTH = 10;
     public const REFERENCED_TYPE_NONE = 'none';
     public const REFERENCED_TYPE_MEDIA = 'media';
     public const REFERENCED_TYPE_POST = 'post';
@@ -144,8 +145,6 @@ class AcfDynamicSupport
 
         return $defs;
     }
-
-    private const MAX_ACF_FIELD_DEPTH = 16;
 
     protected function addAcfFieldToDefs(array $field, array &$defs, int $depth = 0): void
     {
