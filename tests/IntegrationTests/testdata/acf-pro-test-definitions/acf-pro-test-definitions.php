@@ -8,7 +8,7 @@
 
 add_action('init', function () {
     if (function_exists('acf_add_local_field_group')):
-        acf_add_local_field_group(array(
+        $group = array(
                                       'key'                   => 'group_5ad066ba13486',
                                       'title'                 => 'ACF Test Group',
                                       'fields'                => array(
@@ -444,8 +444,16 @@ add_action('init', function () {
                                       'hide_on_screen'        => '',
                                       'active'                => 1,
                                       'description'           => '',
-                                  ));
-
+                                  );
+        acf_add_local_field_group($group);
+        // Persist the group + fields to the DB once so the Smartling connector's
+        // DB-only definition walker (AcfDynamicSupport::collectAcfDefinitions) sees them.
+        if (function_exists('acf_get_field_group_post')
+            && function_exists('acf_import_field_group')
+            && !acf_get_field_group_post($group['key'])
+        ) {
+            acf_import_field_group($group);
+        }
     endif;
 
 
