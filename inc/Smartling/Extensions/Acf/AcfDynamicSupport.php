@@ -4,7 +4,6 @@ namespace Smartling\Extensions\Acf;
 
 use Smartling\Base\ExportedAPI;
 use Smartling\Bootstrap;
-use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Extensions\AcfOptionPages\ContentTypeAcfOption;
 use Smartling\Helpers\ArrayHelper;
@@ -26,12 +25,13 @@ class AcfDynamicSupport
 
     public const POST_TYPE_FIELD = 'acf-field';
     public const POST_TYPE_GROUP = 'acf-field-group';
+    private const MAX_ACF_FIELD_DEPTH = 10;
     public const REFERENCED_TYPE_NONE = 'none';
     public const REFERENCED_TYPE_MEDIA = 'media';
     public const REFERENCED_TYPE_POST = 'post';
     public const REFERENCED_TYPE_TAXONOMY = 'taxonomy';
 
-    public static array $acfReverseDefinitionAction = [];
+    private array $filterConfigurations = [];
 
     private ?array $definitions = null;
 
@@ -44,21 +44,8 @@ class AcfDynamicSupport
 
     public function getDefinitions(): array
     {
+        $this->runIfRequired();
         return $this->definitions ?? [];
-    }
-
-    /**
-     * @throws SmartlingConfigException
-     */
-    private function getAcf(): mixed
-    {
-        global $acf;
-
-        if (!isset($acf)) {
-            throw new SmartlingConfigException('ACF plugin is not installed or activated.');
-        }
-
-        return $acf;
     }
 
     public function __construct(
@@ -108,237 +95,112 @@ class AcfDynamicSupport
     /**
      * @throws SmartlingDirectRunRuntimeException
      */
-    private function getDatabaseDefinitions(): array
+    private function loadDefinitions(): array
     {
         $defs = [];
-        $this->getLogger()->debug('Looking for ACF definitions in the database');
-        $blogsToSearch = $this->getBlogListForSearch();
-        foreach ($blogsToSearch as $blog) {
-            $this->getLogger()->debug(vsprintf('Collecting ACF definitions for blog = \'%s\'...', [$blog]));
+        $this->getLogger()->debug('Looking for ACF definitions via ACF API');
+        foreach ($this->getBlogListForSearch() as $blog) {
             try {
-                $this->getLogger()->debug(vsprintf('Looking for profiles for blog %s', [$blog]));
-                $applicableProfiles = $this->settingsManager->findEntityByMainLocale($blog);
-                if (0 === count($applicableProfiles)) {
-                    $this->getLogger()->debug(vsprintf('No suitable profile found for this blog %s', [$blog]));
-                } else {
-                    $groups = $this->getGroups($blog);
-                    if (0 < count($groups)) {
-                        foreach ($groups as $groupKey => $group) {
-                            $defs[$groupKey] = [
-                                'global_type' => 'group',
-                                'active' => 1,
-                            ];
-                        }
-                        foreach ($this->getFields($blog, array_map(static fn($item) => $item['post_id'], $groups)) as $fieldKey => $field) {
-                            $defs[$fieldKey] = [
-                                'global_type' => 'field',
-                                'type' => $field['type'],
-                            ];
-
-                            if ('clone' === $field['type']) {
-                                if (array_key_exists('clone', $field)) {
-                                    $defs[$fieldKey]['clone'] = $field['clone'];
-                                } else {
-                                    $this->getLogger()->debug('ACF field fieldType="clone" has no target. ' . json_encode($field));
-                                }
-                            }
-                        }
-                    }
+                if (0 === count($this->settingsManager->findEntityByMainLocale($blog))) {
+                    $this->getLogger()->debug("No suitable profile found for blog $blog");
+                    continue;
                 }
+                $defs = array_merge(
+                    $defs,
+                    $this->siteHelper->withBlog($blog, fn(): array => $this->collectAcfDefinitions()),
+                );
             } catch (\Exception $e) {
-                $this->getLogger()->warning(vsprintf('ACF Filter generation failed: %s', [$e->getMessage()]));
+                $this->getLogger()->warning("ACF Filter generation failed: {$e->getMessage()}");
             }
         }
 
         return $defs;
     }
 
-    protected function getGroups($blogId): array
+    public function getFilterConfiguration(string $key): ?array
     {
-        $dbGroups   = [];
-        $needChange = $this->siteHelper->getCurrentBlogId() !== $blogId;
-        try {
-            if ($needChange) {
-                $this->siteHelper->switchBlogId($blogId);
-            }
-            $dbGroups = $this->rawReadGroups();
-        } catch (\Exception $e) {
-            $this->getLogger()->warning(
-                vsprintf('Error occurred while reading ACF data from blog %s. Message: %s', [$blogId, $e->getMessage()])
-            );
-        } finally {
-            if ($needChange) {
-                $this->siteHelper->restoreBlogId();
-            }
-        }
-
-        return $dbGroups;
+        $this->runIfRequired();
+        return $this->filterConfigurations[$key] ?? null;
     }
 
-    /**
-     * Reads the list of groups from database
-     */
-    private function rawReadGroups(): array
-    {
-        $posts = (new \WP_Query(
-            [
-                'post_type' => self::POST_TYPE_GROUP,
-                'suppress_filters' => true,
-                'posts_per_page'   => -1,
-                'post_status'      => 'publish',
-            ]
-        ))->get_posts();
-
-        $groups = [];
-        foreach ($posts as $post) {
-            $groups[$post->post_name] = [
-                'title'   => $post->post_title,
-                'post_id' => $post->ID,
-            ];
-        }
-
-        return $groups;
-    }
-
-    private function rawReadFields($parentId): array
-    {
-        return $this->getFieldsFromPosts($this->getQueryByParentId($parentId)->get_posts());
-    }
-
-    private function getFields(int $blogId, array $parentIds): array
-    {
-        return $this->siteHelper->withBlog($blogId, function () use ($parentIds): array {
-            return $this->getFieldsFromPosts($this->getQueryByParentIds($parentIds)->get_posts());
-        });
-    }
-
-    protected function extractGroupsDefinitions(array $groups): array
+    private function collectAcfDefinitions(): array
     {
         $defs = [];
-        foreach ($groups as $group) {
+        foreach (acf_get_field_groups() as $group) {
+            if (!is_array($group) || !isset($group['key'])) {
+                continue;
+            }
             $defs[$group['key']] = [
                 'global_type' => 'group',
+                'active' => $group['active'] ?? 1,
             ];
-            if (array_key_exists('active', $group)) {
-                $defs[$group['key']]['active'] = $group['active'];
+            $groupId = (int)($group['ID'] ?? 0);
+            if ($groupId <= 0) {
+                // Local-only field group (no DB post) — children live only in the local store,
+                // which we intentionally don't read from. Skip child enumeration for this group.
+                continue;
+            }
+            foreach (acf_get_fields($group) as $field) {
+                $this->addAcfFieldToDefs($field, $defs);
             }
         }
 
         return $defs;
     }
 
-    protected function extractFieldDefinitions(array $fields): array
+    protected function addAcfFieldToDefs(array $field, array &$defs, int $depth = 0): void
     {
-        $defs = [];
-
-        foreach ($fields as $field) {
-            $defs[$field['key']] = [
-                'global_type' => 'field',
-                'type'        => $field['type'],
-                'name'        => $field['name'],
-                'parent'      => $field['parent'],
-            ];
-
-            if ('clone' === $field['type']) {
+        if (!isset($field['key'], $field['type'])) {
+            return;
+        }
+        if ($depth > self::MAX_ACF_FIELD_DEPTH) {
+            $this->getLogger()->error(sprintf(
+                'ACF field tree exceeded depth limit %d at field key "%s"; aborting recursion.',
+                self::MAX_ACF_FIELD_DEPTH,
+                $field['key'],
+            ));
+            return;
+        }
+        $defs[$field['key']] = ['global_type' => 'field', 'type' => $field['type']];
+        if ('clone' === $field['type']) {
+            if (array_key_exists('clone', $field)) {
                 $defs[$field['key']]['clone'] = $field['clone'];
+            } else {
+                $this->getLogger()->debug('ACF field fieldType="clone" has no target. ' . json_encode($field));
             }
         }
-
-        return $defs;
-    }
-
-    /**
-     * Get local definitions for ACF Pro ver < 5.7.12
-     */
-    private function getLocalDefinitionsOld(): array
-    {
-        $defs = [];
-        try {
-            $acf = (array)$this->getAcf();
-        } catch (SmartlingConfigException $e) {
-            $this->getLogger()->warning($e->getMessage());
-            $this->getLogger()->warning('Unable to load old type local ACF definitions.');
-
-            return $defs;
+        if (!in_array($field['type'], ['repeater', 'group', 'flexible_content'], true)) {
+            return;
         }
-
-        if (array_key_exists('local', $acf)) {
-            if ($acf['local'] instanceof \acf_local) {
-                $local = $acf['local'];
-
-                $defs = array_merge($defs, $this->extractGroupsDefinitions($local->groups));
-                $defs = array_merge($defs, $this->extractFieldDefinitions($local->fields));
-
+        if (isset($field['ID']) && (int)$field['ID'] > 0) {
+            foreach (acf_get_fields($field) as $child) {
+                $this->addAcfFieldToDefs($child, $defs, $depth + 1);
             }
         }
-
-        return $defs;
-    }
-
-    protected function validateAcfStores(): bool
-    {
-        global $acf_stores;
-
-        return is_array($acf_stores)
-            && array_key_exists('local-groups', $acf_stores)
-            && ($acf_stores['local-groups'] instanceof \ACF_Data)
-            && array_key_exists('local-fields', $acf_stores)
-            && ($acf_stores['local-fields'] instanceof \ACF_Data);
-    }
-
-    /**
-     * Get local definitions for ACF Pro ver 5.7.12+
-     */
-    private function getLocalDefinitionsNew(): array
-    {
-        $defs = [];
-
-        if ($this->validateAcfStores()) {
-            global $acf_stores;
-
-            $defs = array_merge($defs, $this->extractGroupsDefinitions($acf_stores['local-groups']->get_data()));
-            $defs = array_merge($defs, $this->extractFieldDefinitions($acf_stores['local-fields']->get_data()));
-
-        } else {
-            $this->getLogger()->warning('Unable to load new type local ACF definitions.');
-        }
-
-        return $defs;
-    }
-
-    /**
-     * Reads local (PHP and JSON) ACF Definitions
-     */
-    private function getLocalDefinitions(): array
-    {
-        $defs = $this->getLocalDefinitionsOld();
-
-        if (empty($defs)) {
-            $defs = $this->getLocalDefinitionsNew();
-        }
-
-        return $defs;
-    }
-
-    private function verifyDefinitions(array $localDefinitions, array $dbDefinitions): bool
-    {
-        foreach ($dbDefinitions as $key => $definition) {
-            if (!array_key_exists($key, $localDefinitions)) {
-                return false;
+        if (isset($field['sub_fields']) && is_array($field['sub_fields'])) {
+            foreach ($field['sub_fields'] as $child) {
+                $this->addAcfFieldToDefs($child, $defs, $depth + 1);
             }
-
-            if ($definition['global_type'] === 'field') {
-                $local = $localDefinitions[$key];
-                if ($local['type'] !== $definition['type']) {
-                    // ACF Option Pages has internal issue in definition, so skip it:
-                    if ('group_572b269b668a4' !== $local['parent']) {
-                        return false;
+        }
+        if (isset($field['layouts']) && is_array($field['layouts'])) {
+            foreach ($field['layouts'] as $layout) {
+                if (is_array($layout) && isset($layout['sub_fields']) && is_array($layout['sub_fields'])) {
+                    foreach ($layout['sub_fields'] as $child) {
+                        $this->addAcfFieldToDefs($child, $defs, $depth + 1);
                     }
                 }
             }
         }
+    }
 
-        return true;
+    public function getReferencedType(string $type): string
+    {
+        return match ($type) {
+            'image', 'image_aspect_ratio_crop', 'file', 'gallery' => self::REFERENCED_TYPE_MEDIA,
+            'post_object', 'page_link', 'relationship' => self::REFERENCED_TYPE_POST,
+            'taxonomy' => self::REFERENCED_TYPE_TAXONOMY,
+            default => self::REFERENCED_TYPE_NONE,
+        };
     }
 
     private function tryRegisterACFOptions(): void
@@ -439,31 +301,16 @@ class AcfDynamicSupport
         $this->getLogger()->debug('Checking if ACF presents...');
         if ($this->isAcfActive()) {
             $this->getLogger()->debug('ACF detected.');
-            $localDefinitions = $this->getLocalDefinitions();
-
             try {
-                $dbDefinitions = $this->getDatabaseDefinitions();
+                $this->definitions = $this->loadDefinitions();
             } catch (SmartlingDirectRunRuntimeException $e) {
-                $dbDefinitions = [];
+                $this->definitions = [];
                 DiagnosticsHelper::addDiagnosticsMessage(
-                    'Failed to get ACF definitions from database.' .
+                    'Failed to get ACF definitions. ' .
                     'Please ensure that WordPress network is set up properly.<br>' .
                     "Exception message: {$e->getMessage()}"
                 );
             }
-
-            if (false === $this->verifyDefinitions($localDefinitions, $dbDefinitions)) {
-                $url = admin_url('edit.php?post_type=acf-field-group&page=acf-tools');
-                $msg = [
-                    'ACF Configuration has been changed.',
-                    'Please update groups and fields definitions for all sites (As PHP generated code).',
-                    vsprintf('Use <strong><a href="%s">this</a></strong> page to generate export code and add it to your theme or extra plugin.',
-                        [$url]),
-                ];
-                DiagnosticsHelper::addDiagnosticsMessage(implode('<br/>', $msg));
-            }
-
-            $this->definitions = array_merge($localDefinitions, $dbDefinitions);
             $this->buildRules();
             $this->prepareFilters();
         } else {
@@ -475,6 +322,13 @@ class AcfDynamicSupport
     {
         $this->tryRegisterACFOptions();
         $this->tryRegisterACF();
+    }
+
+    private function runIfRequired(): void
+    {
+        if ($this->definitions === null) {
+            $this->run();
+        }
     }
 
     private function prepareFilters(): void
@@ -508,14 +362,12 @@ class AcfDynamicSupport
             }
         }
 
-        static::$acfReverseDefinitionAction = $rules;
+        $this->filterConfigurations = $rules;
     }
 
     public function getReplacerIdForField(array $attributes, string $key): ?string
     {
-        if ($this->definitions === null) {
-            $this->run();
-        }
+        $this->runIfRequired();
         $parts = array_reverse(explode(FieldsFilterHelper::ARRAY_DIVIDER, $key));
         if (is_numeric($parts[0]) && count($parts) > 1) {
             array_shift($parts);
@@ -535,19 +387,10 @@ class AcfDynamicSupport
         return null;
     }
 
-    public function getReferencedTypeByKey($key): string
+    public function getReferencedTypeByKey(string $key): string
     {
-        if ($this->definitions === null) {
-            $this->run();
-        }
-        $type = $this->definitions[$this->getRuleId($key)]['type'] ?? '';
-
-        return match ($type) {
-            'image', 'image_aspect_ratio_crop', 'file', 'gallery' => self::REFERENCED_TYPE_MEDIA,
-            'post_object', 'page_link', 'relationship' => self::REFERENCED_TYPE_POST,
-            'taxonomy' => self::REFERENCED_TYPE_TAXONOMY,
-            default => self::REFERENCED_TYPE_NONE,
-        };
+        $this->runIfRequired();
+        return $this->getReferencedType($this->definitions[$this->getRuleId($key)]['type'] ?? '');
     }
 
     public function removePreTranslationFields(array $data): array
@@ -555,9 +398,7 @@ class AcfDynamicSupport
         if (!array_key_exists('meta', $data)) {
             return $data;
         }
-        if ($this->definitions === null) {
-            $this->run();
-        }
+        $this->runIfRequired();
 
         foreach ($data['meta'] as $key => $value) {
             if (str_starts_with($key, '_') && in_array($value, $this->rules['copy'], true)) {
@@ -661,44 +502,5 @@ class AcfDynamicSupport
         preg_match_all(AcfTypeDetector::ACF_FIELD_GROUP_REGEX, $key, $matches);
 
         return array_pop($matches[0]) ?? $key;
-    }
-
-    private function getQueryByParentId($parentId): \WP_Query
-    {
-        return new \WP_Query(array_merge($this->getQueryArray(), ['post_parent' => $parentId]));
-    }
-
-    private function getQueryByParentIds(array $parentIds): \WP_Query
-    {
-        return new \WP_Query(array_merge($this->getQueryArray(), ['post_parent__in' => $parentIds]));
-    }
-
-    private function getQueryArray(): array
-    {
-        return [
-            'post_type' => self::POST_TYPE_FIELD,
-            'suppress_filters' => true,
-            'posts_per_page' => -1,
-            'post_status' => 'publish',
-        ];
-    }
-
-    private function getFieldsFromPosts(array $posts): array
-    {
-        $fields = [];
-        foreach ($posts as $post) {
-            $configuration = unserialize($post->post_content, ['allowed_classes' => false]);
-            $fieldData = ['type' => $configuration['type']];
-            if ($configuration['type'] === 'clone' && array_key_exists('clone', $configuration)) {
-                $fieldData['clone'] = $configuration['clone'];
-            }
-            $fields[$post->post_name] = $fieldData;
-            $subFields = $this->rawReadFields($post->ID);
-            if (0 < count($subFields)) {
-                $fields = array_merge($fields, $subFields);
-            }
-        }
-
-        return $fields;
     }
 }

@@ -609,8 +609,9 @@ services:
   acf.type.detector:
     class: Smartling\Extensions\Acf\AcfTypeDetector
     arguments:
-      - "@content.helper"
+      - "@acf.dynamic.support"
       - "@site.cache"
+      - "@content.helper"
 
   wp.translation.lock:
     class: Smartling\WP\Controller\TranslationLockController

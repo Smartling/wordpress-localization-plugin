@@ -42,12 +42,13 @@ class AcfTypeDetectorTest extends TestCase
         $cache->method('get')->willReturn(false);
         $x = $this->getMockBuilder(AcfTypeDetector::class)
             ->setConstructorArgs([
+                $this->createMock(AcfDynamicSupport::class),
+                $cache,
                 new ContentHelper(
                     $this->createMock(ContentEntitiesIOFactory::class),
                     $this->createMock(SiteHelper::class),
                     new WordpressFunctionProxyHelper()
                 ),
-                $cache,
             ])
             ->onlyMethods(["getProcessorByFieldKey"])
             ->getMock();
@@ -114,8 +115,15 @@ class AcfTypeDetectorTest extends TestCase
             '"entity\/post_content\/acf\/testimonial\/data\/_media":"field_5eb1344b55a84"}', true);
         self::assertInstanceOf(
             MediaBasedProcessor::class,
-            (new AcfTypeDetector(new ContentHelper($this->createMock(ContentEntitiesIOFactory::class), $siteHelper, new WordpressFunctionProxyHelper()), new WpObjectCache()))
-                ->getProcessorForGutenberg(array_keys($fields)[0], $fields)
+            (new AcfTypeDetector(
+                $ads,
+                new WpObjectCache(),
+                new ContentHelper(
+                    $this->createMock(ContentEntitiesIOFactory::class),
+                    $siteHelper,
+                    new WordpressFunctionProxyHelper(),
+                )
+            ))->getProcessorForGutenberg(array_keys($fields)[0], $fields)
         );
     }
 }
