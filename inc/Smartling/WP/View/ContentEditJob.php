@@ -234,7 +234,7 @@ if (!$isBulkSubmitPage) : ?>
     </div>
 </div>
 <?php endif; ?>
-
+</div>
 
 <?php
 $id       = 0;
