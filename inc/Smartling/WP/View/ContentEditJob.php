@@ -229,12 +229,12 @@ if (!$isBulkSubmitPage) : ?>
 
             </div>
 
-            <?php if ($needWrapper) : ?>
+            <?php if ($needWrapper && false) : ?>
         </div>
     </div>
 </div>
 <?php endif; ?>
-
+</div>
 
 <?php
 $id       = 0;
