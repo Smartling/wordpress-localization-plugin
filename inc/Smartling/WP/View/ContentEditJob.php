@@ -91,150 +91,135 @@ if (!$isBulkSubmitPage) : ?>
     let globalButton;
 </script>
 
-<?php if ($needWrapper && false) : ?>
-<div class="postbox-container" style="width: 550px">
-    <div id="panel-box" class="postbox hndle"><h2><span>Translate content</span></h2>
-        <div class="inside">
-            <?php endif; ?>
-
-            <div class="job-wizard">
-                <div id="placeholder"><span class="loader"></span> Please wait...</div>
-                <div id="tab-existing" class="tab-content hidden">
-                    <div id="job-tabs">
-                        <span class="active" data-action="new">New Job</span>
-                        <span data-action="existing">Existing Job</span>
-                        <?= $isBulkSubmitPage ? '' : '<span data-action="clone">Clone</span>'?>
-                    </div>
-                    <table>
-                        <tr id="jobList" class="hidden hideWhenCloning">
-                            <th>
-                                <label for="jobSelect">Existing jobs</label>
-                            </th>
-                            <td>
-                                <select id="jobSelect"></select>
-                            </td>
-                        </tr>
-                        <tr class="hideWhenCloning">
-                            <th><label for="name-sm">Name</label></th>
-                            <td><input id="name-sm" name="jobName" type="text"/></td>
-                        </tr>
-                        <tr class="hideWhenCloning">
-                            <th><label for="description-sm">Description</label</th>
-                            <td><textarea id="description-sm" name="description-sm"></textarea></td>
-                        </tr>
-                        <tr class="hideWhenCloning">
-                            <th><label for="dueDate">Due Date</label</th>
-                            <td><input type="text" id="dueDate" name="dueDate"/></td>
-                        </tr>
-                        <tr class="hideWhenCloning">
-                            <th><label for="cbAuthorize">Authorize Job</label</th>
-                            <td><input type="checkbox" class="authorize" id="cbAuthorize"
-                                       name="cbAuthorize" <?= $profile->getAutoAuthorize() ? 'checked="checked"' : '' ?>/>
-                            </td>
-                        </tr>
-
-                        <?php
-                        $contentType = $data['contentType'];
-
-                        $locales = $profile->getTargetLocales();
-                        ArrayHelper::sortLocales($locales);
-                        ?>
-                        <tr>
-                            <th>Target Locales</th>
-                            <td>
-                                <div>
-                                    <?= WPAbstract::checkUncheckBlock($widgetName) ?>
-                                </div>
-                                <div class="locale-list">
-                                    <?php
-
-                                    $localeList = [];
-
-                                    foreach ($locales as $locale) {
-                                        if (!$locale->isEnabled()) {
-                                            continue;
-                                        }
-
-                                        $localeList[] = $locale->getBlogId();
-                                        ?>
-                                        <p class="locale-list">
-                                            <?= WPAbstract::localeSelectionCheckboxBlock(
-                                                $widgetName,
-                                                $locale->getBlogId(),
-                                                $locale->getLabel(),
-                                                false,
-                                                true,
-                                                '',
-                                                [
-                                                    'data-smartling-locale' => $locale->getSmartlingLocale(),
-                                                ]
-                                            ) ?>
-                                        </p>
-                                    <?php } ?>
-                                    <script>
-                                        var localeList = "<?= implode(',', $localeList)?>";
-                                    </script>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Related content</th>
-                            <td>
-                                <?= HtmlTagGeneratorHelper::tag(
-                                    'select',
-                                    HtmlTagGeneratorHelper::renderSelectOptions(
-                                        GlobalSettingsManager::getRelatedContentSelectState(),
-                                        [
-                                            0 => 'Don\'t send  related content',
-                                            1 => 'Send related content one level deep',
-                                            2 => 'Send related content two levels deep',
-                                        ]
-                                    ),
-                                    [
-                                        'id' => 'depth',
-                                        'name' => 'depth',
-                                    ],
-                                )?>
-                            </td>
-                        </tr>
-                        <tr id="relationsInfo">
-                            <th>Related content to be uploaded:</th>
-                            <td id="relatedContent">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th class="center" colspan="2">
-                                <div id="error-messages"></div>
-                                <div id="progress-indicator" class="hidden" style="margin: 10px 0;">
-                                    <div style="background: #f0f0f0; border-radius: 4px; overflow: hidden; height: 20px;">
-                                        <div id="progress-bar" style="background: #2271b1; height: 100%; width: 0; transition: width 0.3s;"></div>
-                                    </div>
-                                    <div id="progress-text" style="margin-top: 5px; font-size: 12px;"></div>
-                                </div>
-                                <div id="loader-image" class="hidden"><span class="loader"></span></div>
-                                <button class="button button-primary components-button is-primary" id="createJob"
-                                        title="Create a new job and add content into it">Create Job
-                                </button>
-                                <button class="button button-primary components-button is-primary hidden" id="addToJob"
-                                        title="Add content into your chosen job">Add to selected Job
-                                </button>
-                                <button class="button button-primary components-button is-primary hidden" id="cloneButton">Clone</button>
-                            </th>
-                        </tr>
-                        <input type="hidden" id="timezone-sm" name="timezone-sm" value="UTC"/>
-                    </table>
-
-                </div>
-
-
+    <div class="job-wizard">
+        <div id="placeholder"><span class="loader"></span> Please wait...</div>
+        <div id="tab-existing" class="tab-content hidden">
+            <div id="job-tabs">
+                <span class="active" data-action="new">New Job</span>
+                <span data-action="existing">Existing Job</span>
+                <?= $isBulkSubmitPage ? '' : '<span data-action="clone">Clone</span>'?>
             </div>
+            <table>
+                <tr id="jobList" class="hidden hideWhenCloning">
+                    <th>
+                        <label for="jobSelect">Existing jobs</label>
+                    </th>
+                    <td>
+                        <select id="jobSelect"></select>
+                    </td>
+                </tr>
+                <tr class="hideWhenCloning">
+                    <th><label for="name-sm">Name</label></th>
+                    <td><input id="name-sm" name="jobName" type="text"/></td>
+                </tr>
+                <tr class="hideWhenCloning">
+                    <th><label for="description-sm">Description</label</th>
+                    <td><textarea id="description-sm" name="description-sm"></textarea></td>
+                </tr>
+                <tr class="hideWhenCloning">
+                    <th><label for="dueDate">Due Date</label</th>
+                    <td><input type="text" id="dueDate" name="dueDate"/></td>
+                </tr>
+                <tr class="hideWhenCloning">
+                    <th><label for="cbAuthorize">Authorize Job</label</th>
+                    <td><input type="checkbox" class="authorize" id="cbAuthorize"
+                               name="cbAuthorize" <?= $profile->getAutoAuthorize() ? 'checked="checked"' : '' ?>/>
+                    </td>
+                </tr>
 
-            <?php if ($needWrapper) : ?>
+                <?php
+                $contentType = $data['contentType'];
+
+                $locales = $profile->getTargetLocales();
+                ArrayHelper::sortLocales($locales);
+                ?>
+                <tr>
+                    <th>Target Locales</th>
+                    <td>
+                        <div>
+                            <?= WPAbstract::checkUncheckBlock($widgetName) ?>
+                        </div>
+                        <div class="locale-list">
+                            <?php
+
+                            $localeList = [];
+
+                            foreach ($locales as $locale) {
+                                if (!$locale->isEnabled()) {
+                                    continue;
+                                }
+
+                                $localeList[] = $locale->getBlogId();
+                                ?>
+                                <p class="locale-list">
+                                    <?= WPAbstract::localeSelectionCheckboxBlock(
+                                        $widgetName,
+                                        $locale->getBlogId(),
+                                        $locale->getLabel(),
+                                        false,
+                                        true,
+                                        '',
+                                        [
+                                            'data-smartling-locale' => $locale->getSmartlingLocale(),
+                                        ]
+                                    ) ?>
+                                </p>
+                            <?php } ?>
+                            <script>
+                                var localeList = "<?= implode(',', $localeList)?>";
+                            </script>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Related content</th>
+                    <td>
+                        <?= HtmlTagGeneratorHelper::tag(
+                            'select',
+                            HtmlTagGeneratorHelper::renderSelectOptions(
+                                GlobalSettingsManager::getRelatedContentSelectState(),
+                                [
+                                    0 => 'Don\'t send  related content',
+                                    1 => 'Send related content one level deep',
+                                    2 => 'Send related content two levels deep',
+                                ]
+                            ),
+                            [
+                                'id' => 'depth',
+                                'name' => 'depth',
+                            ],
+                        )?>
+                    </td>
+                </tr>
+                <tr id="relationsInfo">
+                    <th>Related content to be uploaded:</th>
+                    <td id="relatedContent">
+                    </td>
+                </tr>
+                <tr>
+                    <th class="center" colspan="2">
+                        <div id="error-messages"></div>
+                        <div id="progress-indicator" class="hidden" style="margin: 10px 0;">
+                            <div style="background: #f0f0f0; border-radius: 4px; overflow: hidden; height: 20px;">
+                                <div id="progress-bar" style="background: #2271b1; height: 100%; width: 0; transition: width 0.3s;"></div>
+                            </div>
+                            <div id="progress-text" style="margin-top: 5px; font-size: 12px;"></div>
+                        </div>
+                        <div id="loader-image" class="hidden"><span class="loader"></span></div>
+                        <button class="button button-primary components-button is-primary" id="createJob"
+                                title="Create a new job and add content into it">Create Job
+                        </button>
+                        <button class="button button-primary components-button is-primary hidden" id="addToJob"
+                                title="Add content into your chosen job">Add to selected Job
+                        </button>
+                        <button class="button button-primary components-button is-primary hidden" id="cloneButton">Clone</button>
+                    </th>
+                </tr>
+                <input type="hidden" id="timezone-sm" name="timezone-sm" value="UTC"/>
+            </table>
         </div>
     </div>
 </div>
-<?php endif; ?>
-
 
 <?php
 $id       = 0;
