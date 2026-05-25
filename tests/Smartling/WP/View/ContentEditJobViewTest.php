@@ -64,7 +64,7 @@ class ContentEditJobViewTest extends TestCase
         );
 
         $source = preg_replace_callback(
-            '#<\?php\s+if\s*\(\s*!\$isBulkSubmitPage\s*\)\s*:\s*\?>((?:(?!<\?php\s+endif).)*)<\?php\s+endif\s*;\s*\?>#s',
+            '#<\?php\s.*?if\s*\(\s*!\$isBulkSubmitPage\s*\)\s*:\s*\?>((?:(?!<\?php\s+endif).)*)<\?php\s+endif\s*;\s*\?>#s',
             static fn(array $m): string => $isBulkSubmitPage ? '' : $m[1],
             $source
         );
