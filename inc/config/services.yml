@@ -11,6 +11,16 @@ services:
     arguments:
       - "%known.attachment.rules%"
 
+  json.field.rules.manager:
+    class: Smartling\Tuner\JsonFieldRulesManager
+
+  content.json.rules:
+    class: Smartling\ContentTypes\ExternalContentJsonRules
+    arguments:
+      - "@json.field.rules.manager"
+      - "@factory.replacer"
+      - "@wp.proxy"
+
   persistent.notices.manager:
     class: Smartling\Helpers\AdminNoticesHelper
 
@@ -261,6 +271,7 @@ services:
       - ["addHandler", ["@content.elementor4"]]
       - ["addHandler", ["@content.gravity.forms"]]
       - ["addHandler", ["@content.yoast"]]
+      - ["addHandler", ["@content.json.rules"]]
 
   manager.job:
     class: Smartling\Jobs\JobManager
@@ -554,6 +565,9 @@ services:
     arguments:
       - "@media.attachment.rules.manager"
       - "@factory.replacer"
+      - "@json.field.rules.manager"
+      - "@plugin.info"
+      - "@wp.proxy"
 
   duplicate.submissions.cleaner:
     class: Smartling\WP\Controller\DuplicateSubmissionsCleaner
