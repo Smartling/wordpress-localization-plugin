@@ -55,30 +55,6 @@ class JsonFieldRulesManagerTest extends TestCase
         $this->assertCount(1, $m->listItems());
     }
 
-    public function testGetRulesForFiltersByContentTypeAndMetaKey(): void
-    {
-        $m = new JsonFieldRulesManager();
-        $m->add(['contentType' => 'page', 'metaKey' => '_elementor_data', 'propertyPath' => '$.a', 'replacerId' => 'copy']);
-        $m->add(['contentType' => 'post', 'metaKey' => '_elementor_data', 'propertyPath' => '$.b', 'replacerId' => 'copy']);
-        $m->add(['contentType' => 'page', 'metaKey' => '_other_field',    'propertyPath' => '$.c', 'replacerId' => 'copy']);
-
-        $rules = $m->getRulesFor('page', '_elementor_data');
-
-        $this->assertCount(1, $rules);
-        $rule = array_values($rules)[0];
-        $this->assertSame('$.a', $rule->getPropertyPath());
-    }
-
-    public function testGetRulesForWildcardContentType(): void
-    {
-        $m = new JsonFieldRulesManager();
-        $m->add(['contentType' => '*', 'metaKey' => '_elementor_data', 'propertyPath' => '$.a', 'replacerId' => 'copy']);
-
-        $this->assertCount(1, $m->getRulesFor('page', '_elementor_data'));
-        $this->assertCount(1, $m->getRulesFor('post', '_elementor_data'));
-        $this->assertCount(0, $m->getRulesFor('page', '_other'));
-    }
-
     public function testRemoveItem(): void
     {
         $m = new JsonFieldRulesManager();

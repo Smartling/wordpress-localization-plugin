@@ -161,6 +161,54 @@ class ExternalContentJsonRulesTest extends TestCase
         $this->assertSame(220, $decoded['elements'][1]['settings']['image']['id']);
     }
 
+    public function testSetContentFieldsPreservesPriorHandlerTranslationsOnSameKey(): void
+    {
+        $sourceJson = json_encode([
+            'elements' => [
+                ['settings' => ['title' => 'Hello', 'subtitle' => 'World']],
+            ],
+        ]);
+        // Simulates the JSON that an upstream handler (e.g. Elementor) wrote into
+        // $translation['meta']['_elementor_data'] before JsonRules ran:
+        // BOTH title AND subtitle already translated.
+        $priorTranslationJson = json_encode([
+            'elements' => [
+                ['settings' => ['title' => 'Elementor-Hola', 'subtitle' => 'Elementor-Mundo']],
+            ],
+        ]);
+        $manager = $this->mockRulesManager([
+            // JsonRules user configured a rule only for title, not subtitle.
+            $this->rule('page', '_elementor_data', '$.elements[*].settings.title', 'translate'),
+        ]);
+        $submission = $this->submission('page', 100);
+        $engine = $this->buildEngine($manager);
+
+        $translation = [
+            ExternalContentJsonRules::PLUGIN_ID => [
+                '_elementor_data|$.elements[*].settings.title|0' => 'JsonRules-Hola',
+            ],
+            'meta' => [
+                '_elementor_data' => $priorTranslationJson,
+            ],
+        ];
+        $original = ['meta' => ['_elementor_data' => $sourceJson]];
+
+        $result = $engine->setContentFields($original, $translation, $submission);
+
+        $this->assertIsArray($result);
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $this->assertSame(
+            'JsonRules-Hola',
+            $decoded['elements'][0]['settings']['title'],
+            'JsonRules rule should overwrite the title',
+        );
+        $this->assertSame(
+            'Elementor-Mundo',
+            $decoded['elements'][0]['settings']['subtitle'],
+            "Prior handler's translation on a path WITHOUT a JsonRules rule must survive",
+        );
+    }
+
     public function testRemoveUntranslatableFieldsStripsCoveredMetaKeys(): void
     {
         $manager = $this->mockRulesManager([

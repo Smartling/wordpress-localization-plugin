@@ -55,7 +55,7 @@
         if (/^[A-Za-z_][\w]*$/.test(segment)) {
             return prefix === '$' ? `$.${segment}` : `${prefix}.${segment}`;
         }
-        return `${prefix}['${segment.replace(/'/g, "\\'")}']`;
+        return `${prefix}['${segment.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}']`;
     }
 
     function valueIsLeaf(value) {

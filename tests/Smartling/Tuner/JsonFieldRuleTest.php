@@ -34,16 +34,4 @@ class JsonFieldRuleTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         JsonFieldRule::fromArray(['contentType' => 'page']);
     }
-
-    public function testStringRoundTrip(): void
-    {
-        $rule = new JsonFieldRule('page', '_elementor_data', '$.x', 'copy');
-        $this->assertEquals($rule, JsonFieldRule::fromString((string)$rule));
-    }
-
-    public function testFromStringInvalidThrows(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        JsonFieldRule::fromString('not a rule');
-    }
 }

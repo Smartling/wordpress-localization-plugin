@@ -39,24 +39,4 @@ class JsonFieldRulesManager extends CustomizationManagerAbstract
         }
         return $result;
     }
-
-    /**
-     * @return JsonFieldRule[]
-     */
-    public function getRulesFor(string $contentType, string $metaKey): array
-    {
-        $result = [];
-        foreach ($this->listItems() as $id => $rule) {
-            if ($rule->getContentType() !== '*' && $rule->getContentType() !== $contentType) {
-                continue;
-            }
-            $rulePattern = $rule->getMetaKey();
-            $matches = $rulePattern === $metaKey
-                || @preg_match('~^' . $rulePattern . '$~', $metaKey) === 1;
-            if ($matches) {
-                $result[$id] = $rule;
-            }
-        }
-        return $result;
-    }
 }
