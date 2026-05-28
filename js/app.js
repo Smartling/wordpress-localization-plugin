@@ -437,6 +437,22 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
 
                     relations.length > 0 && el('fieldset', { style: { marginTop: '16px', border: '1px solid #ddd', padding: '12px', borderRadius: '4px' } },
                         el('legend', { style: { fontWeight: 600, padding: '0 8px' } }, 'Related content to be uploaded'),
+                        el('div', { style: { display: 'flex', gap: '8px', marginBottom: '8px' } },
+                            el(Button, {
+                                variant: 'secondary',
+                                size: 'small',
+                                onClick: () => {
+                                    const all = {};
+                                    relations.forEach(r => { all[`${r.contentType}-${r.id}`] = true; });
+                                    setSelectedRelations(all);
+                                }
+                            }, 'Check All'),
+                            el(Button, {
+                                variant: 'secondary',
+                                size: 'small',
+                                onClick: () => setSelectedRelations({})
+                            }, 'Uncheck All')
+                        ),
                         el('div', { style: { maxHeight: '200px', overflowY: 'auto' } },
                             relations.map(rel => {
                                 const key = `${rel.contentType}-${rel.id}`;
