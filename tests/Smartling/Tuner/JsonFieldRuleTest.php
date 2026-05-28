@@ -9,8 +9,7 @@ class JsonFieldRuleTest extends TestCase
 {
     public function testConstructAndGetters(): void
     {
-        $rule = new JsonFieldRule('page', '_elementor_data', '$.elements[*].settings.title', 'translate');
-        $this->assertSame('page', $rule->getContentType());
+        $rule = new JsonFieldRule('_elementor_data', '$.elements[*].settings.title', 'translate');
         $this->assertSame('_elementor_data', $rule->getMetaKey());
         $this->assertSame('$.elements[*].settings.title', $rule->getPropertyPath());
         $this->assertSame('translate', $rule->getReplacerId());
@@ -18,10 +17,9 @@ class JsonFieldRuleTest extends TestCase
 
     public function testToArrayAndFromArray(): void
     {
-        $rule = new JsonFieldRule('page', '_elementor_data', '$.x', 'related|attachment');
+        $rule = new JsonFieldRule('_elementor_data', '$.x', 'related|attachment');
         $arr = $rule->toArray();
         $this->assertSame([
-            'contentType' => 'page',
             'metaKey' => '_elementor_data',
             'propertyPath' => '$.x',
             'replacerId' => 'related|attachment',
@@ -32,6 +30,19 @@ class JsonFieldRuleTest extends TestCase
     public function testFromArrayMissingKeyThrows(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        JsonFieldRule::fromArray(['contentType' => 'page']);
+        JsonFieldRule::fromArray(['metaKey' => '_elementor_data']);
+    }
+
+    public function testFromArrayIgnoresLegacyContentTypeField(): void
+    {
+        $rule = JsonFieldRule::fromArray([
+            'contentType' => 'page',
+            'metaKey' => '_elementor_data',
+            'propertyPath' => '$.x',
+            'replacerId' => 'copy',
+        ]);
+        $this->assertSame('_elementor_data', $rule->getMetaKey());
+        $this->assertSame('$.x', $rule->getPropertyPath());
+        $this->assertSame('copy', $rule->getReplacerId());
     }
 }

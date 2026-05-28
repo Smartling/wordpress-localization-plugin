@@ -17,6 +17,7 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
     public const ACTION_LIST_RULES = 'smartling_visual_configurator_list_rules';
     public const ACTION_SAVE_RULE = 'smartling_visual_configurator_save_rule';
     public const ACTION_DELETE_RULE = 'smartling_visual_configurator_delete_rule';
+    public const ACTION_RESOLVE_TYPE = 'smartling_visual_configurator_resolve_type';
 
     public function __construct(
         private JsonFieldRulesManager $rulesManager,
@@ -34,6 +35,7 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
         $this->wpProxy->add_action('wp_ajax_' . self::ACTION_LIST_RULES, [$this, 'ajaxListRules']);
         $this->wpProxy->add_action('wp_ajax_' . self::ACTION_SAVE_RULE, [$this, 'ajaxSaveRule']);
         $this->wpProxy->add_action('wp_ajax_' . self::ACTION_DELETE_RULE, [$this, 'ajaxDeleteRule']);
+        $this->wpProxy->add_action('wp_ajax_' . self::ACTION_RESOLVE_TYPE, [$this, 'ajaxResolveType']);
     }
 
     public function menu(): void
@@ -80,6 +82,7 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
                 'list' => self::ACTION_LIST_RULES,
                 'save' => self::ACTION_SAVE_RULE,
                 'delete' => self::ACTION_DELETE_RULE,
+                'resolveType' => self::ACTION_RESOLVE_TYPE,
             ],
         ]);
         wp_enqueue_style('wp-components');
@@ -107,7 +110,6 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
         }
 
         $data = (new JsonFieldRule(
-            $payload['contentType'],
             $payload['metaKey'],
             $payload['propertyPath'],
             $payload['replacerId'],
@@ -130,6 +132,22 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
         $this->rulesManager->saveData();
 
         $this->wpProxy->wp_send_json_success(['rule' => ['id' => $id] + $data]);
+    }
+
+    public function ajaxResolveType(): void
+    {
+        $this->verifyNonce();
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        if ($id <= 0) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Missing or invalid id'], 400);
+            return;
+        }
+        $type = $this->wpProxy->get_post_type($id);
+        if ($type === false || $type === '' || $type === null) {
+            $this->wpProxy->wp_send_json_error(['message' => "No post found with id $id"], 404);
+            return;
+        }
+        $this->wpProxy->wp_send_json_success(['type' => $type]);
     }
 
     public function ajaxDeleteRule(): void
@@ -156,7 +174,7 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
     }
 
     /**
-     * @return array{contentType:string,metaKey:string,propertyPath:string,replacerId:string}
+     * @return array{metaKey:string,propertyPath:string,replacerId:string}
      */
     private function readRulePayload(): array
     {
@@ -167,13 +185,12 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
             return $this->wpProxy->sanitize_text_field($this->wpProxy->wp_unslash($_POST[$key]));
         };
         $payload = [
-            'contentType' => $get('contentType'),
             'metaKey' => $get('metaKey'),
             'propertyPath' => $get('propertyPath'),
             'replacerId' => $get('replacerId'),
         ];
         foreach ($payload as $k => $v) {
-            if ($k !== 'contentType' && $v === '') {
+            if ($v === '') {
                 throw new \InvalidArgumentException("Field cannot be empty: $k");
             }
         }

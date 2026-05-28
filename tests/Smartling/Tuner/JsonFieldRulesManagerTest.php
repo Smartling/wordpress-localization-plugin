@@ -23,7 +23,6 @@ class JsonFieldRulesManagerTest extends TestCase
     {
         $m = new JsonFieldRulesManager();
         $id = $m->add([
-            'contentType' => 'page',
             'metaKey' => '_elementor_data',
             'propertyPath' => '$.x',
             'replacerId' => 'copy',
@@ -33,7 +32,6 @@ class JsonFieldRulesManagerTest extends TestCase
         $items = $m->listItems();
         $this->assertArrayHasKey($id, $items);
         $this->assertInstanceOf(JsonFieldRule::class, $items[$id]);
-        $this->assertSame('page', $items[$id]->getContentType());
         $this->assertSame('_elementor_data', $items[$id]->getMetaKey());
         $this->assertSame('$.x', $items[$id]->getPropertyPath());
         $this->assertSame('copy', $items[$id]->getReplacerId());
@@ -43,7 +41,6 @@ class JsonFieldRulesManagerTest extends TestCase
     {
         $m = new JsonFieldRulesManager();
         $data = [
-            'contentType' => 'page',
             'metaKey' => '_elementor_data',
             'propertyPath' => '$.x',
             'replacerId' => 'copy',
@@ -58,7 +55,7 @@ class JsonFieldRulesManagerTest extends TestCase
     public function testRemoveItem(): void
     {
         $m = new JsonFieldRulesManager();
-        $id = $m->add(['contentType' => 'page', 'metaKey' => '_elementor_data', 'propertyPath' => '$.a', 'replacerId' => 'copy']);
+        $id = $m->add(['metaKey' => '_elementor_data', 'propertyPath' => '$.a', 'replacerId' => 'copy']);
         $this->assertCount(1, $m->listItems());
 
         $m->removeItem($id);

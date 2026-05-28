@@ -23,14 +23,16 @@ class ExternalContentJsonRulesTest extends TestCase
         WordpressFunctionsMockHelper::injectFunctionsMocks();
     }
 
-    public function testGetSupportLevelSupportedWhenRulesMatch(): void
+    public function testGetSupportLevelSupportedWhenAnyRuleExists(): void
     {
         $manager = $this->mockRulesManager([
-            $this->rule('page', '_elementor_data', '$.title', 'translate'),
+            $this->rule('_elementor_data', '$.title', 'translate'),
         ]);
         $engine = $this->buildEngine($manager);
 
         $this->assertSame(Pluggable::SUPPORTED, $engine->getSupportLevel('page'));
+        $this->assertSame(Pluggable::SUPPORTED, $engine->getSupportLevel('post'));
+        $this->assertSame(Pluggable::SUPPORTED, $engine->getSupportLevel('custom_post_type'));
     }
 
     public function testGetSupportLevelNotSupportedWhenNoRules(): void
@@ -39,25 +41,6 @@ class ExternalContentJsonRulesTest extends TestCase
         $engine = $this->buildEngine($manager);
 
         $this->assertSame(Pluggable::NOT_SUPPORTED, $engine->getSupportLevel('page'));
-    }
-
-    public function testGetSupportLevelNotSupportedForUnrelatedContentType(): void
-    {
-        $manager = $this->mockRulesManager([
-            $this->rule('post', '_elementor_data', '$.title', 'translate'),
-        ]);
-        $engine = $this->buildEngine($manager);
-
-        $this->assertSame(Pluggable::NOT_SUPPORTED, $engine->getSupportLevel('page'));
-    }
-
-    public function testGetSupportLevelSupportedForWildcardRule(): void
-    {
-        $manager = $this->mockRulesManager([
-            $this->rule('*', '_meta', '$.x', 'copy'),
-        ]);
-
-        $this->assertSame(Pluggable::SUPPORTED, $this->buildEngine($manager)->getSupportLevel('anytype'));
     }
 
     public function testGetContentFieldsExtractsTranslateStringsOnly(): void
@@ -69,9 +52,9 @@ class ExternalContentJsonRulesTest extends TestCase
             ],
         ]);
         $manager = $this->mockRulesManager([
-            $this->rule('page', '_elementor_data', '$.elements[*].settings.title', 'translate'),
-            $this->rule('page', '_elementor_data', '$.elements[*].settings.id',    'related|attachment'),
-            $this->rule('page', '_elementor_data', '$.foo',                        'copy'),
+            $this->rule('_elementor_data', '$.elements[*].settings.title', 'translate'),
+            $this->rule('_elementor_data', '$.elements[*].settings.id',    'related|attachment'),
+            $this->rule('_elementor_data', '$.foo',                        'copy'),
         ]);
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $wpProxy->method('getPostMeta')->willReturn($json);
@@ -96,7 +79,7 @@ class ExternalContentJsonRulesTest extends TestCase
             ],
         ]);
         $manager = $this->mockRulesManager([
-            $this->rule('page', '_elementor_data', '$.elements[*].settings.image.id', 'related|attachment'),
+            $this->rule('_elementor_data', '$.elements[*].settings.image.id', 'related|attachment'),
         ]);
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $wpProxy->method('getPostMeta')->willReturn($json);
@@ -116,8 +99,8 @@ class ExternalContentJsonRulesTest extends TestCase
             ],
         ]);
         $manager = $this->mockRulesManager([
-            $this->rule('page', '_elementor_data', '$.elements[*].settings.title', 'translate'),
-            $this->rule('page', '_elementor_data', '$.elements[*].settings.image.id', 'related|attachment'),
+            $this->rule('_elementor_data', '$.elements[*].settings.title', 'translate'),
+            $this->rule('_elementor_data', '$.elements[*].settings.image.id', 'related|attachment'),
         ]);
         $submission = $this->submission('page', 100);
 
@@ -178,7 +161,7 @@ class ExternalContentJsonRulesTest extends TestCase
         ]);
         $manager = $this->mockRulesManager([
             // JsonRules user configured a rule only for title, not subtitle.
-            $this->rule('page', '_elementor_data', '$.elements[*].settings.title', 'translate'),
+            $this->rule('_elementor_data', '$.elements[*].settings.title', 'translate'),
         ]);
         $submission = $this->submission('page', 100);
         $engine = $this->buildEngine($manager);
@@ -209,10 +192,57 @@ class ExternalContentJsonRulesTest extends TestCase
         );
     }
 
+    public function testWildcardArrayIndicesMatchAllOccurrencesAcrossLevels(): void
+    {
+        // Simulates the Elementor _elementor_data shape: a top-level array of sections,
+        // each holding an array of widgets. We use a doubly-nested wildcard path —
+        // exactly what the UI now emits.
+        $json = json_encode([
+            ['elements' => [
+                ['settings' => ['title' => 'A1']],
+                ['settings' => ['title' => 'A2']],
+            ]],
+            ['elements' => [
+                ['settings' => ['title' => 'B1']],
+            ]],
+        ]);
+        $manager = $this->mockRulesManager([
+            $this->rule('_elementor_data', '$[*].elements[*].settings.title', 'translate'),
+        ]);
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('getPostMeta')->willReturn($json);
+        $engine = $this->buildEngine($manager, $wpProxy);
+        $submission = $this->submission('page', 100);
+
+        $extracted = $engine->getContentFields($submission, false);
+        $this->assertCount(3, $extracted, 'wildcard at both levels should extract all 3 titles');
+        $this->assertContains('A1', $extracted);
+        $this->assertContains('A2', $extracted);
+        $this->assertContains('B1', $extracted);
+
+        // Feed translations back and confirm they land at every position the wildcard matched.
+        $translation = [
+            ExternalContentJsonRules::PLUGIN_ID => array_combine(
+                array_keys($extracted),
+                ['A1-T', 'A2-T', 'B1-T'],
+            ),
+            'meta' => [],
+        ];
+        $original = ['meta' => ['_elementor_data' => $json]];
+
+        $result = $engine->setContentFields($original, $translation, $submission);
+
+        $this->assertIsArray($result);
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $this->assertSame('A1-T', $decoded[0]['elements'][0]['settings']['title']);
+        $this->assertSame('A2-T', $decoded[0]['elements'][1]['settings']['title']);
+        $this->assertSame('B1-T', $decoded[1]['elements'][0]['settings']['title']);
+    }
+
     public function testRemoveUntranslatableFieldsStripsCoveredMetaKeys(): void
     {
         $manager = $this->mockRulesManager([
-            $this->rule('page', '_elementor_data', '$.x', 'translate'),
+            $this->rule('_elementor_data', '$.x', 'translate'),
         ]);
         $engine = $this->buildEngine($manager);
 
@@ -226,9 +256,9 @@ class ExternalContentJsonRulesTest extends TestCase
         $this->assertSame('preserved', $result['entity']['post_content']);
     }
 
-    private function rule(string $contentType, string $metaKey, string $path, string $replacerId): JsonFieldRule
+    private function rule(string $metaKey, string $path, string $replacerId): JsonFieldRule
     {
-        return new JsonFieldRule($contentType, $metaKey, $path, $replacerId);
+        return new JsonFieldRule($metaKey, $path, $replacerId);
     }
 
     /**

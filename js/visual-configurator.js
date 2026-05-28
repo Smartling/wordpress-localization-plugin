@@ -6,6 +6,7 @@
         Card,
         CardBody,
         CardHeader,
+        Modal,
         Notice,
         SelectControl,
         Spinner,
@@ -50,7 +51,10 @@
 
     function joinPath(prefix, segment) {
         if (typeof segment === 'number' || /^\d+$/.test(segment)) {
-            return `${prefix}[${segment}]`;
+            // Emit a wildcard for array indices: clicking one element should produce
+            // a rule that applies to every sibling at the same position, which is what
+            // dynamic JSON blobs (Elementor widgets, etc.) need.
+            return `${prefix}[*]`;
         }
         if (/^[A-Za-z_][\w]*$/.test(segment)) {
             return prefix === '$' ? `$.${segment}` : `${prefix}.${segment}`;
@@ -70,7 +74,7 @@
         return String(value);
     }
 
-    function JsonNode({ value, path, metaKey, contentType, onAddRule, rulesByPath, depth = 0 }) {
+    function JsonNode({ value, path, metaKey, onAddRule, rulesByPath, depth = 0 }) {
         const [expanded, setExpanded] = useState(depth < 2);
         if (valueIsLeaf(value)) {
             const existing = rulesByPath[path];
@@ -94,7 +98,7 @@
                           Button,
                           {
                               variant: 'link',
-                              onClick: () => onAddRule({ path, metaKey, contentType, value, isString, isNumeric }),
+                              onClick: () => onAddRule({ path, metaKey, value, isString, isNumeric }),
                           },
                           'Add rule',
                       ),
@@ -133,7 +137,6 @@
                                 value: v,
                                 path: joinPath(path, k),
                                 metaKey,
-                                contentType,
                                 onAddRule,
                                 rulesByPath,
                                 depth: depth + 1,
@@ -144,7 +147,7 @@
         );
     }
 
-    function MetaField({ name, value, contentType, onAddRule, rulesByPath }) {
+    function MetaField({ name, value, onAddRule, rulesByPath }) {
         const parsed = tryParseJson(value);
         return el(
             Card,
@@ -158,7 +161,6 @@
                           value: parsed,
                           path: '$',
                           metaKey: name,
-                          contentType,
                           onAddRule,
                           rulesByPath,
                       })
@@ -184,7 +186,6 @@
                                             onAddRule({
                                                 path: '',
                                                 metaKey: name,
-                                                contentType,
                                                 value,
                                                 isString: typeof value === 'string',
                                                 isNumeric: typeof value === 'number' || /^\d+$/.test(String(value)),
@@ -203,43 +204,45 @@
         if (!draft) return null;
         const composedReplacerId = replacerId === 'related' ? `related|${refType}` : replacerId;
         return el(
-            Card,
-            { style: { marginTop: 12, border: '2px solid #0073aa' } },
-            el(CardHeader, null, 'Add rule for ', el('code', null, draft.metaKey + (draft.path ? ' ' + draft.path : ''))),
-            el(
-                CardBody,
-                null,
-                el(VStack, { spacing: 3 },
-                    buildReplacerSelect(replacerId, setReplacerId),
-                    replacerId === 'related'
-                        ? el(SelectControl, {
-                              label: 'Referenced content type',
-                              value: refType,
-                              options: REFERENCED_CONTENT_TYPES,
-                              onChange: setRefType,
-                          })
-                        : null,
-                    el('div', null,
-                        el(Button, {
-                            variant: 'primary',
-                            disabled: !replacerId,
-                            onClick: () => onSave({
-                                contentType: draft.contentType,
-                                metaKey: draft.metaKey,
-                                propertyPath: draft.path,
-                                replacerId: composedReplacerId,
-                            }),
-                        }, 'Save rule'),
-                        ' ',
-                        el(Button, { variant: 'secondary', onClick: onCancel }, 'Cancel'),
-                    ),
+            Modal,
+            {
+                title: 'Add rule',
+                onRequestClose: onCancel,
+                shouldCloseOnClickOutside: false,
+                style: { maxWidth: 520 },
+            },
+            el('p', null,
+                'Target: ',
+                el('code', null, draft.metaKey + (draft.path ? ' ' + draft.path : '')),
+            ),
+            el(VStack, { spacing: 3 },
+                buildReplacerSelect(replacerId, setReplacerId),
+                replacerId === 'related'
+                    ? el(SelectControl, {
+                          label: 'Referenced content type',
+                          value: refType,
+                          options: REFERENCED_CONTENT_TYPES,
+                          onChange: setRefType,
+                      })
+                    : null,
+                el('div', null,
+                    el(Button, {
+                        variant: 'primary',
+                        disabled: !replacerId,
+                        onClick: () => onSave({
+                            metaKey: draft.metaKey,
+                            propertyPath: draft.path,
+                            replacerId: composedReplacerId,
+                        }),
+                    }, 'Save rule'),
+                    ' ',
+                    el(Button, { variant: 'secondary', onClick: onCancel }, 'Cancel'),
                 ),
             ),
         );
     }
 
     function VisualConfigurator() {
-        const [contentType, setContentType] = useState('page');
         const [contentId, setContentId] = useState('');
         const [content, setContent] = useState(null);
         const [loading, setLoading] = useState(false);
@@ -271,7 +274,17 @@
             setError('');
             setContent(null);
             try {
-                const url = `${settings.restRoot}/assets/${contentType}-${contentId}/raw`;
+                // Resolve the post type from wp_posts so the user doesn't have to pick it.
+                const typeResp = await jQuery.post(settings.ajaxUrl, {
+                    action: settings.actions.resolveType,
+                    _wpnonce: settings.nonce,
+                    id: contentId,
+                });
+                if (!typeResp || !typeResp.success) {
+                    throw new Error(typeResp?.data?.message || 'Could not resolve post type');
+                }
+                const type = typeResp.data.type;
+                const url = `${settings.restRoot}/assets/${type}-${contentId}/raw`;
                 const response = await fetch(url, {
                     credentials: 'same-origin',
                     headers: { 'X-WP-Nonce': settings.restNonce },
@@ -286,7 +299,7 @@
             } finally {
                 setLoading(false);
             }
-        }, [contentType, contentId]);
+        }, [contentId]);
 
         const handleSaveRule = useCallback(async (payload) => {
             try {
@@ -321,31 +334,20 @@
         }, [refreshRules]);
 
         const rulesByPath = {};
-        rules
-            .filter((r) => r.contentType === contentType || r.contentType === '*')
-            .forEach((r) => {
-                const key = r.propertyPath ? `${r.metaKey}|${r.propertyPath}` : r.metaKey;
-                rulesByPath[r.propertyPath || r.metaKey] = r;
-                rulesByPath[key] = r;
-            });
+        rules.forEach((r) => {
+            const key = r.propertyPath ? `${r.metaKey}|${r.propertyPath}` : r.metaKey;
+            rulesByPath[r.propertyPath || r.metaKey] = r;
+            rulesByPath[key] = r;
+        });
 
         return el(Fragment, null,
             el(Card, { style: { marginBottom: 16 } },
                 el(CardHeader, null, 'Load content sample'),
                 el(CardBody, null,
                     el(VStack, { spacing: 3 },
-                        el(SelectControl, {
-                            label: 'Content type',
-                            value: contentType,
-                            options: [
-                                { label: 'page', value: 'page' },
-                                { label: 'post', value: 'post' },
-                                { label: 'attachment', value: 'attachment' },
-                            ],
-                            onChange: setContentType,
-                        }),
                         el(TextControl, {
-                            label: 'Content ID',
+                            label: 'Post ID',
+                            help: 'Any post-based content (page, post, attachment, custom post type) — the post type is resolved automatically from wp_posts.',
                             value: contentId,
                             onChange: setContentId,
                         }),
@@ -363,7 +365,6 @@
                             key: name,
                             name,
                             value,
-                            contentType,
                             onAddRule: setDraft,
                             rulesByPath,
                         }),
@@ -383,7 +384,6 @@
                         : el('table', { className: 'widefat' },
                             el('thead', null,
                                 el('tr', null,
-                                    el('th', null, 'Content type'),
                                     el('th', null, 'Meta key'),
                                     el('th', null, 'Path'),
                                     el('th', null, 'Rule'),
@@ -393,7 +393,6 @@
                             el('tbody', null,
                                 rules.map((r) =>
                                     el('tr', { key: r.id },
-                                        el('td', null, r.contentType),
                                         el('td', null, el('code', null, r.metaKey)),
                                         el('td', null, el('code', null, r.propertyPath || '(whole field)')),
                                         el('td', null, r.replacerId),

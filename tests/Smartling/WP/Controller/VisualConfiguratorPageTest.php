@@ -31,7 +31,7 @@ class VisualConfiguratorPageTest extends TestCase
         $rulesManager = $this->createMock(JsonFieldRulesManager::class);
         $rulesManager->expects($this->once())->method('loadData');
         $rulesManager->method('listItems')->willReturn([
-            'rule-id-1' => new JsonFieldRule('page', '_elementor_data', '$.title', 'translate'),
+            'rule-id-1' => new JsonFieldRule('_elementor_data', '$.title', 'translate'),
         ]);
 
         $wpProxy = $this->createWpProxy();
@@ -40,7 +40,6 @@ class VisualConfiguratorPageTest extends TestCase
             ->with($this->callback(function ($payload): bool {
                 return $payload['rules'][0] === [
                         'id' => 'rule-id-1',
-                        'contentType' => 'page',
                         'metaKey' => '_elementor_data',
                         'propertyPath' => '$.title',
                         'replacerId' => 'translate',
@@ -54,7 +53,6 @@ class VisualConfiguratorPageTest extends TestCase
     public function testAjaxSaveRuleStoresAndReturnsRule(): void
     {
         $_POST = [
-            'contentType' => 'page',
             'metaKey' => '_elementor_data',
             'propertyPath' => '$.title',
             'replacerId' => 'translate',
@@ -74,7 +72,7 @@ class VisualConfiguratorPageTest extends TestCase
         $controller->ajaxSaveRule();
 
         $this->assertIsArray($savedRule);
-        $this->assertSame('page', $savedRule['contentType']);
+        $this->assertSame('_elementor_data', $savedRule['metaKey']);
         $this->assertSame('translate', $savedRule['replacerId']);
         $this->assertNotEmpty($savedRule['id']);
         $this->assertCount(1, $rulesManager->listItems());
@@ -82,7 +80,7 @@ class VisualConfiguratorPageTest extends TestCase
 
     public function testAjaxSaveRuleRejectsMissingFields(): void
     {
-        $_POST = ['contentType' => 'page'];
+        $_POST = ['metaKey' => '_elementor_data'];
 
         $wpProxy = $this->createWpProxy();
         $wpProxy->method('sanitize_text_field')->willReturnCallback(fn(string $v): string => $v);
@@ -103,7 +101,6 @@ class VisualConfiguratorPageTest extends TestCase
     public function testAjaxSaveRuleRejectsDuplicate(): void
     {
         $_POST = [
-            'contentType' => 'page',
             'metaKey' => '_elementor_data',
             'propertyPath' => '$.title',
             'replacerId' => 'translate',
@@ -128,11 +125,58 @@ class VisualConfiguratorPageTest extends TestCase
         $this->assertTrue($errorCalled);
     }
 
+    public function testAjaxResolveTypeReturnsPostType(): void
+    {
+        $_POST = ['id' => '42'];
+
+        $wpProxy = $this->createWpProxy();
+        $wpProxy->method('get_post_type')->with(42)->willReturn('page');
+
+        $payload = null;
+        $wpProxy->method('wp_send_json_success')->willReturnCallback(function (array $p) use (&$payload) {
+            $payload = $p;
+        });
+
+        $this->makeController(new JsonFieldRulesManager(), $wpProxy)->ajaxResolveType();
+
+        $this->assertSame(['type' => 'page'], $payload);
+    }
+
+    public function testAjaxResolveTypeRejectsMissingId(): void
+    {
+        $_POST = [];
+        $wpProxy = $this->createWpProxy();
+
+        $errorCalled = false;
+        $wpProxy->method('wp_send_json_error')->willReturnCallback(function ($p, $status) use (&$errorCalled) {
+            $errorCalled = true;
+            $this->assertSame(400, $status);
+        });
+
+        $this->makeController(new JsonFieldRulesManager(), $wpProxy)->ajaxResolveType();
+        $this->assertTrue($errorCalled);
+    }
+
+    public function testAjaxResolveTypeReturns404WhenPostMissing(): void
+    {
+        $_POST = ['id' => '999999'];
+        $wpProxy = $this->createWpProxy();
+        $wpProxy->method('get_post_type')->willReturn(false);
+
+        $errorCalled = false;
+        $wpProxy->method('wp_send_json_error')->willReturnCallback(function ($p, $status) use (&$errorCalled) {
+            $errorCalled = true;
+            $this->assertSame(404, $status);
+        });
+
+        $this->makeController(new JsonFieldRulesManager(), $wpProxy)->ajaxResolveType();
+        $this->assertTrue($errorCalled);
+    }
+
     public function testAjaxDeleteRuleRemovesItem(): void
     {
         $manager = new JsonFieldRulesManager();
         $id = $manager->add([
-            'contentType' => 'page',
             'metaKey' => '_elementor_data',
             'propertyPath' => '$.title',
             'replacerId' => 'translate',

@@ -52,12 +52,9 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
     public function getSupportLevel(string $contentType, ?int $contentId = null): string
     {
         $this->rulesManager->loadData();
-        foreach ($this->rulesManager->listItems() as $rule) {
-            if ($rule->getContentType() === '*' || $rule->getContentType() === $contentType) {
-                return Pluggable::SUPPORTED;
-            }
-        }
-        return Pluggable::NOT_SUPPORTED;
+        return $this->rulesManager->listItems() === []
+            ? Pluggable::NOT_SUPPORTED
+            : Pluggable::SUPPORTED;
     }
 
     public function getExternalContentTypes(): array
@@ -69,7 +66,7 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
     {
         $result = [];
         $this->rulesManager->loadData();
-        foreach ($this->getRulesByMetaKey($submission->getContentType()) as $metaKey => $rules) {
+        foreach ($this->getRulesByMetaKey() as $metaKey => $rules) {
             $json = $this->readMetaJson($submission->getSourceId(), $metaKey);
             if ($json === null) {
                 continue;
@@ -93,7 +90,7 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
     {
         $result = [];
         $this->rulesManager->loadData();
-        foreach ($this->getRulesByMetaKey($contentType) as $metaKey => $rules) {
+        foreach ($this->getRulesByMetaKey() as $metaKey => $rules) {
             $json = $this->readMetaJson($contentId, $metaKey);
             if ($json === null) {
                 continue;
@@ -124,7 +121,7 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
 
         $this->rulesManager->loadData();
         $changed = false;
-        foreach ($this->getRulesByMetaKey($submission->getContentType()) as $metaKey => $rules) {
+        foreach ($this->getRulesByMetaKey() as $metaKey => $rules) {
             // Prefer a translation already produced by a prior handler (e.g. Elementor) over the
             // source. JsonRules' edits act as a delta on top of bundled handlers rather than
             // replacing their work.
@@ -159,7 +156,7 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
     public function removeUntranslatableFieldsForUpload(array $source, SubmissionEntity $submission): array
     {
         $this->rulesManager->loadData();
-        foreach (array_keys($this->getRulesByMetaKey($submission->getContentType())) as $metaKey) {
+        foreach (array_keys($this->getRulesByMetaKey()) as $metaKey) {
             if (isset($source['meta'][$metaKey])) {
                 unset($source['meta'][$metaKey]);
             }
@@ -170,13 +167,10 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
     /**
      * @return array<string, JsonFieldRule[]>
      */
-    private function getRulesByMetaKey(string $contentType): array
+    private function getRulesByMetaKey(): array
     {
         $result = [];
         foreach ($this->rulesManager->listItems() as $rule) {
-            if ($rule->getContentType() !== '*' && $rule->getContentType() !== $contentType) {
-                continue;
-            }
             $result[$rule->getMetaKey()][] = $rule;
         }
         return $result;
