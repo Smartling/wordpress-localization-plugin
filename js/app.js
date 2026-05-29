@@ -466,7 +466,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                                         style: { width: '30px', height: '30px', objectFit: 'cover', verticalAlign: 'middle', marginLeft: '5px' }
                                     }) : null;
                                 
-                                return el('label', { key, style: { display: 'flex', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' } },
+                                return el('label', { key, style: { display: 'flex', alignItems: 'center', margin: '8px 0', cursor: 'pointer' } },
                                     el('input', {
                                         type: 'checkbox',
                                         checked: selectedRelations[key] || false,
