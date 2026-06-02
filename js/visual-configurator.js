@@ -75,7 +75,7 @@
     }
 
     function JsonNode({ value, path, metaKey, onAddRule, rulesByPath, depth = 0 }) {
-        const [expanded, setExpanded] = useState(depth < 2);
+        const [expanded, setExpanded] = useState(true);
         if (valueIsLeaf(value)) {
             const existing = rulesByPath[path];
             const isString = typeof value === 'string';
