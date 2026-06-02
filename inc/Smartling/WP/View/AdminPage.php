@@ -4,6 +4,7 @@ use Smartling\WP\Controller\AdminPage;
 use Smartling\WP\Controller\FilterForm;
 use Smartling\WP\Controller\MediaRuleForm;
 use Smartling\WP\Controller\ShortcodeForm;
+use Smartling\WP\Controller\VisualConfiguratorPage;
 use Smartling\WP\Table\LocalizationRulesTableWidget;
 use Smartling\WP\Table\MediaAttachmentTableWidget;
 use Smartling\WP\Table\ShortcodeTableClass;
@@ -69,4 +70,12 @@ use Smartling\WP\Table\ShortcodeTableClass;
         <input type="file" name="file" id="importFileInput" accept=".txt"/>
         <input class="button" type="submit"/>
     </form>
+
+    <h3>Visual Configurator</h3>
+    <p><?= __('Configure translation rules for JSON-encoded meta (Page builder data, custom fields, etc.)')?></p>
+    <p>
+        <a class="button button-primary" href="<?= esc_url(admin_url('admin.php?page=' . VisualConfiguratorPage::SLUG))?>">
+            <?= esc_html__('Open Visual Configurator')?>
+        </a>
+    </p>
 </div>

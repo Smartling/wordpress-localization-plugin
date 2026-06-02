@@ -10,6 +10,7 @@ class ReplacerFactory
     public const REPLACER_COPY = 'copy';
     private const REPLACER_EXCLUDE = 'exclude';
     public const REPLACER_RELATED = 'related';
+    public const REPLACER_TRANSLATE = 'translate';
     private const REPLACER_WP_CORE_IMAGE_INNER_HTML = 'coreImage';
 
     /**
@@ -23,6 +24,7 @@ class ReplacerFactory
             self::REPLACER_COPY => new CopyReplacer(),
             self::REPLACER_EXCLUDE => new ExcludeReplacer(),
             self::REPLACER_RELATED => new ContentIdReplacer($submissionManager),
+            self::REPLACER_TRANSLATE => new TranslateReplacer(),
             self::REPLACER_WP_CORE_IMAGE_INNER_HTML => new ImageInnerHtmlReplacer($submissionManager),
         ];
     }

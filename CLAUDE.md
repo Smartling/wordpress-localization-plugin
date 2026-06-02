@@ -35,7 +35,7 @@ This is the **Smartling Connector** WordPress plugin - a translation and localiz
 - `Submissions/` - Core translation workflow management
 
 **Translation Pipeline**:
-1. **Upload**: Content serialization → Smartling API upload
+1. **Upload**: Content serialization to XML → Smartling API upload
 2. **Processing**: Translation occurs in Smartling dashboard  
 3. **Download**: Completed translations → WordPress content application
 
@@ -90,6 +90,7 @@ This is the **Smartling Connector** WordPress plugin - a translation and localiz
 ## Development Guidelines
 
 ### Code Structure
+- PHP language level 8.0
 - PSR-0 autoloading with `Smartling\` namespace
 - Dependency injection throughout the codebase
 - Extensive use of interfaces for testability
