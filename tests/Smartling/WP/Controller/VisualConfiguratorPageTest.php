@@ -106,7 +106,6 @@ class VisualConfiguratorPageTest extends TestCase
             'replacerId' => 'translate',
         ];
 
-        // The manager's add() returns '' for duplicates; mock that directly so we test the controller's response.
         $manager = $this->createMock(JsonFieldRulesManager::class);
         $manager->method('add')->willReturn('');
 

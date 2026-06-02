@@ -151,7 +151,7 @@ class ExternalContentJsonRulesTest extends TestCase
                 ['settings' => ['title' => 'Hello', 'subtitle' => 'World']],
             ],
         ]);
-        // Simulates the JSON that an upstream handler (e.g. Elementor) wrote into
+        // Simulates the JSON that an upstream handler wrote into
         // $translation['meta']['_elementor_data'] before JsonRules ran:
         // BOTH title AND subtitle already translated.
         $priorTranslationJson = json_encode([
@@ -194,9 +194,6 @@ class ExternalContentJsonRulesTest extends TestCase
 
     public function testWildcardArrayIndicesMatchAllOccurrencesAcrossLevels(): void
     {
-        // Simulates the Elementor _elementor_data shape: a top-level array of sections,
-        // each holding an array of widgets. We use a doubly-nested wildcard path —
-        // exactly what the UI now emits.
         $json = json_encode([
             ['elements' => [
                 ['settings' => ['title' => 'A1']],
@@ -220,7 +217,6 @@ class ExternalContentJsonRulesTest extends TestCase
         $this->assertContains('A2', $extracted);
         $this->assertContains('B1', $extracted);
 
-        // Feed translations back and confirm they land at every position the wildcard matched.
         $translation = [
             ExternalContentJsonRules::PLUGIN_ID => array_combine(
                 array_keys($extracted),

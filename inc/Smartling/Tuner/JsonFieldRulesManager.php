@@ -2,8 +2,12 @@
 
 namespace Smartling\Tuner;
 
+use Smartling\Helpers\LoggerSafeTrait;
+
 class JsonFieldRulesManager extends CustomizationManagerAbstract
 {
+    use LoggerSafeTrait;
+
     public const STORAGE_KEY = 'CUSTOM_JSON_FIELD_RULES';
 
     public function __construct()
@@ -34,7 +38,7 @@ class JsonFieldRulesManager extends CustomizationManagerAbstract
             try {
                 $result[$id] = JsonFieldRule::fromArray($item);
             } catch (\InvalidArgumentException) {
-                // skip malformed entries
+                $this->getLogger()->debug("Unparsable json field rule $id, skipping");
             }
         }
         return $result;

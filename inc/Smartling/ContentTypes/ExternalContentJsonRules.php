@@ -122,9 +122,8 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
         $this->rulesManager->loadData();
         $changed = false;
         foreach ($this->getRulesByMetaKey() as $metaKey => $rules) {
-            // Prefer a translation already produced by a prior handler (e.g. Elementor) over the
-            // source. JsonRules' edits act as a delta on top of bundled handlers rather than
-            // replacing their work.
+            // Prefer a translation already produced by a prior handler over the source.
+            // JsonRules' edits act as a delta on top of bundled handlers rather than replacing their work.
             $sourceJson = $translation['meta'][$metaKey] ?? $original['meta'][$metaKey] ?? null;
             if (!is_string($sourceJson) || $sourceJson === '') {
                 continue;
