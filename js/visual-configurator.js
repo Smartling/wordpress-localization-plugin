@@ -77,7 +77,7 @@
     function JsonNode({ value, path, metaKey, onAddRule, rulesByPath, depth = 0 }) {
         const [expanded, setExpanded] = useState(true);
         if (valueIsLeaf(value)) {
-            const existing = rulesByPath[path];
+            const existing = rulesByPath[`${metaKey}|${path}`];
             const isString = typeof value === 'string';
             const isNumeric = typeof value === 'number' || (isString && /^\d+$/.test(value));
             return el(
@@ -249,6 +249,7 @@
         const [error, setError] = useState('');
         const [rules, setRules] = useState([]);
         const [draft, setDraft] = useState(null);
+        const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
         const refreshRules = useCallback(async () => {
             try {
@@ -319,8 +320,13 @@
             }
         }, [refreshRules]);
 
-        const handleDeleteRule = useCallback(async (id) => {
-            if (!confirm('Delete this rule?')) return;
+        const handleDeleteRule = useCallback((id) => {
+            setDeleteConfirmId(id);
+        }, []);
+
+        const handleConfirmDelete = useCallback(async () => {
+            const id = deleteConfirmId;
+            setDeleteConfirmId(null);
             try {
                 await jQuery.post(settings.ajaxUrl, {
                     action: settings.actions.delete,
@@ -331,12 +337,11 @@
             } catch (e) {
                 setError('Delete failed: ' + (e.message || 'unknown'));
             }
-        }, [refreshRules]);
+        }, [deleteConfirmId, refreshRules]);
 
         const rulesByPath = {};
         rules.forEach((r) => {
             const key = r.propertyPath ? `${r.metaKey}|${r.propertyPath}` : r.metaKey;
-            rulesByPath[r.propertyPath || r.metaKey] = r;
             rulesByPath[key] = r;
         });
 
@@ -376,6 +381,18 @@
                 onCancel: () => setDraft(null),
                 onSave: handleSaveRule,
             }),
+            deleteConfirmId !== null && el(Modal, {
+                title: 'Delete rule',
+                onRequestClose: () => setDeleteConfirmId(null),
+                shouldCloseOnClickOutside: true,
+            },
+                el('p', null, 'Are you sure you want to delete this rule?'),
+                el('div', null,
+                    el(Button, { variant: 'primary', isDestructive: true, onClick: handleConfirmDelete }, 'Delete'),
+                    ' ',
+                    el(Button, { variant: 'secondary', onClick: () => setDeleteConfirmId(null) }, 'Cancel'),
+                ),
+            ),
             el(Card, null,
                 el(CardHeader, null, `Saved rules (${rules.length})`),
                 el(CardBody, null,

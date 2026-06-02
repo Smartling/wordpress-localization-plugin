@@ -175,21 +175,21 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
         return $result;
     }
 
-    private function readMetaJson(int $contentId, string $metaKey): ?string
+    private function readMetaJson(int $contentId, string $metaKey): ?array
     {
         $value = $this->wpProxy->getPostMeta($contentId, $metaKey, true);
         if (!is_string($value) || $value === '') {
             return null;
         }
         try {
-            json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
             return null;
         }
-        return $value;
+        return is_array($decoded) ? $decoded : null;
     }
 
-    private function safeGet(string $json, string $path): array
+    private function safeGet(array $json, string $path): array
     {
         try {
             $result = (new JsonObject($json))->get($path);
@@ -206,7 +206,7 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
     private function applyTranslateRule(JsonObject $jsonObject, JsonFieldRule $rule, string $metaKey, array $translations): bool
     {
         $objects = $jsonObject->getJsonObjects($rule->getPropertyPath());
-        if ($objects === false) {
+        if ($objects === false || $objects === null) {
             return false;
         }
         if (!is_array($objects)) {
@@ -234,7 +234,7 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
             return false;
         }
         $objects = $jsonObject->getJsonObjects($rule->getPropertyPath());
-        if ($objects === false) {
+        if ($objects === false || $objects === null) {
             return false;
         }
         if (!is_array($objects)) {

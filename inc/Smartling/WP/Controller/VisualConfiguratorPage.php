@@ -52,9 +52,6 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
 
     public function pageHandler(): void
     {
-        $this->viewData = [
-            'replacerOptions' => $this->replacerFactory->getListForUi(),
-        ];
         $this->renderScript();
     }
 
@@ -127,6 +124,10 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
                 return;
             }
         } else {
+            if (!array_key_exists($id, $this->rulesManager->listItems())) {
+                $this->wpProxy->wp_send_json_error(['message' => 'Rule not found'], 404);
+                return;
+            }
             $this->rulesManager->updateItem($id, $data);
         }
         $this->rulesManager->saveData();
@@ -193,6 +194,9 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
             if ($v === '') {
                 throw new \InvalidArgumentException("Field cannot be empty: $k");
             }
+        }
+        if (strlen($payload['propertyPath']) > 512) {
+            throw new \InvalidArgumentException('propertyPath exceeds maximum length of 512 characters');
         }
         return $payload;
     }
