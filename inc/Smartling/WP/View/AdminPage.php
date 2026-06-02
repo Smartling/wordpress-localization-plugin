@@ -74,8 +74,8 @@ use Smartling\WP\Table\ShortcodeTableClass;
     <h3>Visual Configurator</h3>
     <p><?= __('Configure translation rules for JSON-encoded meta (Page builder data, custom fields, etc.)')?></p>
     <p>
-        <a class="button button-primary" href="<?= admin_url('admin.php?page=' . VisualConfiguratorPage::SLUG)?>">
-            <?= __('Open Visual Configurator')?>
+        <a class="button button-primary" href="<?= esc_url(admin_url('admin.php?page=' . VisualConfiguratorPage::SLUG))?>">
+            <?= esc_html__('Open Visual Configurator')?>
         </a>
     </p>
 </div>
