@@ -52,7 +52,8 @@
                     url: ajaxurl,
                     data: $.extend(
                         {
-                            action: 'ajax_submissions_update_status'
+                            action: 'ajax_submissions_update_status',
+                            _wpnonce: (typeof smartlingCheckStatus !== 'undefined' ? smartlingCheckStatus.nonce : '')
                         },
                         this.data
                     ),

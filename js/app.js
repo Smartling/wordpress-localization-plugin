@@ -31,6 +31,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
         try {
             const response = await jQuery.post(adminUrl, {
                 action: 'smartling_job_api_proxy',
+                _wpnonce: nonce,
                 innerAction: 'list-jobs',
                 params: {}
             });
@@ -50,7 +51,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
 
     const loadRelations = useCallback(async (type, id, level = 1) => {
         const localeList = locales.map(l => l.blogId).join(',');
-        const url = `${ajaxUrl}?action=smartling-get-relations&id=${id}&content-type=${type}&targetBlogIds=${localeList}`;
+        const url = `${ajaxUrl}?action=smartling-get-relations&id=${id}&content-type=${type}&targetBlogIds=${localeList}&_wpnonce=${encodeURIComponent(nonce)}`;
 
         setPendingRequests(prev => prev + 1);
         setTotalRequests(prev => prev + 1);
@@ -245,6 +246,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
         const url = `${ajaxUrl}?action=smartling-create-submissions`;
 
         const data = {
+            _wpnonce: nonce,
             formAction: activeTab === 'clone' ? 'clone' : 'upload',
             source: { contentType, id: isBulkSubmitPage ? [] : [contentId] },
             job: {
@@ -282,6 +284,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
             if (activeTab === 'new') {
                 const jobResponse = await jQuery.post(adminUrl, {
                     action: 'smartling_job_api_proxy',
+                    _wpnonce: nonce,
                     innerAction: 'create-job',
                     params: {
                         jobName,

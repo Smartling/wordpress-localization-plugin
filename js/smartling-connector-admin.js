@@ -269,7 +269,8 @@ function ajaxDownload() {
         $.post(
             ajaxurl + "?action=" + "smartling_force_download_handler",
             {
-                submissionIds: submissionIds.join(",")
+                submissionIds: submissionIds.join(","),
+                _wpnonce: (typeof smartlingConnector !== 'undefined' ? smartlingConnector.nonce : '')
             },
             function (data) {
                 switch (data.status) {
