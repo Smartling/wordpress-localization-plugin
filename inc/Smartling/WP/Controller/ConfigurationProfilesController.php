@@ -52,6 +52,9 @@ class ConfigurationProfilesController extends WPAbstract implements WPHookInterf
             $this->pluginInfo->getVersion(),
             false
         );
+        wp_localize_script($this->pluginInfo->getName() . 'settings', 'smartlingConnector', [
+            'nonce' => wp_create_nonce('smartling_connector_ajax'),
+        ]);
         wp_enqueue_script(
             $this->pluginInfo->getName() . 'settings-admin-footer',
             $this->pluginInfo->getUrl() . 'js/smartling-connector-gutenberg-lock-attributes.js',

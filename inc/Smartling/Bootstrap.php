@@ -181,6 +181,12 @@ class Bootstrap
     #[NoReturn]
     public function updateGlobalExpertSettings(): void
     {
+        check_ajax_referer('smartling_expert_global_settings', '_wpnonce');
+        if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP)) {
+            wp_send_json(['error' => 'Insufficient permissions'], 403);
+            return;
+        }
+
         $data = $_POST['params'];
 
         $rawPageSize = (int)$data['pageSize'];

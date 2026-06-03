@@ -16,6 +16,7 @@ $blogs = $this->viewData['blogs'];
 <p>Linked items will not be sent for translation.</p>
 <h1></h1> <!--needed for admin notices-->
 <form id="linkTaxonomyForm">
+    <?php wp_nonce_field('smartling_link_taxonomies', '_wpnonce'); ?>
     <input type="hidden" id="sourceBlogId" name="sourceBlogId" value="<?= get_current_blog_id()?>">
     <table class="form-table" style="width: 50%">
         <tr>

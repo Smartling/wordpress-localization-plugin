@@ -6,6 +6,7 @@ use Smartling\FTS\FtsService;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionFactory;
@@ -37,6 +38,11 @@ class InstantTranslationController implements WPHookInterface
     public function handleRequestTranslation(): void
     {
         $this->wpProxy->check_ajax_referer('smartling_instant_translation', '_wpnonce');
+
+        if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+            return;
+        }
 
         try {
             $contentType = $this->wpProxy->sanitize_text_field($this->wpProxy->wp_unslash($_POST['contentType'] ?? ''));
@@ -134,6 +140,11 @@ class InstantTranslationController implements WPHookInterface
     public function handlePollStatus(): void
     {
         $this->wpProxy->check_ajax_referer('smartling_instant_translation', '_wpnonce');
+
+        if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+            return;
+        }
 
         try {
             $submissionId = (int)($_POST['submissionId'] ?? 0);

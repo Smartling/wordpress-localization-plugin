@@ -21,6 +21,9 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
         wp_enqueue_script($this->pluginInfo->getName() . "submission", $this->pluginInfo
                 ->getUrl() . 'js/smartling-submissions-check.js', ['jquery'], $this->pluginInfo
             ->getVersion(), false);
+        wp_localize_script($this->pluginInfo->getName() . "submission", 'smartlingCheckStatus', [
+            'nonce' => wp_create_nonce('smartling_check_status'),
+        ]);
     }
 
     public function register(): void
@@ -36,6 +39,12 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
      */
     public function ajaxHandler()
     {
+        check_ajax_referer('smartling_check_status', '_wpnonce');
+        if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            wp_send_json(['error' => 'Insufficient permissions'], 403);
+            return false;
+        }
+
         if ($_REQUEST["action"] === "ajax_submissions_update_status") {
 
             $items = $this->checkItems($_REQUEST["ids"]);

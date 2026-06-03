@@ -20,6 +20,7 @@ if ($viewData->getTestBlogId() === null && count($viewData->getBlogs()) === 0) {
 if ($viewData->getTestBlogId() === null) {
 ?>
 <form id="testRunForm">
+    <?php wp_nonce_field('smartling_test_run', '_wpnonce'); ?>
     <input type="hidden" id="sourceBlogId" name="sourceBlogId" value="<?= get_current_blog_id()?>">
     <table class="form-table" style="width: 50%">
         <tr>

@@ -9,10 +9,17 @@ class UiMessageHelper
 
     public static function dismissMessage(): void
     {
-        $cache = self::getCache();
-        if (array_key_exists('hash', $_GET)) {
-            $cache->set(self::CACHE_KEY_PREFIX . $_GET['hash'], true, 60 * 60 * 180);
+        check_ajax_referer(self::DISMISS_MESSAGE_ACTION, '_wpnonce');
+        if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP)) {
+            wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+            return;
         }
+        $cache = self::getCache();
+        $hash = isset($_POST['hash']) ? sanitize_text_field(wp_unslash($_POST['hash'])) : '';
+        if ($hash !== '') {
+            $cache->set(self::CACHE_KEY_PREFIX . $hash, true, 60 * 60 * 180);
+        }
+        wp_send_json_success();
     }
 
     public static function displayMessages(): void
@@ -55,8 +62,9 @@ class UiMessageHelper
     {
         $action = self::DISMISS_MESSAGE_ACTION;
         $hash = self::getCacheHash($string);
+        $nonce = wp_create_nonce(self::DISMISS_MESSAGE_ACTION);
         return <<<JS
-jQuery.post(ajaxurl + '?action=$action&hash=$hash');
+jQuery.post(ajaxurl + '?action=$action', {hash: '$hash', _wpnonce: '$nonce'});
 this.parentNode.parentNode.style.display='none';
 return false;
 JS;

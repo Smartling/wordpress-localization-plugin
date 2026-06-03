@@ -19,6 +19,8 @@ use Smartling\WP\WPHookInterface;
 
 class TaxonomyLinksController extends WPAbstract implements WPHookInterface
 {
+    private const NONCE_ACTION = 'smartling_link_taxonomies';
+
     public function __construct(
         protected ApiWrapperInterface $api,
         PluginInfo $pluginInfo,
@@ -150,6 +152,12 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
 
     public function linkTaxonomies($data)
     {
+        $this->wordpressProxy->check_ajax_referer(self::NONCE_ACTION, '_wpnonce');
+        if (!$this->wordpressProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP)) {
+            $this->wordpressProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+            return;
+        }
+
         if ($data === "") {
             $data = $_POST;
         }
