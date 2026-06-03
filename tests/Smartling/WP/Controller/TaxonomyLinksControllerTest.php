@@ -111,5 +111,35 @@ namespace Smartling\Tests\Smartling\WP\Controller {
             $siteHelper->method('listBlogs')->willReturn([1, 2]);
             return $siteHelper;
         }
+
+        public function testLinkTaxonomiesReturns403WhenCapabilityMissing(): void
+        {
+            $wordpress = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wordpress->method('check_ajax_referer')->willReturn(1);
+            $wordpress->method('current_user_can')->willReturn(false);
+
+            $errorCalled = false;
+            $wordpress->method('wp_send_json_error')->willReturnCallback(
+                function (array $data, int $status) use (&$errorCalled) {
+                    $errorCalled = true;
+                    TestCase::assertSame(403, $status);
+                }
+            );
+
+            $x = new TaxonomyLinksController(
+                $this->createMock(\Smartling\ApiWrapperInterface::class),
+                $this->getMockBuilder(\Smartling\Helpers\PluginInfo::class)->disableOriginalConstructor()->getMock(),
+                $this->createMock(\Smartling\Settings\SettingsManager::class),
+                $this->createMock(\Smartling\DbAl\LocalizationPluginProxyInterface::class),
+                $this->getSiteHelperMock(),
+                $this->getSubmissionManagerMock(),
+                $wordpress,
+                $this->createMock(\Smartling\Helpers\WpObjectCache::class),
+            );
+
+            $x->linkTaxonomies('');
+
+            $this->assertTrue($errorCalled);
+        }
     }
 }
