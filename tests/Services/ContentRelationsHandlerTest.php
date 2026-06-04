@@ -84,24 +84,22 @@ class ContentRelationsHandlerTest extends TestCase
 
         $proxy = $this->makeWpProxy(false);
 
-        $errorKey = null;
-        $errorCode = null;
         $x = new class($service, $proxy) extends ContentRelationsHandler {
+            public ?string $capturedErrorKey = null;
+            public ?int $capturedErrorCode = null;
+
             public function returnResponse(array $data, $responseCode = 200): void {}
 
             public function returnError($key, $message, $responseCode = 400): void
             {
-                // Capture for assertions
-                $GLOBALS['_test_error_key'] = $key;
-                $GLOBALS['_test_error_code'] = $responseCode;
+                $this->capturedErrorKey = $key;
+                $this->capturedErrorCode = $responseCode;
             }
         };
 
         $x->createSubmissionsHandler(['formAction' => ContentRelationsHandler::FORM_ACTION_CLONE, 'source' => ['id' => [1], 'contentType' => 'post'], 'targetBlogIds' => '2']);
 
-        $this->assertSame('permission.denied', $GLOBALS['_test_error_key'] ?? null);
-        $this->assertSame(403, $GLOBALS['_test_error_code'] ?? null);
-
-        unset($GLOBALS['_test_error_key'], $GLOBALS['_test_error_code']);
+        $this->assertSame('permission.denied', $x->capturedErrorKey);
+        $this->assertSame(403, $x->capturedErrorCode);
     }
 }

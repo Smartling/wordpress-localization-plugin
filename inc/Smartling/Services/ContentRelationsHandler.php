@@ -81,7 +81,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
      */
     public function createSubmissionsHandler(array $data = null): void
     {
-        $this->wpProxy->check_ajax_referer('smartling_instant_translation', '_wpnonce');
+        $this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce');
         if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             $this->returnError('permission.denied', 'Insufficient permissions', 403);
             return;
@@ -104,7 +104,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
 
     public function actionHandler(): void
     {
-        $this->wpProxy->check_ajax_referer('smartling_instant_translation', '_wpnonce');
+        $this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce');
         if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             $this->returnError('permission.denied', 'Insufficient permissions', 403);
             return;

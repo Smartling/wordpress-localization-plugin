@@ -32,7 +32,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             wp_enqueue_script($jFile, $jFile, ['jquery'], $ver, false);
         }
         wp_localize_script($jsPath . 'configuration-profile-form.js', 'smartlingProfileForm', [
-            'testConnectionNonce' => wp_create_nonce('smartling_test_connection'),
             'expertSettingsNonce' => wp_create_nonce('smartling_expert_global_settings'),
         ]);
     }

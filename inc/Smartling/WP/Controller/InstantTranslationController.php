@@ -37,7 +37,7 @@ class InstantTranslationController implements WPHookInterface
 
     public function handleRequestTranslation(): void
     {
-        $this->wpProxy->check_ajax_referer('smartling_instant_translation', '_wpnonce');
+        $this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce');
 
         if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
@@ -139,7 +139,7 @@ class InstantTranslationController implements WPHookInterface
 
     public function handlePollStatus(): void
     {
-        $this->wpProxy->check_ajax_referer('smartling_instant_translation', '_wpnonce');
+        $this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce');
 
         if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
             $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);

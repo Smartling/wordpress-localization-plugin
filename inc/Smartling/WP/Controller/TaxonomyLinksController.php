@@ -162,7 +162,7 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
             $data = $_POST;
         }
         if (!isset($data['sourceBlogId'], $data['sourceId'], $data['taxonomy'])) {
-            wp_send_json_error('Required parameter missing');
+            $this->wordpressProxy->wp_send_json_error('Required parameter missing');
         }
         $sourceBlogId = (int)$data['sourceBlogId'];
         $sourceId = (int)$data['sourceId'];
@@ -210,13 +210,13 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
         }
         $submissions = array_merge($submissionsToAdd, $submissionsToUpdate);
         if (count(array_merge($submissions, $submissionsToDelete)) === 0) {
-            wp_send_json_error('No changes');
+            $this->wordpressProxy->wp_send_json_error('No changes');
         }
         $this->submissionManager->storeSubmissions($submissions);
         foreach ($submissionsToDelete as $submission) {
             $this->submissionManager->delete($submission);
         }
-        wp_send_json(['success' => true, 'submissions' => $this->getSubmissions()]);
+        $this->wordpressProxy->wp_send_json(['success' => true, 'submissions' => $this->getSubmissions()]);
     }
 
     /**
