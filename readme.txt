@@ -63,6 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 5.5.2 =
+* Added visual configurator for JSON metadata fields
 * Added "Check All" and "Uncheck All" buttons to the related assets list
 
 = 5.5.1 =
