@@ -2,6 +2,8 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Bootstrap;
+
 class UiMessageHelper
 {
     private const CACHE_KEY_PREFIX = 'smartling.ui.message.';
@@ -9,8 +11,13 @@ class UiMessageHelper
 
     public static function dismissMessage(): void
     {
-        check_ajax_referer(self::DISMISS_MESSAGE_ACTION, '_wpnonce');
+        if (check_ajax_referer(self::DISMISS_MESSAGE_ACTION, '_wpnonce', false) === false) {
+            Bootstrap::getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', self::DISMISS_MESSAGE_ACTION, get_current_user_id()));
+            wp_send_json_error(['message' => 'Invalid nonce'], 403);
+            return;
+        }
         if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP)) {
+            Bootstrap::getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP));
             wp_send_json_error(['message' => 'Insufficient permissions'], 403);
             return;
         }

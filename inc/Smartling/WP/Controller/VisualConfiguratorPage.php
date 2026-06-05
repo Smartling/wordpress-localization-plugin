@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -12,6 +13,8 @@ use Smartling\WP\WPHookInterface;
 
 class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterface
 {
+    use LoggerSafeTrait;
+
     public const SLUG = 'smartling_visual_configurator';
     public const NONCE_ACTION = 'smartling_visual_configurator';
     public const ACTION_LIST_RULES = 'smartling_visual_configurator_list_rules';
@@ -87,7 +90,7 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
 
     public function ajaxListRules(): void
     {
-        if (!$this->verifyNonce()) {
+        if (!$this->verifyNonceAndCapabilities()) {
             return;
         }
         $this->rulesManager->loadData();
@@ -100,7 +103,7 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
 
     public function ajaxSaveRule(): void
     {
-        if (!$this->verifyNonce()) {
+        if (!$this->verifyNonceAndCapabilities()) {
             return;
         }
         try {
@@ -141,7 +144,7 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
 
     public function ajaxResolveType(): void
     {
-        if (!$this->verifyNonce()) {
+        if (!$this->verifyNonceAndCapabilities()) {
             return;
         }
         $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
@@ -159,7 +162,7 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
 
     public function ajaxDeleteRule(): void
     {
-        if (!$this->verifyNonce()) {
+        if (!$this->verifyNonceAndCapabilities()) {
             return;
         }
         $id = isset($_POST['id']) && is_string($_POST['id'])
@@ -177,10 +180,15 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
         $this->wpProxy->wp_send_json_success(['id' => $id]);
     }
 
-    private function verifyNonce(): bool
+    private function verifyNonceAndCapabilities(): bool
     {
-        $this->wpProxy->check_ajax_referer(self::NONCE_ACTION, '_wpnonce');
+        if ($this->wpProxy->check_ajax_referer(self::NONCE_ACTION, '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', self::NONCE_ACTION, get_current_user_id()));
+            $this->wpProxy->wp_send_json_error(['message' => 'Invalid nonce'], 403);
+            return false;
+        }
         if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP));
             $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
             return false;
         }

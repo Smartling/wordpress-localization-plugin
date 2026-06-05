@@ -27,8 +27,6 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
 {
     public const SMARTLING_JOB_API_PROXY = 'smartling_job_api_proxy';
 
-    private WordpressFunctionProxyHelper $wpProxy;
-
     public function __construct(
         ApiWrapperInterface $api,
         LocalizationPluginProxyInterface $localizationPluginProxy,
@@ -37,10 +35,9 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
         SiteHelper $siteHelper,
         SubmissionManager $submissionManager,
         Cache $cache,
-        WordpressFunctionProxyHelper $wpProxy,
+        private WordpressFunctionProxyHelper $wpProxy,
     ) {
         parent::__construct($api, $localizationPluginProxy, $pluginInfo, $settingsManager, $siteHelper, $submissionManager, $cache);
-        $this->wpProxy = $wpProxy;
     }
     /**
      * @var string
@@ -87,8 +84,13 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
     public function initJobApiProxy(): void
     {
         add_action('wp_ajax_' . self::SMARTLING_JOB_API_PROXY, function () {
-            $this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce');
+            if ($this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce', false) === false) {
+                $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', 'smartling_translation', get_current_user_id()));
+                $this->wpProxy->wp_send_json(['status' => 403, 'message' => 'Invalid nonce'], 403);
+                return;
+            }
             if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+                $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
                 $this->wpProxy->wp_send_json(['status' => 403, 'message' => 'Insufficient permissions'], 403);
                 return;
             }

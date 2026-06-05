@@ -39,8 +39,13 @@ class CheckStatusController extends WPAbstract implements WPHookInterface
      */
     public function ajaxHandler()
     {
-        check_ajax_referer('smartling_check_status', '_wpnonce');
+        if (check_ajax_referer('smartling_check_status', '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', 'smartling_check_status', get_current_user_id()));
+            wp_send_json(['error' => 'Invalid nonce'], 403);
+            return false;
+        }
         if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
             wp_send_json(['error' => 'Insufficient permissions'], 403);
             return false;
         }

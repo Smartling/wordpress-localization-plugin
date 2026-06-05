@@ -116,8 +116,13 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     public function ajaxDownloadHandler(): void
     {
-        check_ajax_referer(self::AJAX_NONCE_ACTION, '_wpnonce');
+        if (check_ajax_referer(self::AJAX_NONCE_ACTION, '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', self::AJAX_NONCE_ACTION, get_current_user_id()));
+            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Invalid nonce'], 403);
+            return;
+        }
         if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
             wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Insufficient permissions'], 403);
             return;
         }
@@ -182,8 +187,13 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     public function ajaxUploadHandler()
     {
-        check_ajax_referer(self::AJAX_NONCE_ACTION, '_wpnonce');
+        if (check_ajax_referer(self::AJAX_NONCE_ACTION, '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', self::AJAX_NONCE_ACTION, get_current_user_id()));
+            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Invalid nonce'], 403);
+            return;
+        }
         if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
             wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Insufficient permissions'], 403);
             return;
         }
