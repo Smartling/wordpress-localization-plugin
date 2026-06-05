@@ -4,15 +4,21 @@ namespace Smartling\WP\Controller;
 
 use DateTimeZone;
 use Exception;
+use Smartling\ApiWrapperInterface;
 use Smartling\Bootstrap;
+use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Helpers\Cache;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Smartling\Jobs\JobStatus;
 use Smartling\WP\WPAbstract;
 use Smartling\WP\WPHookInterface;
@@ -20,6 +26,22 @@ use Smartling\WP\WPHookInterface;
 class ContentEditJobController extends WPAbstract implements WPHookInterface
 {
     public const SMARTLING_JOB_API_PROXY = 'smartling_job_api_proxy';
+
+    private WordpressFunctionProxyHelper $wpProxy;
+
+    public function __construct(
+        ApiWrapperInterface $api,
+        LocalizationPluginProxyInterface $localizationPluginProxy,
+        PluginInfo $pluginInfo,
+        SettingsManager $settingsManager,
+        SiteHelper $siteHelper,
+        SubmissionManager $submissionManager,
+        Cache $cache,
+        WordpressFunctionProxyHelper $wpProxy,
+    ) {
+        parent::__construct($api, $localizationPluginProxy, $pluginInfo, $settingsManager, $siteHelper, $submissionManager, $cache);
+        $this->wpProxy = $wpProxy;
+    }
     /**
      * @var string
      */
@@ -65,6 +87,12 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
     public function initJobApiProxy(): void
     {
         add_action('wp_ajax_' . self::SMARTLING_JOB_API_PROXY, function () {
+            $this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce');
+            if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+                $this->wpProxy->wp_send_json(['status' => 403, 'message' => 'Insufficient permissions'], 403);
+                return;
+            }
+
             $data =& $_POST;
 
             $result = [

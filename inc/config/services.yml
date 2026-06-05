@@ -226,6 +226,7 @@ services:
     class: Smartling\Services\ContentRelationsHandler
     arguments:
       - "@service.relations-discovery"
+      - "@wp.proxy"
 
   entrypoint:
     class: Smartling\Base\SmartlingCore

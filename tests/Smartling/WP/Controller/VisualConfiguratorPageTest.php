@@ -192,9 +192,39 @@ class VisualConfiguratorPageTest extends TestCase
         $this->assertCount(0, $manager->listItems());
     }
 
-    private function createWpProxy(): WordpressFunctionProxyHelper|MockObject
+    public function testAjaxListRulesReturns403WhenCapabilityMissing(): void
     {
-        return $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy = $this->createWpProxy(false);
+
+        $errorCalled = false;
+        $wpProxy->method('wp_send_json_error')->willReturnCallback(function ($p, $status) use (&$errorCalled) {
+            $errorCalled = true;
+            $this->assertSame(403, $status);
+        });
+
+        $this->makeController(new JsonFieldRulesManager(), $wpProxy)->ajaxListRules();
+        $this->assertTrue($errorCalled);
+    }
+
+    public function testAjaxSaveRuleReturns403WhenCapabilityMissing(): void
+    {
+        $wpProxy = $this->createWpProxy(false);
+
+        $errorCalled = false;
+        $wpProxy->method('wp_send_json_error')->willReturnCallback(function ($p, $status) use (&$errorCalled) {
+            $errorCalled = true;
+            $this->assertSame(403, $status);
+        });
+
+        $this->makeController(new JsonFieldRulesManager(), $wpProxy)->ajaxSaveRule();
+        $this->assertTrue($errorCalled);
+    }
+
+    private function createWpProxy(bool $currentUserCan = true): WordpressFunctionProxyHelper|MockObject
+    {
+        $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $proxy->method('current_user_can')->willReturn($currentUserCan);
+        return $proxy;
     }
 
     private function makeController(JsonFieldRulesManager $manager, WordpressFunctionProxyHelper $wpProxy): VisualConfiguratorPage

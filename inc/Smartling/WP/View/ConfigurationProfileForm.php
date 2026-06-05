@@ -39,8 +39,9 @@ $defaultFilter = Smartling\Bootstrap::getContainer()->getParameter('field.proces
         $(function () {
             const queryProxy = {
                 baseEndpoint: '<?= admin_url('admin-ajax.php') ?>?action=smartling_test_connection',
+                testConnectionNonce: '<?= wp_create_nonce('smartling_test_connection') ?>',
                 getProjectLocales: function (params, success) {
-                    $.post(this.baseEndpoint, params, function (response) {
+                    $.post(this.baseEndpoint, $.extend({ _wpnonce: this.testConnectionNonce }, params), function (response) {
                         success(response);
                     });
                 },

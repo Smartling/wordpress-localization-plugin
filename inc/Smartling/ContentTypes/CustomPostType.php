@@ -95,6 +95,7 @@ class CustomPostType extends PostBasedContentTypeAbstract
             ->addArgument($di->getDefinition('site.helper'))
             ->addArgument($di->getDefinition('manager.submission'))
             ->addArgument($di->getDefinition('site.cache'))
+            ->addArgument($di->getDefinition('wp.proxy'))
             ->addMethodCall('setServedContentType', [$this->getSystemName()]);
         $di->get($tag)->register();
     }

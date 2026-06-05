@@ -25,6 +25,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
     private const WIDGET_NAME = 'smartling_connector_widget';
     public const WIDGET_DATA_NAME = 'smartling';
     private const CONNECTOR_NONCE = 'smartling_connector_nonce';
+    private const AJAX_NONCE_ACTION = 'smartling_connector_ajax';
 
     protected string $servedContentType = 'undefined';
     protected string $needSave = 'Need to have title';
@@ -115,6 +116,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     public function ajaxDownloadHandler(): void
     {
+        check_ajax_referer(self::AJAX_NONCE_ACTION, '_wpnonce');
+        if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Insufficient permissions'], 403);
+            return;
+        }
+
         $logSubmissions = [];
         $result = ['status' => self::RESPONSE_AJAX_STATUS_SUCCESS];
         $submissions = [];
@@ -175,6 +182,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
 
     public function ajaxUploadHandler()
     {
+        check_ajax_referer(self::AJAX_NONCE_ACTION, '_wpnonce');
+        if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Insufficient permissions'], 403);
+            return;
+        }
+
         $result = [];
 
         $data = &$_POST;

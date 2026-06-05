@@ -8,6 +8,7 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginInfo;
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Models\NotificationParameters;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
@@ -98,11 +99,13 @@ class LiveNotificationController implements WPHookInterface
 
         $wrapperClassName = static::UI_NOTIFICATION_IDENTIFIER_CLASS;
         $wrapperClassNameGeneral = static::UI_NOTIFICATION_IDENTIFIER_CLASS_GENERAL;
+        $deleteNonce = wp_create_nonce(self::DELETE_NOTIFICATION_ACTION_NAME);
 
         echo <<<EOF
 <script>
     var firebaseConfig = $configs;
     var deleteNotificationEndpoint = "$deleteEndpoint";
+    var deleteNotificationNonce = "$deleteNonce";
     var firebaseIds = $firebaseIds;
     var notificationClassName = "$wrapperClassName";
     var notificationClassNameGeneral = "$wrapperClassNameGeneral";
@@ -113,6 +116,12 @@ EOF;
 
     public function deleteNotificationAjaxHandler(): void
     {
+        check_ajax_referer(self::DELETE_NOTIFICATION_ACTION_NAME, '_wpnonce');
+        if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            wp_send_json(['code' => 'error', 'message' => 'Insufficient permissions'], 403);
+            return;
+        }
+
         $data = $_POST;
 
         $projectId = $data['project_id'];

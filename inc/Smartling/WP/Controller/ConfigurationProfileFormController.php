@@ -31,6 +31,9 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         foreach ($jsFiles as $jFile) {
             wp_enqueue_script($jFile, $jFile, ['jquery'], $ver, false);
         }
+        wp_localize_script($jsPath . 'configuration-profile-form.js', 'smartlingProfileForm', [
+            'expertSettingsNonce' => wp_create_nonce('smartling_expert_global_settings'),
+        ]);
     }
 
     public function register(): void
@@ -47,6 +50,12 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
     public function initTestConnectionEndpoint(): void
     {
+        check_ajax_referer('smartling_test_connection', '_wpnonce');
+        if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP)) {
+            wp_send_json(['status' => 403, 'message' => 'Insufficient permissions'], 403);
+            return;
+        }
+
         $data =& $_POST;
 
         $result = [

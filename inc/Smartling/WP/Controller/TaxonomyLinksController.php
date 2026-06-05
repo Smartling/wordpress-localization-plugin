@@ -19,6 +19,8 @@ use Smartling\WP\WPHookInterface;
 
 class TaxonomyLinksController extends WPAbstract implements WPHookInterface
 {
+    private const NONCE_ACTION = 'smartling_link_taxonomies';
+
     public function __construct(
         protected ApiWrapperInterface $api,
         PluginInfo $pluginInfo,
@@ -150,11 +152,17 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
 
     public function linkTaxonomies($data)
     {
+        $this->wordpressProxy->check_ajax_referer(self::NONCE_ACTION, '_wpnonce');
+        if (!$this->wordpressProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP)) {
+            $this->wordpressProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+            return;
+        }
+
         if ($data === "") {
             $data = $_POST;
         }
         if (!isset($data['sourceBlogId'], $data['sourceId'], $data['taxonomy'])) {
-            wp_send_json_error('Required parameter missing');
+            $this->wordpressProxy->wp_send_json_error('Required parameter missing');
         }
         $sourceBlogId = (int)$data['sourceBlogId'];
         $sourceId = (int)$data['sourceId'];
@@ -202,13 +210,13 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
         }
         $submissions = array_merge($submissionsToAdd, $submissionsToUpdate);
         if (count(array_merge($submissions, $submissionsToDelete)) === 0) {
-            wp_send_json_error('No changes');
+            $this->wordpressProxy->wp_send_json_error('No changes');
         }
         $this->submissionManager->storeSubmissions($submissions);
         foreach ($submissionsToDelete as $submission) {
             $this->submissionManager->delete($submission);
         }
-        wp_send_json(['success' => true, 'submissions' => $this->getSubmissions()]);
+        $this->wordpressProxy->wp_send_json(['success' => true, 'submissions' => $this->getSubmissions()]);
     }
 
     /**

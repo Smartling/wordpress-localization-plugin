@@ -5,6 +5,8 @@ namespace Smartling\Services;
 use Exception;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\UserCloneRequest;
 use Smartling\Models\UserTranslationRequest;
 
@@ -44,7 +46,8 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
     public const FORM_ACTION_UPLOAD = 'upload';
 
     private ContentRelationsDiscoveryService $service;
-    public function __construct(ContentRelationsDiscoveryService $service)
+
+    public function __construct(ContentRelationsDiscoveryService $service, private WordpressFunctionProxyHelper $wpProxy)
     {
         parent::__construct($_GET);
         $this->service = $service;
@@ -78,6 +81,12 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
      */
     public function createSubmissionsHandler(array $data = null): void
     {
+        $this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce');
+        if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->returnError('permission.denied', 'Insufficient permissions', 403);
+            return;
+        }
+
         if ($data === null) {
             $data = $_POST;
         }
@@ -95,6 +104,12 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
 
     public function actionHandler(): void
     {
+        $this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce');
+        if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->returnError('permission.denied', 'Insufficient permissions', 403);
+            return;
+        }
+
         $data = $_GET;
         $data['targetBlogIds'] = $this->convertTargetBlogIds($data['targetBlogIds']);
         try {

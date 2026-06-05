@@ -492,4 +492,40 @@ class InstantTranslationControllerTest extends TestCase
         $this->assertEquals('pending', $method->invoke($this->controller, SubmissionEntity::SUBMISSION_STATUS_NEW));
         $this->assertEquals('pending', $method->invoke($this->controller, 'unknown_status'));
     }
+
+    public function testHandleRequestTranslationReturns403WhenCapabilityMissing(): void
+    {
+        $this->wpProxy->method('check_ajax_referer')->willReturn(1);
+        $this->wpProxy->method('current_user_can')->willReturn(false);
+
+        $errorArgs = null;
+        $this->wpProxy->method('wp_send_json_error')->willReturnCallback(
+            function (array $data, int $status) use (&$errorArgs) {
+                $errorArgs = ['data' => $data, 'status' => $status];
+            }
+        );
+
+        $this->controller->handleRequestTranslation();
+
+        $this->assertNotNull($errorArgs);
+        $this->assertSame(403, $errorArgs['status']);
+    }
+
+    public function testHandlePollStatusReturns403WhenCapabilityMissing(): void
+    {
+        $this->wpProxy->method('check_ajax_referer')->willReturn(1);
+        $this->wpProxy->method('current_user_can')->willReturn(false);
+
+        $errorArgs = null;
+        $this->wpProxy->method('wp_send_json_error')->willReturnCallback(
+            function (array $data, int $status) use (&$errorArgs) {
+                $errorArgs = ['data' => $data, 'status' => $status];
+            }
+        );
+
+        $this->controller->handlePollStatus();
+
+        $this->assertNotNull($errorArgs);
+        $this->assertSame(403, $errorArgs['status']);
+    }
 }

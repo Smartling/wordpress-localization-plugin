@@ -37,6 +37,7 @@
 
             this.deleteRecord = function (recordId) {
                 $.post(window.deleteNotificationEndpoint, {
+                    _wpnonce: window.deleteNotificationNonce || '',
                     project_id: this.data.projectId,
                     space_id: this.spaceId,
                     object_id: this.object_id,

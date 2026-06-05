@@ -95,6 +95,7 @@ class CustomTaxonomyType extends TermBasedContentTypeAbstract
             ->addArgument($di->getDefinition('site.helper'))
             ->addArgument($di->getDefinition('manager.submission'))
             ->addArgument($di->getDefinition('site.cache'))
+            ->addArgument($di->getDefinition('wp.proxy'))
             ->addMethodCall('setServedContentType', [static::getSystemName()])
             ->addMethodCall('setBaseType', ['taxonomy']);
         $di->get($tag)->register();

@@ -21,6 +21,7 @@
             e.preventDefault();
             const data = {
                 'action': 'smartling_expert_global_settings_update',
+                '_wpnonce': (typeof smartlingProfileForm !== 'undefined' ? smartlingProfileForm.expertSettingsNonce : ''),
                 'params': {
                     'smartling_add_slashes_before_saving_content': $('#smartling_add_slashes_before_saving_content').val(),
                     'smartling_add_slashes_before_saving_meta': $('#smartling_add_slashes_before_saving_meta').val(),

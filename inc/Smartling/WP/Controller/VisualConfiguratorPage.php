@@ -87,7 +87,9 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
 
     public function ajaxListRules(): void
     {
-        $this->verifyNonce();
+        if (!$this->verifyNonce()) {
+            return;
+        }
         $this->rulesManager->loadData();
         $rules = [];
         foreach ($this->rulesManager->listItems() as $id => $rule) {
@@ -98,7 +100,9 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
 
     public function ajaxSaveRule(): void
     {
-        $this->verifyNonce();
+        if (!$this->verifyNonce()) {
+            return;
+        }
         try {
             $payload = $this->readRulePayload();
         } catch (\InvalidArgumentException $e) {
@@ -137,7 +141,9 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
 
     public function ajaxResolveType(): void
     {
-        $this->verifyNonce();
+        if (!$this->verifyNonce()) {
+            return;
+        }
         $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
         if ($id <= 0) {
             $this->wpProxy->wp_send_json_error(['message' => 'Missing or invalid id'], 400);
@@ -153,7 +159,9 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
 
     public function ajaxDeleteRule(): void
     {
-        $this->verifyNonce();
+        if (!$this->verifyNonce()) {
+            return;
+        }
         $id = isset($_POST['id']) && is_string($_POST['id'])
             ? $this->wpProxy->sanitize_text_field($this->wpProxy->wp_unslash($_POST['id']))
             : '';
@@ -169,9 +177,14 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
         $this->wpProxy->wp_send_json_success(['id' => $id]);
     }
 
-    private function verifyNonce(): void
+    private function verifyNonce(): bool
     {
         $this->wpProxy->check_ajax_referer(self::NONCE_ACTION, '_wpnonce');
+        if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP)) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+            return false;
+        }
+        return true;
     }
 
     /**
