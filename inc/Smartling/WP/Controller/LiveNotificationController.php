@@ -116,8 +116,13 @@ EOF;
 
     public function deleteNotificationAjaxHandler(): void
     {
-        check_ajax_referer(self::DELETE_NOTIFICATION_ACTION_NAME, '_wpnonce');
+        if (check_ajax_referer(self::DELETE_NOTIFICATION_ACTION_NAME, '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', self::DELETE_NOTIFICATION_ACTION_NAME, get_current_user_id()));
+            wp_send_json(['code' => 'error', 'message' => 'Invalid nonce'], 403);
+            return;
+        }
         if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
             wp_send_json(['code' => 'error', 'message' => 'Insufficient permissions'], 403);
             return;
         }

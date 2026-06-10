@@ -152,8 +152,13 @@ class TaxonomyLinksController extends WPAbstract implements WPHookInterface
 
     public function linkTaxonomies($data)
     {
-        $this->wordpressProxy->check_ajax_referer(self::NONCE_ACTION, '_wpnonce');
+        if ($this->wordpressProxy->check_ajax_referer(self::NONCE_ACTION, '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', self::NONCE_ACTION, get_current_user_id()));
+            $this->wordpressProxy->wp_send_json_error(['message' => 'Invalid nonce'], 403);
+            return;
+        }
         if (!$this->wordpressProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_MENU_CAP));
             $this->wordpressProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
             return;
         }

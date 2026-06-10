@@ -152,8 +152,13 @@ class TestRunController extends WPAbstract implements WPHookInterface
 
     public function testRun($data): void
     {
-        check_ajax_referer('smartling_test_run', '_wpnonce');
+        if (check_ajax_referer('smartling_test_run', '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', 'smartling_test_run', get_current_user_id()));
+            wp_send_json_error(['message' => 'Invalid nonce'], 403);
+            return;
+        }
         if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP));
             wp_send_json_error(['message' => 'Insufficient permissions'], 403);
             return;
         }

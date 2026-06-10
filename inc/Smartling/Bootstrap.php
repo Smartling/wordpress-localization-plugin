@@ -181,10 +181,13 @@ class Bootstrap
     #[NoReturn]
     public function updateGlobalExpertSettings(): void
     {
-        check_ajax_referer('smartling_expert_global_settings', '_wpnonce');
+        if (check_ajax_referer('smartling_expert_global_settings', '_wpnonce', false) === false) {
+            static::getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', 'smartling_expert_global_settings', get_current_user_id()));
+            wp_send_json(['error' => 'Invalid nonce'], 403);
+        }
         if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP)) {
+            static::getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP));
             wp_send_json(['error' => 'Insufficient permissions'], 403);
-            return;
         }
 
         $data = $_POST['params'];

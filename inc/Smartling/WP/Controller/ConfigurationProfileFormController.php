@@ -50,8 +50,13 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
     public function initTestConnectionEndpoint(): void
     {
-        check_ajax_referer('smartling_test_connection', '_wpnonce');
+        if (check_ajax_referer('smartling_test_connection', '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', 'smartling_test_connection', get_current_user_id()));
+            wp_send_json(['status' => 403, 'message' => 'Invalid nonce'], 403);
+            return;
+        }
         if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP));
             wp_send_json(['status' => 403, 'message' => 'Insufficient permissions'], 403);
             return;
         }

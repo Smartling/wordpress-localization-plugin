@@ -37,9 +37,14 @@ class InstantTranslationController implements WPHookInterface
 
     public function handleRequestTranslation(): void
     {
-        $this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce');
+        if ($this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', 'smartling_translation', get_current_user_id()));
+            $this->wpProxy->wp_send_json_error(['message' => 'Invalid nonce'], 403);
+            return;
+        }
 
         if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
             $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
             return;
         }
@@ -139,9 +144,14 @@ class InstantTranslationController implements WPHookInterface
 
     public function handlePollStatus(): void
     {
-        $this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce');
+        if ($this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', 'smartling_translation', get_current_user_id()));
+            $this->wpProxy->wp_send_json_error(['message' => 'Invalid nonce'], 403);
+            return;
+        }
 
         if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
             $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
             return;
         }
