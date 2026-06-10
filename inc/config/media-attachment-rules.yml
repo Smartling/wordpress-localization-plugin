@@ -19,6 +19,7 @@ parameters:
     - "@wordpress.layout"
     - "@wordpress.style"
     - "@wordpress.width"
+    - "@wordpress.block.ref"
 
 services:
   acf.editor.mode:
@@ -153,3 +154,10 @@ services:
       - "core/.+"
       - "width"
       - "copy"
+
+  wordpress.block.ref:
+    class: Smartling\Helpers\GutenbergReplacementRule
+    arguments:
+      - "block"
+      - "ref"
+      - "related|attachment"
