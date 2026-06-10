@@ -180,6 +180,7 @@ class VisualConfiguratorPageTest extends TestCase
             'propertyPath' => '$.title',
             'replacerId' => 'translate',
         ]);
+        $manager->saveData(); // persist so loadData() inside ajaxDeleteRule() reloads this exact item
         $_POST = ['id' => $id];
 
         $wpProxy = $this->createWpProxy();
