@@ -242,6 +242,7 @@ if ($post instanceof WP_Post) {
             "contentType": '<?= $contentType ?>',
             "id": [<?= $id ?>]
         };
+        var smartlingNonce = '<?= wp_create_nonce('smartling_translation') ?>';
 
         var Helper = {
             placeHolder: {
@@ -260,7 +261,7 @@ if ($post instanceof WP_Post) {
             queryProxy: {
                 baseEndpoint: '<?= admin_url('admin-ajax.php')?>?action=<?= ContentEditJobController::SMARTLING_JOB_API_PROXY?>',
                 query: function (action, params, success) {
-                    var data = { "innerAction": action, "params": params };
+                    var data = { "innerAction": action, "params": params, "_wpnonce": smartlingNonce };
                     $.post(this.baseEndpoint, data, function (response) {
                         success(response);
                     });
@@ -480,7 +481,7 @@ if ($post instanceof WP_Post) {
             };
 
             const loadRelations = function loadRelations(contentType, contentId, level = 1) {
-                const url = `${ajaxurl}?action=<?= ContentRelationsHandler::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}`;
+                const url = `${ajaxurl}?action=<?= ContentRelationsHandler::ACTION_NAME?>&id=${contentId}&content-type=${contentType}&targetBlogIds=${localeList}&_wpnonce=${encodeURIComponent(smartlingNonce)}`;
                 pendingRequests++;
                 totalRequests++;
                 $('#progress-indicator').removeClass('hidden');
@@ -637,6 +638,7 @@ if ($post instanceof WP_Post) {
                         authorize: ($("div.job-wizard input[type=checkbox].authorize:checked").length > 0)
                     },
                     targetBlogIds: blogIds.join(","),
+                    _wpnonce: smartlingNonce,
                 };
 
                 const prepareRequest = () => {
