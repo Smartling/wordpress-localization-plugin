@@ -155,7 +155,7 @@ class ExternalContentGravityForms extends ExternalContentAbstract implements Con
 
     public function getMaxVersion(): string
     {
-        return '2.9';
+        return '2.10';
     }
 
     public function getMinVersion(): string
