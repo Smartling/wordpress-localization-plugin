@@ -34,6 +34,14 @@ RUN apt-get update && \
         subversion \
         zip
 
+# Node.js 20 LTS + Playwright Chromium for E2E tests
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+
+# Pre-install Playwright Chromium so npm ci at runtime skips the download.
+# Version must match package.json devDependencies.@playwright/test exactly.
+RUN npx playwright@1.47.2 install chromium --with-deps
+
 RUN echo "[mysqld]" >> /etc/mysql/my.cnf && \
     echo "default_authentication_plugin=mysql_native_password" >> /etc/mysql/my.cnf && \
     service mysql start && \

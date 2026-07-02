@@ -145,6 +145,44 @@ chmod +x $PHPUNIT_BIN
 
 PHPUNIT_XML="${PLUGIN_DIR}/tests/phpunit.xml"
 
+# ── E2E (Playwright) ───────────────────────────────────────────────────────────
+# Resolve WP_INSTALLATION_DOMAIN so the PHP server and Playwright agree on the URL.
+E2E_DOMAIN="${WP_INSTALLATION_DOMAIN:-test.com}"
+
+echo "127.0.0.1 ${E2E_DOMAIN}" >> /etc/hosts
+
+# Start WordPress via PHP built-in multi-worker server.
+# wp-cli server handles WordPress routing (equivalent to mod_rewrite).
+PHP_CLI_SERVER_WORKERS=4 ${WPCLI} server --host=0.0.0.0 --port=80 \
+    > /var/log/php-e2e-server.log 2>&1 &
+WP_SERVER_PID=$!
+sleep 3  # wait for server to bind
+
+# Create test fixtures: one post + one Smartling profile
+E2E_TEST_POST_ID=$(${WPCLI} post create \
+    --url="${E2E_DOMAIN}" \
+    --post_title="E2E Test Post" \
+    --post_status=publish \
+    --porcelain)
+
+${WPCLI} eval-file "${LOCAL_GIT_DIR}/tests/playwright/fixtures/create-profile.php" \
+    --url="${E2E_DOMAIN}"
+
+# Run Playwright (Chromium already baked into Docker image; skip re-download)
+cd "${LOCAL_GIT_DIR}"
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --prefer-offline 2>/dev/null || npm ci
+
+PLAYWRIGHT_BASE_URL="http://${E2E_DOMAIN}" \
+    E2E_TEST_POST_ID="${E2E_TEST_POST_ID}" \
+    WP_ADMIN_USER=wp \
+    WP_ADMIN_PASSWORD=wp \
+    npx playwright test --reporter=junit,line
+
+E2E_EXIT_CODE=$?
+
+kill ${WP_SERVER_PID} 2>/dev/null || true
+# ── END E2E ────────────────────────────────────────────────────────────────────
+
 ${PHPUNIT_BIN} -c ${PHPUNIT_XML}
 
 PHPUNIT_EXIT_CODE=$?
@@ -165,4 +203,7 @@ svn status
 
 zip -q -r ${PLUGIN_DIR}/release.zip ${PLUGIN_DIR} -x trunk/**\*
 
-exit $PHPUNIT_EXIT_CODE
+if [ "${E2E_EXIT_CODE}" -ne 0 ] || [ "${PHPUNIT_EXIT_CODE}" -ne 0 ]; then
+    exit 1
+fi
+exit 0
