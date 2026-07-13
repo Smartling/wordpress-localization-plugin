@@ -151,21 +151,32 @@ E2E_DOMAIN="${WP_INSTALLATION_DOMAIN:-test.com}"
 
 echo "127.0.0.1 ${E2E_DOMAIN}" >> /etc/hosts
 
-# Ensure WordPress URLs match the test domain before starting the server.
-# multisite-convert or other setup steps may leave siteurl with a filesystem
-# path component (e.g. http://test.com/WP_INSTALL_DIR) which would cause
-# wp_login_url() to generate incorrect redirect URLs during Playwright tests.
-${WPCLI} option update siteurl "http://${E2E_DOMAIN}"
-${WPCLI} option update home "http://${E2E_DOMAIN}"
+# Read the actual WordPress siteurl — multisite-convert may place WordPress at
+# a sub-path (e.g. http://test.com/WP_INSTALL_DIR). Using this as the Playwright
+# baseURL ensures page.goto('/wp-login.php') resolves to the URL WordPress itself
+# generates for login/admin redirects, so auth cookies are set for the right path.
+# Do NOT update siteurl in the DB: changing it while PATH_CURRENT_SITE in
+# wp-config.php still has the original path causes a multisite redirect loop.
+WP_SITEURL=$(${WPCLI} option get siteurl 2>/dev/null | tr -d '\n\r ')
+WP_SITEURL="${WP_SITEURL:-http://${E2E_DOMAIN}}"
+echo "E2E base URL: ${WP_SITEURL}"
 
-# Start WordPress via PHP built-in server directly.
-# Using 'php -S' with -t ensures the docroot is always WP_INSTALL_DIR
-# regardless of the current working directory.  'wp server' is NOT used
-# because it may honour --docroot differently across wp-cli versions, and
-# our test URLs (wp-login.php, wp-admin/*.php) are direct PHP files that
-# don't require WordPress rewrite routing.
+# Choose the PHP document root based on whether WordPress is at the domain root
+# or a sub-path. When the siteurl has a path component (e.g. /WP_INSTALL_DIR),
+# the filesystem root is used as docroot so that URL paths like
+# /WP_INSTALL_DIR/wp-login.php map directly to /WP_INSTALL_DIR/wp-login.php.
+# When WordPress is at the domain root, WP_INSTALL_DIR is used as docroot.
+WP_URL_PATH=$(echo "${WP_SITEURL}" | sed 's|https\?://[^/]*||')
+if [ -z "${WP_URL_PATH}" ] || [ "${WP_URL_PATH}" = "/" ]; then
+    PHP_DOCROOT="${WP_INSTALL_DIR}"
+else
+    PHP_DOCROOT="/"
+fi
+echo "PHP docroot: ${PHP_DOCROOT}"
+
+# Start WordPress via PHP built-in multi-worker server.
 PHP_CLI_SERVER_WORKERS=4 php -S 0.0.0.0:80 \
-    -t "${WP_INSTALL_DIR}" \
+    -t "${PHP_DOCROOT}" \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
 sleep 3  # wait for server to bind
@@ -186,7 +197,7 @@ ${WPCLI} eval-file "${LOCAL_GIT_DIR}/tests/playwright/fixtures/create-profile.ph
 # inside playwright.config.js resolves correctly without a local node_modules.
 cd "${LOCAL_GIT_DIR}"
 NODE_PATH="$(npm root -g)" \
-    PLAYWRIGHT_BASE_URL="http://${E2E_DOMAIN}" \
+    PLAYWRIGHT_BASE_URL="${WP_SITEURL}" \
     E2E_TEST_POST_ID="${E2E_TEST_POST_ID}" \
     WP_ADMIN_USER=wp \
     WP_ADMIN_PASSWORD=wp \
