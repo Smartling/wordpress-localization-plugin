@@ -185,21 +185,13 @@ fi
 # occupying all PHP workers and causing test page loads to time out.
 ${WPCLI} config set DISABLE_WP_CRON true --raw
 
-# Block all outbound HTTP calls from WordPress (wp_remote_get/post).
-# Elementor, Yoast, Beaver Builder, and ACF Pro all make licence / update
-# API calls during plugin initialisation.  In Docker CI those external hosts
-# are unreachable, so the calls hang for 30+ seconds, occupying every PHP
-# worker and preventing wp-login.php from returning domcontentloaded in time.
-# WordPress exempts the site's own hostname (test.com) so REST API and
-# admin-ajax.php still work; only calls to external servers are blocked.
-${WPCLI} config set WP_HTTP_BLOCK_EXTERNAL true --raw
-
-# Deactivate third-party plugins that are not needed for E2E tests.
-# Belt-and-suspenders: even with WP_HTTP_BLOCK_EXTERNAL some plugins execute
-# expensive filesystem / DB work during network-wide init that slows every
-# PHP request.  Keeping only smartling-connector active makes each page load
-# ~1 second instead of 10+ seconds.
-${WPCLI} plugin deactivate elementor wordpress-seo beaver-builder-lite-version advanced-custom-fields-pro --network 2>/dev/null || true
+# Disable WordPress's script/style concatenation for E2E tests.
+# By default, WordPress admin pages serve JavaScript via load-scripts.php
+# (a PHP file that bootstraps WordPress fully on every request).  With
+# CONCATENATE_SCRIPTS=false, each script is served as an individual static
+# .min.js file, so the browser never makes PHP requests for scripts and
+# domcontentloaded fires as soon as the HTML is parsed.
+${WPCLI} config set CONCATENATE_SCRIPTS false --raw
 
 # Start WordPress via the wp-cli built-in server. wp server uses a router
 # script that correctly handles WordPress multisite initialization; bare
