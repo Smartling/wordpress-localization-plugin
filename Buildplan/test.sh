@@ -168,15 +168,14 @@ E2E_TEST_POST_ID=$(${WPCLI} post create \
 ${WPCLI} eval-file "${LOCAL_GIT_DIR}/tests/playwright/fixtures/create-profile.php" \
     --url="${E2E_DOMAIN}"
 
-# Run Playwright (Chromium already baked into Docker image; skip re-download)
+# Run Playwright — @playwright/test and Chromium are pre-installed globally in
+# the Docker image; no runtime npm install needed.
 cd "${LOCAL_GIT_DIR}"
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --prefer-offline 2>/dev/null || npm ci
-
 PLAYWRIGHT_BASE_URL="http://${E2E_DOMAIN}" \
     E2E_TEST_POST_ID="${E2E_TEST_POST_ID}" \
     WP_ADMIN_USER=wp \
     WP_ADMIN_PASSWORD=wp \
-    npx playwright test --reporter=junit,line
+    playwright test --reporter=junit,line
 
 E2E_EXIT_CODE=$?
 
