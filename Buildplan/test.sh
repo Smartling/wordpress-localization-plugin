@@ -186,7 +186,26 @@ fi
 PHP_CLI_SERVER_WORKERS=4 ${WPCLI} server --host=0.0.0.0 --port=80 \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
-sleep 3  # wait for server to bind
+
+# Wait for the server to accept connections (up to 30 seconds)
+echo "Waiting for WP server to start..."
+WP_SERVER_READY=0
+for i in $(seq 1 30); do
+    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+        --max-time 2 "http://${E2E_DOMAIN}/" 2>/dev/null)
+    if [ -n "${HTTP_STATUS}" ] && [ "${HTTP_STATUS}" != "000" ]; then
+        echo "WP server ready (HTTP ${HTTP_STATUS}) after ${i}s"
+        WP_SERVER_READY=1
+        break
+    fi
+    sleep 1
+done
+if [ "${WP_SERVER_READY}" -eq 0 ]; then
+    echo "ERROR: WP server did not start within 30 seconds"
+    echo "--- PHP server log ---"
+    cat /var/log/php-e2e-server.log 2>/dev/null || echo "(empty)"
+    echo "--- END ---"
+fi
 
 # Create test fixtures: one post + one Smartling profile
 E2E_TEST_POST_ID=$(${WPCLI} post create \
@@ -197,6 +216,14 @@ E2E_TEST_POST_ID=$(${WPCLI} post create \
 
 ${WPCLI} eval-file "${LOCAL_GIT_DIR}/tests/playwright/fixtures/create-profile.php" \
     --url="${E2E_DOMAIN}"
+
+echo "--- DIAGNOSTIC: Profile table ---"
+${WPCLI} db query \
+    "SELECT id, profile_name, is_active, original_blog_id, LEFT(target_locales,120) AS locales \
+     FROM ${WP_DB_TABLE_PREFIX}smartling_configuration_profiles" \
+    --url="${E2E_DOMAIN}" 2>&1 || true
+echo "--- DIAGNOSTIC: Plugin status ---"
+${WPCLI} plugin status smartling-connector --url="${E2E_DOMAIN}" 2>&1 || true
 
 # Run Playwright — @playwright/test and Chromium are pre-installed globally in
 # the Docker image; no runtime npm install needed.
@@ -211,6 +238,10 @@ NODE_PATH="$(npm root -g)" \
     playwright test --reporter=junit,line
 
 E2E_EXIT_CODE=$?
+
+echo "--- WP PHP SERVER LOG (last 100 lines) ---"
+tail -100 /var/log/php-e2e-server.log 2>/dev/null || echo "(log empty or missing)"
+echo "--- END WP PHP SERVER LOG ---"
 
 kill ${WP_SERVER_PID} 2>/dev/null || true
 # ── END E2E ────────────────────────────────────────────────────────────────────
