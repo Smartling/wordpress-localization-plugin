@@ -17,7 +17,11 @@ if (fs.existsSync(envFile)) {
 
 module.exports = defineConfig({
     testDir: 'tests/playwright',
-    timeout: 30000,
+    timeout: 120000,
+    // 4 Playwright workers match the 4 PHP workers (PHP_CLI_SERVER_WORKERS=4).
+    // Static files are served without PHP (custom router), and REST API calls
+    // are aborted in beforeEach, so page loads each occupy exactly one PHP worker.
+    workers: 4,
     retries: process.env.CI ? 1 : 0,
     reporter: [
         ['line'],
@@ -26,7 +30,7 @@ module.exports = defineConfig({
     use: {
         baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://test.com',
         headless: true,
-        screenshot: 'only-on-failure',
+        screenshot: { mode: 'only-on-failure', fullPage: true },
         video: 'off',
     },
     projects: [

@@ -52,7 +52,6 @@ pipeline {
             steps {
                 archiveArtifacts artifacts: 'release.zip'
                 archiveArtifacts artifacts: '**/logfile-*'
-                archiveArtifacts artifacts: '**/playwright-results.xml', allowEmptyArchive: true
             }
         }
 

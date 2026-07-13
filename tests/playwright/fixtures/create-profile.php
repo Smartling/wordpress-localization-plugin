@@ -32,6 +32,45 @@ $projectId      = getenv('CRE_PROJECT_ID')      ?: 'aabbccdd1';
 $userIdentifier = getenv('CRE_USER_IDENTIFIER') ?: 'e2e-test-user';
 $secretKey      = getenv('CRE_TOKEN_SECRET')    ?: 'e2e-test-secret';
 
+// Build target locales from SITES env var (format: "Title:smartlingLocale:slug,...")
+// and look up the actual blog_id for each slug from wp_blogs.
+$targetLocales = [];
+$sitesEnv = getenv('SITES') ?: '';
+$localeMap = [];
+if ($sitesEnv !== '') {
+    foreach (explode(',', $sitesEnv) as $siteStr) {
+        $parts = explode(':', trim($siteStr));
+        if (count($parts) === 3) {
+            $localeMap[trim($parts[2])] = trim($parts[1]); // slug => smartlingLocale
+        }
+    }
+    $blogsTable = $wpdb->base_prefix . 'blogs';
+    $blogs = $wpdb->get_results(
+        "SELECT blog_id, path FROM $blogsTable WHERE blog_id != 1 ORDER BY blog_id",
+        ARRAY_A
+    );
+    foreach ($blogs as $blog) {
+        $slug = trim($blog['path'], '/');
+        if (isset($localeMap[$slug])) {
+            $targetLocales[] = [
+                'smartlingLocale' => $localeMap[$slug],
+                'enabled'         => true,
+                'blogId'          => (int) $blog['blog_id'],
+            ];
+        }
+    }
+}
+// Fallback to hardcoded defaults matching the Docker SITES variable
+if (empty($targetLocales)) {
+    $targetLocales = [
+        ['smartlingLocale' => 'es',    'enabled' => true, 'blogId' => 2],
+        ['smartlingLocale' => 'fr-FR', 'enabled' => true, 'blogId' => 3],
+        ['smartlingLocale' => 'ru-RU', 'enabled' => true, 'blogId' => 4],
+        ['smartlingLocale' => 'uk-UA', 'enabled' => true, 'blogId' => 5],
+    ];
+}
+WP_CLI::log(sprintf('Building profile with %d target locale(s).', count($targetLocales)));
+
 $result = $wpdb->insert(
     $table,
     [
@@ -48,11 +87,11 @@ $result = $wpdb->insert(
         'download_on_change'               => 0,
         'clean_metadata_on_download'       => 0,
         'always_sync_images_on_upload'     => 0,
-        'target_locales'                   => '[]',
-        'filter_skip'                      => null,
-        'filter_copy_by_field_name'        => null,
-        'filter_copy_by_field_value_regex' => null,
-        'filter_flag_seo'                  => null,
+        'target_locales'                   => json_encode($targetLocales),
+        'filter_skip'                      => '',
+        'filter_copy_by_field_name'        => '',
+        'filter_copy_by_field_value_regex' => '',
+        'filter_flag_seo'                  => '',
         'clone_attachment'                 => 0,
         'enable_notifications'             => 0,
         'filter_field_name_regexp'         => 0,
