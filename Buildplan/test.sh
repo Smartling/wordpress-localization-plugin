@@ -180,10 +180,10 @@ if [ -n "${CURRENT_SITEURL}" ] && [ "${CURRENT_SITEURL}" != "${EXPECTED_SITEURL}
     ${WPCLI} config set PATH_CURRENT_SITE "/"
 fi
 
-# Start PHP built-in multi-worker server. Docroot is WP_INSTALL_DIR so that
-# absolute-path requests like /wp-login.php map directly to WordPress files.
-PHP_CLI_SERVER_WORKERS=4 php -S 0.0.0.0:80 \
-    -t "${WP_INSTALL_DIR}" \
+# Start WordPress via the wp-cli built-in server. wp server uses a router
+# script that correctly handles WordPress multisite initialization; bare
+# php -S hangs on multisite bootstrap after URL normalization.
+PHP_CLI_SERVER_WORKERS=4 ${WPCLI} server --host=0.0.0.0 --port=80 \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
 sleep 3  # wait for server to bind
