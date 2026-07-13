@@ -151,32 +151,39 @@ E2E_DOMAIN="${WP_INSTALLATION_DOMAIN:-test.com}"
 
 echo "127.0.0.1 ${E2E_DOMAIN}" >> /etc/hosts
 
-# Read the actual WordPress siteurl — multisite-convert may place WordPress at
-# a sub-path (e.g. http://test.com/WP_INSTALL_DIR). Using this as the Playwright
-# baseURL ensures page.goto('/wp-login.php') resolves to the URL WordPress itself
-# generates for login/admin redirects, so auth cookies are set for the right path.
-# Do NOT update siteurl in the DB: changing it while PATH_CURRENT_SITE in
-# wp-config.php still has the original path causes a multisite redirect loop.
-WP_SITEURL=$(${WPCLI} option get siteurl 2>/dev/null | tr -d '\n\r ')
-WP_SITEURL="${WP_SITEURL:-http://${E2E_DOMAIN}}"
-echo "E2E base URL: ${WP_SITEURL}"
-
-# Choose the PHP document root based on whether WordPress is at the domain root
-# or a sub-path. When the siteurl has a path component (e.g. /WP_INSTALL_DIR),
-# the filesystem root is used as docroot so that URL paths like
-# /WP_INSTALL_DIR/wp-login.php map directly to /WP_INSTALL_DIR/wp-login.php.
-# When WordPress is at the domain root, WP_INSTALL_DIR is used as docroot.
-WP_URL_PATH=$(echo "${WP_SITEURL}" | sed 's|https\?://[^/]*||')
-if [ -z "${WP_URL_PATH}" ] || [ "${WP_URL_PATH}" = "/" ]; then
-    PHP_DOCROOT="${WP_INSTALL_DIR}"
-else
-    PHP_DOCROOT="/"
+# Playwright tests use absolute paths (/wp-login.php, /wp-admin/...). Absolute
+# paths in Playwright ignore the base URL's path component, so WordPress MUST
+# be at the domain root (http://test.com), not a sub-path like
+# http://test.com/WP_INSTALL_DIR. multisite-convert may store the install
+# directory name as a URL path component — detect and fix that here.
+#
+# Three things must be consistent for WordPress to serve correctly at the root:
+#   1. DB options (siteurl, home) — via wp search-replace
+#   2. Multisite path columns (wp_site.path, wp_blogs.path) — via direct SQL
+#   3. PATH_CURRENT_SITE constant in wp-config.php — via wp config set
+EXPECTED_SITEURL="http://${E2E_DOMAIN}"
+CURRENT_SITEURL=$(${WPCLI} option get siteurl 2>/dev/null | tr -d '\n\r ')
+echo "Current siteurl: ${CURRENT_SITEURL:-<empty>}"
+if [ -n "${CURRENT_SITEURL}" ] && [ "${CURRENT_SITEURL}" != "${EXPECTED_SITEURL}" ]; then
+    echo "Normalizing WordPress base URL to ${EXPECTED_SITEURL}"
+    # Replace all full-URL occurrences in the database (handles serialized data)
+    ${WPCLI} search-replace "${CURRENT_SITEURL}" "${EXPECTED_SITEURL}" \
+        --all-tables --skip-columns=guid
+    # Fix path-only multisite columns (not updated by search-replace above)
+    ${WPCLI} db query "UPDATE ${WP_DB_TABLE_PREFIX}site \
+        SET path=REPLACE(path, '${WP_INSTALL_DIR}', '') \
+        WHERE domain='${E2E_DOMAIN}' AND path LIKE '${WP_INSTALL_DIR}%'"
+    ${WPCLI} db query "UPDATE ${WP_DB_TABLE_PREFIX}blogs \
+        SET path=REPLACE(path, '${WP_INSTALL_DIR}', '') \
+        WHERE domain='${E2E_DOMAIN}' AND path LIKE '${WP_INSTALL_DIR}%'"
+    # Sync the PATH_CURRENT_SITE constant in wp-config.php
+    ${WPCLI} config set PATH_CURRENT_SITE "/"
 fi
-echo "PHP docroot: ${PHP_DOCROOT}"
 
-# Start WordPress via PHP built-in multi-worker server.
+# Start PHP built-in multi-worker server. Docroot is WP_INSTALL_DIR so that
+# absolute-path requests like /wp-login.php map directly to WordPress files.
 PHP_CLI_SERVER_WORKERS=4 php -S 0.0.0.0:80 \
-    -t "${PHP_DOCROOT}" \
+    -t "${WP_INSTALL_DIR}" \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
 sleep 3  # wait for server to bind
@@ -197,7 +204,7 @@ ${WPCLI} eval-file "${LOCAL_GIT_DIR}/tests/playwright/fixtures/create-profile.ph
 # inside playwright.config.js resolves correctly without a local node_modules.
 cd "${LOCAL_GIT_DIR}"
 NODE_PATH="$(npm root -g)" \
-    PLAYWRIGHT_BASE_URL="${WP_SITEURL}" \
+    PLAYWRIGHT_BASE_URL="${EXPECTED_SITEURL}" \
     E2E_TEST_POST_ID="${E2E_TEST_POST_ID}" \
     WP_ADMIN_USER=wp \
     WP_ADMIN_PASSWORD=wp \
