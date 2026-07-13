@@ -7,7 +7,7 @@ test('login as admin', async ({ page }) => {
     const user = process.env.WP_ADMIN_USER || 'wp';
     const pass = process.env.WP_ADMIN_PASSWORD || 'wp';
 
-    await page.goto('/wp-login.php');
+    await page.goto('/wp-login.php', { waitUntil: 'domcontentloaded' });
     await page.fill('#user_login', user);
     await page.fill('#user_pass', pass);
     await page.click('#wp-submit');

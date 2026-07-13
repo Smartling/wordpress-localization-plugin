@@ -180,6 +180,11 @@ if [ -n "${CURRENT_SITEURL}" ] && [ "${CURRENT_SITEURL}" != "${EXPECTED_SITEURL}
     ${WPCLI} config set PATH_CURRENT_SITE "/"
 fi
 
+# Disable WordPress core cron spawning for E2E tests: wp-cron.php makes
+# outbound HTTP requests to api.wordpress.org which can hang for 30+ seconds,
+# occupying all PHP workers and causing test page loads to time out.
+${WPCLI} config set DISABLE_WP_CRON true --raw
+
 # Start WordPress via the wp-cli built-in server. wp server uses a router
 # script that correctly handles WordPress multisite initialization; bare
 # php -S hangs on multisite bootstrap after URL normalization.
@@ -187,14 +192,15 @@ PHP_CLI_SERVER_WORKERS=4 ${WPCLI} server --host=0.0.0.0 --port=80 \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
 
-# Wait for the server to accept connections (up to 30 seconds)
-echo "Waiting for WP server to start..."
+# Wait for the server TCP port to open — do NOT make HTTP requests here.
+# HTTP health checks trigger WordPress initialization (cron spawning,
+# outbound API calls) which occupies PHP workers for 30+ seconds and
+# causes the subsequent Playwright login to time out.
+echo "Waiting for WP server to accept connections on port 80..."
 WP_SERVER_READY=0
 for i in $(seq 1 30); do
-    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-        --max-time 2 "http://${E2E_DOMAIN}/" 2>/dev/null)
-    if [ -n "${HTTP_STATUS}" ] && [ "${HTTP_STATUS}" != "000" ]; then
-        echo "WP server ready (HTTP ${HTTP_STATUS}) after ${i}s"
+    if (echo >/dev/tcp/localhost/80) 2>/dev/null; then
+        echo "WP server port 80 open after ${i}s"
         WP_SERVER_READY=1
         break
     fi
