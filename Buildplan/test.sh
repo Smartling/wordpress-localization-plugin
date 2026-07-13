@@ -158,11 +158,14 @@ echo "127.0.0.1 ${E2E_DOMAIN}" >> /etc/hosts
 ${WPCLI} option update siteurl "http://${E2E_DOMAIN}"
 ${WPCLI} option update home "http://${E2E_DOMAIN}"
 
-# Start WordPress via PHP built-in multi-worker server.
-# Explicit --docroot prevents wp server from using the CWD as document root
-# (CWD at this point is ${PLUGIN_DIR}/inc/third-party/bin, not WP root).
-PHP_CLI_SERVER_WORKERS=4 ${WPCLI} server --host=0.0.0.0 --port=80 \
-    --docroot="${WP_INSTALL_DIR}" \
+# Start WordPress via PHP built-in server directly.
+# Using 'php -S' with -t ensures the docroot is always WP_INSTALL_DIR
+# regardless of the current working directory.  'wp server' is NOT used
+# because it may honour --docroot differently across wp-cli versions, and
+# our test URLs (wp-login.php, wp-admin/*.php) are direct PHP files that
+# don't require WordPress rewrite routing.
+PHP_CLI_SERVER_WORKERS=4 php -S 0.0.0.0:80 \
+    -t "${WP_INSTALL_DIR}" \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
 sleep 3  # wait for server to bind
