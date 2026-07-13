@@ -151,9 +151,18 @@ E2E_DOMAIN="${WP_INSTALLATION_DOMAIN:-test.com}"
 
 echo "127.0.0.1 ${E2E_DOMAIN}" >> /etc/hosts
 
+# Ensure WordPress URLs match the test domain before starting the server.
+# multisite-convert or other setup steps may leave siteurl with a filesystem
+# path component (e.g. http://test.com/WP_INSTALL_DIR) which would cause
+# wp_login_url() to generate incorrect redirect URLs during Playwright tests.
+${WPCLI} option update siteurl "http://${E2E_DOMAIN}"
+${WPCLI} option update home "http://${E2E_DOMAIN}"
+
 # Start WordPress via PHP built-in multi-worker server.
-# wp-cli server handles WordPress routing (equivalent to mod_rewrite).
+# Explicit --docroot prevents wp server from using the CWD as document root
+# (CWD at this point is ${PLUGIN_DIR}/inc/third-party/bin, not WP root).
 PHP_CLI_SERVER_WORKERS=4 ${WPCLI} server --host=0.0.0.0 --port=80 \
+    --docroot="${WP_INSTALL_DIR}" \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
 sleep 3  # wait for server to bind
