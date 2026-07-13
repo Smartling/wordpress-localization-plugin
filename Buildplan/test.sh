@@ -170,8 +170,11 @@ ${WPCLI} eval-file "${LOCAL_GIT_DIR}/tests/playwright/fixtures/create-profile.ph
 
 # Run Playwright — @playwright/test and Chromium are pre-installed globally in
 # the Docker image; no runtime npm install needed.
+# NODE_PATH exposes the global node_modules so that require('@playwright/test')
+# inside playwright.config.js resolves correctly without a local node_modules.
 cd "${LOCAL_GIT_DIR}"
-PLAYWRIGHT_BASE_URL="http://${E2E_DOMAIN}" \
+NODE_PATH="$(npm root -g)" \
+    PLAYWRIGHT_BASE_URL="http://${E2E_DOMAIN}" \
     E2E_TEST_POST_ID="${E2E_TEST_POST_ID}" \
     WP_ADMIN_USER=wp \
     WP_ADMIN_PASSWORD=wp \
