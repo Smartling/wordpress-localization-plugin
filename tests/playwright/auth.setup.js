@@ -10,11 +10,11 @@ test('login as admin', async ({ page }) => {
     // Abort ALL static resource requests (scripts, stylesheets, fonts, images).
     // The login form is pure HTML and submits via a standard POST — no JavaScript
     // or CSS is needed to fill the form or click the submit button. Aborting
-    // static resources prevents a PHP bootstrap race condition: wp server
-    // bootstraps WordPress for every request (including .min.js files); with
-    // 16 workers all starting concurrently, several bootstraps race to check
-    // plugin update transients, triggering slow external HTTP calls (30-90 s)
-    // that block the browser's HTML parser and keep #user_login out of the DOM.
+    // static resources is belt-and-suspenders: even though the custom PHP router
+    // in test.sh now serves static files without WordPress bootstrap, aborting
+    // them at the browser keeps the login page's network graph minimal and avoids
+    // any edge case where a PHP-generated resource (e.g. a dynamically-loaded
+    // script) might delay the first #user_login appearance in the DOM.
     await page.route(/\.(js|css|woff2?|ttf|eot|svg|png|gif|ico)(\?.*)?$/i, route => route.abort());
 
     // 'commit' fires as soon as response headers arrive — we don't need scripts

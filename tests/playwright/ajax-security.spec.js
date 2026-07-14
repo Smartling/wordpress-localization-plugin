@@ -77,12 +77,11 @@ async function collectAjaxObservations(page, callback) {
 //
 // External hosts (CDNs, Elementor, etc.) — aborted: slow/unreachable in CI.
 //
-// REST API (/wp-json/): aborted — Gutenberg makes 20-30 async REST calls per
-// page load. They don't block domcontentloaded but each occupies a PHP worker
-// for 5-30 s. With few workers those outstanding calls from earlier tests delay
-// the next test's page request until timeout.
+// REST API (/wp-json/) — aborted: Gutenberg makes 20-30 async REST calls per
+// page load. Each occupies a PHP worker for 5-30 s. Aborting at the browser
+// prevents those workers from being occupied while subsequent tests navigate.
 //
-// admin-ajax.php is NOT aborted: these are the calls we're testing.
+// admin-ajax.php is NOT aborted: these calls are exactly what we are testing.
 test.beforeEach(async ({ page }) => {
     await page.route(/^https?:\/\/(?!localhost)/, route => route.abort());
     await page.route(/\/wp-json\//, route => route.abort());

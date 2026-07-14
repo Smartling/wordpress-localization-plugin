@@ -207,16 +207,32 @@ ${WPCLI} config set DISABLE_WP_CRON true --raw
 # domcontentloaded fires as soon as the HTML is parsed.
 ${WPCLI} config set CONCATENATE_SCRIPTS false --raw
 
-# Start WordPress via the wp-cli built-in server. wp server uses a router
-# script that correctly handles WordPress multisite initialization; bare
-# php -S hangs on multisite bootstrap after URL normalization.
-# 16 workers: each admin page load triggers several background admin-ajax.php
-# calls (Smartling API lookups, Gutenberg state) that keep PHP workers busy for
-# 30-300 s. With only 4 workers those background calls from earlier tests can
-# occupy all slots, causing the next test's page.goto to queue until timeout.
-# 16 workers (4 tests × ~3 async admin-ajax calls each = 12 max outstanding)
-# always keeps at least 4 slots free for new page requests.
-PHP_CLI_SERVER_WORKERS=16 ${WPCLI} server --host=0.0.0.0 --port=80 \
+# Custom router for PHP's built-in server that serves static files (CSS, JS,
+# fonts, images) directly via C code without bootstrapping WordPress, and lets
+# PHP execute .php files directly (each WordPress entry point loads WordPress
+# itself via wp-load.php). Only virtual URLs (WordPress pretty permalinks, REST
+# API, etc.) fall through to the WordPress front controller (index.php).
+#
+# WHY this matters: wp server's built-in router bootstraps WordPress for EVERY
+# request — including .min.js and .css files. With 16 workers all starting
+# concurrently, there are 16 parallel WordPress bootstraps that each trigger
+# plugin licence checks and update pings (30-120 s each). Those 16 concurrent
+# outbound HTTP calls saturate all workers and cause subsequent page.goto calls
+# to queue for > 120 s, making domcontentloaded never fire within the test
+# timeout. With our custom router, 50+ static-file requests per admin page load
+# consume zero PHP workers — only the one main .php request bootstraps WordPress.
+cat > /tmp/wp-e2e-router.php << 'ROUTER_EOF'
+<?php
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$file = $_SERVER['DOCUMENT_ROOT'] . $uri;
+if (is_file($file) || is_dir($file)) {
+    return false;
+}
+chdir($_SERVER['DOCUMENT_ROOT']);
+require_once $_SERVER['DOCUMENT_ROOT'] . '/index.php';
+ROUTER_EOF
+
+PHP_CLI_SERVER_WORKERS=16 php -S 0.0.0.0:80 -t "${WP_INSTALL_DIR}" /tmp/wp-e2e-router.php \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
 
