@@ -17,7 +17,12 @@ if (fs.existsSync(envFile)) {
 
 module.exports = defineConfig({
     testDir: 'tests/playwright',
-    timeout: 30000,
+    timeout: 45000,
+    // Sequential execution prevents PHP worker starvation: concurrent admin page
+    // loads each trigger multiple PHP requests (REST API, admin-ajax.php). With 4
+    // PHP workers and 2+ simultaneous Playwright tests, all workers can saturate
+    // and the page 'load' event never fires within the test timeout.
+    workers: 1,
     retries: process.env.CI ? 1 : 0,
     reporter: [
         ['line'],

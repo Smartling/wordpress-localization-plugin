@@ -13,9 +13,10 @@ const POST_ID = process.env.E2E_TEST_POST_ID || '1';
  * Collects AJAX observations (nonce presence + response status) for every
  * admin-ajax.php request made while the callback runs.
  *
- * Uses 'load' (not 'networkidle') — networkidle waits for ALL network activity
- * to cease, which never happens when WordPress heartbeat or slow API calls are
- * in flight. After 'load' fires we drain only the AJAX calls we're tracking.
+ * Callbacks navigate with waitUntil:'domcontentloaded' (not 'load') so the
+ * function returns quickly even when Elementor or other plugins load external
+ * resources that would stall the 'load' event. React mounts and dispatches
+ * admin-ajax.php calls during the 12-second drain window that follows.
  */
 async function collectAjaxObservations(page, callback) {
     const observations = [];
@@ -60,7 +61,7 @@ async function collectAjaxObservations(page, callback) {
         // Drain in-flight AJAX requests (they were dispatched during page load
         // and should complete in well under 8s; we don't wait for unrelated
         // background requests like WordPress heartbeat).
-        const deadline = Date.now() + 8000;
+        const deadline = Date.now() + 12000;
         while (pendingCount > 0 && Date.now() < deadline) {
             await page.waitForTimeout(100);
         }
@@ -75,8 +76,7 @@ async function collectAjaxObservations(page, callback) {
 test.describe('AJAX security — post edit page', () => {
     test('all admin-ajax POSTs include _wpnonce', async ({ page }) => {
         const observations = await collectAjaxObservations(page, async () => {
-            await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`);
-            await page.waitForLoadState('load');
+            await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'domcontentloaded' });
         });
 
         const smartlingCalls = observations.filter((o) =>
@@ -97,8 +97,7 @@ test.describe('AJAX security — post edit page', () => {
 
     test('no 403 responses from admin-ajax.php', async ({ page }) => {
         const observations = await collectAjaxObservations(page, async () => {
-            await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`);
-            await page.waitForLoadState('load');
+            await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'domcontentloaded' });
         });
 
         const forbidden = observations.filter((o) => o.status === 403);
@@ -112,8 +111,7 @@ test.describe('AJAX security — post edit page', () => {
 test.describe('AJAX security — bulk submit page', () => {
     test('all admin-ajax POSTs include _wpnonce', async ({ page }) => {
         const observations = await collectAjaxObservations(page, async () => {
-            await page.goto('/wp-admin/admin.php?page=smartling-bulk-submit');
-            await page.waitForLoadState('load');
+            await page.goto('/wp-admin/admin.php?page=smartling-bulk-submit', { waitUntil: 'domcontentloaded' });
         });
 
         const smartlingCalls = observations.filter((o) =>
@@ -130,8 +128,7 @@ test.describe('AJAX security — bulk submit page', () => {
 
     test('no 403 responses from admin-ajax.php', async ({ page }) => {
         const observations = await collectAjaxObservations(page, async () => {
-            await page.goto('/wp-admin/admin.php?page=smartling-bulk-submit');
-            await page.waitForLoadState('load');
+            await page.goto('/wp-admin/admin.php?page=smartling-bulk-submit', { waitUntil: 'domcontentloaded' });
         });
 
         const forbidden = observations.filter((o) => o.status === 403);
