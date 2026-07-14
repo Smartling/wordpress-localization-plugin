@@ -207,20 +207,33 @@ ${WPCLI} config set DISABLE_WP_CRON true --raw
 # domcontentloaded fires as soon as the HTML is parsed.
 ${WPCLI} config set CONCATENATE_SCRIPTS false --raw
 
-# Cap all WordPress HTTP API calls at 5 s for E2E tests.
-# Plugins (Elementor, Yoast, Smartling, WordPress core) make synchronous
-# outbound HTTP calls during admin page rendering — licence checks, update
-# pings, API preflight requests. In CI these calls can hang for 60-120 s,
-# meaning PHP never finishes sending the page HTML before Playwright's 120 s
-# test timeout fires and domcontentloaded never fires.
-# A 5 s timeout causes all such calls to fail fast (returning WP_Error) so
-# the PHP render completes in ~10-15 s, well within the 120 s limit.
-# The mu-plugin is removed before PHPUnit runs so integration tests that need
-# real Smartling API access are unaffected.
+# Block ALL external outbound WordPress HTTP API calls during E2E tests.
+# Plugins (Elementor, Yoast, ACF, WordPress core) make sequential synchronous
+# HTTP calls during admin page rendering — licence checks, update pings, feed
+# fetches. In CI these calls each time out at 5 s (WordPress default), so with
+# 15-20 plugins each making 1-2 calls, PHP spends 75-200 s in network waits
+# before it can output the <body> of the admin page. Playwright's page.goto
+# with waitUntil:'commit' fires after the first 4 KB of the response (the
+# DOCTYPE + partial <head>) and then waitForSelector('#smartling-app') has its
+# own 90 s clock — but #smartling-app is in the <body> which PHP has not yet
+# generated. This consistently causes the 90 s waitForSelector to expire on
+# cold page loads.
+#
+# The pre_http_request filter returns WP_Error before any socket is opened,
+# so all external calls fail in < 1 ms. Admin pages render in < 1 s. Smartling
+# API calls in AJAX handlers use Guzzle directly (not WordPress HTTP API) and
+# are therefore unaffected. Localhost requests (cron, self-ping) pass through.
+# The mu-plugin is removed before PHPUnit runs so integration tests retain
+# full Smartling API access.
 mkdir -p "${WP_INSTALL_DIR}/wp-content/mu-plugins"
 cat > "${WP_INSTALL_DIR}/wp-content/mu-plugins/e2e-fast-http.php" << 'MU_EOF'
 <?php
-add_filter('http_request_timeout', static function() { return 5; });
+add_filter('pre_http_request', static function($preempt, $parsed_args, $url) {
+    if (strpos($url, '://localhost') !== false || strpos($url, '://127.0.0.1') !== false) {
+        return $preempt;
+    }
+    return new WP_Error('e2e_blocked', 'External HTTP blocked during E2E tests');
+}, 1, 3);
 MU_EOF
 
 # Custom router for PHP's built-in server that serves static files (CSS, JS,
