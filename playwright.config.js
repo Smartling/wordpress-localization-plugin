@@ -31,7 +31,7 @@ module.exports = defineConfig({
     use: {
         baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://test.com',
         headless: true,
-        screenshot: 'only-on-failure',
+        screenshot: { mode: 'only-on-failure', fullPage: true },
         video: 'off',
     },
     projects: [

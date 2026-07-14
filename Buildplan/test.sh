@@ -253,6 +253,40 @@ ${WPCLI} db query \
 echo "--- DIAGNOSTIC: Plugin status ---"
 ${WPCLI} plugin status smartling-connector --url="${E2E_DOMAIN}" 2>&1 || true
 
+# ── HTTP warm-up ──────────────────────────────────────────────────────────────
+# PHP's first admin page load on Docker's overlay filesystem takes 60-90 s:
+# WordPress reads hundreds of PHP source files from overlayfs on cold start,
+# and plugins make outbound HTTP calls (update checks, licence validation) that
+# are then cached in WordPress transients for subsequent requests.  After the
+# first load the OS page cache holds the files and transients skip the HTTP
+# calls, so every subsequent load takes only ~12 s.
+#
+# Warm both admin pages here — before Playwright starts — so every test runs
+# warm and well within the 45 s timeout.
+echo "--- HTTP WARM-UP: priming PHP page cache (first load ~60-90 s) ---"
+_WU_JAR="/tmp/wp-e2e-warmup-cookies.txt"
+# Step 1: GET the login page so WordPress sets wordpress_test_cookie in our jar
+curl -s --max-time 30 \
+    -c "${_WU_JAR}" -b "wordpress_test_cookie=WP+Cookie+check" \
+    "http://localhost/wp-login.php" -o /dev/null
+# Step 2: POST credentials — no redirect follow, we only need the auth cookie
+curl -s --max-time 15 \
+    -c "${_WU_JAR}" -b "${_WU_JAR}" \
+    -d "log=wp&pwd=wp&wp-submit=Log+In&redirect_to=%2Fwp-admin%2F&testcookie=1" \
+    "http://localhost/wp-login.php" -o /dev/null
+# Step 3: Warm post.php and bulk-submit concurrently (each occupies one PHP worker)
+curl -s --max-time 120 -b "${_WU_JAR}" \
+    "http://localhost/wp-admin/post.php?post=${E2E_TEST_POST_ID}&action=edit" \
+    -o /dev/null &
+_WU_POST_PID=$!
+curl -s --max-time 120 -b "${_WU_JAR}" \
+    "http://localhost/wp-admin/admin.php?page=smartling-bulk-submit" \
+    -o /dev/null &
+_WU_ADMIN_PID=$!
+wait "${_WU_POST_PID}" "${_WU_ADMIN_PID}" || true
+echo "--- HTTP WARM-UP complete ---"
+# ── END HTTP warm-up ──────────────────────────────────────────────────────────
+
 # Run Playwright — @playwright/test and Chromium are pre-installed globally in
 # the Docker image; no runtime npm install needed.
 # NODE_PATH exposes the global node_modules so that require('@playwright/test')
