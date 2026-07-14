@@ -146,21 +146,29 @@ chmod +x $PHPUNIT_BIN
 PHPUNIT_XML="${PLUGIN_DIR}/tests/phpunit.xml"
 
 # ── E2E (Playwright) ───────────────────────────────────────────────────────────
-# Resolve WP_INSTALLATION_DOMAIN so the PHP server and Playwright agree on the URL.
-E2E_DOMAIN="${WP_INSTALLATION_DOMAIN:-test.com}"
-
-echo "127.0.0.1 ${E2E_DOMAIN}" >> /etc/hosts
+# Always use localhost as the WordPress domain for E2E tests instead of the
+# installed domain (test.com).  test.com is a real internet domain — WordPress
+# makes outbound PHP HTTP requests using its own siteurl (wp_remote_get for
+# cron, heartbeat, REST pre-loads, plugin update checks).  When siteurl is
+# test.com those requests leave the container and reach the public internet;
+# the remote server may hang the connection for 30-60 s, causing the body of
+# admin pages to stall mid-render while domcontentloaded never fires.
+# localhost always resolves to 127.0.0.1 in PHP without any DNS lookup, so
+# every loopback request hits the local PHP server instantly.
+INSTALLED_DOMAIN="${WP_INSTALLATION_DOMAIN:-test.com}"
+E2E_DOMAIN="localhost"
 
 # Playwright tests use absolute paths (/wp-login.php, /wp-admin/...). Absolute
 # paths in Playwright ignore the base URL's path component, so WordPress MUST
-# be at the domain root (http://test.com), not a sub-path like
-# http://test.com/WP_INSTALL_DIR. multisite-convert may store the install
+# be at the domain root (http://localhost), not a sub-path like
+# http://localhost/WP_INSTALL_DIR. multisite-convert may store the install
 # directory name as a URL path component — detect and fix that here.
 #
-# Three things must be consistent for WordPress to serve correctly at the root:
+# Four things must be consistent for WordPress to serve correctly at the root:
 #   1. DB options (siteurl, home) — via wp search-replace
 #   2. Multisite path columns (wp_site.path, wp_blogs.path) — via direct SQL
-#   3. PATH_CURRENT_SITE constant in wp-config.php — via wp config set
+#   3. Multisite domain columns (wp_site.domain, wp_blogs.domain) — via SQL
+#   4. DOMAIN_CURRENT_SITE / PATH_CURRENT_SITE constants in wp-config.php
 EXPECTED_SITEURL="http://${E2E_DOMAIN}"
 CURRENT_SITEURL=$(${WPCLI} option get siteurl 2>/dev/null | tr -d '\n\r ')
 echo "Current siteurl: ${CURRENT_SITEURL:-<empty>}"
@@ -169,14 +177,20 @@ if [ -n "${CURRENT_SITEURL}" ] && [ "${CURRENT_SITEURL}" != "${EXPECTED_SITEURL}
     # Replace all full-URL occurrences in the database (handles serialized data)
     ${WPCLI} search-replace "${CURRENT_SITEURL}" "${EXPECTED_SITEURL}" \
         --all-tables --skip-columns=guid
-    # Fix path-only multisite columns (not updated by search-replace above)
+    # Fix path-only multisite columns (domain still holds INSTALLED_DOMAIN here)
     ${WPCLI} db query "UPDATE ${WP_DB_TABLE_PREFIX}site \
         SET path=REPLACE(path, '${WP_INSTALL_DIR}', '') \
-        WHERE domain='${E2E_DOMAIN}' AND path LIKE '${WP_INSTALL_DIR}%'"
+        WHERE domain='${INSTALLED_DOMAIN}' AND path LIKE '${WP_INSTALL_DIR}%'"
     ${WPCLI} db query "UPDATE ${WP_DB_TABLE_PREFIX}blogs \
         SET path=REPLACE(path, '${WP_INSTALL_DIR}', '') \
-        WHERE domain='${E2E_DOMAIN}' AND path LIKE '${WP_INSTALL_DIR}%'"
-    # Sync the PATH_CURRENT_SITE constant in wp-config.php
+        WHERE domain='${INSTALLED_DOMAIN}' AND path LIKE '${WP_INSTALL_DIR}%'"
+    # Migrate domain columns from installed value to localhost
+    ${WPCLI} db query \
+        "UPDATE ${WP_DB_TABLE_PREFIX}site  SET domain='localhost' WHERE domain='${INSTALLED_DOMAIN}'"
+    ${WPCLI} db query \
+        "UPDATE ${WP_DB_TABLE_PREFIX}blogs SET domain='localhost' WHERE domain='${INSTALLED_DOMAIN}'"
+    # Sync wp-config.php constants (DOMAIN_CURRENT_SITE must match wp_site.domain)
+    ${WPCLI} config set DOMAIN_CURRENT_SITE "localhost"
     ${WPCLI} config set PATH_CURRENT_SITE "/"
 fi
 
