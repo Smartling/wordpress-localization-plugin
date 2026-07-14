@@ -7,20 +7,23 @@ test('login as admin', async ({ page }) => {
     const user = process.env.WP_ADMIN_USER || 'wp';
     const pass = process.env.WP_ADMIN_PASSWORD || 'wp';
 
-    // Abort external browser requests: plugins add external CSS/JS to the login
-    // page <head>; in CI those hosts are slow or unreachable, blocking
-    // domcontentloaded for the full test timeout even though PHP serves the
-    // complete HTML in ~2 s. Localhost requests pass through untouched.
-    await page.route(/^https?:\/\/(?!localhost)/, route => route.abort());
+    // Abort ALL static resource requests (scripts, stylesheets, fonts, images).
+    // The login form is pure HTML and submits via a standard POST — no JavaScript
+    // or CSS is needed to fill the form or click the submit button. Aborting
+    // static resources prevents a PHP bootstrap race condition: wp server
+    // bootstraps WordPress for every request (including .min.js files); with
+    // 16 workers all starting concurrently, several bootstraps race to check
+    // plugin update transients, triggering slow external HTTP calls (30-90 s)
+    // that block the browser's HTML parser and keep #user_login out of the DOM.
+    await page.route(/\.(js|css|woff2?|ttf|eot|svg|png|gif|ico)(\?.*)?$/i, route => route.abort());
 
-    // 'commit' fires as soon as response headers arrive — we don't need all
-    // scripts to run to fill a login form. One PHP-generated script (the
-    // wp-i18n wrapper that injects translation data) may hang indefinitely in
-    // CI; 'commit' lets us proceed the instant PHP starts sending the HTML.
+    // 'commit' fires as soon as response headers arrive — we don't need scripts
+    // to execute to fill a login form.
     await page.goto('/wp-login.php', { waitUntil: 'commit' });
     // PHP delivers the full login form HTML in ~2 s; wait for the input to
-    // appear in the DOM before trying to fill it.
-    await page.waitForSelector('#user_login', { state: 'attached', timeout: 30000 });
+    // appear in the DOM before trying to fill it. With static resources aborted
+    // the HTML parser is never blocked, so the element appears almost immediately.
+    await page.waitForSelector('#user_login', { state: 'attached', timeout: 15000 });
     await page.fill('#user_login', user);
     await page.fill('#user_pass', pass);
     await page.click('#wp-submit');
