@@ -207,6 +207,22 @@ ${WPCLI} config set DISABLE_WP_CRON true --raw
 # domcontentloaded fires as soon as the HTML is parsed.
 ${WPCLI} config set CONCATENATE_SCRIPTS false --raw
 
+# Cap all WordPress HTTP API calls at 5 s for E2E tests.
+# Plugins (Elementor, Yoast, Smartling, WordPress core) make synchronous
+# outbound HTTP calls during admin page rendering — licence checks, update
+# pings, API preflight requests. In CI these calls can hang for 60-120 s,
+# meaning PHP never finishes sending the page HTML before Playwright's 120 s
+# test timeout fires and domcontentloaded never fires.
+# A 5 s timeout causes all such calls to fail fast (returning WP_Error) so
+# the PHP render completes in ~10-15 s, well within the 120 s limit.
+# The mu-plugin is removed before PHPUnit runs so integration tests that need
+# real Smartling API access are unaffected.
+mkdir -p "${WP_INSTALL_DIR}/wp-content/mu-plugins"
+cat > "${WP_INSTALL_DIR}/wp-content/mu-plugins/e2e-fast-http.php" << 'MU_EOF'
+<?php
+add_filter('http_request_timeout', static function() { return 5; });
+MU_EOF
+
 # Custom router for PHP's built-in server that serves static files (CSS, JS,
 # fonts, images) directly via C code without bootstrapping WordPress, and lets
 # PHP execute .php files directly (each WordPress entry point loads WordPress
@@ -295,6 +311,9 @@ tail -100 /var/log/php-e2e-server.log 2>/dev/null || echo "(log empty or missing
 echo "--- END WP PHP SERVER LOG ---"
 
 kill ${WP_SERVER_PID} 2>/dev/null || true
+# Remove the E2E HTTP timeout cap before PHPUnit runs so integration tests
+# retain full access to the Smartling API.
+rm -f "${WP_INSTALL_DIR}/wp-content/mu-plugins/e2e-fast-http.php"
 # ── END E2E ────────────────────────────────────────────────────────────────────
 
 ${PHPUNIT_BIN} -c ${PHPUNIT_XML}
