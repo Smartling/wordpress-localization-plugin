@@ -13,10 +13,13 @@ const POST_ID = process.env.E2E_TEST_POST_ID || '1';
  * Collects AJAX observations (nonce presence + response status) for every
  * admin-ajax.php request made while the callback runs.
  *
- * Callbacks navigate with waitUntil:'domcontentloaded' (not 'load') so the
- * function returns quickly even when Elementor or other plugins load external
- * resources that would stall the 'load' event. React mounts and dispatches
- * admin-ajax.php calls during the 12-second drain window that follows.
+ * Callbacks navigate with waitUntil:'commit' (HTTP response headers received)
+ * instead of 'domcontentloaded'. In CI, domcontentloaded is blocked for 120 s+
+ * by scripts that hold the event after the page is visually complete. 'commit'
+ * fires as soon as PHP finishes sending the response (~15-20 s with the
+ * e2e-fast-http mu-plugin). After 'commit' the HTML body is already delivered;
+ * scripts execute, React mounts synchronously from app.js, and loadJobs() fires
+ * its admin-ajax.php POST before the drain window ends.
  */
 async function collectAjaxObservations(page, callback) {
     const observations = [];
@@ -58,6 +61,18 @@ async function collectAjaxObservations(page, callback) {
 
     try {
         await callback();
+        // With waitUntil:'commit' the goto returns when PHP sends headers.
+        // Wait for #smartling-app (PHP-rendered) to appear in the DOM — once
+        // it is attached, scripts have executed and React has synchronously
+        // mounted its JobWizard component and dispatched loadJobs().
+        await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 90000 });
+        // Wait for at least one admin-ajax.php POST to be dispatched. React's
+        // loadJobs() useEffect fires immediately after mounting; the call
+        // normally appears within 2 s of #smartling-app being attached.
+        const callDeadline = Date.now() + 30000;
+        while (pendingCount === 0 && Date.now() < callDeadline) {
+            await page.waitForTimeout(200);
+        }
         // Drain in-flight AJAX requests (they were dispatched during page load
         // and should complete in well under 8s; we don't wait for unrelated
         // background requests like WordPress heartbeat).
@@ -90,7 +105,7 @@ test.beforeEach(async ({ page }) => {
 test.describe('AJAX security — post edit page', () => {
     test('all admin-ajax POSTs include _wpnonce', async ({ page }) => {
         const observations = await collectAjaxObservations(page, async () => {
-            await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'domcontentloaded' });
+            await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'commit' });
         });
 
         const smartlingCalls = observations.filter((o) =>
@@ -111,7 +126,7 @@ test.describe('AJAX security — post edit page', () => {
 
     test('no 403 responses from admin-ajax.php', async ({ page }) => {
         const observations = await collectAjaxObservations(page, async () => {
-            await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'domcontentloaded' });
+            await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'commit' });
         });
 
         const forbidden = observations.filter((o) => o.status === 403);
@@ -125,7 +140,7 @@ test.describe('AJAX security — post edit page', () => {
 test.describe('AJAX security — bulk submit page', () => {
     test('all admin-ajax POSTs include _wpnonce', async ({ page }) => {
         const observations = await collectAjaxObservations(page, async () => {
-            await page.goto('/wp-admin/admin.php?page=smartling-bulk-submit', { waitUntil: 'domcontentloaded' });
+            await page.goto('/wp-admin/admin.php?page=smartling-bulk-submit', { waitUntil: 'commit' });
         });
 
         const smartlingCalls = observations.filter((o) =>
@@ -142,7 +157,7 @@ test.describe('AJAX security — bulk submit page', () => {
 
     test('no 403 responses from admin-ajax.php', async ({ page }) => {
         const observations = await collectAjaxObservations(page, async () => {
-            await page.goto('/wp-admin/admin.php?page=smartling-bulk-submit', { waitUntil: 'domcontentloaded' });
+            await page.goto('/wp-admin/admin.php?page=smartling-bulk-submit', { waitUntil: 'commit' });
         });
 
         const forbidden = observations.filter((o) => o.status === 403);

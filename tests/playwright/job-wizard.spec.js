@@ -29,8 +29,8 @@ test.describe('Job wizard — post edit page', () => {
         // PHP renders #smartling-app immediately; use 'attached' because the
         // Gutenberg block editor keeps the meta box section hidden until its
         // REST API calls complete (unrelated to the data-nonce we're verifying).
-        await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 15000 });
+        await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'commit' });
+        await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 90000 });
 
         const nonce = await page.getAttribute('#smartling-app', 'data-nonce');
         expect(nonce, 'data-nonce attribute must be present and non-empty').toBeTruthy();
@@ -38,8 +38,8 @@ test.describe('Job wizard — post edit page', () => {
     });
 
     test('#smartling-app has valid JSON in data-locales', async ({ page }) => {
-        await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 15000 });
+        await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'commit' });
+        await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 90000 });
 
         const localesRaw = await page.getAttribute('#smartling-app', 'data-locales');
         expect(localesRaw, 'data-locales attribute must be present').toBeTruthy();
@@ -50,8 +50,8 @@ test.describe('Job wizard — post edit page', () => {
     });
 
     test('React job wizard renders job tabs', async ({ page }) => {
-        await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 15000 });
+        await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'commit' });
+        await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 90000 });
 
         // Wait for React to render the tab panel. The element may be inside a
         // Gutenberg meta box section that is initially hidden; toBeAttached and
@@ -68,8 +68,8 @@ test.describe('Job wizard — post edit page', () => {
 
 test.describe('Job wizard — bulk submit page', () => {
     test('#smartling-app container exists with non-empty data-nonce', async ({ page }) => {
-        await page.goto('/wp-admin/admin.php?page=smartling-bulk-submit', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 15000 });
+        await page.goto('/wp-admin/admin.php?page=smartling-bulk-submit', { waitUntil: 'commit' });
+        await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 90000 });
 
         const nonce = await page.getAttribute('#smartling-app', 'data-nonce');
         expect(nonce, 'data-nonce attribute must be present and non-empty').toBeTruthy();
