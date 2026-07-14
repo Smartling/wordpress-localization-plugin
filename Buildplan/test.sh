@@ -210,7 +210,13 @@ ${WPCLI} config set CONCATENATE_SCRIPTS false --raw
 # Start WordPress via the wp-cli built-in server. wp server uses a router
 # script that correctly handles WordPress multisite initialization; bare
 # php -S hangs on multisite bootstrap after URL normalization.
-PHP_CLI_SERVER_WORKERS=4 ${WPCLI} server --host=0.0.0.0 --port=80 \
+# 16 workers: each admin page load triggers several background admin-ajax.php
+# calls (Smartling API lookups, Gutenberg state) that keep PHP workers busy for
+# 30-300 s. With only 4 workers those background calls from earlier tests can
+# occupy all slots, causing the next test's page.goto to queue until timeout.
+# 16 workers (4 tests × ~3 async admin-ajax calls each = 12 max outstanding)
+# always keeps at least 4 slots free for new page requests.
+PHP_CLI_SERVER_WORKERS=16 ${WPCLI} server --host=0.0.0.0 --port=80 \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
 

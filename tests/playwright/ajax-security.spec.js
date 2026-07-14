@@ -73,12 +73,19 @@ async function collectAjaxObservations(page, callback) {
     return observations;
 }
 
-// Abort external browser requests before each test so that plugins adding
-// external CSS/JS to admin page <head> sections don't block domcontentloaded
-// in CI where those hosts are slow or unreachable. admin-ajax.php and all
-// other localhost requests pass through untouched.
+// Abort requests that would saturate PHP workers without benefiting the tests.
+//
+// External hosts (CDNs, Elementor, etc.) — aborted: slow/unreachable in CI.
+//
+// REST API (/wp-json/): aborted — Gutenberg makes 20-30 async REST calls per
+// page load. They don't block domcontentloaded but each occupies a PHP worker
+// for 5-30 s. With few workers those outstanding calls from earlier tests delay
+// the next test's page request until timeout.
+//
+// admin-ajax.php is NOT aborted: these are the calls we're testing.
 test.beforeEach(async ({ page }) => {
     await page.route(/^https?:\/\/(?!localhost)/, route => route.abort());
+    await page.route(/\/wp-json\//, route => route.abort());
 });
 
 test.describe('AJAX security — post edit page', () => {

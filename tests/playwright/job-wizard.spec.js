@@ -6,12 +6,22 @@ const { test, expect } = require('@playwright/test');
 
 const POST_ID = process.env.E2E_TEST_POST_ID || '1';
 
-// Abort external browser requests before each test so that plugins adding
-// external CSS/JS to admin page <head> sections don't block domcontentloaded
-// in CI where those hosts are slow or unreachable. Localhost requests
-// (including REST API calls made by Gutenberg) pass through untouched.
+// Abort requests that would saturate PHP workers without benefiting the tests.
+//
+// External hosts — aborted: slow/unreachable in CI.
+//
+// REST API (/wp-json/) — aborted: Gutenberg async calls that occupy PHP workers
+// without affecting the DOM attributes (#smartling-app data-nonce/data-locales)
+// or the React tab structure we are testing.
+//
+// admin-ajax.php — aborted: Smartling API lookups that can take 30-300 s per
+// call. Aborting prevents worker saturation so subsequent page.goto calls are
+// not queued behind outstanding calls from earlier tests. All DOM attributes
+// checked in these tests are PHP-rendered and do not require AJAX responses.
 test.beforeEach(async ({ page }) => {
     await page.route(/^https?:\/\/(?!localhost)/, route => route.abort());
+    await page.route(/\/wp-json\//, route => route.abort());
+    await page.route(/\/wp-admin\/admin-ajax\.php/, route => route.abort());
 });
 
 test.describe('Job wizard — post edit page', () => {
