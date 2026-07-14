@@ -73,6 +73,14 @@ async function collectAjaxObservations(page, callback) {
     return observations;
 }
 
+// Abort external browser requests before each test so that plugins adding
+// external CSS/JS to admin page <head> sections don't block domcontentloaded
+// in CI where those hosts are slow or unreachable. admin-ajax.php and all
+// other localhost requests pass through untouched.
+test.beforeEach(async ({ page }) => {
+    await page.route(/^https?:\/\/(?!localhost)/, route => route.abort());
+});
+
 test.describe('AJAX security — post edit page', () => {
     test('all admin-ajax POSTs include _wpnonce', async ({ page }) => {
         const observations = await collectAjaxObservations(page, async () => {

@@ -259,6 +259,7 @@ ${WPCLI} plugin status smartling-connector --url="${E2E_DOMAIN}" 2>&1 || true
 # inside playwright.config.js resolves correctly without a local node_modules.
 cd "${LOCAL_GIT_DIR}"
 NODE_PATH="$(npm root -g)" \
+    CI=true \
     PLAYWRIGHT_BASE_URL="${EXPECTED_SITEURL}" \
     E2E_TEST_POST_ID="${E2E_TEST_POST_ID}" \
     WP_ADMIN_USER=wp \

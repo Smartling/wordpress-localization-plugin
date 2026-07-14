@@ -6,6 +6,14 @@ const { test, expect } = require('@playwright/test');
 
 const POST_ID = process.env.E2E_TEST_POST_ID || '1';
 
+// Abort external browser requests before each test so that plugins adding
+// external CSS/JS to admin page <head> sections don't block domcontentloaded
+// in CI where those hosts are slow or unreachable. Localhost requests
+// (including REST API calls made by Gutenberg) pass through untouched.
+test.beforeEach(async ({ page }) => {
+    await page.route(/^https?:\/\/(?!localhost)/, route => route.abort());
+});
+
 test.describe('Job wizard — post edit page', () => {
     test('#smartling-app container exists with non-empty data-nonce', async ({ page }) => {
         // PHP renders #smartling-app immediately; use 'attached' because the
