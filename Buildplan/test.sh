@@ -207,15 +207,6 @@ ${WPCLI} config set DISABLE_WP_CRON true --raw
 # domcontentloaded fires as soon as the HTML is parsed.
 ${WPCLI} config set CONCATENATE_SCRIPTS false --raw
 
-# Block all outbound WordPress HTTP for E2E — plugin update checks, Elementor
-# licence validation, Yoast telemetry, and similar calls each take 5-15 s on
-# cold start; with 5+ plugins running in the same admin page bootstrap they
-# stack to 60-90 s, which exceeds every Playwright timeout.  These calls are
-# irrelevant to E2E tests (which only verify _wpnonce presence and React
-# rendering). WP_HTTP_BLOCK_EXTERNAL is deleted before PHPUnit runs so that
-# integration tests still reach the Smartling API.
-${WPCLI} config set WP_HTTP_BLOCK_EXTERNAL true --raw
-
 # Start WordPress via the wp-cli built-in server. wp server uses a router
 # script that correctly handles WordPress multisite initialization; bare
 # php -S hangs on multisite bootstrap after URL normalization.
@@ -281,10 +272,6 @@ tail -100 /var/log/php-e2e-server.log 2>/dev/null || echo "(log empty or missing
 echo "--- END WP PHP SERVER LOG ---"
 
 kill ${WP_SERVER_PID} 2>/dev/null || true
-
-# Restore external HTTP access for PHPUnit integration tests (which need the
-# real Smartling API). This undoes the WP_HTTP_BLOCK_EXTERNAL set above.
-${WPCLI} config delete WP_HTTP_BLOCK_EXTERNAL 2>/dev/null || true
 # ── END E2E ────────────────────────────────────────────────────────────────────
 
 ${PHPUNIT_BIN} -c ${PHPUNIT_XML}
