@@ -52,6 +52,11 @@ test.describe('Job wizard — post edit page', () => {
     test('React job wizard renders job tabs', async ({ page }) => {
         await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'commit' });
         await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 90000 });
+        // Wait for DOMContentLoaded so all Gutenberg scripts have executed and
+        // React's loadJobs() useEffect has fired. With external PHP HTTP blocked
+        // by e2e-fast-http, DOMContentLoaded fires in ~15-30 s in CI. After it
+        // fires, React transitions out of the loading spinner and renders tabs.
+        await page.waitForLoadState('domcontentloaded', { timeout: 60000 }).catch(() => {});
 
         // Wait for React to render the tab panel. The element may be inside a
         // Gutenberg meta box section that is initially hidden; toBeAttached and
@@ -59,7 +64,7 @@ test.describe('Job wizard — post edit page', () => {
         // innerText, so they don't require the element to be visible).
         await expect(
             page.locator('#smartling-app [role="tablist"], #smartling-app .components-tab-panel__tabs').first(),
-        ).toBeAttached({ timeout: 20000 });
+        ).toBeAttached({ timeout: 30000 });
 
         await expect(page.locator('#smartling-app')).toContainText('New Job');
         await expect(page.locator('#smartling-app')).toContainText('Existing Job');
