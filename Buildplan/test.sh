@@ -320,10 +320,15 @@ ${WPCLI} plugin status smartling-connector --url="${E2E_DOMAIN}" 2>&1 || true
 # so all plugin PHP files are compiled even though the response is a 302.
 # The e2e-fast-http mu-plugin is already active and blocks external HTTP calls.
 echo "Pre-warming PHP workers (OPcache cold-start)..."
+WARMUP_PIDS=()
 for i in $(seq 1 4); do
     curl -sf --max-time 180 "http://localhost/wp-admin/" > /dev/null 2>&1 &
+    WARMUP_PIDS+=($!)
 done
-wait
+# Wait only for the 4 curl processes, NOT for the PHP server (which is also a
+# background job and runs indefinitely — a bare 'wait' would block forever).
+for pid in "${WARMUP_PIDS[@]}"; do wait "$pid" 2>/dev/null || true; done
+unset WARMUP_PIDS
 echo "PHP workers pre-warmed."
 
 # Run Playwright — @playwright/test and Chromium are pre-installed globally in
