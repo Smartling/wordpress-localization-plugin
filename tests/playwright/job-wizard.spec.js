@@ -83,7 +83,7 @@ test.describe('Job wizard — post edit page', () => {
 
         // Wait for React to mount and render the tab panel. app.js is a footer
         // script that executes after all Gutenberg/Elementor scripts; on a cold
-        // PHP worker (each of the 16 workers has its own OPcache) this can take
+        // PHP worker (each of the 4 workers has its own OPcache) this can take
         // 30-80 s. Once app.js runs, React mounts synchronously and loadJobs()
         // fires via useEffect — admin-ajax.php is aborted by beforeEach so the
         // fetch rejects immediately and setLoading(false) renders the tabs within

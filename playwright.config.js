@@ -25,11 +25,10 @@ module.exports = defineConfig({
     // results, so every subsequent load takes ~12 s. 120 s covers the cold
     // worst case with headroom to spare.
     timeout: 120000,
-    // Sequential execution prevents PHP worker starvation: concurrent admin page
-    // loads each trigger multiple PHP requests (REST API, admin-ajax.php). With 4
-    // PHP workers and 2+ simultaneous Playwright tests, all workers can saturate
-    // and the page 'load' event never fires within the test timeout.
-    workers: 1,
+    // 4 Playwright workers match the 4 PHP workers (PHP_CLI_SERVER_WORKERS=4).
+    // Static files are served without PHP (custom router), and REST API calls
+    // are aborted in beforeEach, so page loads each occupy exactly one PHP worker.
+    workers: 4,
     // One retry on CI so that if an unusual cold-start burst pushes a test past
     // 120 s, the retry runs warm (cache already hot) and passes quickly.
     retries: process.env.CI ? 1 : 0,

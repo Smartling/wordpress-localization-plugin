@@ -58,9 +58,6 @@ cp "$LOCAL_GIT_DIR/fix-double-namespace.php" "$NS_WORK/"
 cd "$NS_WORK"
 $COMPOSER_BIN install --no-scripts --no-dev --no-interaction
 
-echo "--- DIAG: deprecation-contracts after outer composer install ---"
-ls -la "$NS_WORK/inc/third-party/symfony/deprecation-contracts/" 2>&1 || echo "MISSING: $NS_WORK/inc/third-party/symfony/deprecation-contracts/"
-
 # Replace composer.json with a stripped version before running namespacer so that
 # namespacer's inner 'composer update --no-dev' doesn't inherit:
 #   - 'scripts': would try to run namespacer recursively → exit 127
@@ -103,15 +100,9 @@ PATH="$NS_BIN:$COMPOSER_INSTALL_DIR:$PATH" \
 php fix-double-namespace.php
 rm -rf "$NS_BIN"
 
-echo "--- DIAG: deprecation-contracts after namespacer ---"
-ls -la "$NS_WORK/inc/lib/smartling-connector-symfony/deprecation-contracts/" 2>&1 || echo "MISSING: $NS_WORK/inc/lib/smartling-connector-symfony/deprecation-contracts/"
-
 rm -rf "$LOCAL_GIT_DIR/inc/lib"
 cp -r "$NS_WORK/inc/lib" "$LOCAL_GIT_DIR/inc/"
 rm -rf "$NS_WORK"
-
-echo "--- DIAG: deprecation-contracts after cp to LOCAL_GIT_DIR ---"
-ls -la "$LOCAL_GIT_DIR/inc/lib/smartling-connector-symfony/deprecation-contracts/" 2>&1 || echo "MISSING: $LOCAL_GIT_DIR/inc/lib/smartling-connector-symfony/deprecation-contracts/"
 
 cd "$LOCAL_GIT_DIR"
 
@@ -199,30 +190,16 @@ fi
 # occupying all PHP workers and causing test page loads to time out.
 ${WPCLI} config set DISABLE_WP_CRON true --raw
 
-# Disable WordPress's script/style concatenation for E2E tests.
-# By default, WordPress admin pages serve JavaScript via load-scripts.php
-# (a PHP file that bootstraps WordPress fully on every request).  With
-# CONCATENATE_SCRIPTS=false, each script is served as an individual static
-# .min.js file, so the browser never makes PHP requests for scripts and
-# domcontentloaded fires as soon as the HTML is parsed.
+# Serve scripts as individual static files instead of via load-scripts.php,
+# which bootstraps WordPress on every script request.
 ${WPCLI} config set CONCATENATE_SCRIPTS false --raw
 
-# Block ALL external outbound WordPress HTTP API calls during E2E tests.
-# Plugins (Elementor, Yoast, ACF, WordPress core) make sequential synchronous
-# HTTP calls during admin page rendering — licence checks, update pings, feed
-# fetches. In CI these calls each time out at 5 s (WordPress default), so with
-# 15-20 plugins each making 1-2 calls, PHP spends 75-200 s in network waits
-# before it can output the <body> of the admin page. Playwright's page.goto
-# with waitUntil:'commit' fires after the first 4 KB of the response (the
-# DOCTYPE + partial <head>) and then waitForSelector('#smartling-app') has its
-# own 90 s clock — but #smartling-app is in the <body> which PHP has not yet
-# generated. This consistently causes the 90 s waitForSelector to expire on
-# cold page loads.
-#
+# Block external outbound WordPress HTTP API calls during E2E tests.
+# Plugins make synchronous licence checks / update pings that each time out at
+# 5 s — with 15-20 plugins this can delay admin page rendering by 75-200 s.
 # The pre_http_request filter returns WP_Error before any socket is opened,
-# so all external calls fail in < 1 ms. Admin pages render in < 1 s. Smartling
-# API calls in AJAX handlers use Guzzle directly (not WordPress HTTP API) and
-# are therefore unaffected. Localhost requests (cron, self-ping) pass through.
+# so external calls fail in < 1 ms.  Smartling API calls use Guzzle directly
+# (not WordPress HTTP API) and are unaffected.  Localhost requests pass through.
 # The mu-plugin is removed before PHPUnit runs so integration tests retain
 # full Smartling API access.
 mkdir -p "${WP_INSTALL_DIR}/wp-content/mu-plugins"
@@ -236,20 +213,9 @@ add_filter('pre_http_request', static function($preempt, $parsed_args, $url) {
 }, 1, 3);
 MU_EOF
 
-# Custom router for PHP's built-in server that serves static files (CSS, JS,
-# fonts, images) directly via C code without bootstrapping WordPress, and lets
-# PHP execute .php files directly (each WordPress entry point loads WordPress
-# itself via wp-load.php). Only virtual URLs (WordPress pretty permalinks, REST
-# API, etc.) fall through to the WordPress front controller (index.php).
-#
-# WHY this matters: wp server's built-in router bootstraps WordPress for EVERY
-# request — including .min.js and .css files. With 16 workers all starting
-# concurrently, there are 16 parallel WordPress bootstraps that each trigger
-# plugin licence checks and update pings (30-120 s each). Those 16 concurrent
-# outbound HTTP calls saturate all workers and cause subsequent page.goto calls
-# to queue for > 120 s, making domcontentloaded never fire within the test
-# timeout. With our custom router, 50+ static-file requests per admin page load
-# consume zero PHP workers — only the one main .php request bootstraps WordPress.
+# Custom router: serve static files (CSS, JS, fonts, images) directly without
+# bootstrapping WordPress; only .php files and virtual URLs go through WP.
+# This keeps PHP workers free for actual page requests.
 cat > /tmp/wp-e2e-router.php << 'ROUTER_EOF'
 <?php
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -304,21 +270,11 @@ ${WPCLI} db query \
 echo "--- DIAGNOSTIC: Plugin status ---"
 ${WPCLI} plugin status smartling-connector --url="${E2E_DOMAIN}" 2>&1 || true
 
-# Pre-warm all 4 PHP workers to eliminate OPcache cold-start failures in tests.
-# Each worker must compile all WordPress + plugin PHP source files on its first
-# request (OPcache cold start), which takes 60-90 s. Firing exactly 4 concurrent
-# requests (one per worker) now ensures all workers compile their OPcache before
-# Playwright navigates — eliminating the cold-start delays that cause flaky
-# waitForSelector timeouts.
-# Using 4 workers (not 16): each WordPress bootstrap uses ~50 MB RAM; 16 workers
-# all bootstrapping concurrently = ~800 MB and can segfault the PHP master
-# process. 4 workers = ~200 MB RAM, well within container limits, while still
-# handling the concurrent PHP requests a single Playwright test generates (one
-# page load + 1-3 admin-ajax.php calls).
-# /wp-admin/ is unauthenticated-safe: WordPress bootstraps fully (loading all
-# plugins including the Smartling connector) before redirecting to wp-login.php,
-# so all plugin PHP files are compiled even though the response is a 302.
-# The e2e-fast-http mu-plugin is already active and blocks external HTTP calls.
+# Pre-warm all 4 PHP workers so OPcache is hot before Playwright starts.
+# Each worker must compile WordPress + plugin sources on its first request
+# (60-90 s); firing 4 concurrent requests ensures all workers are warm.
+# /wp-admin/ triggers a full bootstrap (including plugin loading) before
+# redirecting to wp-login.php, so all plugin files get compiled.
 echo "Pre-warming PHP workers (OPcache cold-start)..."
 WARMUP_PIDS=()
 for i in $(seq 1 4); do
@@ -359,9 +315,26 @@ tail -100 /var/log/php-e2e-server.log 2>/dev/null || echo "(log empty or missing
 echo "--- END WP PHP SERVER LOG ---"
 
 kill ${WP_SERVER_PID} 2>/dev/null || true
-# Remove the E2E HTTP timeout cap before PHPUnit runs so integration tests
-# retain full access to the Smartling API.
+# Remove the E2E HTTP block before PHPUnit runs so integration tests retain
+# full access to the Smartling API.
 rm -f "${WP_INSTALL_DIR}/wp-content/mu-plugins/e2e-fast-http.php"
+
+# Restore the original WordPress domain for PHPUnit.  The E2E section changed
+# the domain to localhost so PHP loopback requests don't hit the real internet.
+# PHPUnit's bootstrap sets HTTP_HOST = WP_INSTALLATION_DOMAIN (test.com) and
+# expects the WordPress multisite DB to have that domain — so we must undo the
+# search-replace before PHPUnit runs, or WordPress can't find the current site.
+if [ -n "${CURRENT_SITEURL}" ] && [ "${CURRENT_SITEURL}" != "${EXPECTED_SITEURL}" ]; then
+    echo "Restoring WordPress domain for PHPUnit (localhost → ${INSTALLED_DOMAIN})..."
+    ${WPCLI} search-replace "${EXPECTED_SITEURL}" "${CURRENT_SITEURL}" \
+        --all-tables --skip-columns=guid
+    ${WPCLI} db query \
+        "UPDATE ${WP_DB_TABLE_PREFIX}site SET domain='${INSTALLED_DOMAIN}' WHERE domain='${E2E_DOMAIN}'"
+    ${WPCLI} db query \
+        "UPDATE ${WP_DB_TABLE_PREFIX}blogs SET domain='${INSTALLED_DOMAIN}' WHERE domain='${E2E_DOMAIN}'"
+    ${WPCLI} config set DOMAIN_CURRENT_SITE "${INSTALLED_DOMAIN}"
+fi
+export WP_DB_HOST="${MYSQL_HOST:-localhost}"
 # ── END E2E ────────────────────────────────────────────────────────────────────
 
 echo "--- Starting PHPUnit ---"
