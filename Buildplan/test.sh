@@ -261,7 +261,7 @@ chdir($_SERVER['DOCUMENT_ROOT']);
 require_once $_SERVER['DOCUMENT_ROOT'] . '/index.php';
 ROUTER_EOF
 
-PHP_CLI_SERVER_WORKERS=16 php -S 0.0.0.0:80 -t "${WP_INSTALL_DIR}" /tmp/wp-e2e-router.php \
+PHP_CLI_SERVER_WORKERS=4 php -S 0.0.0.0:80 -t "${WP_INSTALL_DIR}" /tmp/wp-e2e-router.php \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
 
@@ -304,20 +304,23 @@ ${WPCLI} db query \
 echo "--- DIAGNOSTIC: Plugin status ---"
 ${WPCLI} plugin status smartling-connector --url="${E2E_DOMAIN}" 2>&1 || true
 
-# Pre-warm all PHP workers to eliminate OPcache cold-start failures in tests.
-# With PHP_CLI_SERVER_WORKERS=16 workers, each worker must compile all WordPress
-# + plugin PHP source files on its very first request (OPcache cold start),
-# which takes 60-90 s per worker. Firing 20 concurrent requests to /wp-admin/
-# now ensures all 16 workers compile their OPcache before Playwright navigates —
-# eliminating the near-90 s cold-start delays that cause waitForSelector
-# timeouts and flaky test failures.
-# /wp-admin/ is safe for unauthenticated requests: WordPress bootstraps fully
-# (loading all plugins and mu-plugins, including the Smartling connector) before
-# redirecting to wp-login.php, so all plugin PHP files get compiled even though
-# the HTTP response is a 302. The e2e-fast-http mu-plugin is already active and
-# blocks all external HTTP calls, so no outbound network requests are triggered.
+# Pre-warm all 4 PHP workers to eliminate OPcache cold-start failures in tests.
+# Each worker must compile all WordPress + plugin PHP source files on its first
+# request (OPcache cold start), which takes 60-90 s. Firing exactly 4 concurrent
+# requests (one per worker) now ensures all workers compile their OPcache before
+# Playwright navigates — eliminating the cold-start delays that cause flaky
+# waitForSelector timeouts.
+# Using 4 workers (not 16): each WordPress bootstrap uses ~50 MB RAM; 16 workers
+# all bootstrapping concurrently = ~800 MB and can segfault the PHP master
+# process. 4 workers = ~200 MB RAM, well within container limits, while still
+# handling the concurrent PHP requests a single Playwright test generates (one
+# page load + 1-3 admin-ajax.php calls).
+# /wp-admin/ is unauthenticated-safe: WordPress bootstraps fully (loading all
+# plugins including the Smartling connector) before redirecting to wp-login.php,
+# so all plugin PHP files are compiled even though the response is a 302.
+# The e2e-fast-http mu-plugin is already active and blocks external HTTP calls.
 echo "Pre-warming PHP workers (OPcache cold-start)..."
-for i in $(seq 1 20); do
+for i in $(seq 1 4); do
     curl -sf --max-time 180 "http://localhost/wp-admin/" > /dev/null 2>&1 &
 done
 wait

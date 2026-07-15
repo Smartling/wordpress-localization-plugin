@@ -73,6 +73,9 @@ test.describe('Job wizard — post edit page', () => {
                 hasTablist: !!el?.querySelector('[role="tablist"]'),
                 hasSpinner: !!el?.querySelector('[class*="spinner"], .components-spinner'),
                 wpElementRender: typeof wp?.element?.render,
+                wpComponents: typeof wp?.components,
+                wpTabPanel: typeof wp?.components?.TabPanel,
+                readyState: document.readyState,
                 innerHTML100: el ? (el.innerHTML || '').substring(0, 100) : '',
             };
         });
