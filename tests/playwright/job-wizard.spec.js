@@ -50,21 +50,42 @@ test.describe('Job wizard — post edit page', () => {
     });
 
     test('React job wizard renders job tabs', async ({ page }) => {
+        // Allow extra time: waitForSelector (90 s) + React mount (up to 90 s)
+        // can exceed the global 120 s when multiple cold PHP workers are hit.
+        test.setTimeout(240000);
+
+        const pageErrors = [];
+        page.on('pageerror', (err) => pageErrors.push(err.message));
+
         await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'commit' });
         await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 90000 });
-        // Wait for DOMContentLoaded so all Gutenberg scripts have executed and
-        // React's loadJobs() useEffect has fired. With external PHP HTTP blocked
-        // by e2e-fast-http, DOMContentLoaded fires in ~15-30 s in CI. After it
-        // fires, React transitions out of the loading spinner and renders tabs.
-        await page.waitForLoadState('domcontentloaded', { timeout: 60000 }).catch(() => {});
 
-        // Wait for React to render the tab panel. The element may be inside a
-        // Gutenberg meta box section that is initially hidden; toBeAttached and
-        // toContainText both work on hidden elements (they use textContent, not
-        // innerText, so they don't require the element to be visible).
+        // Diagnostic: log the state of #smartling-app immediately after it
+        // attaches so CI logs show whether React mounted (spinner/tablist) or
+        // the container is empty (app.js not yet executed or threw an error).
+        const diag = await page.evaluate(() => {
+            const el = document.getElementById('smartling-app');
+            return {
+                children: el ? el.childElementCount : -1,
+                hasTablist: !!el?.querySelector('[role="tablist"]'),
+                hasSpinner: !!el?.querySelector('[class*="spinner"], .components-spinner'),
+                wpElementRender: typeof wp?.element?.render,
+            };
+        });
+        console.log('[E2E DIAG react-tabs]', JSON.stringify({ diag, pageErrors }));
+
+        // Wait for React to mount and render the tab panel. app.js is a footer
+        // script that executes after all Gutenberg/Elementor scripts; on a cold
+        // PHP worker (each of the 16 workers has its own OPcache) this can take
+        // 30-80 s. Once app.js runs, React mounts synchronously and loadJobs()
+        // fires via useEffect — admin-ajax.php is aborted by beforeEach so the
+        // fetch rejects immediately and setLoading(false) renders the tabs within
+        // milliseconds of app.js executing. 90 s gives ample headroom.
+        // The element may be inside a Gutenberg meta box section that is
+        // initially hidden; toBeAttached uses DOM presence, not visibility.
         await expect(
             page.locator('#smartling-app [role="tablist"], #smartling-app .components-tab-panel__tabs').first(),
-        ).toBeAttached({ timeout: 30000 });
+        ).toBeAttached({ timeout: 90000 });
 
         await expect(page.locator('#smartling-app')).toContainText('New Job');
         await expect(page.locator('#smartling-app')).toContainText('Existing Job');

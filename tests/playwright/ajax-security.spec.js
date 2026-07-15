@@ -14,12 +14,11 @@ const POST_ID = process.env.E2E_TEST_POST_ID || '1';
  * admin-ajax.php request made while the callback runs.
  *
  * Callbacks navigate with waitUntil:'commit' (first response byte from PHP).
- * After 'commit', we explicitly wait for DOMContentLoaded so all deferred
- * scripts have executed before starting the drain window. The e2e-fast-http
- * mu-plugin blocks external PHP HTTP calls, cutting PHP execution from 90 s+
- * to < 1 s so DOMContentLoaded now fires in ~15-30 s in CI. Once
- * DOMContentLoaded fires, React's loadJobs() useEffect has been scheduled
- * and the first admin-ajax.php POST is either in-flight or imminent.
+ * After the PHP-rendered #smartling-app is attached, we poll for 60 s for the
+ * first admin-ajax.php POST. React mounts synchronously when app.js executes
+ * (a deferred footer script) and immediately dispatches loadJobs() via
+ * useEffect. With the e2e-fast-http mu-plugin blocking PHP-side external HTTP
+ * calls, app.js typically executes within 20-50 s of #smartling-app appearing.
  */
 async function collectAjaxObservations(page, callback) {
     const observations = [];
@@ -64,16 +63,13 @@ async function collectAjaxObservations(page, callback) {
         // 'commit' fires when PHP sends the first response byte. Wait for the
         // PHP-rendered #smartling-app element to appear in the DOM (body arrived).
         await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 90000 });
-        // Wait for DOMContentLoaded so that all deferred scripts (Gutenberg,
-        // app.js) have executed. With the e2e-fast-http mu-plugin blocking
-        // external PHP HTTP calls, DOMContentLoaded now fires in ~15-30 s.
-        // After it fires, React's loadJobs() useEffect has been scheduled and
-        // the first admin-ajax.php POST is either in-flight or about to be.
-        // The catch handles the rare case where DOMContentLoaded is delayed
-        // beyond 60 s — the callDeadline loop below still drains any calls.
-        await page.waitForLoadState('domcontentloaded', { timeout: 60000 }).catch(() => {});
-        // Wait for at least one admin-ajax.php POST to be dispatched.
-        const callDeadline = Date.now() + 30000;
+        // Wait up to 60 s for React's loadJobs() to dispatch its first
+        // admin-ajax.php POST. On a warm container React mounts and fires
+        // useEffect within ~20-50 s of #smartling-app being attached; on a
+        // cold worker (first OPcache miss) it can take longer. The loop exits
+        // as soon as one call appears (pendingCount > 0) — no wasted time
+        // when React is fast.
+        const callDeadline = Date.now() + 60000;
         while (pendingCount === 0 && Date.now() < callDeadline) {
             await page.waitForTimeout(200);
         }
