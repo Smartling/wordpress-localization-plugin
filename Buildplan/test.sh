@@ -304,10 +304,34 @@ ${WPCLI} db query \
 echo "--- DIAGNOSTIC: Plugin status ---"
 ${WPCLI} plugin status smartling-connector --url="${E2E_DOMAIN}" 2>&1 || true
 
+# Pre-warm all PHP workers to eliminate OPcache cold-start failures in tests.
+# With PHP_CLI_SERVER_WORKERS=16 workers, each worker must compile all WordPress
+# + plugin PHP source files on its very first request (OPcache cold start),
+# which takes 60-90 s per worker. Firing 20 concurrent requests to /wp-admin/
+# now ensures all 16 workers compile their OPcache before Playwright navigates —
+# eliminating the near-90 s cold-start delays that cause waitForSelector
+# timeouts and flaky test failures.
+# /wp-admin/ is safe for unauthenticated requests: WordPress bootstraps fully
+# (loading all plugins and mu-plugins, including the Smartling connector) before
+# redirecting to wp-login.php, so all plugin PHP files get compiled even though
+# the HTTP response is a 302. The e2e-fast-http mu-plugin is already active and
+# blocks all external HTTP calls, so no outbound network requests are triggered.
+echo "Pre-warming PHP workers (OPcache cold-start)..."
+for i in $(seq 1 20); do
+    curl -sf --max-time 180 "http://localhost/wp-admin/" > /dev/null 2>&1 &
+done
+wait
+echo "PHP workers pre-warmed."
+
 # Run Playwright — @playwright/test and Chromium are pre-installed globally in
 # the Docker image; no runtime npm install needed.
 # NODE_PATH exposes the global node_modules so that require('@playwright/test')
 # inside playwright.config.js resolves correctly without a local node_modules.
+# timeout 900: Playwright can hang after all tests complete while waiting for
+# Chromium child processes to exit cleanly. Without a ceiling, test.sh blocks
+# at this line indefinitely and PHPUnit never runs. 900 s is well above the
+# longest expected E2E run (9 tests × 240 s = 2160 s worst case, but retries
+# run on warm workers and finish in < 30 s each — real budget is ~400 s).
 cd "${LOCAL_GIT_DIR}"
 NODE_PATH="$(npm root -g)" \
     CI=true \
@@ -315,9 +339,12 @@ NODE_PATH="$(npm root -g)" \
     E2E_TEST_POST_ID="${E2E_TEST_POST_ID}" \
     WP_ADMIN_USER=wp \
     WP_ADMIN_PASSWORD=wp \
-    playwright test --reporter=junit,line
+    timeout 900 playwright test --reporter=junit,line
 
 E2E_EXIT_CODE=$?
+if [ "${E2E_EXIT_CODE}" -eq 124 ]; then
+    echo "WARNING: playwright test timed out after 900 s — Chromium may have hung on shutdown"
+fi
 
 echo "--- WP PHP SERVER LOG (last 100 lines) ---"
 tail -100 /var/log/php-e2e-server.log 2>/dev/null || echo "(log empty or missing)"
@@ -329,9 +356,10 @@ kill ${WP_SERVER_PID} 2>/dev/null || true
 rm -f "${WP_INSTALL_DIR}/wp-content/mu-plugins/e2e-fast-http.php"
 # ── END E2E ────────────────────────────────────────────────────────────────────
 
+echo "--- Starting PHPUnit ---"
 ${PHPUNIT_BIN} -c ${PHPUNIT_XML}
-
 PHPUNIT_EXIT_CODE=$?
+echo "--- PHPUnit finished (exit code ${PHPUNIT_EXIT_CODE}) ---"
 
 service mysql stop
 
