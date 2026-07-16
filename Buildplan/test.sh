@@ -333,17 +333,31 @@ if [ -n "${CURRENT_SITEURL}" ] && [ "${CURRENT_SITEURL}" != "${EXPECTED_SITEURL}
     ${WPCLI} db query \
         "UPDATE ${WP_DB_TABLE_PREFIX}blogs SET domain='${INSTALLED_DOMAIN}' WHERE domain='${E2E_DOMAIN}'"
     ${WPCLI} config set DOMAIN_CURRENT_SITE "${INSTALLED_DOMAIN}"
-    # Clear any Beaver Builder cached-URL options that still contain the E2E
-    # domain (stored with trailing slash or no protocol, so search-replace may
-    # have missed them).  BB's admin_init handler compares siteurl against this
-    # stored value; if they differ it calls FLUpdater — a premium-only class
-    # absent from the lite version — and fatals.  Deleting the option means
-    # get_option() returns false, the "if ($saved_url && ...)" guard is skipped,
-    # and the crash never happens.
+    # Delete BB's cached siteurl option so BB's admin_init handler sees no
+    # stored value and skips URL-change detection entirely.  The search-replace
+    # above may have produced a value with a trailing slash (e.g.
+    # "http://test.com/" vs "http://test.com") that still triggers a mismatch.
+    # Deleting by option_name avoids the value-format ambiguity; BB will just
+    # write a fresh value on the next request.
     ${WPCLI} db query \
-        "DELETE FROM ${WP_DB_TABLE_PREFIX}options WHERE option_name LIKE 'fl_%' AND option_value LIKE '%${E2E_DOMAIN}%'" \
+        "DELETE FROM ${WP_DB_TABLE_PREFIX}options \
+         WHERE (option_name LIKE 'fl_%' OR option_name LIKE '_fl_%') \
+         AND option_name LIKE '%url%'" \
         2>/dev/null || true
 fi
+# FLUpdater stub: BB Lite's admin_init hook calls FLBuilderUpdate::init() when
+# a URL change is detected; that function instantiates FLUpdater — a class that
+# only exists in the premium version — and fatals with "Class FLUpdater not found".
+# The stub below satisfies the instantiation so the test suite can continue.
+mkdir -p "${WP_INSTALL_DIR}/wp-content/mu-plugins"
+cat > "${WP_INSTALL_DIR}/wp-content/mu-plugins/fl-updater-shim.php" << 'SHIM_EOF'
+<?php
+if ( ! class_exists( 'FLUpdater' ) ) {
+    class FLUpdater {
+        public function __construct( array $args = [] ) {}
+    }
+}
+SHIM_EOF
 export WP_DB_HOST="${MYSQL_HOST:-localhost}"
 # ── END E2E ────────────────────────────────────────────────────────────────────
 
