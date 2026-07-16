@@ -88,7 +88,7 @@ async function collectAjaxObservations(page, callback) {
     return observations;
 }
 
-// Abort requests that would saturate PHP workers without benefiting the tests.
+// Abort requests that would saturate PHP workers without any benefit for the tests.
 //
 // External hosts (CDNs, Elementor, etc.) — aborted: slow/unreachable in CI.
 //

@@ -17,20 +17,11 @@ if (fs.existsSync(envFile)) {
 
 module.exports = defineConfig({
     testDir: 'tests/playwright',
-    // 120 s per test: the first cold load on Docker overlayfs reads hundreds of
-    // PHP source files from the overlay filesystem, and several plugins make
-    // outbound HTTP calls (update checks, licence validation) that can take
-    // 5-15 s each — together 60-90 s on a cold container. After the first load
-    // files are in the OS page cache and WordPress transients hold the HTTP
-    // results, so every subsequent load takes ~12 s. 120 s covers the cold
-    // worst case with headroom to spare.
     timeout: 120000,
     // 4 Playwright workers match the 4 PHP workers (PHP_CLI_SERVER_WORKERS=4).
     // Static files are served without PHP (custom router), and REST API calls
     // are aborted in beforeEach, so page loads each occupy exactly one PHP worker.
     workers: 4,
-    // One retry on CI so that if an unusual cold-start burst pushes a test past
-    // 120 s, the retry runs warm (cache already hot) and passes quickly.
     retries: process.env.CI ? 1 : 0,
     reporter: [
         ['line'],
