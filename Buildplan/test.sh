@@ -333,6 +333,16 @@ if [ -n "${CURRENT_SITEURL}" ] && [ "${CURRENT_SITEURL}" != "${EXPECTED_SITEURL}
     ${WPCLI} db query \
         "UPDATE ${WP_DB_TABLE_PREFIX}blogs SET domain='${INSTALLED_DOMAIN}' WHERE domain='${E2E_DOMAIN}'"
     ${WPCLI} config set DOMAIN_CURRENT_SITE "${INSTALLED_DOMAIN}"
+    # Clear any Beaver Builder cached-URL options that still contain the E2E
+    # domain (stored with trailing slash or no protocol, so search-replace may
+    # have missed them).  BB's admin_init handler compares siteurl against this
+    # stored value; if they differ it calls FLUpdater — a premium-only class
+    # absent from the lite version — and fatals.  Deleting the option means
+    # get_option() returns false, the "if ($saved_url && ...)" guard is skipped,
+    # and the crash never happens.
+    ${WPCLI} db query \
+        "DELETE FROM ${WP_DB_TABLE_PREFIX}options WHERE option_name LIKE 'fl_%' AND option_value LIKE '%${E2E_DOMAIN}%'" \
+        2>/dev/null || true
 fi
 export WP_DB_HOST="${MYSQL_HOST:-localhost}"
 # ── END E2E ────────────────────────────────────────────────────────────────────
