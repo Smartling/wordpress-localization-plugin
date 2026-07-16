@@ -23,14 +23,6 @@ $exists = (int) $wpdb->get_var(
     )
 );
 
-// Disable Smartling self-check regardless of whether the profile already exists.
-// testUpdates() calls plugins_api('plugin_information') which makes a synchronous
-// HTTP request to api.wordpress.org on every page load. In Docker CI that request
-// hangs for 30+ seconds, preventing any admin page from rendering within the
-// Playwright test timeout.
-update_site_option('smartling_static_check_disabled', 1);
-WP_CLI::log('Disabled Smartling self-check (skips outbound plugins_api call).');
-
 if ($exists > 0) {
     WP_CLI::log('E2E Test Profile already exists — skipping.');
     return;
