@@ -20,3 +20,9 @@ tests/IntegrationTests/src
 
 #IDE
 .idea
+
+# Playwright E2E
+.env.playwright
+tests/playwright/.auth/
+node_modules/
+tests/playwright-results.xml

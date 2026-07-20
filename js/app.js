@@ -66,6 +66,8 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                     setL2Relations(prev => [...prev, ...refs.filter(r => !prev.some(p => p.contentType === r.contentType && p.id === r.id))]);
                 }
             }
+        } catch (e) {
+            // Network error or abort — pendingRequests is decremented in finally
         } finally {
             setPendingRequests(prev => prev - 1);
         }
