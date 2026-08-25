@@ -13,7 +13,7 @@ class UploadQueueItem {
         private array $submissions,
         private string $batchUid,
         private IntStringPairCollection $smartlingLocales,
-        private ?int $id = null,
+        private int $id,
     ) {
         $contentTypes = [];
         $sourceBlogIds = [];
@@ -46,7 +46,7 @@ class UploadQueueItem {
         return $this->batchUid;
     }
 
-    public function getId(): ?int
+    public function getId(): int
     {
         return $this->id;
     }

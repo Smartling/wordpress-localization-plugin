@@ -47,6 +47,9 @@ class UploadQueueManager {
 
     public function dequeue(int $blogId): ?UploadQueueItem
     {
+        // Get queue items with the first submission having its source blog id = $blogId.
+        // It should be impossible to create a single queue item with submissions from multiple source blog ids,
+        // so only checking one is enough.
         $staleClaimCondition = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
         $staleClaimCondition->addCondition(new Condition(
             ConditionBuilder::CONDITION_IS_NULL,
@@ -107,10 +110,6 @@ SQL,
             }
 
             if ($unprocessable) {
-                // The whole row is grouped by shared content, so one unresolvable submission
-                // takes the rest down with it. They must not vanish silently: every submission
-                // that still exists gets a visible error instead of being left in New status
-                // with no queue row and no explanation.
                 $this->discardQueueItem(
                     $queueId,
                     $existingSubmissions,
@@ -158,10 +157,7 @@ SQL,
 
     public function complete(UploadQueueItem $item): void
     {
-        $id = $item->getId();
-        if ($id !== null) {
-            $this->delete($id);
-        }
+        $this->delete($item->getId());
     }
 
     private function claim(int $id, int $attempts): void

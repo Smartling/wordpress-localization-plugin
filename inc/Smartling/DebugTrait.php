@@ -89,15 +89,10 @@ trait DebugTrait
 
     /**
      * Error types that actually terminate the request. Anything else - notices,
-     * warnings and in particular deprecations - is left alone: error_get_last()
+     * warnings, and in particular deprecations - is left alone: error_get_last()
      * returns the last error of *any* severity, so treating non-fatal types as
      * fatal reports an emergency on every otherwise healthy request and buries
      * the real crashes.
-     */
-    /**
-     * PHP traits cannot declare constants until PHP 8.2, so these are exposed
-     * as private static methods instead. See the property comment above for
-     * why only these types are treated as fatal.
      */
     private static function fatalErrorTypes(): int
     {
