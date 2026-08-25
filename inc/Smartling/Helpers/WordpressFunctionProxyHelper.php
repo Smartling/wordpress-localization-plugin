@@ -114,6 +114,11 @@ class WordpressFunctionProxyHelper
         return apply_filters(...func_get_args());
     }
 
+    public function do_action()
+    {
+        return do_action(...func_get_args());
+    }
+
     public function delete_post_meta()
     {
         return delete_post_meta(...func_get_args());

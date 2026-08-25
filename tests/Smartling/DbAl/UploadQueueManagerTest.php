@@ -6,6 +6,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\Models\IntegerIterator;
+use Smartling\Models\UploadQueueEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -147,11 +148,12 @@ class UploadQueueManagerTest extends TestCase {
 
         $matcherGetRowArray = $this->exactly(3);
         $db->expects($matcherGetRowArray)->method('getRowArray')->willReturnCallback(function ($query) use ($matcherGetRowArray) {
-            $this->assertEquals(<<<SQL
-select q.id, q.submission_ids, q.batch_uid from smartling_upload_queue q left join smartling_submissions s
-    on if(locate(',', q.submission_ids), left(submission_ids, locate(',', submission_ids) - 1), submission_ids) = s.id
-    where s.source_blog_id = 1
-SQL, $query);
+            // Not asserted verbatim: the eligibility clause embeds a moving timestamp.
+            $this->assertStringContainsString(
+                'from smartling_upload_queue q left join smartling_submissions s',
+                $query,
+            );
+            $this->assertStringContainsString('where s.source_blog_id = 1', $query);
 
             return match ($matcherGetRowArray->getInvocationCount()) {
                 1 => ['id' => 1, 'batch_uid' => '', 'submission_ids' => '1,2'],
@@ -160,7 +162,8 @@ SQL, $query);
             };
         });
         $db->expects($this->exactly(2))->method('query')->willReturnCallback(function ($query) {
-            $this->assertStringStartsWith('DELETE', $query);
+            // Dequeue claims the row; deletion happens only after a successful upload.
+            $this->assertStringStartsWith('UPDATE', $query);
             return true;
         });
 
@@ -193,5 +196,149 @@ SQL, $query);
         $this->assertEquals(4, $submissions[0]->getId());
 
         $this->assertNull($uploadQueueManager->dequeue(1));
+    }
+
+    /**
+     * A queue row must survive dequeue so that a fatal error during the upload
+     * that follows does not destroy the queued work.
+     */
+    public function testDequeueClaimsRowInsteadOfDeletingIt()
+    {
+        $queries = [];
+        $manager = $this->buildManager(
+            [['id' => 7, 'batch_uid' => '', 'submission_ids' => '1', 'claimed' => null, 'attempts' => 0], null],
+            [1 => 1],
+            $queries,
+        );
+
+        $item = $manager->dequeue(1);
+
+        $this->assertNotNull($item, 'Expected an unclaimed row to be dequeued');
+        $this->assertCount(1, $queries, 'Expected exactly one write while claiming a row');
+        $this->assertStringStartsWith('UPDATE', $queries[0], 'Dequeue must claim the row, not delete it');
+        $this->assertStringContainsString(UploadQueueEntity::FIELD_CLAIMED, $queries[0]);
+        $this->assertStringNotContainsStringIgnoringCase('DELETE', $queries[0]);
+    }
+
+    /**
+     * Rows already being worked on by another run must not be picked up again,
+     * while rows whose worker died must become available after the stale timeout.
+     */
+    public function testDequeueOnlyConsidersUnclaimedOrStaleRows()
+    {
+        $queries = [];
+        $selects = [];
+        $manager = $this->buildManager(
+            [['id' => 7, 'batch_uid' => '', 'submission_ids' => '1', 'claimed' => null, 'attempts' => 0], null],
+            [1 => 1],
+            $queries,
+            $selects,
+        );
+
+        $manager->dequeue(1);
+
+        $this->assertStringContainsString(UploadQueueEntity::FIELD_CLAIMED, $selects[0]);
+        $this->assertStringContainsString(
+            'is null',
+            strtolower($selects[0]),
+            'Expected unclaimed rows to be eligible',
+        );
+        $this->assertMatchesRegularExpression(
+            '/claimed`? <|<.*claimed/i',
+            $selects[0],
+            'Expected a staleness comparison so abandoned claims are retried',
+        );
+    }
+
+    public function testDequeueFailsSubmissionsOnceAttemptsAreExhausted()
+    {
+        $queries = [];
+        $selects = [];
+        $failed = [];
+        $manager = $this->buildManager(
+            [
+                ['id' => 7, 'batch_uid' => '', 'submission_ids' => '1', 'claimed' => '2020-01-01 00:00:00', 'attempts' => UploadQueueManager::MAX_ATTEMPTS],
+                null,
+            ],
+            [1 => 1],
+            $queries,
+            $selects,
+            $failed,
+        );
+
+        $this->assertNull($manager->dequeue(1), 'Exhausted rows must not be handed out again');
+        $this->assertCount(1, $failed, 'Expected the submission to be failed visibly');
+        $this->assertStringContainsString('attempt', strtolower($failed[0]));
+        $this->assertNotEmpty(
+            array_filter($queries, static fn(string $q) => str_starts_with($q, 'DELETE')),
+            'Expected the exhausted row to be removed from the queue',
+        );
+    }
+
+    /**
+     * @param array $rows        sequential getRowArray() return values
+     * @param int[] $submissions map of submission id => source blog id that exist
+     */
+    private function buildManager(
+        array $rows,
+        array $submissions,
+        array &$queries,
+        array &$selects = [],
+        array &$failed = [],
+    ): UploadQueueManager {
+        $stored = [];
+        foreach ($submissions as $id => $sourceBlogId) {
+            $submission = $this->createMock(SubmissionEntity::class);
+            $submission->method('getId')->willReturn($id);
+            $submission->method('getSourceId')->willReturn(1);
+            $submission->method('getSourceBlogId')->willReturn($sourceBlogId);
+            $stored[] = $submission;
+        }
+
+        $this->mockDbAl();
+        $db = $this->getMockBuilder(DB::class)
+            ->setConstructorArgs([new class {
+                public string $base_prefix = '';
+                public function getRowArray() {}
+                public function query() {}
+            }])
+            ->onlyMethods(['getRowArray', 'query'])
+            ->getMock();
+
+        $index = 0;
+        $db->method('getRowArray')->willReturnCallback(function ($query) use ($rows, &$index, &$selects) {
+            $selects[] = $query;
+            return $rows[$index++] ?? null;
+        });
+        $db->method('query')->willReturnCallback(function ($query) use (&$queries) {
+            $queries[] = $query;
+            return true;
+        });
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('getEntityById')->willReturnCallback(function ($id) use ($stored) {
+            foreach ($stored as $submission) {
+                if ($submission->getId() === $id) {
+                    return $submission;
+                }
+            }
+            return null;
+        });
+        $submissionManager->method('setErrorMessage')->willReturnCallback(
+            function (SubmissionEntity $submission, string $message) use (&$failed) {
+                $failed[] = $message;
+                return $submission;
+            }
+        );
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getSmartlingLocaleBySubmission')->willReturn('de-DE');
+
+        return new UploadQueueManager(
+            $this->createMock(ApiWrapperInterface::class),
+            $settingsManager,
+            $db,
+            $submissionManager,
+        );
     }
 }

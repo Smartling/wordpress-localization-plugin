@@ -14,6 +14,7 @@ abstract class SmartlingEntityAbstract implements SmartlingTableDefinitionInterf
 
     public const DB_TYPE_U_BIGINT = 'INT(20) UNSIGNED NOT NULL'; // BIGINT alias of INT(20)
     public const DB_TYPE_DATETIME = 'DATETIME NOT NULL DEFAULT \'0000-00-00 00:00:00\'';
+    public const DB_TYPE_DATETIME_NULL = 'DATETIME NULL DEFAULT NULL';
     public const DB_TYPE_STRING_STANDARD = 'VARCHAR(255) NOT NULL';
     public const DB_TYPE_STRING_64 = 'VARCHAR(64) NOT NULL';
     public const DB_TYPE_STRING_SMALL = 'VARCHAR(16) NOT NULL';

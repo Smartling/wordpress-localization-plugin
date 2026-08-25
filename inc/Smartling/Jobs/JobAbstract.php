@@ -173,6 +173,7 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === self::THROTTLED_MESSAGE) {
                 $message = self::THROTTLED_MESSAGE;
+                $this->getLogger()->debug("Skipping {$this->getJobHookName()} run: throttled");
             } else {
                 throw $e;
             }

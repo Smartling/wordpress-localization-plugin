@@ -9,8 +9,12 @@ class UploadQueueItem {
     /**
      * @param SubmissionEntity[] $submissions
      */
-    public function __construct(private array $submissions, private string $batchUid, private IntStringPairCollection $smartlingLocales)
-    {
+    public function __construct(
+        private array $submissions,
+        private string $batchUid,
+        private IntStringPairCollection $smartlingLocales,
+        private ?int $id = null,
+    ) {
         $contentTypes = [];
         $sourceBlogIds = [];
         $sourceIds = [];
@@ -42,6 +46,15 @@ class UploadQueueItem {
         return $this->batchUid;
     }
 
+    /**
+     * Identifies the originating upload queue row, so it can be removed once the
+     * upload succeeds. Null when the item was not read from the queue.
+     */
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
     public function getSmartlingLocales(): IntStringPairCollection
     {
         return $this->smartlingLocales;
@@ -64,7 +77,7 @@ class UploadQueueItem {
             return $item->getKey() !== $submission->getId();
         })));
 
-        return new self($submissions, $this->batchUid, $locales);
+        return new self($submissions, $this->batchUid, $locales, $this->id);
     }
 
     #[Pure]

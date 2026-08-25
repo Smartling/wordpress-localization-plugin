@@ -96,13 +96,19 @@ class UploadJob extends JobAbstract
             ));
 
             try {
-                do_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, $item);
+                $this->wpProxy->do_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, $item);
             } catch (\Exception $e) {
                 foreach ($item->getSubmissions() as $submission) {
                     $this->getLogger()->notice(sprintf('Failing submissionId=%s: %s', $submission->getId(), $e->getMessage()));
                     $this->submissionManager->setErrorMessage($submission, $e->getMessage());
                 }
             }
+            /**
+             * Only now that the upload has been accounted for - either sent or recorded as
+             * failed - may the queue row go away. If the process dies before reaching this
+             * point the row survives and is retried, instead of the work being lost.
+             */
+            $this->uploadQueueManager->complete($item);
             $this->placeLockFlag(true);
         }
     }

@@ -23,6 +23,22 @@ use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class UploadQueueManager {
     use LoggerSafeTrait;
+
+    /**
+     * How many times a queue row may be claimed before its submissions are failed.
+     * Guards against content that reliably kills the process (timeout, OOM) from
+     * being retried forever.
+     */
+    public const MAX_ATTEMPTS = 3;
+
+    /**
+     * How long a claim is honoured before the row is considered abandoned and
+     * offered to another run. Must comfortably exceed the slowest realistic upload,
+     * because a claim that expires while its upload is still running can result in
+     * the same content being uploaded twice.
+     */
+    public const STALE_CLAIM_SECONDS = 900;
+
     private string $tableName;
     public function __construct(
         private ApiWrapperInterface $api,
@@ -46,9 +62,9 @@ class UploadQueueManager {
         // It's impossible to create a single queue item with submissions from multiple source blog ids,
         // so only checking one is enough.
         $query = sprintf(<<<'SQL'
-select q.%1$s, q.%2$s, q.%3$s from %7$s q left join %8$s s
+select q.%1$s, q.%2$s, q.%3$s, q.%9$s, q.%10$s from %7$s q left join %8$s s
     on if(locate(',', q.%2$s), left(%2$s, locate(',', %2$s) - 1), %2$s) = s.%4$s
-    where s.%5$s = %6$d
+    where s.%5$s = %6$d and (q.%9$s is null or q.%9$s < '%11$s')
 SQL,
             UploadQueueEntity::FIELD_ID,
             UploadQueueEntity::FIELD_SUBMISSION_IDS,
@@ -58,30 +74,95 @@ SQL,
             $blogId,
             $this->db->completeTableName(UploadQueueEntity::getTableName()),
             $this->db->completeTableName(SubmissionEntity::getTableName()),
+            UploadQueueEntity::FIELD_CLAIMED,
+            UploadQueueEntity::FIELD_ATTEMPTS,
+            $this->getStaleClaimThreshold(),
         );
         while (($row = $this->db->getRowArray($query)) !== null) {
-            $this->delete($row[UploadQueueEntity::FIELD_ID]);
+            $queueId = (int)$row[UploadQueueEntity::FIELD_ID];
+            $attempts = (int)($row[UploadQueueEntity::FIELD_ATTEMPTS] ?? 0);
             $locales = new IntStringPairCollection();
             $submissions = [];
+            $unprocessable = false;
             foreach (IntegerIterator::fromString($row[UploadQueueEntity::FIELD_SUBMISSION_IDS]) as $submissionId) {
                 $submission = $this->submissionManager->getEntityById($submissionId);
                 if ($submission === null) {
-                    continue 2;
+                    $this->getLogger()->warning("Discarding upload queue item id=$queueId: submissionId=$submissionId no longer exists");
+                    $unprocessable = true;
+                    break;
                 }
 
                 $locale = $this->getSmartlingLocale($submission);
                 if ($locale === null) {
-                    continue 2;
+                    $this->getLogger()->warning("Discarding upload queue item id=$queueId: unable to resolve target locale for submissionId=$submissionId, targetBlogId={$submission->getTargetBlogId()}");
+                    $unprocessable = true;
+                    break;
                 }
 
                 $locales = $locales->add([new IntStringPair($submission->getId(), $locale)]);
                 $submissions[] = $submission;
             }
 
-            return new UploadQueueItem($submissions, $row[UploadQueueEntity::FIELD_BATCH_UID], $locales);
+            if ($unprocessable) {
+                $this->delete($queueId);
+                continue;
+            }
+
+            if ($attempts >= self::MAX_ATTEMPTS) {
+                $message = sprintf(
+                    'Upload abandoned after %d attempts. The upload process most likely terminated unexpectedly (fatal error, timeout or out of memory) while handling this content.',
+                    $attempts,
+                );
+                $this->getLogger()->error("Failing upload queue item id=$queueId: $message");
+                foreach ($submissions as $submission) {
+                    $this->submissionManager->setErrorMessage($submission, $message);
+                }
+                $this->delete($queueId);
+                continue;
+            }
+
+            $this->claim($queueId, $attempts);
+
+            return new UploadQueueItem($submissions, $row[UploadQueueEntity::FIELD_BATCH_UID], $locales, $queueId);
         }
 
         return null;
+    }
+
+    private function getStaleClaimThreshold(): string
+    {
+        return DateTimeHelper::dateTimeToString(
+            (new \DateTime('now', new \DateTimeZone(DateTimeHelper::TIMEZONE_UTC)))
+                ->modify('-' . self::STALE_CLAIM_SECONDS . ' seconds')
+        );
+    }
+
+    /**
+     * Removes a queue row once its upload has actually succeeded.
+     */
+    public function complete(UploadQueueItem $item): void
+    {
+        $id = $item->getId();
+        if ($id !== null) {
+            $this->delete($id);
+        }
+    }
+
+    /**
+     * Marks a queue row as being worked on, without removing it. The row is deleted
+     * only once the upload has actually succeeded, so that a fatal error mid-upload
+     * leaves the work recoverable instead of silently destroying it.
+     */
+    private function claim(int $id, int $attempts): void
+    {
+        $this->db->query(QueryBuilder::buildUpdateQuery(
+            $this->tableName,
+            [
+                UploadQueueEntity::FIELD_CLAIMED => DateTimeHelper::nowAsString(),
+                UploadQueueEntity::FIELD_ATTEMPTS => $attempts + 1,
+            ],
+            $this->idCondition($id),
+        ));
     }
 
     public function enqueue(IntegerIterator $submissionIds, string $batchUid): void
@@ -169,10 +250,15 @@ SQL,
 
     private function delete(int $id): void
     {
+        $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $this->idCondition($id)));
+    }
+
+    private function idCondition(int $id): ConditionBlock
+    {
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
         $block->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, UploadQueueEntity::FIELD_ID, $id));
 
-        $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $block));
+        return $block;
     }
 
 }
