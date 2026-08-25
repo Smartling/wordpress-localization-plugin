@@ -5,6 +5,7 @@ namespace Smartling\DbAl;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Models\IntegerIterator;
 use Smartling\Models\UploadQueueEntity;
 use Smartling\Settings\SettingsManager;
@@ -237,6 +238,92 @@ class UploadQueueManagerTest extends TestCase {
             '/claimed`? <|<.*claimed/i',
             $selects[0],
             'Expected a staleness comparison so abandoned claims are retried',
+        );
+    }
+
+    /**
+     * A queue row groups submissions that share the same content, so one submission
+     * with an unresolvable locale takes the whole row down. Every submission that
+     * still exists - the one that failed to resolve and any sibling that resolved
+     * just fine - must not just vanish: each needs a visible error instead of being
+     * left in New status with no queue row and no explanation.
+     */
+    public function testDequeueSetsErrorOnResolvedSiblingsWhenGroupIsUnprocessable()
+    {
+        $resolvableSubmission = $this->createMock(SubmissionEntity::class);
+        $resolvableSubmission->method('getId')->willReturn(1);
+        $resolvableSubmission->method('getSourceId')->willReturn(1);
+        $resolvableSubmission->method('getSourceBlogId')->willReturn(1);
+
+        $unresolvableSubmission = $this->createMock(SubmissionEntity::class);
+        $unresolvableSubmission->method('getId')->willReturn(2);
+        $unresolvableSubmission->method('getSourceId')->willReturn(1);
+        $unresolvableSubmission->method('getSourceBlogId')->willReturn(1);
+        $unresolvableSubmission->method('getTargetBlogId')->willReturn(3);
+
+        $this->mockDbAl();
+        $db = $this->getMockBuilder(DB::class)
+            ->setConstructorArgs([new class {
+                public string $base_prefix = '';
+                public function getRowArray() {}
+                public function query() {}
+            }])
+            ->onlyMethods(['getRowArray', 'query'])
+            ->getMock();
+        $db->method('getRowArray')->willReturnOnConsecutiveCalls(
+            ['id' => 7, 'batch_uid' => '', 'submission_ids' => '1,2', 'claimed' => null, 'attempts' => 0],
+            null,
+        );
+        $queries = [];
+        $db->method('query')->willReturnCallback(function ($query) use (&$queries) {
+            $queries[] = $query;
+            return true;
+        });
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('getEntityById')->willReturnCallback(
+            function ($id) use ($resolvableSubmission, $unresolvableSubmission) {
+                return match ($id) {
+                    1 => $resolvableSubmission,
+                    2 => $unresolvableSubmission,
+                    default => null,
+                };
+            },
+        );
+        $failed = [];
+        $submissionManager->method('setErrorMessage')->willReturnCallback(
+            function (SubmissionEntity $submission, string $message) use (&$failed) {
+                $failed[] = $submission;
+                return $submission;
+            },
+        );
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getSmartlingLocaleBySubmission')->willReturnCallback(
+            function (SubmissionEntity $submission) use ($resolvableSubmission) {
+                if ($submission === $resolvableSubmission) {
+                    return 'de-DE';
+                }
+                throw new SmartlingDbException('profile not found');
+            },
+        );
+
+        $uploadQueueManager = new UploadQueueManager(
+            $this->createMock(ApiWrapperInterface::class),
+            $settingsManager,
+            $db,
+            $submissionManager,
+        );
+
+        $this->assertNull($uploadQueueManager->dequeue(1), 'Unprocessable groups must not be handed out');
+        $this->assertSame(
+            [$resolvableSubmission, $unresolvableSubmission],
+            $failed,
+            'Expected every existing submission in the discarded group to be failed visibly',
+        );
+        $this->assertNotEmpty(
+            array_filter($queries, static fn(string $q) => str_starts_with($q, 'DELETE')),
+            'Expected the unprocessable row to be removed from the queue',
         );
     }
 

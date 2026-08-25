@@ -69,20 +69,23 @@ SQL,
             $attempts = (int)($row[UploadQueueEntity::FIELD_ATTEMPTS] ?? 0);
             $locales = new IntStringPairCollection();
             $submissions = [];
+            $existingSubmissions = [];
             $unprocessable = false;
             foreach (IntegerIterator::fromString($row[UploadQueueEntity::FIELD_SUBMISSION_IDS]) as $submissionId) {
                 $submission = $this->submissionManager->getEntityById($submissionId);
                 if ($submission === null) {
                     $this->getLogger()->warning("Discarding upload queue item id=$queueId: submissionId=$submissionId no longer exists");
                     $unprocessable = true;
-                    break;
+                    continue;
                 }
+
+                $existingSubmissions[] = $submission;
 
                 $locale = $this->getSmartlingLocale($submission);
                 if ($locale === null) {
                     $this->getLogger()->warning("Discarding upload queue item id=$queueId: unable to resolve target locale for submissionId=$submissionId, targetBlogId={$submission->getTargetBlogId()}");
                     $unprocessable = true;
-                    break;
+                    continue;
                 }
 
                 $locales = $locales->add([new IntStringPair($submission->getId(), $locale)]);
@@ -90,6 +93,14 @@ SQL,
             }
 
             if ($unprocessable) {
+                // The whole row is grouped by shared content, so one unresolvable submission
+                // takes the rest down with it. They must not vanish silently: every submission
+                // that still exists gets a visible error instead of being left in New status
+                // with no queue row and no explanation.
+                $message = 'Upload queue item discarded: unable to resolve one or more submissions grouped with this item, see log for details.';
+                foreach ($existingSubmissions as $submission) {
+                    $this->submissionManager->setErrorMessage($submission, $message);
+                }
                 $this->delete($queueId);
                 continue;
             }
