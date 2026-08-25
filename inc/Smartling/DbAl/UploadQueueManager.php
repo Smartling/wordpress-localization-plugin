@@ -47,10 +47,24 @@ class UploadQueueManager {
 
     public function dequeue(int $blogId): ?UploadQueueItem
     {
+        $staleClaimCondition = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
+        $staleClaimCondition->addCondition(new Condition(
+            ConditionBuilder::CONDITION_IS_NULL,
+            'q.' . UploadQueueEntity::FIELD_CLAIMED,
+            [],
+            false,
+        ));
+        $staleClaimCondition->addCondition(new Condition(
+            ConditionBuilder::CONDITION_SIGN_LESS,
+            'q.' . UploadQueueEntity::FIELD_CLAIMED,
+            $this->getStaleClaimThreshold(),
+            false,
+        ));
+
         $query = sprintf(<<<'SQL'
 select q.%1$s, q.%2$s, q.%3$s, q.%9$s, q.%10$s from %7$s q left join %8$s s
     on if(locate(',', q.%2$s), left(%2$s, locate(',', %2$s) - 1), %2$s) = s.%4$s
-    where s.%5$s = %6$d and (q.%9$s is null or q.%9$s < '%11$s')
+    where s.%5$s = %6$d and %11$s
 SQL,
             UploadQueueEntity::FIELD_ID,
             UploadQueueEntity::FIELD_SUBMISSION_IDS,
@@ -62,7 +76,7 @@ SQL,
             $this->db->completeTableName(SubmissionEntity::getTableName()),
             UploadQueueEntity::FIELD_CLAIMED,
             UploadQueueEntity::FIELD_ATTEMPTS,
-            $this->getStaleClaimThreshold(),
+            $staleClaimCondition,
         );
         while (($row = $this->db->getRowArray($query)) !== null) {
             $queueId = (int)$row[UploadQueueEntity::FIELD_ID];
@@ -97,11 +111,11 @@ SQL,
                 // takes the rest down with it. They must not vanish silently: every submission
                 // that still exists gets a visible error instead of being left in New status
                 // with no queue row and no explanation.
-                $message = 'Upload queue item discarded: unable to resolve one or more submissions grouped with this item, see log for details.';
-                foreach ($existingSubmissions as $submission) {
-                    $this->submissionManager->setErrorMessage($submission, $message);
-                }
-                $this->delete($queueId);
+                $this->discardQueueItem(
+                    $queueId,
+                    $existingSubmissions,
+                    'Upload queue item discarded: unable to resolve one or more submissions grouped with this item, see log for details.',
+                );
                 continue;
             }
 
@@ -111,10 +125,7 @@ SQL,
                     $attempts,
                 );
                 $this->getLogger()->error("Failing upload queue item id=$queueId: $message");
-                foreach ($submissions as $submission) {
-                    $this->submissionManager->setErrorMessage($submission, $message);
-                }
-                $this->delete($queueId);
+                $this->discardQueueItem($queueId, $submissions, $message);
                 continue;
             }
 
@@ -124,6 +135,17 @@ SQL,
         }
 
         return null;
+    }
+
+    /**
+     * @param SubmissionEntity[] $submissions
+     */
+    private function discardQueueItem(int $queueId, array $submissions, string $errorMessage): void
+    {
+        foreach ($submissions as $submission) {
+            $this->submissionManager->setErrorMessage($submission, $errorMessage);
+        }
+        $this->delete($queueId);
     }
 
     private function getStaleClaimThreshold(): string

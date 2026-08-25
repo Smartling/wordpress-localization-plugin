@@ -76,6 +76,7 @@ class UploadJob extends JobAbstract
                     $profiles[$submission->getSourceBlogId()] = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
                 } catch (SmartlingDbException) {
                     $this->getLogger()->notice("Skipping upload of submissionId={$submission->getId()}: no active profile found for blogId={$submission->getSourceBlogId()}");
+                    $this->uploadQueueManager->complete($item);
                     continue;
                 }
             }
@@ -98,7 +99,7 @@ class UploadJob extends JobAbstract
 
             try {
                 $this->wpProxy->do_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, $item);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 foreach ($item->getSubmissions() as $submission) {
                     $this->getLogger()->notice(sprintf('Failing submissionId=%s: %s', $submission->getId(), $e->getMessage()));
                     $this->submissionManager->setErrorMessage($submission, $e->getMessage());
@@ -113,7 +114,7 @@ class UploadJob extends JobAbstract
     {
         while (($submission = $this->submissionManager->findSubmissionForCloning($blogId)) !== null) {
             try {
-                do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
+                $this->wpProxy->do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
             } catch (\Throwable $e) {
                 $this->submissionManager->setErrorMessage($submission, $e->getMessage());
                 continue;
