@@ -63,6 +63,7 @@ class UploadJob extends JobAbstract
                 break;
             }
             $submission = $item->getSubmissions()[0];
+            $this->getLogger()->debug("Retrieved upload queue item for submissionId={$submission->getId()}");
             if ($submission->isCloned()) {
                 $this->getLogger()->debug("Skipping processing queue for submissionId={$submission->getId()}: was cloned");
             }
@@ -103,11 +104,6 @@ class UploadJob extends JobAbstract
                     $this->submissionManager->setErrorMessage($submission, $e->getMessage());
                 }
             }
-            /**
-             * Only now that the upload has been accounted for - either sent or recorded as
-             * failed - may the queue row go away. If the process dies before reaching this
-             * point the row survives and is retried, instead of the work being lost.
-             */
             $this->uploadQueueManager->complete($item);
             $this->placeLockFlag(true);
         }

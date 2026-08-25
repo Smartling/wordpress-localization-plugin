@@ -88,65 +88,28 @@ trait DebugTrait
     }
 
     /**
-     * Error types that actually terminate the request. Anything else - notices,
-     * warnings and in particular deprecations - is left alone: error_get_last()
-     * returns the last error of *any* severity, so treating non-fatal types as
-     * fatal reports an emergency on every otherwise healthy request and buries
-     * the real crashes.
-     */
-    private const FATAL_ERROR_TYPES = E_ERROR
-        | E_PARSE
-        | E_CORE_ERROR
-        | E_COMPILE_ERROR
-        | E_USER_ERROR
-        | E_RECOVERABLE_ERROR;
-
-    private const ERROR_TYPE_NAMES = [
-        E_ERROR => 'E_ERROR',
-        E_WARNING => 'E_WARNING',
-        E_PARSE => 'E_PARSE',
-        E_NOTICE => 'E_NOTICE',
-        E_CORE_ERROR => 'E_CORE_ERROR',
-        E_CORE_WARNING => 'E_CORE_WARNING',
-        E_COMPILE_ERROR => 'E_COMPILE_ERROR',
-        E_COMPILE_WARNING => 'E_COMPILE_WARNING',
-        E_USER_ERROR => 'E_USER_ERROR',
-        E_USER_WARNING => 'E_USER_WARNING',
-        E_USER_NOTICE => 'E_USER_NOTICE',
-        E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
-        E_DEPRECATED => 'E_DEPRECATED',
-        E_USER_DEPRECATED => 'E_USER_DEPRECATED',
-    ];
-
-    public static function isFatalError(?int $errorType): bool
-    {
-        return $errorType !== null && ($errorType & self::FATAL_ERROR_TYPES) !== 0;
-    }
-
-    public static function getErrorTypeName(int $errorType): string
-    {
-        return self::ERROR_TYPE_NAMES[$errorType] ?? "UNKNOWN($errorType)";
-    }
-
-    /**
      * Last chance to know what had happened if Wordpress is down.
      */
     public function shutdownHandler()
     {
+        $logger = Bootstrap::getLogger();
+
+        $skipLogging = E_NOTICE | E_WARNING | E_USER_NOTICE | E_USER_WARNING | E_STRICT | E_DEPRECATED;
+
+        $loggingPattern = E_ALL ^ $skipLogging;
+
         $data = error_get_last();
 
-        if (!self::isFatalError($data['type'] ?? null)) {
-            return;
+        /**
+         * @var int $errorType
+         */
+        $errorType = &$data['type'];
+
+        if ($errorType & $loggingPattern) {
+            $message = "An Error (0x{$data['type']}) occurred and Wordpress is down.\n";
+            $message .= "Message: '{$data['message']}'\n";
+            $message .= "Location: '{$data['file']}:{$data['line']}'\n";
+            $logger->emergency($message);
         }
-
-        $message = sprintf(
-            "A fatal error (%s) occurred and Wordpress is down.\nMessage: '%s'\nLocation: '%s:%s'\n",
-            self::getErrorTypeName($data['type']),
-            $data['message'],
-            $data['file'],
-            $data['line'],
-        );
-
-        Bootstrap::getLogger()->emergency($message);
     }
 }

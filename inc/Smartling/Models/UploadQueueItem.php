@@ -46,10 +46,6 @@ class UploadQueueItem {
         return $this->batchUid;
     }
 
-    /**
-     * Identifies the originating upload queue row, so it can be removed once the
-     * upload succeeds. Null when the item was not read from the queue.
-     */
     public function getId(): ?int
     {
         return $this->id;

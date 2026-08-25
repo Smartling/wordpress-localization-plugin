@@ -148,7 +148,6 @@ class UploadQueueManagerTest extends TestCase {
 
         $matcherGetRowArray = $this->exactly(3);
         $db->expects($matcherGetRowArray)->method('getRowArray')->willReturnCallback(function ($query) use ($matcherGetRowArray) {
-            // Not asserted verbatim: the eligibility clause embeds a moving timestamp.
             $this->assertStringContainsString(
                 'from smartling_upload_queue q left join smartling_submissions s',
                 $query,
@@ -162,7 +161,6 @@ class UploadQueueManagerTest extends TestCase {
             };
         });
         $db->expects($this->exactly(2))->method('query')->willReturnCallback(function ($query) {
-            // Dequeue claims the row; deletion happens only after a successful upload.
             $this->assertStringStartsWith('UPDATE', $query);
             return true;
         });
@@ -198,10 +196,6 @@ class UploadQueueManagerTest extends TestCase {
         $this->assertNull($uploadQueueManager->dequeue(1));
     }
 
-    /**
-     * A queue row must survive dequeue so that a fatal error during the upload
-     * that follows does not destroy the queued work.
-     */
     public function testDequeueClaimsRowInsteadOfDeletingIt()
     {
         $queries = [];
@@ -220,10 +214,6 @@ class UploadQueueManagerTest extends TestCase {
         $this->assertStringNotContainsStringIgnoringCase('DELETE', $queries[0]);
     }
 
-    /**
-     * Rows already being worked on by another run must not be picked up again,
-     * while rows whose worker died must become available after the stale timeout.
-     */
     public function testDequeueOnlyConsidersUnclaimedOrStaleRows()
     {
         $queries = [];

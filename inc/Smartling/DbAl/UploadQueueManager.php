@@ -24,19 +24,8 @@ use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 class UploadQueueManager {
     use LoggerSafeTrait;
 
-    /**
-     * How many times a queue row may be claimed before its submissions are failed.
-     * Guards against content that reliably kills the process (timeout, OOM) from
-     * being retried forever.
-     */
     public const MAX_ATTEMPTS = 3;
 
-    /**
-     * How long a claim is honoured before the row is considered abandoned and
-     * offered to another run. Must comfortably exceed the slowest realistic upload,
-     * because a claim that expires while its upload is still running can result in
-     * the same content being uploaded twice.
-     */
     public const STALE_CLAIM_SECONDS = 900;
 
     private string $tableName;
@@ -58,9 +47,6 @@ class UploadQueueManager {
 
     public function dequeue(int $blogId): ?UploadQueueItem
     {
-        // Get queue items with first submission having its source blog id = $blogId.
-        // It's impossible to create a single queue item with submissions from multiple source blog ids,
-        // so only checking one is enough.
         $query = sprintf(<<<'SQL'
 select q.%1$s, q.%2$s, q.%3$s, q.%9$s, q.%10$s from %7$s q left join %8$s s
     on if(locate(',', q.%2$s), left(%2$s, locate(',', %2$s) - 1), %2$s) = s.%4$s
@@ -137,9 +123,6 @@ SQL,
         );
     }
 
-    /**
-     * Removes a queue row once its upload has actually succeeded.
-     */
     public function complete(UploadQueueItem $item): void
     {
         $id = $item->getId();
@@ -148,11 +131,6 @@ SQL,
         }
     }
 
-    /**
-     * Marks a queue row as being worked on, without removing it. The row is deleted
-     * only once the upload has actually succeeded, so that a fatal error mid-upload
-     * leaves the work recoverable instead of silently destroying it.
-     */
     private function claim(int $id, int $attempts): void
     {
         $this->db->query(QueryBuilder::buildUpdateQuery(

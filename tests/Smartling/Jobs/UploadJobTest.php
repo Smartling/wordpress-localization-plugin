@@ -2,6 +2,7 @@
 
 namespace Smartling\Tests\Smartling\Jobs;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\UploadQueueManager;
@@ -75,7 +76,7 @@ class UploadJobTest extends TestCase
         );
     }
 
-    private function buildQueueManager(UploadQueueItem $item): UploadQueueManager
+    private function buildQueueManager(UploadQueueItem $item): UploadQueueManager|MockObject
     {
         $uploadQueueManager = $this->createMock(UploadQueueManager::class);
         $uploadQueueManager->method('length')->willReturn(1);
