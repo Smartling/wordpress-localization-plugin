@@ -94,38 +94,49 @@ trait DebugTrait
      * fatal reports an emergency on every otherwise healthy request and buries
      * the real crashes.
      */
-    private const FATAL_ERROR_TYPES = E_ERROR
-        | E_PARSE
-        | E_CORE_ERROR
-        | E_COMPILE_ERROR
-        | E_USER_ERROR
-        | E_RECOVERABLE_ERROR;
+    /**
+     * PHP traits cannot declare constants until PHP 8.2, so these are exposed
+     * as private static methods instead. See the property comment above for
+     * why only these types are treated as fatal.
+     */
+    private static function fatalErrorTypes(): int
+    {
+        return E_ERROR
+            | E_PARSE
+            | E_CORE_ERROR
+            | E_COMPILE_ERROR
+            | E_USER_ERROR
+            | E_RECOVERABLE_ERROR;
+    }
 
-    private const ERROR_TYPE_NAMES = [
-        E_ERROR => 'E_ERROR',
-        E_WARNING => 'E_WARNING',
-        E_PARSE => 'E_PARSE',
-        E_NOTICE => 'E_NOTICE',
-        E_CORE_ERROR => 'E_CORE_ERROR',
-        E_CORE_WARNING => 'E_CORE_WARNING',
-        E_COMPILE_ERROR => 'E_COMPILE_ERROR',
-        E_COMPILE_WARNING => 'E_COMPILE_WARNING',
-        E_USER_ERROR => 'E_USER_ERROR',
-        E_USER_WARNING => 'E_USER_WARNING',
-        E_USER_NOTICE => 'E_USER_NOTICE',
-        E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
-        E_DEPRECATED => 'E_DEPRECATED',
-        E_USER_DEPRECATED => 'E_USER_DEPRECATED',
-    ];
+    private static function errorTypeNames(): array
+    {
+        return [
+            E_ERROR => 'E_ERROR',
+            E_WARNING => 'E_WARNING',
+            E_PARSE => 'E_PARSE',
+            E_NOTICE => 'E_NOTICE',
+            E_CORE_ERROR => 'E_CORE_ERROR',
+            E_CORE_WARNING => 'E_CORE_WARNING',
+            E_COMPILE_ERROR => 'E_COMPILE_ERROR',
+            E_COMPILE_WARNING => 'E_COMPILE_WARNING',
+            E_USER_ERROR => 'E_USER_ERROR',
+            E_USER_WARNING => 'E_USER_WARNING',
+            E_USER_NOTICE => 'E_USER_NOTICE',
+            E_RECOVERABLE_ERROR => 'E_RECOVERABLE_ERROR',
+            E_DEPRECATED => 'E_DEPRECATED',
+            E_USER_DEPRECATED => 'E_USER_DEPRECATED',
+        ];
+    }
 
     public static function isFatalError(?int $errorType): bool
     {
-        return $errorType !== null && ($errorType & self::FATAL_ERROR_TYPES) !== 0;
+        return $errorType !== null && ($errorType & self::fatalErrorTypes()) !== 0;
     }
 
     public static function getErrorTypeName(int $errorType): string
     {
-        return self::ERROR_TYPE_NAMES[$errorType] ?? "UNKNOWN($errorType)";
+        return self::errorTypeNames()[$errorType] ?? "UNKNOWN($errorType)";
     }
 
     /**

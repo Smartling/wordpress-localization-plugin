@@ -82,7 +82,14 @@ class UploadJob extends JobAbstract
             }
             $profile = $profiles[$submission->getSourceBlogId()];
             if ($item->getBatchUid() === '') {
-                $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());
+                try {
+                    $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());
+                } catch (\Throwable $e) {
+                    $this->getLogger()->notice("Skipping upload of submissionId={$submission->getId()}: failed to get or create daily bucket job: {$e->getMessage()}");
+                    $this->submissionManager->setErrorMessage($submission, $e->getMessage());
+                    $this->uploadQueueManager->complete($item);
+                    continue;
+                }
             }
 
             $this->getLogger()->info(sprintf(
