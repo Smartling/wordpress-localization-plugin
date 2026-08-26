@@ -75,7 +75,11 @@ class UploadJob extends JobAbstract
                 try {
                     $profiles[$submission->getSourceBlogId()] = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
                 } catch (SmartlingDbException) {
-                    $this->getLogger()->notice("Skipping upload of submissionId={$submission->getId()}: no active profile found for blogId={$submission->getSourceBlogId()}");
+                    $message = "No active profile found for blogId={$submission->getSourceBlogId()}";
+                    foreach ($item->getSubmissions() as $itemSubmission) {
+                        $this->getLogger()->notice("Skipping upload of submissionId={$itemSubmission->getId()}: $message");
+                        $this->submissionManager->setErrorMessage($itemSubmission, $message);
+                    }
                     $this->uploadQueueManager->complete($item);
                     continue;
                 }
@@ -85,8 +89,10 @@ class UploadJob extends JobAbstract
                 try {
                     $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());
                 } catch (\Throwable $e) {
-                    $this->getLogger()->notice("Skipping upload of submissionId={$submission->getId()}: failed to get or create daily bucket job: {$e->getMessage()}");
-                    $this->submissionManager->setErrorMessage($submission, $e->getMessage());
+                    foreach ($item->getSubmissions() as $itemSubmission) {
+                        $this->getLogger()->notice("Skipping upload of submissionId={$itemSubmission->getId()}: failed to get or create daily bucket job: {$e->getMessage()}");
+                        $this->submissionManager->setErrorMessage($itemSubmission, $e->getMessage());
+                    }
                     $this->uploadQueueManager->complete($item);
                     continue;
                 }

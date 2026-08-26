@@ -23,21 +23,28 @@ class Migration260825 implements SmartlingDbMigrationInterface
 
     public function getQueries($tablePrefix = 'wp_'): array
     {
-        $tableName = (new DB())->completeTableName(UploadQueueEntity::getTableName());
+        $db = new DB();
+        $tableName = $db->completeTableName(UploadQueueEntity::getTableName());
 
-        return [
-            sprintf(
-                'ALTER TABLE `%s` ADD COLUMN `%s` %s',
-                $tableName,
-                UploadQueueEntity::FIELD_CLAIMED,
-                SmartlingEntityAbstract::DB_TYPE_DATETIME_NULL,
-            ),
-            sprintf(
-                'ALTER TABLE `%s` ADD COLUMN `%s` %s',
-                $tableName,
-                UploadQueueEntity::FIELD_ATTEMPTS,
-                SmartlingEntityAbstract::DB_TYPE_U_BIGINT . ' ' . SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
-            ),
+        // Migration240315 (re)creates this table with `CREATE TABLE IF NOT EXISTS` from the
+        // current, evolving UploadQueueEntity::getFieldDefinitions(). A site upgrading from a
+        // schema version older than 240315 runs that migration first, and it already creates
+        // the table with the columns below, so blindly adding them here would fail with a
+        // duplicate column error. Only add what isn't already there.
+        $existingColumns = $db->getColumnArray("SHOW COLUMNS FROM `$tableName`");
+
+        $columns = [
+            UploadQueueEntity::FIELD_CLAIMED => SmartlingEntityAbstract::DB_TYPE_DATETIME_NULL,
+            UploadQueueEntity::FIELD_ATTEMPTS => SmartlingEntityAbstract::DB_TYPE_U_BIGINT . ' ' . SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
         ];
+
+        $queries = [];
+        foreach ($columns as $column => $definition) {
+            if (!in_array($column, $existingColumns, true)) {
+                $queries[] = sprintf('ALTER TABLE `%s` ADD COLUMN `%s` %s', $tableName, $column, $definition);
+            }
+        }
+
+        return $queries;
     }
 }

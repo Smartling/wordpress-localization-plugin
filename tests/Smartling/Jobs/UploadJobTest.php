@@ -104,6 +104,85 @@ class UploadJobTest extends TestCase
     }
 
     /**
+     * A queue item groups submissions for the same content across multiple target
+     * locales; only the first one is used to look up the profile/batch job. If either
+     * lookup fails, every submission in the group must be failed visibly, not just the
+     * first, or siblings silently vanish with the row while staying in "New" forever.
+     */
+    public function testFailsEverySubmissionWhenNoActiveProfileFound()
+    {
+        [$item, $submission1, $submission2] = $this->buildTwoSubmissionItem();
+        $uploadQueueManager = $this->buildQueueManager($item);
+        $uploadQueueManager->expects($this->once())->method('complete')->with($item);
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $failed = [];
+        $submissionManager->method('setErrorMessage')->willReturnCallback(
+            static function (SubmissionEntity $submission, string $message) use (&$failed) {
+                $failed[] = $submission;
+                return $submission;
+            },
+        );
+
+        $this->buildJob($uploadQueueManager, $submissionManager, null, static function () {
+            throw new SmartlingDbException('no profile');
+        })->run('');
+
+        $this->assertSame([$submission1, $submission2], $failed, 'Expected every submission in the group to be failed visibly');
+    }
+
+    /**
+     * Same as above, but for the daily-bucket-job lookup failing instead of the profile
+     * lookup.
+     */
+    public function testFailsEverySubmissionWhenDailyBucketJobCannotBeCreated()
+    {
+        [$item, $submission1, $submission2] = $this->buildTwoSubmissionItem();
+        $uploadQueueManager = $this->buildQueueManager($item);
+        $uploadQueueManager->expects($this->once())->method('complete')->with($item);
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $failed = [];
+        $submissionManager->method('setErrorMessage')->willReturnCallback(
+            static function (SubmissionEntity $submission, string $message) use (&$failed) {
+                $failed[] = $submission;
+                return $submission;
+            },
+        );
+
+        $api = $this->createMock(ApiWrapperInterface::class);
+        $api->method('getOrCreateJobInfoForDailyBucketJob')->willThrowException(new \RuntimeException('boom'));
+
+        $this->buildJob($uploadQueueManager, $submissionManager, null, null, $api)->run('');
+
+        $this->assertSame([$submission1, $submission2], $failed, 'Expected every submission in the group to be failed visibly');
+    }
+
+    /**
+     * @return array{0: UploadQueueItem, 1: SubmissionEntity, 2: SubmissionEntity}
+     */
+    private function buildTwoSubmissionItem(): array
+    {
+        $submission1 = $this->createMock(SubmissionEntity::class);
+        $submission1->method('getId')->willReturn(1);
+        $submission1->method('getFileUri')->willReturn('file.xml');
+        $submission1->method('getSourceBlogId')->willReturn(1);
+        $submission2 = $this->createMock(SubmissionEntity::class);
+        $submission2->method('getId')->willReturn(2);
+        $submission2->method('getFileUri')->willReturn('file.xml');
+        $submission2->method('getSourceBlogId')->willReturn(1);
+
+        $item = new UploadQueueItem(
+            [$submission1, $submission2],
+            '',
+            new IntStringPairCollection([new IntStringPair(1, 'de-DE'), new IntStringPair(2, 'fr-FR')]),
+            42,
+        );
+
+        return [$item, $submission1, $submission2];
+    }
+
+    /**
      * processUploadQueue() dispatches through the WordPress function proxy so the hook
      * call can be mocked in tests; processCloning() must do the same, or bugs in the
      * cloning dispatch have no unit-test coverage.
@@ -179,6 +258,7 @@ class UploadJobTest extends TestCase
         ?SubmissionManager $submissionManager = null,
         ?callable $onSendForTranslation = null,
         ?callable $onGetSingleSettingsProfile = null,
+        ?ApiWrapperInterface $api = null,
     ): UploadJob {
         $settingsManager = $this->createMock(SettingsManager::class);
         if ($onGetSingleSettingsProfile !== null) {
@@ -200,7 +280,7 @@ class UploadJobTest extends TestCase
         }
 
         return new UploadJob(
-            $this->createMock(ApiWrapperInterface::class),
+            $api ?? $this->createMock(ApiWrapperInterface::class),
             $this->createMock(Cache::class),
             $this->createMock(FileUriHelper::class),
             $settingsManager,
