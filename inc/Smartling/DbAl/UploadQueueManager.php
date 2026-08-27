@@ -85,28 +85,31 @@ SQL,
             $queueId = (int)$row[UploadQueueEntity::FIELD_ID];
             $attempts = (int)($row[UploadQueueEntity::FIELD_ATTEMPTS] ?? 0);
             $locales = new IntStringPairCollection();
-            $submissions = [];
             $existingSubmissions = [];
             $unprocessable = false;
             foreach (IntegerIterator::fromString($row[UploadQueueEntity::FIELD_SUBMISSION_IDS]) as $submissionId) {
-                $submission = $this->submissionManager->getEntityById($submissionId);
-                if ($submission === null) {
-                    $this->getLogger()->warning("Discarding upload queue item id=$queueId: submissionId=$submissionId no longer exists");
+                try {
+                    $submission = $this->submissionManager->getEntityById($submissionId);
+                    if ($submission === null) {
+                        $this->getLogger()->warning("Discarding upload queue item id=$queueId: submissionId=$submissionId no longer exists");
+                        $unprocessable = true;
+                        continue;
+                    }
+
+                    $existingSubmissions[] = $submission;
+
+                    $locale = $this->getSmartlingLocale($submission);
+                    if ($locale === null) {
+                        $this->getLogger()->warning("Discarding upload queue item id=$queueId: unable to resolve target locale for submissionId=$submissionId, targetBlogId={$submission->getTargetBlogId()}");
+                        $unprocessable = true;
+                        continue;
+                    }
+
+                    $locales = $locales->add([new IntStringPair($submission->getId(), $locale)]);
+                } catch (\Throwable $e) {
+                    $this->getLogger()->warning("Discarding upload queue item id=$queueId: failed to resolve submissionId=$submissionId: {$e->getMessage()}");
                     $unprocessable = true;
-                    continue;
                 }
-
-                $existingSubmissions[] = $submission;
-
-                $locale = $this->getSmartlingLocale($submission);
-                if ($locale === null) {
-                    $this->getLogger()->warning("Discarding upload queue item id=$queueId: unable to resolve target locale for submissionId=$submissionId, targetBlogId={$submission->getTargetBlogId()}");
-                    $unprocessable = true;
-                    continue;
-                }
-
-                $locales = $locales->add([new IntStringPair($submission->getId(), $locale)]);
-                $submissions[] = $submission;
             }
 
             if ($unprocessable) {
@@ -124,13 +127,13 @@ SQL,
                     $attempts,
                 );
                 $this->getLogger()->error("Failing upload queue item id=$queueId: $message");
-                $this->discardQueueItem($queueId, $submissions, $message);
+                $this->discardQueueItem($queueId, $existingSubmissions, $message);
                 continue;
             }
 
             $this->claim($queueId, $attempts);
 
-            return new UploadQueueItem($submissions, $row[UploadQueueEntity::FIELD_BATCH_UID], $locales, $queueId);
+            return new UploadQueueItem($existingSubmissions, $row[UploadQueueEntity::FIELD_BATCH_UID], $locales, $queueId);
         }
 
         return null;
@@ -150,7 +153,7 @@ SQL,
     private function getStaleClaimThreshold(): string
     {
         return DateTimeHelper::dateTimeToString(
-            (new \DateTime('now', new \DateTimeZone(DateTimeHelper::TIMEZONE_UTC)))
+            (new \DateTime('now', DateTimeHelper::getDefaultTimezone()))
                 ->modify('-' . self::STALE_CLAIM_SECONDS . ' seconds')
         );
     }

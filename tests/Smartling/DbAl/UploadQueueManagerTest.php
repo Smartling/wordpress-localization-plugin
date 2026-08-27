@@ -153,6 +153,11 @@ class UploadQueueManagerTest extends TestCase {
                 'from smartling_upload_queue q left join smartling_submissions s',
                 $query,
             );
+            $this->assertStringContainsString(
+                "on if(locate(',', q.submission_ids), left(submission_ids, locate(',', submission_ids) - 1), submission_ids) = s.id",
+                $query,
+                'Expected the join to extract the first submission id from the comma-separated group',
+            );
             $this->assertStringContainsString('where s.source_blog_id = 1', $query);
 
             return match ($matcherGetRowArray->getInvocationCount()) {
@@ -349,6 +354,51 @@ class UploadQueueManagerTest extends TestCase {
         $this->assertNotEmpty(
             array_filter($queries, static fn(string $q) => str_starts_with($q, 'DELETE')),
             'Expected the exhausted row to be removed from the queue',
+        );
+    }
+
+    /**
+     * dequeue() claims a row only after resolving every submission in it. If that
+     * resolution throws anything unexpected, the row must still end up discarded
+     * rather than left permanently unclaimed - otherwise a single misbehaving
+     * submission blocks the entire per-blog queue forever, since every future
+     * dequeue() call would hit the same exception before ever reaching claim().
+     */
+    public function testDequeueDiscardsItemWhenResolvingASubmissionThrowsUnexpectedException()
+    {
+        $this->mockDbAl();
+        $db = $this->getMockBuilder(DB::class)
+            ->setConstructorArgs([new class {
+                public string $base_prefix = '';
+                public function getRowArray() {}
+                public function query() {}
+            }])
+            ->onlyMethods(['getRowArray', 'query'])
+            ->getMock();
+        $db->method('getRowArray')->willReturnOnConsecutiveCalls(
+            ['id' => 7, 'batch_uid' => '', 'submission_ids' => '1', 'claimed' => null, 'attempts' => 0],
+            null,
+        );
+        $queries = [];
+        $db->method('query')->willReturnCallback(function ($query) use (&$queries) {
+            $queries[] = $query;
+            return true;
+        });
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('getEntityById')->willThrowException(new \RuntimeException('DB connection lost'));
+
+        $uploadQueueManager = new UploadQueueManager(
+            $this->createMock(ApiWrapperInterface::class),
+            $this->createMock(SettingsManager::class),
+            $db,
+            $submissionManager,
+        );
+
+        $this->assertNull($uploadQueueManager->dequeue(1), 'An unresolvable row must not be handed out, but must not throw either');
+        $this->assertNotEmpty(
+            array_filter($queries, static fn(string $q) => str_starts_with($q, 'DELETE')),
+            'Expected the unresolvable row to be removed from the queue rather than left claimed forever',
         );
     }
 

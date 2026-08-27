@@ -9,6 +9,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Models\UploadQueueItem;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 
@@ -66,6 +67,8 @@ class UploadJob extends JobAbstract
             $this->getLogger()->debug("Retrieved upload queue item for submissionId={$submission->getId()}");
             if ($submission->isCloned()) {
                 $this->getLogger()->debug("Skipping processing queue for submissionId={$submission->getId()}: was cloned");
+                $this->uploadQueueManager->complete($item);
+                continue;
             }
             if ($submission->getFileUri() === '') {
                 $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
@@ -75,11 +78,7 @@ class UploadJob extends JobAbstract
                 try {
                     $profiles[$submission->getSourceBlogId()] = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
                 } catch (SmartlingDbException) {
-                    $message = "No active profile found for blogId={$submission->getSourceBlogId()}";
-                    foreach ($item->getSubmissions() as $itemSubmission) {
-                        $this->getLogger()->notice("Skipping upload of submissionId={$itemSubmission->getId()}: $message");
-                        $this->submissionManager->setErrorMessage($itemSubmission, $message);
-                    }
+                    $this->failItem($item, 'Skipping upload of', "No active profile found for blogId={$submission->getSourceBlogId()}");
                     $this->uploadQueueManager->complete($item);
                     continue;
                 }
@@ -89,10 +88,7 @@ class UploadJob extends JobAbstract
                 try {
                     $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());
                 } catch (\Throwable $e) {
-                    foreach ($item->getSubmissions() as $itemSubmission) {
-                        $this->getLogger()->notice("Skipping upload of submissionId={$itemSubmission->getId()}: failed to get or create daily bucket job: {$e->getMessage()}");
-                        $this->submissionManager->setErrorMessage($itemSubmission, $e->getMessage());
-                    }
+                    $this->failItem($item, 'Skipping upload of', $e->getMessage(), "failed to get or create daily bucket job: {$e->getMessage()}");
                     $this->uploadQueueManager->complete($item);
                     continue;
                 }
@@ -113,13 +109,19 @@ class UploadJob extends JobAbstract
             try {
                 $this->wpProxy->do_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, $item);
             } catch (\Throwable $e) {
-                foreach ($item->getSubmissions() as $submission) {
-                    $this->getLogger()->notice(sprintf('Failing submissionId=%s: %s', $submission->getId(), $e->getMessage()));
-                    $this->submissionManager->setErrorMessage($submission, $e->getMessage());
-                }
+                $this->failItem($item, 'Failing', $e->getMessage());
             }
             $this->uploadQueueManager->complete($item);
             $this->placeLockFlag(true);
+        }
+    }
+
+    private function failItem(UploadQueueItem $item, string $logVerb, string $errorMessage, ?string $logMessage = null): void
+    {
+        $logMessage ??= $errorMessage;
+        foreach ($item->getSubmissions() as $submission) {
+            $this->getLogger()->notice("$logVerb submissionId={$submission->getId()}: $logMessage");
+            $this->submissionManager->setErrorMessage($submission, $errorMessage);
         }
     }
 

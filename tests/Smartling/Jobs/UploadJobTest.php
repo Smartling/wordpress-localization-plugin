@@ -104,6 +104,29 @@ class UploadJobTest extends TestCase
     }
 
     /**
+     * A cloned submission's content was already uploaded at clone time; re-uploading
+     * it would be a duplicate. Before this fix, isCloned() only logged that the item
+     * was "being skipped" without actually skipping it.
+     */
+    public function testClonedSubmissionIsSkippedAndCompletesQueueItemWithoutUploading()
+    {
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getId')->willReturn(1);
+        $submission->method('isCloned')->willReturn(true);
+        $item = $this->buildItem($submission);
+
+        $uploadQueueManager = $this->buildQueueManager($item);
+        $uploadQueueManager->expects($this->once())->method('complete')->with($item);
+
+        $uploaded = false;
+        $this->buildJob($uploadQueueManager, null, static function () use (&$uploaded) {
+            $uploaded = true;
+        })->run('');
+
+        $this->assertFalse($uploaded, 'Cloned submissions must not be uploaded');
+    }
+
+    /**
      * A queue item groups submissions for the same content across multiple target
      * locales; only the first one is used to look up the profile/batch job. If either
      * lookup fails, every submission in the group must be failed visibly, not just the
