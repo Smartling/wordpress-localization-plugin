@@ -220,6 +220,48 @@ class UploadQueueManagerTest extends TestCase {
         $this->assertStringNotContainsStringIgnoringCase('DELETE', $queries[0]);
     }
 
+    /**
+     * $wpdb->query() returns false on failure without throwing. If dequeue() trusted an
+     * unconfirmed claim, a second dequeue($blogId) call could claim (or have already
+     * claimed) the same row, dispatching the same content for translation twice.
+     */
+    public function testDequeueDoesNotHandOutItemWhenClaimFails()
+    {
+        $this->mockDbAl();
+        $db = $this->getMockBuilder(DB::class)
+            ->setConstructorArgs([new class {
+                public string $base_prefix = '';
+                public function getRowArray() {}
+                public function query() {}
+            }])
+            ->onlyMethods(['getRowArray', 'query'])
+            ->getMock();
+        $db->method('getRowArray')->willReturnOnConsecutiveCalls(
+            ['id' => 7, 'batch_uid' => '', 'submission_ids' => '1', 'claimed' => null, 'attempts' => 0],
+            null,
+        );
+        $db->method('query')->willReturn(false);
+
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getId')->willReturn(1);
+        $submission->method('getSourceId')->willReturn(1);
+        $submission->method('getSourceBlogId')->willReturn(1);
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('getEntityById')->willReturn($submission);
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getSmartlingLocaleBySubmission')->willReturn('de-DE');
+
+        $uploadQueueManager = new UploadQueueManager(
+            $this->createMock(ApiWrapperInterface::class),
+            $settingsManager,
+            $db,
+            $submissionManager,
+        );
+
+        $this->assertNull($uploadQueueManager->dequeue(1), 'Must not hand out an item whose claim could not be confirmed');
+    }
+
     public function testDequeueOnlyConsidersUnclaimedOrStaleRows()
     {
         $queries = [];

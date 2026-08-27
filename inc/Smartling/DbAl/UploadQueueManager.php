@@ -118,9 +118,6 @@ SQL,
                     $existingSubmissions,
                     'Upload queue item discarded: unable to resolve one or more submissions grouped with this item, see log for details.',
                 )) {
-                    // The row is still there and would come back as the exact same result on
-                    // the next iteration of this loop: bail out of this dequeue() call rather
-                    // than spin on a delete that keeps failing.
                     return null;
                 }
                 continue;
@@ -138,7 +135,10 @@ SQL,
                 continue;
             }
 
-            $this->claim($queueId, $attempts);
+            if (!$this->claim($queueId, $attempts)) {
+                $this->getLogger()->error("Failed to claim upload queue item id=$queueId");
+                return null;
+            }
 
             return new UploadQueueItem($existingSubmissions, $row[UploadQueueEntity::FIELD_BATCH_UID], $locales, $queueId);
         }
@@ -174,24 +174,23 @@ SQL,
     public function complete(UploadQueueItem $item): void
     {
         if (!$this->delete($item->getId())) {
-            // Not left in an inconsistent state: the row stays claimed and picks up the
-            // existing stale-claim retry path, same as a crash would. Logged only so a
-            // recurring DB failure here is visible instead of only showing up as unexplained
-            // re-uploads later.
             $this->getLogger()->error("Failed to delete completed upload queue item id={$item->getId()}");
         }
     }
 
-    private function claim(int $id, int $attempts): void
+    /**
+     * @return bool Whether the row was actually claimed.
+     */
+    private function claim(int $id, int $attempts): bool
     {
-        $this->db->query(QueryBuilder::buildUpdateQuery(
+        return $this->db->query(QueryBuilder::buildUpdateQuery(
             $this->tableName,
             [
                 UploadQueueEntity::FIELD_CLAIMED => DateTimeHelper::nowAsString(),
                 UploadQueueEntity::FIELD_ATTEMPTS => $attempts + 1,
             ],
             $this->idCondition($id),
-        ));
+        )) !== false;
     }
 
     public function enqueue(IntegerIterator $submissionIds, string $batchUid): void
@@ -278,10 +277,7 @@ SQL,
     }
 
     /**
-     * @return bool Whether the row was actually removed. $wpdb->query() returns false on
-     *              failure (deadlock, lock-wait timeout, connection blip) without throwing, so
-     *              this must be checked rather than assumed: a caller that keeps treating the
-     *              row as gone when it silently wasn't can end up looping on it forever.
+     * @return bool Whether the row was actually removed.
      */
     private function delete(int $id): bool
     {
