@@ -358,6 +358,50 @@ class UploadQueueManagerTest extends TestCase {
     }
 
     /**
+     * $wpdb->query() returns false on failure (deadlock, lock-wait timeout, connection
+     * blip) without throwing. If discardQueueItem()'s delete() silently fails, dequeue()
+     * must not treat the row as gone and re-select: the row comes back unchanged, so
+     * continuing the while loop would spin on it forever inside a single dequeue() call.
+     */
+    public function testDequeueStopsInsteadOfSpinningWhenDiscardFailsToDelete()
+    {
+        $this->mockDbAl();
+        $db = $this->getMockBuilder(DB::class)
+            ->setConstructorArgs([new class {
+                public string $base_prefix = '';
+                public function getRowArray() {}
+                public function query() {}
+            }])
+            ->onlyMethods(['getRowArray', 'query'])
+            ->getMock();
+        $selectCalls = 0;
+        $db->method('getRowArray')->willReturnCallback(function () use (&$selectCalls) {
+            $selectCalls++;
+            // The same unprocessable row every time, as it would be in reality if the
+            // DELETE below kept failing and never actually removed it.
+            return ['id' => 7, 'batch_uid' => '', 'submission_ids' => '1', 'claimed' => null, 'attempts' => 0];
+        });
+        $db->method('query')->willReturn(false);
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('getEntityById')->willReturn(null);
+
+        $uploadQueueManager = new UploadQueueManager(
+            $this->createMock(ApiWrapperInterface::class),
+            $this->createMock(SettingsManager::class),
+            $db,
+            $submissionManager,
+        );
+
+        $this->assertNull($uploadQueueManager->dequeue(1));
+        $this->assertSame(
+            1,
+            $selectCalls,
+            'Expected dequeue() to stop after the first failed delete rather than re-selecting the same row forever',
+        );
+    }
+
+    /**
      * dequeue() claims a row only after resolving every submission in it. If that
      * resolution throws anything unexpected, the row must still end up discarded
      * rather than left permanently unclaimed - otherwise a single misbehaving

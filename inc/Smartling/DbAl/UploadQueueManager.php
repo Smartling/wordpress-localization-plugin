@@ -113,11 +113,16 @@ SQL,
             }
 
             if ($unprocessable) {
-                $this->discardQueueItem(
+                if (!$this->discardQueueItem(
                     $queueId,
                     $existingSubmissions,
                     'Upload queue item discarded: unable to resolve one or more submissions grouped with this item, see log for details.',
-                );
+                )) {
+                    // The row is still there and would come back as the exact same result on
+                    // the next iteration of this loop: bail out of this dequeue() call rather
+                    // than spin on a delete that keeps failing.
+                    return null;
+                }
                 continue;
             }
 
@@ -127,7 +132,9 @@ SQL,
                     $attempts,
                 );
                 $this->getLogger()->error("Failing upload queue item id=$queueId: $message");
-                $this->discardQueueItem($queueId, $existingSubmissions, $message);
+                if (!$this->discardQueueItem($queueId, $existingSubmissions, $message)) {
+                    return null;
+                }
                 continue;
             }
 
@@ -141,13 +148,19 @@ SQL,
 
     /**
      * @param SubmissionEntity[] $submissions
+     * @return bool Whether the row was actually removed from the queue.
      */
-    private function discardQueueItem(int $queueId, array $submissions, string $errorMessage): void
+    private function discardQueueItem(int $queueId, array $submissions, string $errorMessage): bool
     {
         foreach ($submissions as $submission) {
             $this->submissionManager->setErrorMessage($submission, $errorMessage);
         }
-        $this->delete($queueId);
+        if (!$this->delete($queueId)) {
+            $this->getLogger()->error("Failed to delete upload queue item id=$queueId after discarding it");
+            return false;
+        }
+
+        return true;
     }
 
     private function getStaleClaimThreshold(): string
@@ -160,7 +173,13 @@ SQL,
 
     public function complete(UploadQueueItem $item): void
     {
-        $this->delete($item->getId());
+        if (!$this->delete($item->getId())) {
+            // Not left in an inconsistent state: the row stays claimed and picks up the
+            // existing stale-claim retry path, same as a crash would. Logged only so a
+            // recurring DB failure here is visible instead of only showing up as unexplained
+            // re-uploads later.
+            $this->getLogger()->error("Failed to delete completed upload queue item id={$item->getId()}");
+        }
     }
 
     private function claim(int $id, int $attempts): void
@@ -258,9 +277,15 @@ SQL,
         return null;
     }
 
-    private function delete(int $id): void
+    /**
+     * @return bool Whether the row was actually removed. $wpdb->query() returns false on
+     *              failure (deadlock, lock-wait timeout, connection blip) without throwing, so
+     *              this must be checked rather than assumed: a caller that keeps treating the
+     *              row as gone when it silently wasn't can end up looping on it forever.
+     */
+    private function delete(int $id): bool
     {
-        $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $this->idCondition($id)));
+        return $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $this->idCondition($id))) !== false;
     }
 
     private function idCondition(int $id): ConditionBlock
