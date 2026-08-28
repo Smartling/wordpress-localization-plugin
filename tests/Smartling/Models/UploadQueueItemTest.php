@@ -13,7 +13,7 @@ class UploadQueueItemTest extends TestCase {
         $s1->setId(1);
         $s2 = new SubmissionEntity();
         $s2->setId(2);
-        $x = new UploadQueueItem([$s1, $s2], '', new IntStringPairCollection([new IntStringPair(1, 'a'), new IntStringPair(2, 'b')]));
+        $x = new UploadQueueItem([$s1, $s2], '', new IntStringPairCollection([new IntStringPair(1, 'a'), new IntStringPair(2, 'b')]), 1);
         foreach ($x->getSubmissions() as $submission) {
             if ($submission->getId() === 1) {
                 $x = $x->removeSubmission($submission);
@@ -31,7 +31,7 @@ class UploadQueueItemTest extends TestCase {
         $s1->setId(1);
         $s2 = new SubmissionEntity();
         $s2->setId(2);
-        $x = new UploadQueueItem([$s1, $s2], '', new IntStringPairCollection([new IntStringPair(1, 'a'), new IntStringPair(2, 'b')]));
+        $x = new UploadQueueItem([$s1, $s2], '', new IntStringPairCollection([new IntStringPair(1, 'a'), new IntStringPair(2, 'b')]), 1);
         foreach ($x->getSubmissions() as $submission) {
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_COMPLETED);
         }

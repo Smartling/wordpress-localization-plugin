@@ -104,6 +104,7 @@ HTML);
             $submissionsToUpload += count($uploadQueueItem->getSubmissions());
             $batchUid = $uploadQueueItem->getBatchUid();
             $this->assertNotEquals('', $batchUid);
+            $uploadQueueManager->complete($uploadQueueItem);
         } while ($uploadQueueManager->count() > 0);
         $this->assertEquals(2, $submissionsToUpload);
         $uploadQueueManager->enqueue(

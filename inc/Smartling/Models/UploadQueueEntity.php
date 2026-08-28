@@ -8,7 +8,9 @@ use Smartling\SmartlingTableDefinitionInterface;
 class UploadQueueEntity implements SmartlingTableDefinitionInterface
 {
     public const FIELD_ID = 'id';
+    public const FIELD_ATTEMPTS = 'attempts';
     public const FIELD_BATCH_UID = 'batch_uid';
+    public const FIELD_CLAIMED = 'claimed';
     public const FIELD_CREATED = 'created';
     public const FIELD_SUBMISSION_IDS = 'submission_ids';
     public const TABLE_NAME = 'smartling_upload_queue';
@@ -39,6 +41,8 @@ class UploadQueueEntity implements SmartlingTableDefinitionInterface
             self::FIELD_SUBMISSION_IDS => SmartlingEntityAbstract::DB_TYPE_STRING_TEXT,
             self::FIELD_BATCH_UID => SmartlingEntityAbstract::DB_TYPE_STRING_64 . ' ' . SmartlingEntityAbstract::DB_TYPE_DEFAULT_EMPTYSTRING,
             self::FIELD_CREATED => SmartlingEntityAbstract::DB_TYPE_DATETIME,
+            self::FIELD_CLAIMED => SmartlingEntityAbstract::DB_TYPE_DATETIME_NULL,
+            self::FIELD_ATTEMPTS => SmartlingEntityAbstract::DB_TYPE_U_BIGINT . ' ' . SmartlingEntityAbstract::DB_TYPE_DEFAULT_ZERO,
         ];
     }
 
