@@ -251,7 +251,16 @@ jQuery(document).ready(function () {
                 _wpnonce: smartlingConnector.nonce
             }).done(function (response) {
                 if (response && response.success && response.data && typeof response.data.count !== 'undefined') {
-                    jQuery('#smartling-upload-queue-count').text(response.data.count);
+                    var $current = jQuery('#smartling-upload-queue-count');
+                    var newCount = String(response.data.count);
+                    if ($current.text() !== newCount) {
+                        $current.text(newCount);
+                        // Snap to the highlight color, then let the transition on the base
+                        // rule (below) calmly fade it back once the class is removed.
+                        $current.addClass('smartling-queue-count-changed');
+                        void $current.get(0).offsetWidth; // force reflow so removal transitions
+                        $current.removeClass('smartling-queue-count-changed');
+                    }
                 }
             });
         }, 1000);
