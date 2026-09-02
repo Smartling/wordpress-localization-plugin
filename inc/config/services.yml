@@ -491,6 +491,12 @@ services:
       - "@file.uri.helper"
       - "@wp.proxy"
 
+  wp.upload-queue-count:
+    class: Smartling\WP\Controller\UploadQueueCountController
+    arguments:
+      - "@manager.upload.queue"
+      - "@wp.proxy"
+
   helper.gutenberg:
     class: Smartling\Helpers\GutenbergBlockHelper
     arguments:

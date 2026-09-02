@@ -234,6 +234,29 @@ jQuery(document).ready(function () {
         });
     })
 
+    /**
+     * UploadJob no longer holds the distributed lock (see UploadJob::usesDistributedLock()),
+     * so the Queue Manager screen can't show "running" for it anymore. Poll the current
+     * upload queue count instead, so the number visibly drains while a run is in progress.
+     */
+    if (jQuery('#smartling-upload-queue-count').length > 0 && typeof smartlingConnector !== 'undefined') {
+        var uploadQueueCountInterval = setInterval(function () {
+            var $counter = jQuery('#smartling-upload-queue-count');
+            if ($counter.length === 0) {
+                clearInterval(uploadQueueCountInterval);
+                return;
+            }
+            jQuery.getJSON(ajaxurl, {
+                action: 'smartling_upload_queue_count',
+                _wpnonce: smartlingConnector.nonce
+            }).done(function (response) {
+                if (response && response.success && response.data && typeof response.data.count !== 'undefined') {
+                    jQuery('#smartling-upload-queue-count').text(response.data.count);
+                }
+            });
+        }, 1000);
+    }
+
 });
 
 function ajaxDownload() {

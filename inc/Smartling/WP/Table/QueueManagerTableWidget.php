@@ -81,7 +81,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         $data = [
             [
                 'cron_name'   => __('Upload'),
-                'run_cron' => $this->getUploadCronActionCell($profile, $newSubmissionsCount),
+                'run_cron' => $this->getUploadCronActionCell($newSubmissionsCount),
                 'queue_name'  => __('&nbsp;'),
                 'queue_purge' => 0 === $newSubmissionsCount
                     ? __('Nothing to purge')
@@ -140,23 +140,23 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         $this->items = $data;
     }
 
-    private function getUploadCronActionCell(?ConfigurationProfileEntity $profile, int $count): string
+    /**
+     * UploadJob no longer holds the distributed lock (see UploadJob::usesDistributedLock()),
+     * so unlike the other cron rows this one can't detect "running" via a lock probe - that
+     * probe would now always succeed and cost a Smartling API round trip for nothing. Instead,
+     * this shows a live counter span that JS polls and refreshes every second.
+     */
+    private function getUploadCronActionCell(int $count): string
     {
         if ($count === 0 && $this->submissionManager->findSubmissionForCloning($this->wpProxy->get_current_blog_id()) === null) {
             return self::MESSAGE_NOTHING_TO_DO;
         }
 
-        $jobName = UploadJob::JOB_HOOK_NAME;
-        try {
-            $this->testLock($profile, $jobName);
-            return sprintf(
-                '%s (%s submissions waiting)',
-                $this->getLockTag($jobName),
-                $count,
-            );
-        } catch (SmartlingApiException $e) {
-            return sprintf('%s (%s submissions queued)', $this->getRunningMessage($e), $count);
-        }
+        return sprintf(
+            '%s (<span id="smartling-upload-queue-count">%s</span> submissions waiting)',
+            $this->getLockTag(UploadJob::JOB_HOOK_NAME),
+            $count,
+        );
     }
 
     private function getCheckStatusHelperCronActionCell(?ConfigurationProfileEntity $profile, int $count): string
