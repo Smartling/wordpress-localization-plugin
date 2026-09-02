@@ -17,9 +17,15 @@ use Smartling\Helpers\Serializers\SerializerJsonWithFallback;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TestRunHelper;
 use Smartling\Helpers\XmlHelper;
+use Smartling\Models\IntStringPair;
+use Smartling\Models\IntStringPairCollection;
+use Smartling\Models\LoggerWithStringContext;
+use Smartling\Models\UploadQueueItem;
 use Smartling\Replacers\ReplacerFactory;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tests\Traits\DbAlMock;
 use Smartling\Tests\Traits\DummyLoggerMock;
@@ -382,5 +388,126 @@ class SmartlingCoreTest extends TestCase
         $this->expectExceptionMessage("Failed creating target placeholder for submission id='5', source_blog_id='1', source_id='1', target_blog_id='1', target_id='0' with message:");
 
         $obj->getXMLFiltered($submission);
+    }
+
+    /**
+     * The "Clone attachment" profile option used to only flag the submission is_cloned=1 and
+     * defer the actual clone to UploadJob's separate processCloning() poll. That poll is gone,
+     * so sendForTranslation() must clone the attachment itself, synchronously, right where it
+     * already holds the submission.
+     */
+    public function testSendForTranslationClonesAttachmentSynchronously()
+    {
+        $attachment = $this->createMock(SubmissionEntity::class);
+        $attachment->method('getId')->willReturn(1);
+        $attachment->method('getContentType')->willReturn('attachment');
+        $attachment->method('getSourceBlogId')->willReturn(1);
+        $attachment->method('getSourceId')->willReturn(10);
+
+        $item = new UploadQueueItem(
+            [$attachment],
+            'batchUid',
+            new IntStringPairCollection([new IntStringPair(1, 'de-DE')]),
+            42,
+        );
+
+        $core = $this->buildCoreForSendForTranslation($this->cloneAttachmentProfile());
+        $core->expects(self::once())->method('cloneContent')->with($attachment);
+        $core->expects(self::never())->method('bulkSubmit');
+
+        $core->sendForTranslation($item);
+    }
+
+    /**
+     * A clone failure must be recorded as a visible error, the same way a failed upload is,
+     * instead of silently disappearing or aborting the whole cron run.
+     */
+    public function testSendForTranslationRecordsErrorWhenAttachmentCloneFails()
+    {
+        $attachment = $this->createMock(SubmissionEntity::class);
+        $attachment->method('getId')->willReturn(1);
+        $attachment->method('getContentType')->willReturn('attachment');
+        $attachment->method('getSourceBlogId')->willReturn(1);
+        $attachment->method('getSourceId')->willReturn(10);
+
+        $item = new UploadQueueItem(
+            [$attachment],
+            'batchUid',
+            new IntStringPairCollection([new IntStringPair(1, 'de-DE')]),
+            42,
+        );
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('storeEntity')->willReturnArgument(0);
+        $submissionManager->expects(self::once())->method('setErrorMessage')
+            ->with($attachment, $this->stringContains('boom'));
+
+        $core = $this->buildCoreForSendForTranslation($this->cloneAttachmentProfile(), $submissionManager);
+        $core->method('cloneContent')->willThrowException(new \RuntimeException('boom'));
+        $core->expects(self::never())->method('bulkSubmit');
+
+        $core->sendForTranslation($item);
+    }
+
+    /**
+     * Guards against a regression where cloning is attempted for content it was never meant
+     * for: non-attachment submissions must still go through the normal upload path.
+     */
+    public function testSendForTranslationDoesNotCloneNonAttachmentContent()
+    {
+        $post = $this->createMock(SubmissionEntity::class);
+        $post->method('getId')->willReturn(1);
+        $post->method('getContentType')->willReturn('post');
+        $post->method('getSourceBlogId')->willReturn(1);
+        $post->method('getSourceId')->willReturn(10);
+
+        $item = new UploadQueueItem(
+            [$post],
+            'batchUid',
+            new IntStringPairCollection([new IntStringPair(1, 'de-DE')]),
+            42,
+        );
+
+        $core = $this->buildCoreForSendForTranslation($this->cloneAttachmentProfile());
+        $core->expects(self::never())->method('cloneContent');
+        $core->expects(self::once())->method('bulkSubmit')->with($item);
+
+        $core->sendForTranslation($item);
+    }
+
+    private function cloneAttachmentProfile(): ConfigurationProfileEntity
+    {
+        $profile = $this->createMock(ConfigurationProfileEntity::class);
+        $profile->method('getCloneAttachment')->willReturn(1);
+
+        return $profile;
+    }
+
+    private function buildCoreForSendForTranslation(
+        ConfigurationProfileEntity $profile,
+        ?SubmissionManager $submissionManager = null,
+    ): SmartlingCore|\PHPUnit\Framework\MockObject\MockObject {
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+
+        $submissionManager ??= $this->createMock(SubmissionManager::class);
+
+        $logger = $this->createMock(LoggerWithStringContext::class);
+        $logger->method('withStringContext')->willReturnCallback(
+            static fn(array $context, callable $callable) => $callable(),
+        );
+
+        $core = $this->createPartialMock(SmartlingCore::class, [
+            'getSettingsManager',
+            'getSubmissionManager',
+            'getLogger',
+            'cloneContent',
+            'bulkSubmit',
+        ]);
+        $core->method('getSettingsManager')->willReturn($settingsManager);
+        $core->method('getSubmissionManager')->willReturn($submissionManager);
+        $core->method('getLogger')->willReturn($logger);
+
+        return $core;
     }
 }

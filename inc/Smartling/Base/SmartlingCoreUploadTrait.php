@@ -532,8 +532,10 @@ trait SmartlingCoreUploadTrait
 
         $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile($item->getSubmissions()[0]->getSourceBlogId());
 
-        // Mark attachment submission as "Cloned" if there is "Clone attachment"
-        // option is enabled in configuration profile.
+        // Clone attachment submission instead of uploading it, if "Clone attachment"
+        // option is enabled in configuration profile. Cloning is a local, synchronous
+        // operation (no Smartling API calls), so it happens right here instead of being
+        // deferred to a separate poll.
         foreach ($item->getSubmissions() as $submission) {
             if (1 === $configurationProfile->getCloneAttachment() && $submission->getContentType() === 'attachment') {
                 $submission->setIsCloned(1);
@@ -541,7 +543,7 @@ trait SmartlingCoreUploadTrait
 
                 $this->getLogger()->info(
                     sprintf(
-                        'Attachment submissionId="%s" marked as cloned (sourceBlogId="%s", sourceId="%s", contentType="%s", batchUid="%s").',
+                        'Cloning attachment submissionId="%s" (sourceBlogId="%s", sourceId="%s", contentType="%s", batchUid="%s").',
                         $submission->getId(),
                         $submission->getSourceBlogId(),
                         $submission->getSourceId(),
@@ -549,6 +551,18 @@ trait SmartlingCoreUploadTrait
                         $item->getBatchUid(),
                     )
                 );
+                try {
+                    $this->cloneContent($submission);
+                } catch (\Throwable $e) {
+                    $this->getSubmissionManager()->setErrorMessage(
+                        $submission, vsprintf('Error occurred while cloning: %s', [$e->getMessage()])
+                    );
+                    $this->getLogger()->error(sprintf(
+                        'Failed cloning attachment submissionId="%s": %s',
+                        $submission->getId(),
+                        $e->getMessage(),
+                    ));
+                }
                 $item = $item->removeSubmission($submission);
             }
         }

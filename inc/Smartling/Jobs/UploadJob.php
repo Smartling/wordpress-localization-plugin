@@ -48,8 +48,6 @@ class UploadJob extends JobAbstract
 
         $this->processUploadQueue($blogId);
 
-        $this->processCloning($blogId);
-
         $this->getLogger()->debug("Finished $message");
     }
 
@@ -122,19 +120,6 @@ class UploadJob extends JobAbstract
         foreach ($item->getSubmissions() as $submission) {
             $this->getLogger()->notice("$logVerb submissionId={$submission->getId()}: $logMessage");
             $this->submissionManager->setErrorMessage($submission, $errorMessage);
-        }
-    }
-
-    private function processCloning(int $blogId): void
-    {
-        while (($submission = $this->submissionManager->findSubmissionForCloning($blogId)) !== null) {
-            try {
-                $this->wpProxy->do_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
-            } catch (\Throwable $e) {
-                $this->submissionManager->setErrorMessage($submission, $e->getMessage());
-                continue;
-            }
-            $this->placeLockFlag(true);
         }
     }
 }
