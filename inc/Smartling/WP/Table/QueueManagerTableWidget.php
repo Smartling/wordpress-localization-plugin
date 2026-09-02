@@ -153,7 +153,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         }
 
         return sprintf(
-            '%s (<span id="smartling-upload-queue-count">%s</span> submissions waiting)',
+            '<span id="smartling-upload-cron-cell">%s (<span id="smartling-upload-queue-count">%s</span> submissions waiting)</span>',
             $this->getLockTag(UploadJob::JOB_HOOK_NAME),
             $count,
         );

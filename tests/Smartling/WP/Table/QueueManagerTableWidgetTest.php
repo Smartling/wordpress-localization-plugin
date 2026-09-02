@@ -227,5 +227,25 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $uploadRow = $widget->items[0];
             $this->assertStringContainsString('<span id="smartling-upload-queue-count">3</span>', $uploadRow['run_cron']);
         }
+
+        /**
+         * JS needs a stable element wrapping the whole cell state (link + counter) so that
+         * when the polled count reaches zero, it can swap the entire cell to "Nothing to do"
+         * - the same state page load would render - rather than just zeroing the counter.
+         */
+        public function testUploadRowWrapsCellStateInStableContainer(): void
+        {
+            $api = $this->createMock(ApiWrapperInterface::class);
+
+            $widget = $this->buildWidget($api, uploadQueueCount: 3);
+
+            $widget->prepare_items();
+
+            $uploadRow = $widget->items[0];
+            $this->assertStringContainsString(
+                '<span id="smartling-upload-cron-cell">',
+                $uploadRow['run_cron'],
+            );
+        }
     }
 }

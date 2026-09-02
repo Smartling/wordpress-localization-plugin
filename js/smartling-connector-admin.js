@@ -251,6 +251,13 @@ jQuery(document).ready(function () {
                 _wpnonce: smartlingConnector.nonce
             }).done(function (response) {
                 if (response && response.success && response.data && typeof response.data.count !== 'undefined') {
+                    if (response.data.count === 0) {
+                        // Same state QueueManagerTableWidget::MESSAGE_NOTHING_TO_DO renders
+                        // on page load when the queue is empty.
+                        jQuery('#smartling-upload-cron-cell').text('Nothing to do');
+                        clearInterval(uploadQueueCountInterval);
+                        return;
+                    }
                     var $current = jQuery('#smartling-upload-queue-count');
                     var newCount = String(response.data.count);
                     if ($current.text() !== newCount) {
