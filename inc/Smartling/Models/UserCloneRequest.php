@@ -56,7 +56,6 @@ class UserCloneRequest
         return new self(self::getSourceId($array), $array['source']['contentType'], $array['relations'] ?? [], explode(',', $array['targetBlogIds']));
     }
 
-    // Might be 0 in case of bulk upload
     protected static function getSourceId(array $array): int
     {
         $id = $array['source']['id'][0] ?? null;

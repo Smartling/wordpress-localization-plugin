@@ -30,9 +30,10 @@ class UserTranslationRequest extends UserCloneRequest
     {
         self::validate($array);
         $ids = self::toIntegerArray($array['ids'] ?? []);
+        $contentId = count($ids) > 0 ? 0 : self::getSourceId($array);
 
         return new self(
-            self::getSourceId($array),
+            $contentId,
             $array['source']['contentType'] ?? '',
             $array['relations'] ?? [],
             explode(',', $array['targetBlogIds']),

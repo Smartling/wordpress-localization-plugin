@@ -46,4 +46,32 @@ class TranslationRequestTest extends TestCase
         $this->assertEquals($jobTimeZone, $x->getJobInformation()->getTimeZone());
         $this->assertEquals($jobUid, $x->getJobInformation()->getId());
     }
+
+    /**
+     * Bulk submit sends an empty source.id array (the actual content ids live in `ids`),
+     * so fromArray() must not require source.id[0] to be present when `ids` is populated.
+     */
+    public function testFromArrayBulkUploadWithEmptySourceId()
+    {
+        $targetBlogId = 2;
+        $ids = [13, 14, 15];
+        $x = UserTranslationRequest::fromArray([
+            'job' => [
+                'id' => '',
+                'name' => '',
+                'description' => '',
+                'dueDate' => '',
+                'timeZone' => 'Europe/Kyiv',
+                'authorize' => 'true',
+            ],
+            'formAction' => ContentRelationsHandler::FORM_ACTION_UPLOAD,
+            'source' => ['id' => [], 'contentType' => 'post'],
+            'relations' => [],
+            'targetBlogIds' => (string)$targetBlogId,
+            'ids' => $ids,
+        ]);
+        $this->assertTrue($x->isBulk());
+        $this->assertEquals($ids, $x->getIds());
+        $this->assertEquals('post', $x->getContentType());
+    }
 }
