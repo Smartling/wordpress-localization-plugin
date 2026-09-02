@@ -50,19 +50,7 @@ class UploadQueueManager {
         // Get queue items with the first submission having its source blog id = $blogId.
         // It should be impossible to create a single queue item with submissions from multiple source blog ids,
         // so only checking one is enough.
-        $staleClaimCondition = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
-        $staleClaimCondition->addCondition(new Condition(
-            ConditionBuilder::CONDITION_IS_NULL,
-            'q.' . UploadQueueEntity::FIELD_CLAIMED,
-            [],
-            false,
-        ));
-        $staleClaimCondition->addCondition(new Condition(
-            ConditionBuilder::CONDITION_SIGN_LESS,
-            'q.' . UploadQueueEntity::FIELD_CLAIMED,
-            $this->getStaleClaimThreshold(),
-            false,
-        ));
+        $staleClaimCondition = $this->staleClaimCondition('q.');
 
         $query = sprintf(<<<'SQL'
 select q.%1$s, q.%2$s, q.%3$s, q.%9$s, q.%10$s from %7$s q left join %8$s s
@@ -171,6 +159,33 @@ SQL,
         );
     }
 
+    /**
+     * A row is eligible to be (re)claimed when nobody holds a claim on it, or the claim is
+     * old enough to have been abandoned by a crashed process.
+     *
+     * @param string $fieldPrefix Table alias prefix (e.g. 'q.') to use in a joined query.
+     *                            Left empty for an unqualified column reference.
+     */
+    private function staleClaimCondition(string $fieldPrefix = ''): ConditionBlock
+    {
+        $escapeField = $fieldPrefix === '';
+        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
+        $block->addCondition(new Condition(
+            ConditionBuilder::CONDITION_IS_NULL,
+            $fieldPrefix . UploadQueueEntity::FIELD_CLAIMED,
+            [],
+            $escapeField,
+        ));
+        $block->addCondition(new Condition(
+            ConditionBuilder::CONDITION_SIGN_LESS,
+            $fieldPrefix . UploadQueueEntity::FIELD_CLAIMED,
+            $this->getStaleClaimThreshold(),
+            $escapeField,
+        ));
+
+        return $block;
+    }
+
     public function complete(UploadQueueItem $item): void
     {
         if (!$this->delete($item->getId())) {
@@ -179,18 +194,27 @@ SQL,
     }
 
     /**
+     * Claims a row by id, but only if it is still unclaimed (or stale) at the moment of the
+     * write. Matching by id alone would let two concurrent dequeue() calls that both selected
+     * the same unclaimed row both succeed in claiming it; re-checking the claim in the same
+     * UPDATE makes this a real compare-and-swap, since InnoDB serializes concurrent writers
+     * to the same row and re-evaluates the WHERE clause against the current data.
+     *
      * @return bool Whether the row was actually claimed.
      */
     private function claim(int $id, int $attempts): bool
     {
+        $conditions = $this->idCondition($id);
+        $conditions->addConditionBlock($this->staleClaimCondition());
+
         return $this->db->query(QueryBuilder::buildUpdateQuery(
             $this->tableName,
             [
                 UploadQueueEntity::FIELD_CLAIMED => DateTimeHelper::nowAsString(),
                 UploadQueueEntity::FIELD_ATTEMPTS => $attempts + 1,
             ],
-            $this->idCondition($id),
-        )) !== false;
+            $conditions,
+        )) > 0;
     }
 
     public function enqueue(IntegerIterator $submissionIds, string $batchUid): void

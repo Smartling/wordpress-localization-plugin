@@ -262,6 +262,80 @@ class UploadQueueManagerTest extends TestCase {
         $this->assertNull($uploadQueueManager->dequeue(1), 'Must not hand out an item whose claim could not be confirmed');
     }
 
+    /**
+     * $wpdb->query() returns the number of affected rows for a successful UPDATE - 0 when
+     * the WHERE matched nothing. If claim() re-checks the row is still unclaimed (a real
+     * compare-and-swap) instead of updating by id alone, a concurrent dequeue() that claimed
+     * the row first makes this UPDATE affect zero rows without erroring. Treating that as
+     * "not claimed" is the whole point of the fix: naively checking `!== false` would treat
+     * int 0 as success (0 !== false is true) and hand out a row someone else already claimed.
+     */
+    public function testDequeueDoesNotHandOutItemWhenClaimLosesRaceToAnotherProcess()
+    {
+        $this->mockDbAl();
+        $db = $this->getMockBuilder(DB::class)
+            ->setConstructorArgs([new class {
+                public string $base_prefix = '';
+                public function getRowArray() {}
+                public function query() {}
+            }])
+            ->onlyMethods(['getRowArray', 'query'])
+            ->getMock();
+        $db->method('getRowArray')->willReturnOnConsecutiveCalls(
+            ['id' => 7, 'batch_uid' => '', 'submission_ids' => '1', 'claimed' => null, 'attempts' => 0],
+            null,
+        );
+        $db->method('query')->willReturn(0); // matched zero rows: another process claimed it first
+
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getId')->willReturn(1);
+        $submission->method('getSourceId')->willReturn(1);
+        $submission->method('getSourceBlogId')->willReturn(1);
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('getEntityById')->willReturn($submission);
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getSmartlingLocaleBySubmission')->willReturn('de-DE');
+
+        $uploadQueueManager = new UploadQueueManager(
+            $this->createMock(ApiWrapperInterface::class),
+            $settingsManager,
+            $db,
+            $submissionManager,
+        );
+
+        $this->assertNull($uploadQueueManager->dequeue(1), 'A lost claim race must not be handed out');
+    }
+
+    /**
+     * claim() must re-check the row is still unclaimed (or stale) in the same UPDATE that
+     * writes the new claim, not just match by id - otherwise two concurrent dequeue() calls
+     * that both selected the same unclaimed row would both succeed in claiming it.
+     */
+    public function testClaimQueryRechecksRowIsStillUnclaimed()
+    {
+        $queries = [];
+        $manager = $this->buildManager(
+            [['id' => 7, 'batch_uid' => '', 'submission_ids' => '1', 'claimed' => null, 'attempts' => 0], null],
+            [1 => 1],
+            $queries,
+        );
+
+        $manager->dequeue(1);
+
+        $this->assertStringStartsWith('UPDATE', $queries[0]);
+        $this->assertStringContainsString(
+            'is null',
+            strtolower($queries[0]),
+            'Expected the claim to re-check the row is still unclaimed',
+        );
+        $this->assertMatchesRegularExpression(
+            '/claimed`? <|<.*claimed/i',
+            $queries[0],
+            'Expected the claim to re-check the claim has not gone stale',
+        );
+    }
+
     public function testDequeueOnlyConsidersUnclaimedOrStaleRows()
     {
         $queries = [];
