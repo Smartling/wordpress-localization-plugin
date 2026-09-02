@@ -205,6 +205,24 @@ class UploadJobTest extends TestCase
     }
 
     /**
+     * The distributed lock's correctness role is now handled by UploadQueueManager's
+     * compare-and-swap claim(); UploadJob must not pay for the Smartling API round trips
+     * placeLockFlag()/dropLockFlag() would otherwise make on every processed item.
+     */
+    public function testRunDoesNotUseDistributedLockApi()
+    {
+        $item = $this->buildItem();
+        $uploadQueueManager = $this->buildQueueManager($item);
+
+        $api = $this->createMock(ApiWrapperInterface::class);
+        $api->expects($this->never())->method('acquireLock');
+        $api->expects($this->never())->method('renewLock');
+        $api->expects($this->never())->method('releaseLock');
+
+        $this->buildJob($uploadQueueManager, null, null, null, $api)->run('');
+    }
+
+    /**
      * Cloning used to be polled here via findSubmissionForCloning(), deferring the actual
      * clone to a separate loop. The "Clone attachment" profile option now clones
      * synchronously inside sendForTranslation(), and the standalone clone-request feature

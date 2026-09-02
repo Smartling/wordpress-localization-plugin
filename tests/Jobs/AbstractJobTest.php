@@ -58,6 +58,36 @@ class AbstractJobTest extends TestCase
     }
 
     /**
+     * A job that opts out of the distributed lock (usesDistributedLock() === false) must
+     * not pay for the Smartling API round trips acquireLock()/renewLock() would otherwise
+     * make, whether placing the flag for the first time or renewing it mid-run.
+     */
+    public function testPlaceLockFlagSkipsDistributedLockApiWhenDisabled()
+    {
+        $api = $this->createMock(ApiWrapperInterface::class);
+        $api->expects($this->never())->method('acquireLock');
+        $api->expects($this->never())->method('renewLock');
+
+        $x = $this->getJobAbstractMockWithoutDistributedLock($api);
+
+        $x->placeLockFlag();
+        $x->placeLockFlag(true);
+    }
+
+    /**
+     * Same as above for releasing the flag.
+     */
+    public function testDropLockFlagSkipsDistributedLockApiWhenDisabled()
+    {
+        $api = $this->createMock(ApiWrapperInterface::class);
+        $api->expects($this->never())->method('releaseLock');
+
+        $x = $this->getJobAbstractMockWithoutDistributedLock($api);
+
+        $x->dropLockFlag();
+    }
+
+    /**
      * @return MockObject|JobAbstract
      */
     private function getJobAbstractMock(ApiWrapperInterface $api)
@@ -76,5 +106,29 @@ class AbstractJobTest extends TestCase
                 180,
             ])
             ->getMockForAbstractClass();
+    }
+
+    /**
+     * @return MockObject|JobAbstract
+     */
+    private function getJobAbstractMockWithoutDistributedLock(ApiWrapperInterface $api)
+    {
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getActiveProfile')->willReturn($this->profile);
+
+        $x = $this->getMockBuilder(JobAbstract::class)
+            ->setConstructorArgs([
+                $api,
+                $this->createMock(Cache::class),
+                $settingsManager,
+                $this->submissionManager,
+                0,
+                '5m',
+            ])
+            ->onlyMethods(['usesDistributedLock'])
+            ->getMockForAbstractClass();
+        $x->method('usesDistributedLock')->willReturn(false);
+
+        return $x;
     }
 }

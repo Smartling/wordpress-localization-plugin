@@ -36,6 +36,16 @@ class UploadJob extends JobAbstract
         return self::JOB_HOOK_NAME;
     }
 
+    /**
+     * The upload queue claims rows with a compare-and-swap (see UploadQueueManager::claim()),
+     * so concurrent runs of this job can no longer double-process the same item. The
+     * account-level distributed lock is no longer needed for correctness here.
+     */
+    protected function usesDistributedLock(): bool
+    {
+        return false;
+    }
+
     public function run(string $source): void
     {
         $message = 'UploadJob';
