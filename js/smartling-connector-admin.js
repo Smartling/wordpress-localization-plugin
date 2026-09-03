@@ -235,6 +235,8 @@ jQuery(document).ready(function () {
     })
 
     if (jQuery('#smartling-upload-queue-count').length > 0 && typeof smartlingConnector !== 'undefined') {
+        var uploadQueueCountConsecutiveFailures = 0;
+        var uploadQueueCountMaxConsecutiveFailures = 5;
         var uploadQueueCountInterval = setInterval(function () {
             var $counter = jQuery('#smartling-upload-queue-count');
             if ($counter.length === 0) {
@@ -245,6 +247,7 @@ jQuery(document).ready(function () {
                 action: 'smartling_upload_queue_count',
                 _wpnonce: smartlingConnector.nonce
             }).done(function (response) {
+                uploadQueueCountConsecutiveFailures = 0;
                 if (response && response.success && response.data && typeof response.data.count !== 'undefined') {
                     if (response.data.count === 0) {
                         jQuery('#smartling-upload-cron-cell').text('Nothing to do');
@@ -259,6 +262,14 @@ jQuery(document).ready(function () {
                         void $current.get(0).offsetWidth; // force reflow
                         $current.removeClass('smartling-queue-count-changed');
                     }
+                }
+            }).fail(function () {
+                // Transient nonce rotation / 5xx / network blip: keep the last known count
+                // displayed and retry on the next tick, but give up after repeated failures
+                // instead of hammering admin-ajax.php forever with no visible progress.
+                uploadQueueCountConsecutiveFailures++;
+                if (uploadQueueCountConsecutiveFailures >= uploadQueueCountMaxConsecutiveFailures) {
+                    clearInterval(uploadQueueCountInterval);
                 }
             });
         }, 1000);

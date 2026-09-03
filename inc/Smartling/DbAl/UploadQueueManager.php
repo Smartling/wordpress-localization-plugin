@@ -305,7 +305,10 @@ SQL,
      */
     private function delete(int $id): bool
     {
-        return $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $this->idCondition($id))) !== false;
+        // Affected-rows is checked with `> 0`, not `!== false`: a successful DELETE matching
+        // zero rows returns int(0), and `0 !== false` is true in PHP, which would report a
+        // no-op delete as success (see claim()'s equivalent check for the same pitfall).
+        return $this->db->query(QueryBuilder::buildDeleteQuery($this->tableName, $this->idCondition($id))) > 0;
     }
 
     private function idCondition(int $id): ConditionBlock

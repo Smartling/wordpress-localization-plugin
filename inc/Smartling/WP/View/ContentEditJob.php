@@ -97,7 +97,6 @@ if (!$isBulkSubmitPage) : ?>
             <div id="job-tabs">
                 <span class="active" data-action="new">New Job</span>
                 <span data-action="existing">Existing Job</span>
-                <?= $isBulkSubmitPage ? '' : '<span data-action="clone">Clone</span>'?>
             </div>
             <table>
                 <tr id="jobList" class="hidden hideWhenCloning">
@@ -212,7 +211,6 @@ if (!$isBulkSubmitPage) : ?>
                         <button class="button button-primary components-button is-primary hidden" id="addToJob"
                                 title="Add content into your chosen job">Add to selected Job
                         </button>
-                        <button class="button button-primary components-button is-primary hidden" id="cloneButton">Clone</button>
                     </th>
                 </tr>
                 <input type="hidden" id="timezone-sm" name="timezone-sm" value="UTC"/>
@@ -393,24 +391,12 @@ if ($post instanceof WP_Post) {
             $("div#job-tabs span").on("click", function () {
                 $("div#job-tabs span").removeClass("active");
                 $(this).addClass("active");
-                const hideWhenCloning = $('.hideWhenCloning');
-                const cloneButton = $('#cloneButton');
                 switch ($(this).attr("data-action")) {
                     case "new":
                         Helper.ui.createJobForm.show();
-                        hideWhenCloning.show();
-                        cloneButton.addClass('hidden');
-                        break;
-                    case "clone":
-                        Helper.ui.createJobForm.hide();
-                        hideWhenCloning.hide();
-                        $('#addToJob').addClass('hidden');
-                        cloneButton.removeClass('hidden');
                         break;
                     case "existing":
                         Helper.ui.createJobForm.hide();
-                        hideWhenCloning.show();
-                        cloneButton.addClass('hidden');
                         break;
                     default:
                 }
@@ -608,7 +594,7 @@ if ($post instanceof WP_Post) {
                 && hasProp(window.wp.data, "dispatch")
             ;
 
-            $("#addToJob, #cloneButton").on("click", function (e) {
+            $("#addToJob").on("click", function (e) {
                 e.stopPropagation();
                 e.preventDefault();
                 const btn = $(e.target);
