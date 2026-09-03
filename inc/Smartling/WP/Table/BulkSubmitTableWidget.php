@@ -38,10 +38,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     private const CUSTOM_CONTROLS_NAMESPACE = 'smartling-bulk-submit-page';
 
-    /**
-     * Nonce action/field for CSRF protection of processBulkAction(). Rendered via
-     * wp_nonce_field() in the Bulk Submit view template.
-     */
     public const BULK_ACTION_NONCE_ACTION = 'smartling-bulk-submit-action';
     public const BULK_ACTION_NONCE_FIELD = '_wpnonce';
 
@@ -182,10 +178,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
     public function processBulkAction(): void
     {
         $action = $this->getFromSource('action', 'send');
-        // Non-array request values are normalized to [] here so the empty()/array_key_exists()
-        // checks further down don't have to special-case a scalar value (e.g. a crafted
-        // `?smartling=x` link): array_key_exists('locales', $data) throws a TypeError in PHP 8
-        // when $data isn't an array.
         $submissions = $this->getFormElementValue('submission', []);
         $submissions = is_array($submissions) ? $submissions : [];
         $locales = [];
@@ -197,12 +189,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $smartlingData = is_array($smartlingData) ? $smartlingData : [];
         $profile = $this->getProfile();
 
-        // Gated on the HTTP method, not on which fields happen to be populated: the page's
-        // only <form method="post"> is exactly where the nonce field is rendered (the other,
-        // GET, form is a plain content-type/status filter with no side effects), so any POST
-        // to this page must carry a valid nonce. Unlike a per-field payload heuristic, this
-        // doesn't need to be remembered and updated whenever a new side-effecting field is
-        // added to the form - it covers every POST field automatically.
         if ($this->isPostRequest() && !$this->verifyBulkActionNonce()) {
             $this->getLogger()->warning('Rejected Bulk Submit action: missing or invalid nonce.');
             return;
@@ -277,9 +263,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
         }
     }
 
-    /**
-     * Verifies the CSRF nonce submitted alongside a bulk action request.
-     */
     private function verifyBulkActionNonce(): bool
     {
         return $this->verifyNonce($this->getFromSource(self::BULK_ACTION_NONCE_FIELD, ''), self::BULK_ACTION_NONCE_ACTION);

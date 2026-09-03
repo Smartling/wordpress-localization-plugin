@@ -15,7 +15,7 @@ trait NonceVerificationTrait
     /**
      * @param mixed $nonce Raw value read from the request; anything other than a non-empty string fails verification.
      */
-    protected function verifyNonce($nonce, string $nonceAction): bool
+    protected function verifyNonce(mixed $nonce, string $nonceAction): bool
     {
         return is_string($nonce) && $nonce !== '' && false !== $this->wpProxy->wp_verify_nonce($nonce, $nonceAction);
     }

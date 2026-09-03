@@ -40,10 +40,6 @@ class SubmissionTableWidget extends SmartlingListTable
     private const ACTION_UNLOCK = 'unlock';
     private const ACTION_UPLOAD = 'upload';
 
-    /**
-     * Nonce action/field for CSRF protection of processBulkAction(). Rendered via
-     * wp_nonce_field() in the Translation Progress view template.
-     */
     public const BULK_ACTION_NONCE_ACTION = 'smartling-submissions-bulk-action';
     public const BULK_ACTION_NONCE_FIELD = '_wpnonce';
 
@@ -175,9 +171,6 @@ class SubmissionTableWidget extends SmartlingListTable
     public function processBulkAction(): void
     {
         $requestedSubmissions = $this->getFormElementValue('submission', []);
-        // Non-array request values are normalized to [] here: a scalar 'submission' value
-        // would otherwise both pass a naive non-empty check (bypassing the nonce guard below)
-        // and throw a TypeError out of array_map(), which requires an array argument.
         $requestedSubmissions = is_array($requestedSubmissions) ? $requestedSubmissions : [];
 
         if (count($requestedSubmissions) > 0 && !$this->verifyBulkActionNonce()) {
@@ -253,9 +246,6 @@ class SubmissionTableWidget extends SmartlingListTable
         }
     }
 
-    /**
-     * Verifies the CSRF nonce submitted alongside a bulk action request.
-     */
     private function verifyBulkActionNonce(): bool
     {
         return $this->verifyNonce($this->getFromSource(self::BULK_ACTION_NONCE_FIELD, ''), self::BULK_ACTION_NONCE_ACTION);

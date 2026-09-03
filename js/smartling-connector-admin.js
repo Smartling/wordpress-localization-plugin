@@ -245,9 +245,6 @@ jQuery(document).ready(function () {
                 return;
             }
             if (uploadQueueCountRequestInFlight) {
-                // A previous tick's request is still outstanding (slow response/network blip):
-                // skip this tick rather than letting two requests race, where an older response
-                // resolving after a newer one would overwrite the displayed count with stale data.
                 return;
             }
             uploadQueueCountRequestInFlight = true;
@@ -272,9 +269,6 @@ jQuery(document).ready(function () {
                     }
                 }
             }).fail(function () {
-                // Transient nonce rotation / 5xx / network blip: keep the last known count
-                // displayed and retry on the next tick, but give up after repeated failures
-                // instead of hammering admin-ajax.php forever with no visible progress.
                 uploadQueueCountConsecutiveFailures++;
                 if (uploadQueueCountConsecutiveFailures >= uploadQueueCountMaxConsecutiveFailures) {
                     clearInterval(uploadQueueCountInterval);

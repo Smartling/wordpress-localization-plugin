@@ -2,19 +2,9 @@
 
 namespace Smartling\Helpers;
 
-/**
- * Shared nonce + capability check for WordPress AJAX handlers.
- *
- * Requires the using class to have a `WordpressFunctionProxyHelper $wpProxy`
- * property and a `getLogger()` method (e.g. via LoggerSafeTrait).
- */
 trait AjaxSecurityTrait
 {
     /**
-     * Verifies the AJAX nonce and the current user's capability, logging on
-     * failure. Callers are responsible for sending their own error response
-     * based on the returned reason.
-     *
      * @return string|null An AjaxAuthorizationFailure::* constant on failure, null when authorized.
      */
     protected function checkAjaxNonceAndCapability(string $nonceAction, string $capability, string $actionName): ?string
@@ -44,11 +34,6 @@ trait AjaxSecurityTrait
     }
 
     /**
-     * Convenience wrapper around checkAjaxNonceAndCapability() for the common case: send the
-     * standard wp_send_json_error() response on failure and let the caller just bail out.
-     * Callers that need a different error payload shape (e.g. an error code field) should call
-     * checkAjaxNonceAndCapability() directly instead.
-     *
      * @return bool Whether the request is authorized. When false, an error response has already been sent.
      */
     protected function enforceAjaxAuthorization(string $nonceAction, string $capability, string $actionName): bool

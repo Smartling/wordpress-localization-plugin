@@ -25,10 +25,6 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
 {
     use NonceVerificationTrait;
 
-    /**
-     * Nonce action/field for CSRF protection of handleFormPost(). Rendered via
-     * wp_nonce_field() in the Translation Lock popup view template.
-     */
     public const LOCK_ACTION_NONCE_ACTION = 'smartling-translation-lock-action';
     public const LOCK_ACTION_NONCE_FIELD = '_wpnonce';
 
@@ -165,9 +161,6 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         }
     }
 
-    /**
-     * Verifies the CSRF nonce submitted alongside a Translation Lock form post.
-     */
     private function verifyLockActionNonce(): bool
     {
         return $this->verifyNonce($_POST[self::LOCK_ACTION_NONCE_FIELD] ?? '', self::LOCK_ACTION_NONCE_ACTION);
