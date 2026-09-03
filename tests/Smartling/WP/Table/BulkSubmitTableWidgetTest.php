@@ -36,6 +36,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
     use Smartling\Helpers\SiteHelper;
     use Smartling\Jobs\JobEntityWithBatchUid;
+    use Smartling\Models\IntegerIterator;
     use Smartling\Processors\ContentEntitiesIOFactory;
     use Smartling\Settings\ConfigurationProfileEntity;
     use Smartling\Settings\Locale;
@@ -46,7 +47,15 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
     class BulkSubmitTableWidgetTest extends TestCase
     {
-        public function testClone()
+        /**
+         * Cloning from the Bulk Submit page was removed: the only executor for
+         * isCloned=1 submissions created outside the upload queue (UploadJob::processCloning())
+         * was deleted, which would have left such submissions permanently orphaned.
+         * processBulkAction() must now always prepare submissions as regular
+         * (non-cloned) uploads and enqueue every one of them, regardless of the
+         * 'action' request value.
+         */
+        public function testProcessBulkActionEnqueuesEverySubmissionForUpload()
         {
             WordpressFunctionsMockHelper::injectFunctionsMocks();
             $currentBlogId = 1;
@@ -66,14 +75,13 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
             $core = $this->createMock(SmartlingCore::class);
             $core->method('getContentIoFactory')->willReturn($contentEntitiesIOFactory);
-            $core->expects($this->once())->method('prepareForUpload')->with($submissionType, $currentBlogId, $submissionId, $targetBlogId)->willReturnCallback(function (string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone) use ($projectUid) {
+            $core->expects($this->once())->method('prepareForUpload')->with($submissionType, $currentBlogId, $submissionId, $targetBlogId)->willReturnCallback(function (string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo) use ($projectUid) {
                 $this->assertEquals('', $jobInfo->getBatchUid());
                 $jobInfo = $jobInfo->getJobInformationEntity();
                 $this->assertEquals(null, $jobInfo->getId());
                 $this->assertEquals('', $jobInfo->getJobName());
                 $this->assertEquals('', $jobInfo->getJobUid());
                 $this->assertEquals($projectUid, $jobInfo->getProjectUid());
-                $this->assertTrue($clone);
                 return (new SubmissionEntity())->setId(1);
             });
 
@@ -81,12 +89,18 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $profile->method('getSourceLocale')->willReturn($locale);
             $profile->method('getProjectId')->willReturn($projectUid);
 
+            $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+            $uploadQueueManager->expects($this->once())->method('enqueue')->with(
+                $this->callback(static fn(IntegerIterator $ids) => $ids->getArrayCopy() === [1]),
+                '',
+            );
+
             $x = new class($this->createMock(
                 LocalizationPluginProxyInterface::class),
                 $this->createMock(SiteHelper::class),
                 $core,
                 $manager,
-                $this->createMock(UploadQueueManager::class),
+                $uploadQueueManager,
                 $profile,
             ) extends BulkSubmitTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
@@ -111,7 +125,11 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     'locale' => 'Test',
                     'enabled' => 'on',
                 ]]],
-                'action' => 'clone',
+                // Any action other than 'send' skips the (uninvolved, container-dependent)
+                // batch-retrieval branch and goes straight to preparing/enqueuing
+                // submissions - exactly what used to happen for the now-removed 'clone'
+                // action, and is unaffected by removing it.
+                'action' => 'add-to-existing-job',
             ]);
             $x->processBulkAction();
         }

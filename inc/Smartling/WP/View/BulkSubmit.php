@@ -3,7 +3,6 @@
 use Smartling\Helpers\ArrayHelper;
 use Smartling\WP\Controller\BulkSubmitController;
 use Smartling\WP\Table\BulkSubmitTableWidget;
-use Smartling\WP\WPAbstract;
 
 /**
  * @var BulkSubmitController $this
@@ -76,7 +75,6 @@ $widgetName = 'bulk-submit-locales';
                 <div class="inside">
                     <div id="action-tabs">
                         <span class="active" data-action="translate">Translate</span>
-                        <span data-action="clone">Clone</span>
                     </div>
                     <div class="tab-panel">
                         <div id="translate" class="tab">
@@ -88,48 +86,11 @@ $widgetName = 'bulk-submit-locales';
                             $this->renderViewScript('ContentEditJob.php');
                             ?>
                         </div>
-                        <div id="clone" class="tab hidden">
-                            <table>
-                                <tr>
-                                    <td>
-                                        <h3><?= __('Clone into next languages:'); ?></h3>
-                                        <div>
-                                            <?= WPAbstract::checkUncheckBlock($widgetName) ?>
-                                        </div>
-                                        <?php
-                                        $locales = $data->getProfile()
-                                            ->getTargetLocales();
-
-                                        ArrayHelper::sortLocales($locales);
-
-                                        foreach ($locales as $locale) {
-                                            if (!$locale->isEnabled()) {
-                                                continue;
-                                            }
-                                            ?>
-                                            <p>
-                                                <?= WPAbstract::localeSelectionCheckboxBlock(
-                                                    $widgetName,
-                                                    $locale->getBlogId(),
-                                                    $locale->getLabel(),
-                                                    false
-                                                ); ?>
-                                            </p>
-                                        <?php } ?>
-                                    </td>
-                                </tr>
-                            </table>
-                            <div class="clone-button">
-                                <?= WPAbstract::bulkSubmitCloneButton(); ?>
-                            </div>
-
-                        </div>
                     </div>
                 </div>
             </div>
             <input type="hidden" name="content-type" id="ct" value=""/>
             <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
-            <input type="hidden" id="action" name="action" value="clone"/>
     </form>
 
     <script>

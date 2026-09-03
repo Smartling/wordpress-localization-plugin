@@ -622,7 +622,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    public function prepareForUpload(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone): SubmissionEntity
+    public function prepareForUpload(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo): SubmissionEntity
     {
         $translationHelper = $this->getTranslationHelper();
         $submission = $translationHelper
@@ -641,8 +641,7 @@ trait SmartlingCoreUploadTrait
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         }
 
-        $isCloned = true === $clone ? 1 : 0;
-        $submission->setIsCloned($isCloned);
+        $submission->setIsCloned(0);
         $submission->setJobInfo($jobInfo->getJobInformationEntity());
 
         return $this->getSubmissionManager()->storeEntity($submission);
