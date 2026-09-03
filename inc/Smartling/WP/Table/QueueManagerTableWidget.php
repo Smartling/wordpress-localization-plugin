@@ -140,12 +140,6 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         $this->items = $data;
     }
 
-    /**
-     * UploadJob no longer holds the distributed lock (see UploadJob::usesDistributedLock()),
-     * so unlike the other cron rows this one can't detect "running" via a lock probe - that
-     * probe would now always succeed and cost a Smartling API round trip for nothing. Instead,
-     * this shows a live counter span that JS polls and refreshes every second.
-     */
     private function getUploadCronActionCell(int $count): string
     {
         if ($count === 0 && $this->submissionManager->findSubmissionForCloning($this->wpProxy->get_current_blog_id()) === null) {

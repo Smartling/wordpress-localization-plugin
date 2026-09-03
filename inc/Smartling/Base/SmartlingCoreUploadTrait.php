@@ -533,9 +533,7 @@ trait SmartlingCoreUploadTrait
         $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile($item->getSubmissions()[0]->getSourceBlogId());
 
         // Clone attachment submission instead of uploading it, if "Clone attachment"
-        // option is enabled in configuration profile. Cloning is a local, synchronous
-        // operation (no Smartling API calls), so it happens right here instead of being
-        // deferred to a separate poll.
+        // option is enabled in configuration profile.
         foreach ($item->getSubmissions() as $submission) {
             if (1 === $configurationProfile->getCloneAttachment() && $submission->getContentType() === 'attachment') {
                 $submission->setIsCloned(1);

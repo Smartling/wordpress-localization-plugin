@@ -390,12 +390,6 @@ class SmartlingCoreTest extends TestCase
         $obj->getXMLFiltered($submission);
     }
 
-    /**
-     * The "Clone attachment" profile option used to only flag the submission is_cloned=1 and
-     * defer the actual clone to UploadJob's separate processCloning() poll. That poll is gone,
-     * so sendForTranslation() must clone the attachment itself, synchronously, right where it
-     * already holds the submission.
-     */
     public function testSendForTranslationClonesAttachmentSynchronously()
     {
         $attachment = $this->createMock(SubmissionEntity::class);
@@ -418,10 +412,6 @@ class SmartlingCoreTest extends TestCase
         $core->sendForTranslation($item);
     }
 
-    /**
-     * A clone failure must be recorded as a visible error, the same way a failed upload is,
-     * instead of silently disappearing or aborting the whole cron run.
-     */
     public function testSendForTranslationRecordsErrorWhenAttachmentCloneFails()
     {
         $attachment = $this->createMock(SubmissionEntity::class);
@@ -449,10 +439,6 @@ class SmartlingCoreTest extends TestCase
         $core->sendForTranslation($item);
     }
 
-    /**
-     * Guards against a regression where cloning is attempted for content it was never meant
-     * for: non-attachment submissions must still go through the normal upload path.
-     */
     public function testSendForTranslationDoesNotCloneNonAttachmentContent()
     {
         $post = $this->createMock(SubmissionEntity::class);

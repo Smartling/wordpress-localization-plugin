@@ -85,12 +85,6 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         return self::CRON_FLAG_PREFIX . $this->getJobHookName();
     }
 
-    /**
-     * Whether this job needs the Smartling-account-level distributed lock to serialize
-     * concurrent cron runs. Override to return false for a job whose own state (e.g. an
-     * atomically-claimed queue) already makes concurrent runs safe, to avoid paying for
-     * the acquireLock()/renewLock()/releaseLock() API round trips.
-     */
     protected function usesDistributedLock(): bool
     {
         return true;

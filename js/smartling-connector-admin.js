@@ -234,11 +234,6 @@ jQuery(document).ready(function () {
         });
     })
 
-    /**
-     * UploadJob no longer holds the distributed lock (see UploadJob::usesDistributedLock()),
-     * so the Queue Manager screen can't show "running" for it anymore. Poll the current
-     * upload queue count instead, so the number visibly drains while a run is in progress.
-     */
     if (jQuery('#smartling-upload-queue-count').length > 0 && typeof smartlingConnector !== 'undefined') {
         var uploadQueueCountInterval = setInterval(function () {
             var $counter = jQuery('#smartling-upload-queue-count');
@@ -252,8 +247,6 @@ jQuery(document).ready(function () {
             }).done(function (response) {
                 if (response && response.success && response.data && typeof response.data.count !== 'undefined') {
                     if (response.data.count === 0) {
-                        // Same state QueueManagerTableWidget::MESSAGE_NOTHING_TO_DO renders
-                        // on page load when the queue is empty.
                         jQuery('#smartling-upload-cron-cell').text('Nothing to do');
                         clearInterval(uploadQueueCountInterval);
                         return;
@@ -262,10 +255,8 @@ jQuery(document).ready(function () {
                     var newCount = String(response.data.count);
                     if ($current.text() !== newCount) {
                         $current.text(newCount);
-                        // Snap to the highlight color, then let the transition on the base
-                        // rule (below) calmly fade it back once the class is removed.
                         $current.addClass('smartling-queue-count-changed');
-                        void $current.get(0).offsetWidth; // force reflow so removal transitions
+                        void $current.get(0).offsetWidth; // force reflow
                         $current.removeClass('smartling-queue-count-changed');
                     }
                 }

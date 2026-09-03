@@ -115,12 +115,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 }
             };
         }
-
-        /**
-         * Download still holds the distributed lock (only UploadJob opted out via
-         * usesDistributedLock()), so its cell must still reflect an invalid-credentials
-         * error from the lock probe.
-         */
         public function testPrepareItemsDoesNotThrowWhenApiCredentialsAreInvalid(): void
         {
             $authError = new SmartlingApiException(
@@ -141,10 +135,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $this->assertStringContainsString('Invalid credentials', $downloadRow['run_cron']);
         }
 
-        /**
-         * Download still holds the distributed lock, so its cell must still show
-         * "Running" when the lock probe reports the resource is locked.
-         */
         public function testPrepareItemsShowsRunningMessageWhenLockHeld(): void
         {
             $lockError = new SmartlingApiException(
@@ -163,10 +153,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $this->assertStringContainsString('Running', $downloadRow['run_cron']);
         }
 
-        /**
-         * Download still holds the distributed lock, so its cell must still show
-         * "Running" for the SDK's wrapped-Guzzle-423 shape too.
-         */
         public function testPrepareItemsShowsRunningMessageWhenSdkWrapsGuzzle423(): void
         {
             // Reproduces the real SDK behavior: BaseApiAbstract::sendRequest() catches
@@ -193,12 +179,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $this->assertStringNotContainsString('API error', $downloadRow['run_cron']);
         }
 
-        /**
-         * UploadJob no longer holds the distributed lock (see UploadJob::usesDistributedLock()),
-         * so its cell must not probe it at all - the probe would now always "succeed" and never
-         * detect a real background upload run, making the check pointless while still costing a
-         * Smartling API round trip on every page load.
-         */
         public function testUploadRowDoesNotProbeDistributedLock(): void
         {
             $api = $this->createMock(ApiWrapperInterface::class);
@@ -212,10 +192,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $this->assertStringNotContainsString('Running', $uploadRow['run_cron']);
         }
 
-        /**
-         * The upload row shows a live counter span that JS polls and refreshes every
-         * second instead of the (no-longer-meaningful) "Running" indicator.
-         */
         public function testUploadRowShowsLiveCounterSpanWithCurrentCount(): void
         {
             $api = $this->createMock(ApiWrapperInterface::class);
@@ -228,11 +204,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $this->assertStringContainsString('<span id="smartling-upload-queue-count">3</span>', $uploadRow['run_cron']);
         }
 
-        /**
-         * JS needs a stable element wrapping the whole cell state (link + counter) so that
-         * when the polled count reaches zero, it can swap the entire cell to "Nothing to do"
-         * - the same state page load would render - rather than just zeroing the counter.
-         */
         public function testUploadRowWrapsCellStateInStableContainer(): void
         {
             $api = $this->createMock(ApiWrapperInterface::class);

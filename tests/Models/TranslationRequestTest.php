@@ -47,10 +47,6 @@ class TranslationRequestTest extends TestCase
         $this->assertEquals($jobUid, $x->getJobInformation()->getId());
     }
 
-    /**
-     * Bulk submit sends an empty source.id array (the actual content ids live in `ids`),
-     * so fromArray() must not require source.id[0] to be present when `ids` is populated.
-     */
     public function testFromArrayBulkUploadWithEmptySourceId()
     {
         $targetBlogId = 2;

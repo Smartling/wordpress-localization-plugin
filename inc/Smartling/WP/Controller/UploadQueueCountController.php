@@ -8,12 +8,6 @@ use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\WP\WPHookInterface;
 
-/**
- * Backs the live-refreshing upload queue count shown on the Queue Manager screen.
- * UploadJob no longer holds the distributed lock (see UploadJob::usesDistributedLock()),
- * so the widget can no longer detect "running" via a lock probe; polling the current
- * queue size instead lets the admin see it draining without that indicator.
- */
 class UploadQueueCountController implements WPHookInterface
 {
     use LoggerSafeTrait;

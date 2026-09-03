@@ -57,11 +57,6 @@ class AbstractJobTest extends TestCase
         $this->fail('Should throw exception when source is user');
     }
 
-    /**
-     * A job that opts out of the distributed lock (usesDistributedLock() === false) must
-     * not pay for the Smartling API round trips acquireLock()/renewLock() would otherwise
-     * make, whether placing the flag for the first time or renewing it mid-run.
-     */
     public function testPlaceLockFlagSkipsDistributedLockApiWhenDisabled()
     {
         $api = $this->createMock(ApiWrapperInterface::class);
@@ -74,9 +69,6 @@ class AbstractJobTest extends TestCase
         $x->placeLockFlag(true);
     }
 
-    /**
-     * Same as above for releasing the flag.
-     */
     public function testDropLockFlagSkipsDistributedLockApiWhenDisabled()
     {
         $api = $this->createMock(ApiWrapperInterface::class);

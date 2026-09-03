@@ -262,14 +262,6 @@ class UploadQueueManagerTest extends TestCase {
         $this->assertNull($uploadQueueManager->dequeue(1), 'Must not hand out an item whose claim could not be confirmed');
     }
 
-    /**
-     * $wpdb->query() returns the number of affected rows for a successful UPDATE - 0 when
-     * the WHERE matched nothing. If claim() re-checks the row is still unclaimed (a real
-     * compare-and-swap) instead of updating by id alone, a concurrent dequeue() that claimed
-     * the row first makes this UPDATE affect zero rows without erroring. Treating that as
-     * "not claimed" is the whole point of the fix: naively checking `!== false` would treat
-     * int 0 as success (0 !== false is true) and hand out a row someone else already claimed.
-     */
     public function testDequeueDoesNotHandOutItemWhenClaimLosesRaceToAnotherProcess()
     {
         $this->mockDbAl();
@@ -307,11 +299,6 @@ class UploadQueueManagerTest extends TestCase {
         $this->assertNull($uploadQueueManager->dequeue(1), 'A lost claim race must not be handed out');
     }
 
-    /**
-     * claim() must re-check the row is still unclaimed (or stale) in the same UPDATE that
-     * writes the new claim, not just match by id - otherwise two concurrent dequeue() calls
-     * that both selected the same unclaimed row would both succeed in claiming it.
-     */
     public function testClaimQueryRechecksRowIsStillUnclaimed()
     {
         $queries = [];
@@ -362,13 +349,6 @@ class UploadQueueManagerTest extends TestCase {
         );
     }
 
-    /**
-     * A queue row groups submissions that share the same content, so one submission
-     * with an unresolvable locale takes the whole row down. Every submission that
-     * still exists - the one that failed to resolve and any sibling that resolved
-     * just fine - must not just vanish: each needs a visible error instead of being
-     * left in New status with no queue row and no explanation.
-     */
     public function testDequeueSetsErrorOnResolvedSiblingsWhenGroupIsUnprocessable()
     {
         $resolvableSubmission = $this->createMock(SubmissionEntity::class);
@@ -473,12 +453,6 @@ class UploadQueueManagerTest extends TestCase {
         );
     }
 
-    /**
-     * $wpdb->query() returns false on failure (deadlock, lock-wait timeout, connection
-     * blip) without throwing. If discardQueueItem()'s delete() silently fails, dequeue()
-     * must not treat the row as gone and re-select: the row comes back unchanged, so
-     * continuing the while loop would spin on it forever inside a single dequeue() call.
-     */
     public function testDequeueStopsInsteadOfSpinningWhenDiscardFailsToDelete()
     {
         $this->mockDbAl();
@@ -517,13 +491,6 @@ class UploadQueueManagerTest extends TestCase {
         );
     }
 
-    /**
-     * dequeue() claims a row only after resolving every submission in it. If that
-     * resolution throws anything unexpected, the row must still end up discarded
-     * rather than left permanently unclaimed - otherwise a single misbehaving
-     * submission blocks the entire per-blog queue forever, since every future
-     * dequeue() call would hit the same exception before ever reaching claim().
-     */
     public function testDequeueDiscardsItemWhenResolvingASubmissionThrowsUnexpectedException()
     {
         $this->mockDbAl();
