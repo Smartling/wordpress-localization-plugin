@@ -70,4 +70,40 @@ class TranslationRequestTest extends TestCase
         $this->assertEquals($ids, $x->getIds());
         $this->assertEquals('post', $x->getContentType());
     }
+
+    public function testFromArrayDefaultsDescriptionToBulkSubmitWhenBulk()
+    {
+        $x = UserTranslationRequest::fromArray($this->buildArray(['ids' => [13, 14, 15]]));
+        $this->assertEquals('From Bulk Submit', $x->getDescription());
+    }
+
+    public function testFromArrayDefaultsDescriptionToWidgetWhenNotBulk()
+    {
+        $x = UserTranslationRequest::fromArray($this->buildArray());
+        $this->assertEquals('From Widget', $x->getDescription());
+    }
+
+    public function testFromArrayPreservesExplicitTopLevelDescription()
+    {
+        $x = UserTranslationRequest::fromArray($this->buildArray(['description' => 'My custom description']));
+        $this->assertEquals('My custom description', $x->getDescription());
+    }
+
+    private function buildArray(array $overrides = []): array
+    {
+        return array_merge([
+            'job' => [
+                'id' => '',
+                'name' => '',
+                'description' => '',
+                'dueDate' => '',
+                'timeZone' => 'Europe/Kyiv',
+                'authorize' => 'true',
+            ],
+            'formAction' => ContentRelationsHandler::FORM_ACTION_UPLOAD,
+            'source' => ['id' => [5], 'contentType' => 'post'],
+            'relations' => [],
+            'targetBlogIds' => '2',
+        ], $overrides);
+    }
 }

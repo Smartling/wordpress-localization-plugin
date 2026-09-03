@@ -34,7 +34,6 @@ use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Models\IntegerIterator;
-use Smartling\Models\UserCloneRequest;
 use Smartling\Models\DetectedRelation;
 use Smartling\Models\DetectedRelations;
 use Smartling\Models\GutenbergBlock;
@@ -144,56 +143,6 @@ class ContentRelationsDiscoveryService
         }
 
         return $queueIds;
-    }
-
-    public function clone(UserCloneRequest $request): void
-    {
-        $sourceBlogId = $this->wordpressProxy->get_current_blog_id();
-        $submissionArray = [
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
-        ];
-        $submissions = [];
-
-        foreach ($request->getTargetBlogIds() as $targetBlogId) {
-            $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID] = $targetBlogId;
-            $sources = $this->getSources($request, $targetBlogId);
-
-            $sources[] = [
-                'id' => $request->getContentId(),
-                'type' => $request->getContentType(),
-            ];
-
-            foreach ($sources as $source) {
-                $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE] = $source['type'];
-                $submissionArray[SubmissionEntity::FIELD_SOURCE_ID] = (int)$source['id'];
-                $existing = $this->submissionManager->findTargetBlogSubmission(
-                    $submissionArray[SubmissionEntity::FIELD_CONTENT_TYPE],
-                    $submissionArray[SubmissionEntity::FIELD_SOURCE_BLOG_ID],
-                    $submissionArray[SubmissionEntity::FIELD_SOURCE_ID],
-                    $submissionArray[SubmissionEntity::FIELD_TARGET_BLOG_ID],
-                );
-                if ($existing instanceof SubmissionEntity) {
-                    $submission = $existing;
-                    if ($submission->isLocked()) {
-                        $this->getLogger()->debug('Skipping cloning for submissionId=' . $submission->getId() . ', because it is locked');
-                        continue;
-                    }
-                    $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
-                } else {
-                    $submissionArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
-                    $submissionArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
-                    $submission = $this->submissionFactory->fromArray($submissionArray);
-                    $title = $this->getTitle($submission);
-                    if ($title !== '') {
-                        $submission->setSourceTitle($title);
-                    }
-                    $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
-                }
-                $submission->setIsCloned(1);
-                $submissions[] = $submission;
-            }
-        }
-        $this->submissionManager->storeSubmissions($submissions);
     }
 
     public function createSubmissions(UserTranslationRequest $request): void
@@ -652,7 +601,7 @@ class ContentRelationsDiscoveryService
         }
     }
 
-    private function getSources(UserCloneRequest $request, int $targetBlogId): array
+    private function getSources(UserTranslationRequest $request, int $targetBlogId): array
     {
         $sources = [];
 

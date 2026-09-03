@@ -7,7 +7,6 @@ use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Models\UserCloneRequest;
 use Smartling\Models\UserTranslationRequest;
 
 /**
@@ -42,7 +41,6 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
 
     public const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
 
-    public const FORM_ACTION_CLONE = 'clone';
     public const FORM_ACTION_UPLOAD = 'upload';
 
     private ContentRelationsDiscoveryService $service;
@@ -96,11 +94,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
             $data = $_POST;
         }
         try {
-            if ($data['formAction'] === self::FORM_ACTION_CLONE) {
-                $this->service->clone(UserCloneRequest::fromArray($data));
-            } else {
-                $this->service->createSubmissions(UserTranslationRequest::fromArray($data));
-            }
+            $this->service->createSubmissions(UserTranslationRequest::fromArray($data));
             $this->returnResponse(['status' => BaseAjaxServiceAbstract::RESPONSE_SUCCESS]);
         } catch (Exception $e) {
             $this->returnError('content.submission.failed', $e->getMessage());

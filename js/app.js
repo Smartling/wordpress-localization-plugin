@@ -249,7 +249,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
 
         const data = {
             _wpnonce: nonce,
-            formAction: activeTab === 'clone' ? 'clone' : 'upload',
+            formAction: 'upload',
             source: { contentType, id: isBulkSubmitPage ? [] : [contentId] },
             job: {
                 id: activeTab === 'new' ? '' : selectedJob,
@@ -372,7 +372,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                     )
                 ),
 
-                tab.name !== 'clone' && tab.name !== 'instant' && el('div', {},
+                tab.name !== 'instant' && el('div', {},
                     tab.name === 'new' && el(TextControl, { label: 'Name', value: jobName, onChange: setJobName }),
                     el(TextareaControl, { label: 'Description', value: description, onChange: setDescription, rows: 3 }),
                     el(TextControl, {
@@ -385,7 +385,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                     el(CheckboxControl, { label: 'Authorize Job', checked: authorize, onChange: setAuthorize })
                 ),
 
-                (tab.name === 'instant' || tab.name !== 'clone') && el('div', {},
+                el('div', {},
                     el('fieldset', { style: { marginTop: '16px', border: '1px solid #ddd', padding: '12px', borderRadius: '4px' } },
                         el('legend', { style: { fontWeight: 600, padding: '0 8px' } }, 'Target Locales'),
                         el('div', { style: { display: 'flex', gap: '8px', marginBottom: '8px' } },
@@ -495,7 +495,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                         isBusy: submitting,
                         disabled: submitting || pendingRequests > 0 || selectedLocales.length === 0,
                         onClick: tab.name === 'instant' ? handleInstantTranslation : handleSubmit
-                    }, tab.name === 'instant' ? 'Request Instant Translation' : tab.name === 'new' ? 'Create Job' : tab.name === 'clone' ? 'Clone' : 'Add to selected Job')
+                    }, tab.name === 'instant' ? 'Request Instant Translation' : tab.name === 'new' ? 'Create Job' : 'Add to selected Job')
                 )
             ))
         )

@@ -2,90 +2,13 @@
 
 namespace IntegrationTests\tests;
 
-use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Jobs\JobEntity;
-use Smartling\Models\UserCloneRequest;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 use Smartling\Vendor\Smartling\Exceptions\SmartlingApiException;
 
 class CloneTest extends SmartlingUnitTestCaseAbstract {
-    public function testNoMediaDuplication(): void
-    {
-        $this->markTestSkipped('TODO');
-        $content = '<!-- wp:test/post {"id":%d} /-->';
-        $currentBlogId = get_current_blog_id();
-        $targetBlogId = 2;
-        switch_to_blog($targetBlogId);
-        $attachmentCount = count($this->getAttachments());
-        restore_current_blog();
-
-        $childPostId = $this->createPost('post', 'embedded post', 'embedded content');
-        $imageId = $this->createAttachment();
-        set_post_thumbnail($childPostId, $imageId);
-        wp_update_post([
-            'ID' => $imageId,
-            'post_parent' => $childPostId,
-        ]); // Force ReferencedStdBasedContentProcessorAbstract change that caused regression initially
-
-        $relationsDiscoveryService = $this->getContentRelationsDiscoveryService();
-        $rootPostId = $this->createPost('post', 'root post', sprintf($content, $childPostId));
-        $addedMetaKey = 'contribute_slug_to_childpage_url';
-        $addedMetaValue = [
-            'use_page_name' => true,
-            $addedMetaKey => false,
-        ];
-        add_post_meta($rootPostId, $addedMetaKey, $addedMetaValue);
-
-        $this->withBlockRules($this->getRulesManager(), [
-            'test' => [
-                'block' => 'test/post',
-                'path' => 'id',
-                'replacerId' => 'related|post',
-            ],
-        ], function () use ($childPostId, $imageId, $relationsDiscoveryService, $rootPostId, $targetBlogId) {
-            $references = $relationsDiscoveryService->getRelations('post', $rootPostId, [$targetBlogId]);
-            $postReferences = array_filter($references->getReferences(), static fn($rel) => $rel->getContentType() === 'post');
-            $this->assertCount(1, $postReferences);
-            $this->assertEquals($childPostId, $postReferences[0]->getId());
-            $relationsDiscoveryService->clone(new UserCloneRequest($rootPostId, 'post', [
-                $targetBlogId => [
-                    'post' => [$childPostId],
-                    'attachment' => [$imageId],
-                ],
-            ], [$targetBlogId]));
-            $this->executeUpload();
-        });
-
-        switch_to_blog($targetBlogId);
-        $this->assertCount($attachmentCount + 1, $this->getAttachments(), 'Expected exactly one more attachment in target blog after cloning');
-        $rootSubmission = ArrayHelper::first($this->getSubmissionManager()->find([
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
-            SubmissionEntity::FIELD_SOURCE_ID => $rootPostId,
-        ]));
-        $childSubmission = ArrayHelper::first($this->getSubmissionManager()->find([
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
-            SubmissionEntity::FIELD_SOURCE_ID => $childPostId,
-        ]));
-        $imageSubmission = ArrayHelper::first($this->getSubmissionManager()->find([
-            SubmissionEntity::FIELD_SOURCE_BLOG_ID => $currentBlogId,
-            SubmissionEntity::FIELD_SOURCE_ID => $imageId,
-        ]));
-        $this->assertInstanceOf(SubmissionEntity::class, $rootSubmission);
-        $this->assertInstanceOf(SubmissionEntity::class, $childSubmission);
-        $this->assertInstanceOf(SubmissionEntity::class, $imageSubmission);
-        $childPostTargetId = $childSubmission->getTargetId();
-        $post = get_post($rootSubmission->getTargetId());
-        $this->assertEquals(sprintf($content, $childPostTargetId), $post->post_content, 'Expected root post to reference child post id at the target blog');
-        $this->assertEquals($addedMetaValue, get_post_meta($rootSubmission->getTargetId(), $addedMetaKey, true), 'Expected boolean values in array metadata to be preserved');
-        $imageTargetId = $imageSubmission->getTargetId();
-        $this->assertEquals($imageTargetId, get_post_meta($childPostTargetId, '_thumbnail_id', true), 'Expected child post to reference attachment id at the target blog');
-        $this->assertNotEquals($childPostId, $childPostTargetId, 'Expected child post id to change in translation');
-        $this->assertNotEquals($imageId, $imageTargetId, 'Expected attachment id to change in translation');
-        restore_current_blog();
-    }
-
     public function testLocking(): void
     {
         $content = <<<HTML
@@ -216,12 +139,5 @@ HTML;
         $this->assertEquals(get_post_meta($id, $expectedMetaKey, true), $expectedMetaValue);
 
         return $post;
-    }
-
-    private function getAttachments(): array
-    {
-        self::flush_cache();
-
-        return get_posts(['post_type' => 'attachment']);
     }
 }

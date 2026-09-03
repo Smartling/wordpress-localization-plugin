@@ -5,7 +5,7 @@ namespace Smartling\Tests\Services;
 use PHPUnit\Framework\TestCase;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Models\UserCloneRequest;
+use Smartling\Models\UserTranslationRequest;
 use Smartling\Services\ContentRelationsDiscoveryService;
 use Smartling\Services\ContentRelationsHandler;
 
@@ -20,10 +20,10 @@ class ContentRelationsHandlerTest extends TestCase
         return $proxy;
     }
 
-    public function testCreateSubmissionsHandlerCloneNoRelations()
+    public function testCreateSubmissionsHandlerUploadNoRelations()
     {
         $service = $this->createMock(ContentRelationsDiscoveryService::class);
-        $service->expects($this->once())->method('clone')->willReturnCallback(function (UserCloneRequest $request) {
+        $service->expects($this->once())->method('createSubmissions')->willReturnCallback(function (UserTranslationRequest $request) {
             $this->request = $request;
         });
         $proxy = $this->makeWpProxy();
@@ -37,18 +37,18 @@ class ContentRelationsHandlerTest extends TestCase
                 TestCase::fail('Should not return error, got ' . $message);
             }
         };
-        $x->createSubmissionsHandler(['formAction' => ContentRelationsHandler::FORM_ACTION_CLONE, 'source' => ['id' => [13], 'contentType' => 'post'], 'targetBlogIds' => '2,3']);
-        $this->assertInstanceOf(UserCloneRequest::class, $this->request);
+        $x->createSubmissionsHandler($this->buildData(['source' => ['id' => [13], 'contentType' => 'post'], 'targetBlogIds' => '2,3']));
+        $this->assertInstanceOf(UserTranslationRequest::class, $this->request);
         $this->assertEquals(13, $this->request->getContentId());
         $this->assertEquals('post', $this->request->getContentType());
         $this->assertEquals([], $this->request->getRelationsOrdered(), 'Should be empty array if no relations specified');
         $this->assertEquals([2, 3], $this->request->getTargetBlogIds());
     }
 
-    public function testCreateSubmissionsHandlerCloneRelations()
+    public function testCreateSubmissionsHandlerUploadRelations()
     {
         $service = $this->createMock(ContentRelationsDiscoveryService::class);
-        $service->expects($this->once())->method('clone')->willReturnCallback(function (UserCloneRequest $request) {
+        $service->expects($this->once())->method('createSubmissions')->willReturnCallback(function (UserTranslationRequest $request) {
             $this->request = $request;
         });
         $targetBlogId = 2;
@@ -63,16 +63,15 @@ class ContentRelationsHandlerTest extends TestCase
                 TestCase::fail('Should not return error, got ' . $message);
             }
         };
-        $x->createSubmissionsHandler([
-            'formAction' => ContentRelationsHandler::FORM_ACTION_CLONE,
+        $x->createSubmissionsHandler($this->buildData([
             'source' => ['id' => [13], 'contentType' => 'post'],
             'relations' => [
                 1 => [$targetBlogId => ['post' => 3]],
                 2 => [$targetBlogId => ['attachment' => 5]],
             ],
-            'targetBlogIds' => (string)$targetBlogId
-        ]);
-        $this->assertInstanceOf(UserCloneRequest::class, $this->request);
+            'targetBlogIds' => (string)$targetBlogId,
+        ]));
+        $this->assertInstanceOf(UserTranslationRequest::class, $this->request);
         $this->assertEquals([1 => [$targetBlogId => ['post' => 3]], 2 => [$targetBlogId => ['attachment' => 5]]], $this->request->getRelationsOrdered());
         $this->assertEquals([$targetBlogId => ['attachment' => 5]], ArrayHelper::first($this->request->getRelationsOrdered()), 'Should return deepest level first');
     }
@@ -80,7 +79,7 @@ class ContentRelationsHandlerTest extends TestCase
     public function testCreateSubmissionsHandlerReturns403WhenCapabilityMissing(): void
     {
         $service = $this->createMock(ContentRelationsDiscoveryService::class);
-        $service->expects($this->never())->method('clone');
+        $service->expects($this->never())->method('createSubmissions');
 
         $proxy = $this->makeWpProxy(false);
 
@@ -97,9 +96,24 @@ class ContentRelationsHandlerTest extends TestCase
             }
         };
 
-        $x->createSubmissionsHandler(['formAction' => ContentRelationsHandler::FORM_ACTION_CLONE, 'source' => ['id' => [1], 'contentType' => 'post'], 'targetBlogIds' => '2']);
+        $x->createSubmissionsHandler($this->buildData(['source' => ['id' => [1], 'contentType' => 'post'], 'targetBlogIds' => '2']));
 
         $this->assertSame('permission.denied', $x->capturedErrorKey);
         $this->assertSame(403, $x->capturedErrorCode);
+    }
+
+    private function buildData(array $overrides = []): array
+    {
+        return array_merge([
+            'formAction' => ContentRelationsHandler::FORM_ACTION_UPLOAD,
+            'job' => [
+                'id' => '',
+                'name' => '',
+                'description' => '',
+                'dueDate' => '',
+                'timeZone' => 'Europe/Kyiv',
+                'authorize' => 'true',
+            ],
+        ], $overrides);
     }
 }
