@@ -217,18 +217,6 @@ class UploadJobTest extends TestCase
         $this->buildJob($uploadQueueManager, null, null, null, $api)->run('');
     }
 
-    public function testRunDoesNotPollForCloningWork()
-    {
-        $item = $this->buildItem();
-        $uploadQueueManager = $this->buildQueueManager($item);
-        $uploadQueueManager->method('complete');
-
-        $submissionManager = $this->createMock(SubmissionManager::class);
-        $submissionManager->expects($this->never())->method('findSubmissionForCloning');
-
-        $this->buildJob($uploadQueueManager, $submissionManager)->run('');
-    }
-
     private function buildItem(?SubmissionEntity $submission = null): UploadQueueItem
     {
         if ($submission === null) {

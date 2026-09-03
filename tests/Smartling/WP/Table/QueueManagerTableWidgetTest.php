@@ -46,7 +46,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
     use PHPUnit\Framework\TestCase;
     use Smartling\ApiWrapperInterface;
     use Smartling\DbAl\UploadQueueManager;
-    use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Queue\QueueInterface;
     use Smartling\Settings\ConfigurationProfileEntity;
     use Smartling\Settings\Locale;
@@ -86,10 +85,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
             $submissionManager = $this->createMock(SubmissionManager::class);
             $submissionManager->method('getTotalInCheckStatusHelperQueue')->willReturn(0);
-            $submissionManager->method('findSubmissionForCloning')->willReturn(null);
-
-            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-            $wpProxy->method('get_current_blog_id')->willReturn(1);
 
             // Use an anonymous subclass to bypass WP_List_Table::__construct(), which
             // calls convert_to_screen() / get_current_screen() and requires a fully
@@ -100,7 +95,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $settingsManager,
                 $submissionManager,
                 $uploadQueueManager,
-                $wpProxy,
             ) extends QueueManagerTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
                 public function __construct(
@@ -109,7 +103,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     protected SettingsManager $settingsManager,
                     protected SubmissionManager $submissionManager,
                     protected UploadQueueManager $uploadQueueManager,
-                    protected WordpressFunctionProxyHelper $wpProxy,
                 ) {
                     $this->setSource([]);
                 }

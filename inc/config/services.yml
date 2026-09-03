@@ -400,7 +400,6 @@ services:
       - "@site.cache"
       - "@queue.db"
       - "@manager.upload.queue"
-      - "@wp.proxy"
 
   wp.settings.edit:
     class: Smartling\WP\Controller\ConfigurationProfileFormController
