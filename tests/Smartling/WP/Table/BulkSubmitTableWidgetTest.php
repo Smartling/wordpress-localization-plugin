@@ -35,6 +35,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
     use Smartling\DbAl\UploadQueueManager;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
     use Smartling\Helpers\SiteHelper;
+    use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Jobs\JobEntityWithBatchUid;
     use Smartling\Models\IntegerIterator;
     use Smartling\Processors\ContentEntitiesIOFactory;
@@ -95,6 +96,9 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 '',
             );
 
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('wp_verify_nonce')->with('valid-nonce', BulkSubmitTableWidget::BULK_ACTION_NONCE_ACTION)->willReturn(1);
+
             $x = new class($this->createMock(
                 LocalizationPluginProxyInterface::class),
                 $this->createMock(SiteHelper::class),
@@ -102,6 +106,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $manager,
                 $uploadQueueManager,
                 $profile,
+                $wpProxy,
             ) extends BulkSubmitTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
                 public function __construct(
@@ -111,6 +116,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     protected SubmissionManager $manager,
                     protected UploadQueueManager $uploadQueueManager,
                     protected ConfigurationProfileEntity $profile,
+                    protected WordpressFunctionProxyHelper $wpProxy,
                 ) {
                 }
             };
@@ -130,6 +136,66 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 // submissions - exactly what used to happen for the now-removed 'clone'
                 // action, and is unaffected by removing it.
                 'action' => 'add-to-existing-job',
+                '_wpnonce' => 'valid-nonce',
+            ]);
+            $x->processBulkAction();
+        }
+
+        /**
+         * processBulkAction() must reject a request carrying a bulk-action payload
+         * (submissions + locales) when the nonce is missing or invalid, without
+         * preparing or enqueueing anything.
+         */
+        public function testProcessBulkActionRejectsInvalidNonce()
+        {
+            WordpressFunctionsMockHelper::injectFunctionsMocks();
+            $submissionId = 3;
+            $submissionType = 'post';
+            $targetBlogId = 5;
+
+            $manager = $this->createMock(SubmissionManager::class);
+            $core = $this->createMock(SmartlingCore::class);
+            $core->expects($this->never())->method('prepareForUpload');
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+
+            $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+            $uploadQueueManager->expects($this->never())->method('enqueue');
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('wp_verify_nonce')->willReturn(false);
+
+            $x = new class($this->createMock(
+                LocalizationPluginProxyInterface::class),
+                $this->createMock(SiteHelper::class),
+                $core,
+                $manager,
+                $uploadQueueManager,
+                $profile,
+                $wpProxy,
+            ) extends BulkSubmitTableWidget {
+                /** @noinspection PhpMissingParentConstructorInspection */
+                public function __construct(
+                    protected LocalizationPluginProxyInterface $localizationPluginProxy,
+                    protected SiteHelper $siteHelper,
+                    protected SmartlingCore $core,
+                    protected SubmissionManager $manager,
+                    protected UploadQueueManager $uploadQueueManager,
+                    protected ConfigurationProfileEntity $profile,
+                    protected WordpressFunctionProxyHelper $wpProxy,
+                ) {
+                }
+            };
+            $x->setSource([
+                'smartling-bulk-submit-page-content-type' => $submissionType,
+                'smartling-bulk-submit-page-submission' => ["$submissionId-$submissionType"],
+                'bulk-submit-locales' => ['locales' => [$targetBlogId => [
+                    'blog' => (string)$targetBlogId,
+                    'locale' => 'Test',
+                    'enabled' => 'on',
+                ]]],
+                'action' => 'add-to-existing-job',
+                '_wpnonce' => 'not-a-valid-nonce',
             ]);
             $x->processBulkAction();
         }

@@ -45,6 +45,7 @@ $widgetName = 'bulk-submit-locales';
     </table>
 
     <form class="form-table" id="bulk-submit-main" method="post">
+        <?php wp_nonce_field(BulkSubmitTableWidget::BULK_ACTION_NONCE_ACTION, BulkSubmitTableWidget::BULK_ACTION_NONCE_FIELD); ?>
         <?php if ($bulkSubmitTable->isDataFiltered()) {?>
             <h3 style="float: right">Additional table filters present, later pages will have less rows</h3>
         <?php }?>

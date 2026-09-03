@@ -21,6 +21,7 @@ use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Models\IntegerIterator;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -34,6 +35,13 @@ class BulkSubmitTableWidget extends SmartlingListTable
     use LoggerSafeTrait;
 
     private const CUSTOM_CONTROLS_NAMESPACE = 'smartling-bulk-submit-page';
+
+    /**
+     * Nonce action/field for CSRF protection of processBulkAction(). Rendered via
+     * wp_nonce_field() in the Bulk Submit view template.
+     */
+    public const BULK_ACTION_NONCE_ACTION = 'smartling-bulk-submit-action';
+    public const BULK_ACTION_NONCE_FIELD = '_wpnonce';
 
     /**
      * base name of Content-type filtering select
@@ -75,6 +83,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         protected SubmissionManager $manager,
         protected UploadQueueManager $uploadQueueManager,
         protected ConfigurationProfileEntity $profile,
+        protected WordpressFunctionProxyHelper $wpProxy,
     ) {
         $this->setSource($_REQUEST);
 
@@ -176,11 +185,19 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $batchUid = '';
         $data = $this->getFromSource('bulk-submit-locales', []);
         $jobName = '';
-        $smartlingData = [];
+        $smartlingData = $this->getFromSource('smartling', []);
         $profile = $this->getProfile();
 
+        $hasBulkActionPayload = (is_array($submissions) && count($submissions) > 0)
+            || (is_array($data) && array_key_exists('locales', $data))
+            || (is_array($smartlingData) && count($smartlingData) > 0);
+
+        if ($hasBulkActionPayload && !$this->verifyBulkActionNonce()) {
+            $this->getLogger()->warning('Rejected Bulk Submit action: missing or invalid nonce.');
+            return;
+        }
+
         if ($action === 'send') {
-            $smartlingData = $this->getFromSource('smartling', []);
             if (empty($smartlingData)) {
                 return;
             }
@@ -247,6 +264,16 @@ class BulkSubmitTableWidget extends SmartlingListTable
                 $this->uploadQueueManager->enqueue($queueIds, $batchUid);
             }
         }
+    }
+
+    /**
+     * Verifies the CSRF nonce submitted alongside a bulk action request.
+     */
+    private function verifyBulkActionNonce(): bool
+    {
+        $nonce = $this->getFromSource(self::BULK_ACTION_NONCE_FIELD, '');
+
+        return is_string($nonce) && $nonce !== '' && false !== $this->wpProxy->wp_verify_nonce($nonce, self::BULK_ACTION_NONCE_ACTION);
     }
 
     private function getContentTypeFilterValue(): ?string

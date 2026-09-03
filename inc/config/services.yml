@@ -480,6 +480,7 @@ services:
       - "@manager.submission"
       - "@manager.upload.queue"
       - "@site.cache"
+      - "@wp.proxy"
 
   wp.instant.translation:
     class: Smartling\WP\Controller\InstantTranslationController

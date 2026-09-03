@@ -270,6 +270,11 @@ class WordpressFunctionProxyHelper
         return check_ajax_referer(...func_get_args());
     }
 
+    public function wp_verify_nonce()
+    {
+        return wp_verify_nonce(...func_get_args());
+    }
+
     public function current_user_can()
     {
         return current_user_can(...func_get_args());
