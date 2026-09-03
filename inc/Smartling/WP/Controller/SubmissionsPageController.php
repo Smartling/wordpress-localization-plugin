@@ -8,6 +8,7 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Queue\Queue;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
@@ -26,6 +27,7 @@ class SubmissionsPageController extends WPAbstract implements WPHookInterface
         SubmissionManager $manager,
         Cache $cache,
         private Queue $queue,
+        private WordpressFunctionProxyHelper $wpProxy,
     ) {
         parent::__construct($api, $connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
@@ -66,6 +68,7 @@ class SubmissionsPageController extends WPAbstract implements WPHookInterface
             $this->siteHelper,
             $this->submissionManager,
             $this->queue,
+            $this->wpProxy,
         );
         $table->prepare_items();
         $this->view($table);

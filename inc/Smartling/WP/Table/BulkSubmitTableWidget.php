@@ -180,17 +180,26 @@ class BulkSubmitTableWidget extends SmartlingListTable
     public function processBulkAction(): void
     {
         $action = $this->getFromSource('action', 'send');
+        // Non-array request values are normalized to [] here so the nonce guard below and
+        // the empty()/array_key_exists() checks further down share the same "no payload"
+        // semantics. Without this, a scalar value (e.g. a crafted `?smartling=x` link) would
+        // fail is_array() in the guard - skipping the nonce check - while still passing the
+        // looser checks downstream, reaching retrieveBatch()/array_key_exists() unauthenticated
+        // (the latter throwing a TypeError in PHP 8 when given a non-array).
         $submissions = $this->getFormElementValue('submission', []);
+        $submissions = is_array($submissions) ? $submissions : [];
         $locales = [];
         $batchUid = '';
         $data = $this->getFromSource('bulk-submit-locales', []);
+        $data = is_array($data) ? $data : [];
         $jobName = '';
         $smartlingData = $this->getFromSource('smartling', []);
+        $smartlingData = is_array($smartlingData) ? $smartlingData : [];
         $profile = $this->getProfile();
 
-        $hasBulkActionPayload = (is_array($submissions) && count($submissions) > 0)
-            || (is_array($data) && array_key_exists('locales', $data))
-            || (is_array($smartlingData) && count($smartlingData) > 0);
+        $hasBulkActionPayload = count($submissions) > 0
+            || array_key_exists('locales', $data)
+            || count($smartlingData) > 0;
 
         if ($hasBulkActionPayload && !$this->verifyBulkActionNonce()) {
             $this->getLogger()->warning('Rejected Bulk Submit action: missing or invalid nonce.');
@@ -236,7 +245,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
             }
         }
 
-        if (null !== $data && array_key_exists('locales', $data)) {
+        if (array_key_exists('locales', $data)) {
             foreach ($data['locales'] as $blogId => $blogName) {
                 if (array_key_exists('enabled', $blogName) && 'on' === $blogName['enabled']) {
                     $locales[$blogId] = $blogName['locale'];

@@ -423,6 +423,7 @@ services:
       - "@manager.submission"
       - "@site.cache"
       - "@queue.db"
+      - "@wp.proxy"
 
   wp.taxonomy.linker:
     class: Smartling\WP\Controller\TaxonomyLinksController
@@ -645,6 +646,7 @@ services:
       - "@manager.submission"
       - "@site.cache"
       - "@content.helper"
+      - "@wp.proxy"
 
   live_notification.service:
     class: Smartling\WP\Controller\LiveNotificationController

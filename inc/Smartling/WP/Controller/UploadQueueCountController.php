@@ -32,7 +32,7 @@ class UploadQueueCountController implements WPHookInterface
     {
         $authFailure = $this->checkAjaxNonceAndCapability(
             'smartling_connector_ajax',
-            SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
+            SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
             self::ACTION_NAME,
         );
         if ($authFailure === AjaxAuthorizationFailure::INVALID_NONCE) {

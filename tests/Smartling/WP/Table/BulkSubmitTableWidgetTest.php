@@ -199,5 +199,108 @@ namespace Smartling\Tests\Smartling\WP\Table {
             ]);
             $x->processBulkAction();
         }
+
+        /**
+         * A scalar `smartling` request value (e.g. a crafted `?smartling=x` link) must not
+         * bypass the nonce guard. Before the fix, is_array($smartlingData) was false so the
+         * guard was skipped entirely, yet `empty('x')` was also false, so processing fell
+         * through into the 'send' branch and reached the container-dependent
+         * `Bootstrap::getContainer()->get('api.wrapper.with.retries')->retrieveBatch(...)`
+         * call unauthenticated. Normalizing non-array values to [] up front makes both the
+         * guard and `empty($smartlingData)` agree there is no payload, so it returns before
+         * ever reaching that call - which would otherwise fatal in this test, since no DI
+         * container is bootstrapped here.
+         */
+        public function testProcessBulkActionIgnoresNonArraySmartlingPayload()
+        {
+            WordpressFunctionsMockHelper::injectFunctionsMocks();
+
+            $core = $this->createMock(SmartlingCore::class);
+            $core->expects($this->never())->method('prepareForUpload');
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+
+            $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+            $uploadQueueManager->expects($this->never())->method('enqueue');
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->expects($this->never())->method('wp_verify_nonce');
+
+            $x = new class($this->createMock(
+                LocalizationPluginProxyInterface::class),
+                $this->createMock(SiteHelper::class),
+                $core,
+                $this->createMock(SubmissionManager::class),
+                $uploadQueueManager,
+                $profile,
+                $wpProxy,
+            ) extends BulkSubmitTableWidget {
+                /** @noinspection PhpMissingParentConstructorInspection */
+                public function __construct(
+                    protected LocalizationPluginProxyInterface $localizationPluginProxy,
+                    protected SiteHelper $siteHelper,
+                    protected SmartlingCore $core,
+                    protected SubmissionManager $manager,
+                    protected UploadQueueManager $uploadQueueManager,
+                    protected ConfigurationProfileEntity $profile,
+                    protected WordpressFunctionProxyHelper $wpProxy,
+                ) {
+                }
+            };
+            $x->setSource([
+                'smartling' => 'x',
+                // No '_wpnonce' provided: this must not matter, because the request should
+                // never be treated as carrying a bulk-action payload in the first place.
+            ]);
+            $x->processBulkAction();
+        }
+
+        /**
+         * A scalar `bulk-submit-locales` request value must not bypass the nonce guard nor
+         * reach `array_key_exists('locales', $data)`, which throws a TypeError in PHP 8 when
+         * $data is not an array.
+         */
+        public function testProcessBulkActionIgnoresNonArrayLocalesPayload()
+        {
+            WordpressFunctionsMockHelper::injectFunctionsMocks();
+
+            $core = $this->createMock(SmartlingCore::class);
+            $core->expects($this->never())->method('prepareForUpload');
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+
+            $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+            $uploadQueueManager->expects($this->never())->method('enqueue');
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->expects($this->never())->method('wp_verify_nonce');
+
+            $x = new class($this->createMock(
+                LocalizationPluginProxyInterface::class),
+                $this->createMock(SiteHelper::class),
+                $core,
+                $this->createMock(SubmissionManager::class),
+                $uploadQueueManager,
+                $profile,
+                $wpProxy,
+            ) extends BulkSubmitTableWidget {
+                /** @noinspection PhpMissingParentConstructorInspection */
+                public function __construct(
+                    protected LocalizationPluginProxyInterface $localizationPluginProxy,
+                    protected SiteHelper $siteHelper,
+                    protected SmartlingCore $core,
+                    protected SubmissionManager $manager,
+                    protected UploadQueueManager $uploadQueueManager,
+                    protected ConfigurationProfileEntity $profile,
+                    protected WordpressFunctionProxyHelper $wpProxy,
+                ) {
+                }
+            };
+            $x->setSource([
+                'action' => 'add-to-existing-job',
+                'bulk-submit-locales' => 'foo',
+            ]);
+            $x->processBulkAction();
+        }
     }
 }

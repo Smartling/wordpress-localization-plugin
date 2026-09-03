@@ -12,6 +12,7 @@ use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -21,6 +22,13 @@ use Smartling\WP\WPHookInterface;
 
 class TranslationLockController extends WPAbstract implements WPHookInterface
 {
+    /**
+     * Nonce action/field for CSRF protection of handleFormPost(). Rendered via
+     * wp_nonce_field() in the Translation Lock popup view template.
+     */
+    public const LOCK_ACTION_NONCE_ACTION = 'smartling-translation-lock-action';
+    public const LOCK_ACTION_NONCE_FIELD = '_wpnonce';
+
     public function __construct(
         protected ApiWrapperInterface $api,
         LocalizationPluginProxyInterface $connector,
@@ -30,6 +38,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         SubmissionManager $manager,
         Cache $cache,
         private ContentHelper $contentHelper,
+        private WordpressFunctionProxyHelper $wpProxy,
     ) {
         parent::__construct($api, $connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
@@ -140,12 +149,27 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
 
     public function handleFormPost(): void
     {
+        if (!$this->verifyLockActionNonce()) {
+            $this->getLogger()->warning('Rejected Translation Lock action: missing or invalid nonce.');
+            return;
+        }
+
         $submission = $this->getSubmissionFromQuery();
         if (false !== $submission) {
             $submission->setLockedFields(array_keys($_POST['lockField'] ?? []));
             $submission->setIsLocked(array_key_exists('lock_page', $_POST) ? 1 : 0);
             $this->submissionManager->storeEntity($submission);
         }
+    }
+
+    /**
+     * Verifies the CSRF nonce submitted alongside a Translation Lock form post.
+     */
+    private function verifyLockActionNonce(): bool
+    {
+        $nonce = $_POST[self::LOCK_ACTION_NONCE_FIELD] ?? '';
+
+        return is_string($nonce) && $nonce !== '' && false !== $this->wpProxy->wp_verify_nonce($nonce, self::LOCK_ACTION_NONCE_ACTION);
     }
 
     public function notAllowed()
