@@ -237,12 +237,20 @@ jQuery(document).ready(function () {
     if (jQuery('#smartling-upload-queue-count').length > 0 && typeof smartlingConnector !== 'undefined') {
         var uploadQueueCountConsecutiveFailures = 0;
         var uploadQueueCountMaxConsecutiveFailures = 5;
+        var uploadQueueCountRequestInFlight = false;
         var uploadQueueCountInterval = setInterval(function () {
             var $counter = jQuery('#smartling-upload-queue-count');
             if ($counter.length === 0) {
                 clearInterval(uploadQueueCountInterval);
                 return;
             }
+            if (uploadQueueCountRequestInFlight) {
+                // A previous tick's request is still outstanding (slow response/network blip):
+                // skip this tick rather than letting two requests race, where an older response
+                // resolving after a newer one would overwrite the displayed count with stale data.
+                return;
+            }
+            uploadQueueCountRequestInFlight = true;
             jQuery.getJSON(ajaxurl, {
                 action: 'smartling_upload_queue_count',
                 _wpnonce: smartlingConnector.nonce
@@ -271,6 +279,8 @@ jQuery(document).ready(function () {
                 if (uploadQueueCountConsecutiveFailures >= uploadQueueCountMaxConsecutiveFailures) {
                     clearInterval(uploadQueueCountInterval);
                 }
+            }).always(function () {
+                uploadQueueCountRequestInFlight = false;
             });
         }, 1000);
     }

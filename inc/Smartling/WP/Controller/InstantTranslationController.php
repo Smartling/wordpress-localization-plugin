@@ -3,7 +3,6 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\FTS\FtsService;
-use Smartling\Helpers\AjaxAuthorizationFailure;
 use Smartling\Helpers\AjaxSecurityTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileUriHelper;
@@ -40,17 +39,11 @@ class InstantTranslationController implements WPHookInterface
 
     public function handleRequestTranslation(): void
     {
-        $authFailure = $this->checkAjaxNonceAndCapability(
+        if (!$this->enforceAjaxAuthorization(
             'smartling_translation',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
             self::ACTION_REQUEST_TRANSLATION,
-        );
-        if ($authFailure === AjaxAuthorizationFailure::INVALID_NONCE) {
-            $this->wpProxy->wp_send_json_error(['message' => 'Invalid nonce'], 403);
-            return;
-        }
-        if ($authFailure === AjaxAuthorizationFailure::INSUFFICIENT_CAPABILITY) {
-            $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+        )) {
             return;
         }
 
@@ -149,17 +142,11 @@ class InstantTranslationController implements WPHookInterface
 
     public function handlePollStatus(): void
     {
-        $authFailure = $this->checkAjaxNonceAndCapability(
+        if (!$this->enforceAjaxAuthorization(
             'smartling_translation',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
             self::ACTION_POLL_STATUS,
-        );
-        if ($authFailure === AjaxAuthorizationFailure::INVALID_NONCE) {
-            $this->wpProxy->wp_send_json_error(['message' => 'Invalid nonce'], 403);
-            return;
-        }
-        if ($authFailure === AjaxAuthorizationFailure::INSUFFICIENT_CAPABILITY) {
-            $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+        )) {
             return;
         }
 

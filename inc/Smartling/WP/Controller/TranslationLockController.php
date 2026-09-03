@@ -9,6 +9,7 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\NonceVerificationTrait;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
@@ -22,6 +23,8 @@ use Smartling\WP\WPHookInterface;
 
 class TranslationLockController extends WPAbstract implements WPHookInterface
 {
+    use NonceVerificationTrait;
+
     /**
      * Nonce action/field for CSRF protection of handleFormPost(). Rendered via
      * wp_nonce_field() in the Translation Lock popup view template.
@@ -167,9 +170,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
      */
     private function verifyLockActionNonce(): bool
     {
-        $nonce = $_POST[self::LOCK_ACTION_NONCE_FIELD] ?? '';
-
-        return is_string($nonce) && $nonce !== '' && false !== $this->wpProxy->wp_verify_nonce($nonce, self::LOCK_ACTION_NONCE_ACTION);
+        return $this->verifyNonce($_POST[self::LOCK_ACTION_NONCE_FIELD] ?? '', self::LOCK_ACTION_NONCE_ACTION);
     }
 
     public function notAllowed()

@@ -11,6 +11,7 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\NonceVerificationTrait;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
@@ -31,6 +32,7 @@ class SubmissionTableWidget extends SmartlingListTable
 {
     use CommonLogMessagesTrait;
     use LoggerSafeTrait;
+    use NonceVerificationTrait;
 
     private const ACTION_CHECK_STATUS = 'checkStatus';
     public const ACTION_DOWNLOAD = 'download';
@@ -256,9 +258,7 @@ class SubmissionTableWidget extends SmartlingListTable
      */
     private function verifyBulkActionNonce(): bool
     {
-        $nonce = $this->getFromSource(self::BULK_ACTION_NONCE_FIELD, '');
-
-        return is_string($nonce) && $nonce !== '' && false !== $this->wpProxy->wp_verify_nonce($nonce, self::BULK_ACTION_NONCE_ACTION);
+        return $this->verifyNonce($this->getFromSource(self::BULK_ACTION_NONCE_FIELD, ''), self::BULK_ACTION_NONCE_ACTION);
     }
 
     /**

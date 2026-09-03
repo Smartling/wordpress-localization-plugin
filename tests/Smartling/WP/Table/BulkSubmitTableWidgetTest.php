@@ -48,6 +48,11 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
     class BulkSubmitTableWidgetTest extends TestCase
     {
+        protected function tearDown(): void
+        {
+            unset($_SERVER['REQUEST_METHOD']);
+        }
+
         /**
          * Cloning from the Bulk Submit page was removed: the only executor for
          * isCloned=1 submissions created outside the upload queue (UploadJob::processCloning())
@@ -59,6 +64,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
         public function testProcessBulkActionEnqueuesEverySubmissionForUpload()
         {
             WordpressFunctionsMockHelper::injectFunctionsMocks();
+            $_SERVER['REQUEST_METHOD'] = 'POST';
             $currentBlogId = 1;
             $projectUid = 'projectUid';
             $submissionId = 3;
@@ -142,13 +148,14 @@ namespace Smartling\Tests\Smartling\WP\Table {
         }
 
         /**
-         * processBulkAction() must reject a request carrying a bulk-action payload
-         * (submissions + locales) when the nonce is missing or invalid, without
-         * preparing or enqueueing anything.
+         * processBulkAction() must reject a POST request when the nonce is missing or
+         * invalid, without preparing or enqueueing anything, regardless of which fields
+         * the request happens to carry.
          */
         public function testProcessBulkActionRejectsInvalidNonce()
         {
             WordpressFunctionsMockHelper::injectFunctionsMocks();
+            $_SERVER['REQUEST_METHOD'] = 'POST';
             $submissionId = 3;
             $submissionType = 'post';
             $targetBlogId = 5;
@@ -299,6 +306,61 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $x->setSource([
                 'action' => 'add-to-existing-job',
                 'bulk-submit-locales' => 'foo',
+            ]);
+            $x->processBulkAction();
+        }
+
+        /**
+         * A POST request must always require a valid nonce, even when it carries none of the
+         * specific fields (submission, bulk-submit-locales, smartling) that the previous
+         * per-field heuristic checked for. This is what actually closes the maintenance risk
+         * that heuristic had: a future side-effecting field added to the form is covered
+         * automatically, without needing to be remembered and added to an enumeration.
+         */
+        public function testProcessBulkActionRequiresNonceForAnyPostRequestRegardlessOfFields()
+        {
+            WordpressFunctionsMockHelper::injectFunctionsMocks();
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+
+            $core = $this->createMock(SmartlingCore::class);
+            $core->expects($this->never())->method('prepareForUpload');
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+
+            $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+            $uploadQueueManager->expects($this->never())->method('enqueue');
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->expects($this->once())->method('wp_verify_nonce')
+                ->with('not-a-valid-nonce', BulkSubmitTableWidget::BULK_ACTION_NONCE_ACTION)
+                ->willReturn(false);
+
+            $x = new class($this->createMock(
+                LocalizationPluginProxyInterface::class),
+                $this->createMock(SiteHelper::class),
+                $core,
+                $this->createMock(SubmissionManager::class),
+                $uploadQueueManager,
+                $profile,
+                $wpProxy,
+            ) extends BulkSubmitTableWidget {
+                /** @noinspection PhpMissingParentConstructorInspection */
+                public function __construct(
+                    protected LocalizationPluginProxyInterface $localizationPluginProxy,
+                    protected SiteHelper $siteHelper,
+                    protected SmartlingCore $core,
+                    protected SubmissionManager $manager,
+                    protected UploadQueueManager $uploadQueueManager,
+                    protected ConfigurationProfileEntity $profile,
+                    protected WordpressFunctionProxyHelper $wpProxy,
+                ) {
+                }
+            };
+            $x->setSource([
+                // No 'submission', 'bulk-submit-locales', or 'smartling' field at all - exactly
+                // the shape the old $hasBulkActionPayload heuristic would have let through
+                // unchecked.
+                '_wpnonce' => 'not-a-valid-nonce',
             ]);
             $x->processBulkAction();
         }

@@ -42,4 +42,29 @@ trait AjaxSecurityTrait
 
         return null;
     }
+
+    /**
+     * Convenience wrapper around checkAjaxNonceAndCapability() for the common case: send the
+     * standard wp_send_json_error() response on failure and let the caller just bail out.
+     * Callers that need a different error payload shape (e.g. an error code field) should call
+     * checkAjaxNonceAndCapability() directly instead.
+     *
+     * @return bool Whether the request is authorized. When false, an error response has already been sent.
+     */
+    protected function enforceAjaxAuthorization(string $nonceAction, string $capability, string $actionName): bool
+    {
+        $authFailure = $this->checkAjaxNonceAndCapability($nonceAction, $capability, $actionName);
+        if ($authFailure === AjaxAuthorizationFailure::INVALID_NONCE) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Invalid nonce'], 403);
+
+            return false;
+        }
+        if ($authFailure === AjaxAuthorizationFailure::INSUFFICIENT_CAPABILITY) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+
+            return false;
+        }
+
+        return true;
+    }
 }
