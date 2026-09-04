@@ -11,9 +11,7 @@ use Smartling\Tests\IntegrationTests\SmartlingUnitTestCaseAbstract;
 
 class RelationsTest extends SmartlingUnitTestCaseAbstract
 {
-    private const ORIGINAL_BLOG_ID = 1;
     private const TRANSLATE_BLOG_ID = 2;
-    private const CLONE_BLOG_ID = 3;
 
     public function testSubmitPostWithCategoryWhichHasParentCategory()
     {
@@ -87,12 +85,11 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         self::assertSame($targetCategoryId, $term->term_id);
     }
 
-    public function testTranslationAndCloningRelationsOneLevelDeep()
+    public function testTranslationRelationsOneLevelDeep()
     {
         $this->loadBuiltInFilters();
         #region create posts, images, link them
         $translationBlogId = 2;
-        $cloneBlogId = self::CLONE_BLOG_ID;
         $imagesPerPost = 2; // Post thumbnail aka featured image and an image in content
         // TODO add featured images
         $posts = [
@@ -108,14 +105,8 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         $postSubmissions = [];
         $images = [];
         $imagePointer = 0;
-        $expectedImagesCloned = $this->getSiteHelper()->withBlog(self::CLONE_BLOG_ID, function () {
-            return $this->getPostCountFromDb(ContentTypeHelper::POST_TYPE_ATTACHMENT);
-        });
         $expectedImagesTranslated = $this->getSiteHelper()->withBlog(self::TRANSLATE_BLOG_ID, function () {
             return $this->getPostCountFromDb(ContentTypeHelper::POST_TYPE_ATTACHMENT);
-        });
-        $expectedPostsCloned = $this->getSiteHelper()->withBlog(self::CLONE_BLOG_ID, function () {
-            return $this->getPostCount();
         });
         $expectedPostsTranslated = $this->getSiteHelper()->withBlog(self::TRANSLATE_BLOG_ID, function () {
             return $this->getPostCount();
@@ -157,12 +148,6 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         #endregion
         #region root page
         $originalContent = get_post($posts[0][0])->post_content;
-        #region cloning
-        $submission = $this->uploadDownload($this->createSubmissionForCloning(ContentTypeHelper::CONTENT_TYPE_POST, $posts[0][0]));
-        ++$expectedPostsCloned;
-        $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
-        $this->getSiteHelper()->withBlog($cloneBlogId, $this->assertResult($expectedImagesCloned, $originalContent, $expectedPostsCloned, $submission));
-        #endregion
         #region translation
         $submission = $this->uploadDownload($this->createSubmission(ContentTypeHelper::CONTENT_TYPE_POST, $posts[0][0]));
         ++$expectedPostsTranslated;
@@ -176,21 +161,14 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         #endregion
         #endregion
         #region child page (level 2)
-        $result = $this->verify($posts[1][0], $cloneBlogId, $translationBlogId, $imagesPerPost, $expectedImagesCloned, $expectedPostsCloned, $expectedImagesTranslated, $expectedPostsTranslated, ['(1)'], ['(~1)']);
+        $result = $this->verify($posts[1][0], $translationBlogId, $imagesPerPost, $expectedImagesTranslated, $expectedPostsTranslated, ['(1)'], ['(~1)']);
         #endregion
         #region child page sibling (level 2 sibling)
-        $result = $this->verify($posts[1][1], $cloneBlogId, $translationBlogId, $imagesPerPost, $result['expectedImagesCloned'], $result['expectedPostsCloned'], $result['expectedImagesTranslated'], $result['expectedPostsTranslated'], ['(2)'], ['(~2)']);
+        $result = $this->verify($posts[1][1], $translationBlogId, $imagesPerPost, $result['expectedImagesTranslated'], $result['expectedPostsTranslated'], ['(2)'], ['(~2)']);
         #endregion
         #region child > child page (level 3)
-        $this->verify($posts[2][0], $cloneBlogId, $translationBlogId, $imagesPerPost, $result['expectedImagesCloned'], $result['expectedPostsCloned'], $result['expectedImagesTranslated'], $result['expectedPostsTranslated'], ['(1-1)'], ['(1~-1)']);
+        $this->verify($posts[2][0], $translationBlogId, $imagesPerPost, $result['expectedImagesTranslated'], $result['expectedPostsTranslated'], ['(1-1)'], ['(1~-1)']);
         #endregion
-    }
-
-    private function createSubmissionForCloning(string $contentType, int $contentId): SubmissionEntity
-    {
-        $submission = $this->createSubmission($contentType, $contentId, self::ORIGINAL_BLOG_ID, self::CLONE_BLOG_ID);
-        $submission->setIsCloned(1);
-        return $this->getSubmissionManager()->storeEntity($submission);
     }
 
     private function assertResult(int $expectedAttachments, string $expectedContent, int $expectedPosts, SubmissionEntity $submission, ?int $expectedThumbnailId = null): \Closure
@@ -211,7 +189,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
             $this->assertInstanceOf(SubmissionEntity::class, $imageSubmission);
             $content = preg_replace("~([:-])({$imageSubmission->getSourceId()})~", '${1}' . $imageSubmission->getTargetId(), $content);
         }
-        return $blogId !== self::CLONE_BLOG_ID ? str_replace('/uploads/', "/uploads/sites/$blogId/", $content) : $content;
+        return str_replace('/uploads/', "/uploads/sites/$blogId/", $content);
     }
 
     private function pseudoPseudoTranslate(string $content): string
@@ -229,12 +207,11 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
             );
     }
 
-    #[ArrayShape(['expectedImagesCloned' => 'int', 'expectedImagesTranslated' => 'int', 'expectedPostsCloned' => 'int', 'expectedPostsTranslated' => 'int'])]
-    private function verify(int $postId, int $cloneBlogId, int $translationBlogId, int $imagesPerPost, int $expectedImagesCloned, int $expectedPostsCloned, int $expectedImagesTranslated, int $expectedPostsTranslated, array $search, array $replace): array
+    #[ArrayShape(['expectedImagesTranslated' => 'int', 'expectedPostsTranslated' => 'int'])]
+    private function verify(int $postId, int $translationBlogId, int $imagesPerPost, int $expectedImagesTranslated, int $expectedPostsTranslated, array $search, array $replace): array
     {
         $post = get_post($postId);
         $relations = $this->getContentRelationsDiscoveryService()->getRelations(ContentTypeHelper::CONTENT_TYPE_POST, $postId, [
-            $cloneBlogId,
             $translationBlogId
         ]);
         $expectedThumbId = -1;
@@ -244,31 +221,6 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
             static fn(DetectedRelation $relation) => $relation->getContentType() === ContentTypeHelper::POST_TYPE_ATTACHMENT,
         );
         $this->assertCount($imagesPerPost, $attachmentRelations);
-        #region cloning
-        $imageSubmissions = [];
-        foreach ($attachmentRelations as $relation) {
-            $this->assertInstanceOf(DetectedRelation::class, $relation);
-            $submission = $this->uploadDownload($this->createSubmissionForCloning(ContentTypeHelper::POST_TYPE_ATTACHMENT, $relation->getId()));
-            $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
-            $this->assertNotEquals(0, $submission->getTargetId());
-            if ($submission->getSourceId() !== $thumbId) {
-                $imageSubmissions = [$submission];
-            } else {
-                $expectedThumbId = $submission->getTargetId();
-            }
-            ++$expectedImagesCloned;
-        }
-        $submission = $this->uploadDownload($this->createSubmissionForCloning(ContentTypeHelper::CONTENT_TYPE_POST, $postId));
-        ++$expectedPostsCloned;
-        $this->assertEquals(SubmissionEntity::SUBMISSION_STATUS_COMPLETED, $submission->getStatus());
-        $this->getSiteHelper()->withBlog($cloneBlogId, $this->assertResult(
-            $expectedImagesCloned,
-            $this->getContentWithImageIdsReplaced($post->post_content, $imageSubmissions, $cloneBlogId),
-            $expectedPostsCloned,
-            $submission,
-            $expectedThumbId,
-        ));
-        #endregion
         #region translation
         $imageSubmissions = [];
         foreach ($attachmentRelations as $relation) {
@@ -295,9 +247,7 @@ class RelationsTest extends SmartlingUnitTestCaseAbstract
         ));
         #endregion
         return [
-            'expectedImagesCloned' => $expectedImagesCloned,
             'expectedImagesTranslated' => $expectedImagesTranslated,
-            'expectedPostsCloned' => $expectedPostsCloned,
             'expectedPostsTranslated' => $expectedPostsTranslated,
         ];
     }
