@@ -159,10 +159,20 @@ class WordpressContentTypeHelper
 
     private static function buildEditUrl(SubmissionEntity $submission, int $blogId, int $contentId): string
     {
-        /**
-         * @var ContentTypeAbstract $ctHandler
-         */
-        $ctHandler = static::getContentTypeManager()->getHandler($submission->getContentType());
+        try {
+            /**
+             * @var ContentTypeAbstract $ctHandler
+             */
+            $ctHandler = static::getContentTypeManager()->getHandler($submission->getContentType());
+        } catch (\Exception $e) {
+            // getHandler() throws for a content type that isn't currently registered as a
+            // descriptor - e.g. a historical submission whose custom-post-type integration
+            // has since been removed or deactivated. That must degrade to "no link", not
+            // crash the whole page (this is rendered for every row on the Submissions Board).
+            Bootstrap::getLogger()->warning(sprintf('%s (submissionId=%d)', $e->getMessage(), $submission->getId()));
+
+            return '';
+        }
 
         if ($ctHandler instanceof ContentTypeAbstract) {
             $tail = '';

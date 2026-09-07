@@ -18,6 +18,7 @@ namespace Smartling\Tests\Smartling\Helpers {
     use Smartling\ContentTypes\ContentTypeAbstract;
     use Smartling\ContentTypes\ContentTypeInterface;
     use Smartling\ContentTypes\ContentTypeManager;
+    use Smartling\Exception\SmartlingInvalidFactoryArgumentException;
     use Smartling\Helpers\WordpressContentTypeHelper;
     use Smartling\Submissions\SubmissionEntity;
 
@@ -52,6 +53,46 @@ namespace Smartling\Tests\Smartling\Helpers {
             }
 
             Bootstrap::getContainer()->set('content-type-descriptor-manager', $manager);
+        }
+
+        /**
+         * ContentTypeManager::getHandler() throws (rather than returning some sentinel
+         * value) when the requested content type was never registered as a descriptor -
+         * e.g. a historical submission row whose custom-post-type integration has since
+         * been removed/deactivated. buildEditUrl() must not let that exception escape.
+         */
+        private function registerThrowingContentTypeManager(): void
+        {
+            $manager = $this->createMock(ContentTypeManager::class);
+            $manager->method('getHandler')->willThrowException(
+                new SmartlingInvalidFactoryArgumentException("Requested descriptor for 'sovos_product' that doesn't exists.")
+            );
+
+            Bootstrap::getContainer()->set('content-type-descriptor-manager', $manager);
+        }
+
+        public function testGetSourceEditUrlReturnsEmptyStringWhenContentTypeManagerThrows(): void
+        {
+            $this->registerThrowingContentTypeManager();
+
+            $submission = (new SubmissionEntity())
+                ->setContentType('sovos_product')
+                ->setSourceBlogId(1)
+                ->setSourceId(1);
+
+            $this->assertSame('', WordpressContentTypeHelper::getSourceEditUrl($submission));
+        }
+
+        public function testGetEditUrlReturnsEmptyStringWhenContentTypeManagerThrows(): void
+        {
+            $this->registerThrowingContentTypeManager();
+
+            $submission = (new SubmissionEntity())
+                ->setContentType('sovos_product')
+                ->setTargetBlogId(1)
+                ->setTargetId(1);
+
+            $this->assertSame('', WordpressContentTypeHelper::getEditUrl($submission));
         }
 
         public function testGetSourceEditUrlBuildsPostEditLink(): void
