@@ -230,11 +230,18 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $profile->setSourceLocale($locale);
         }
 
+        $sourceBlogId = $profile->getSourceLocale()->getBlogId();
+
         $usedTargetLocales = [];
         if (array_key_exists('targetLocales', $settings)) {
             $locales = [];
 
             foreach ($settings['targetLocales'] as $blogId => $settings) {
+                if ((int)$blogId === $sourceBlogId) {
+                    // Never persist the source locale as a target locale, even if a stale
+                    // form submission still includes it after the source locale was changed.
+                    continue;
+                }
                 try {
                     $tLocale = new TargetLocale();
                     $tLocale->setBlogId($blogId);
