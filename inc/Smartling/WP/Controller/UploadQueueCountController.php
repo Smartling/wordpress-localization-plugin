@@ -3,22 +3,19 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\DbAl\UploadQueueManager;
-use Smartling\Helpers\AjaxSecurityTrait;
-use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\WP\WPHookInterface;
 
 class UploadQueueCountController implements WPHookInterface
 {
-    use AjaxSecurityTrait;
-    use LoggerSafeTrait;
-
     private const ACTION_NAME = 'smartling_upload_queue_count';
 
     public function __construct(
         private UploadQueueManager $uploadQueueManager,
         private WordpressFunctionProxyHelper $wpProxy,
+        private AjaxSecurityChecker $ajaxSecurity,
     ) {
     }
 
@@ -29,7 +26,7 @@ class UploadQueueCountController implements WPHookInterface
 
     public function handleGetCount(): void
     {
-        if (!$this->enforceAjaxAuthorization(
+        if (!$this->ajaxSecurity->enforce(
             'smartling_connector_ajax',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP,
             self::ACTION_NAME,

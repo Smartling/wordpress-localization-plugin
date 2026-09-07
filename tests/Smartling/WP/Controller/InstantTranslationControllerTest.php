@@ -4,6 +4,7 @@ namespace Smartling\WP\Controller;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\FTS\FtsService;
+use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -18,6 +19,7 @@ class InstantTranslationControllerTest extends TestCase
     private SubmissionFactory $submissionFactory;
     private FileUriHelper $fileUriHelper;
     private WordpressFunctionProxyHelper $wpProxy;
+    private AjaxSecurityChecker $ajaxSecurity;
 
     protected function setUp(): void
     {
@@ -28,13 +30,15 @@ class InstantTranslationControllerTest extends TestCase
         $this->submissionFactory = $this->createMock(SubmissionFactory::class);
         $this->fileUriHelper = $this->createMock(FileUriHelper::class);
         $this->wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $this->ajaxSecurity = $this->createMock(AjaxSecurityChecker::class);
 
         $this->controller = new InstantTranslationController(
             $this->ftsService,
             $this->submissionManager,
             $this->submissionFactory,
             $this->fileUriHelper,
-            $this->wpProxy
+            $this->wpProxy,
+            $this->ajaxSecurity,
         );
     }
 
@@ -291,8 +295,7 @@ class InstantTranslationControllerTest extends TestCase
         ];
 
         // Mock nonce and permission checks pass
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-        $this->wpProxy->method('current_user_can')->willReturn(true);
+        $this->ajaxSecurity->method('enforce')->willReturn(true);
         $this->wpProxy->method('sanitize_text_field')->willReturn('');
         $this->wpProxy->method('wp_unslash')->willReturnArgument(0);
         $this->wpProxy->method('map_deep')->willReturnArgument(0);
@@ -320,8 +323,7 @@ class InstantTranslationControllerTest extends TestCase
         ];
 
         // Mock nonce and permission checks pass
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-        $this->wpProxy->method('current_user_can')->willReturn(true);
+        $this->ajaxSecurity->method('enforce')->willReturn(true);
         $this->wpProxy->method('sanitize_text_field')->willReturn('post');
         $this->wpProxy->method('wp_unslash')->willReturnArgument(0);
         $this->wpProxy->method('map_deep')->willReturnArgument(0);
@@ -350,8 +352,7 @@ class InstantTranslationControllerTest extends TestCase
         ];
 
         // Mock nonce and permission checks pass
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-        $this->wpProxy->method('current_user_can')->willReturn(true);
+        $this->ajaxSecurity->method('enforce')->willReturn(true);
         $this->wpProxy->method('sanitize_text_field')->willReturn('post');
         $this->wpProxy->method('wp_unslash')->willReturnArgument(0);
         $this->wpProxy->method('map_deep')->willReturnArgument(0);
@@ -385,8 +386,7 @@ class InstantTranslationControllerTest extends TestCase
         $_POST = ['submissionId' => 0];
 
         // Mock nonce and permission checks pass
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-        $this->wpProxy->method('current_user_can')->willReturn(true);
+        $this->ajaxSecurity->method('enforce')->willReturn(true);
 
         // Expect error response
         $this->wpProxy->expects($this->once())
@@ -407,8 +407,7 @@ class InstantTranslationControllerTest extends TestCase
         $_POST = ['submissionId' => -5];
 
         // Mock nonce and permission checks pass
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-        $this->wpProxy->method('current_user_can')->willReturn(true);
+        $this->ajaxSecurity->method('enforce')->willReturn(true);
 
         // Expect error response
         $this->wpProxy->expects($this->once())
@@ -429,8 +428,7 @@ class InstantTranslationControllerTest extends TestCase
         $_POST = ['submissionId' => 999];
 
         // Mock nonce and permission checks pass
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-        $this->wpProxy->method('current_user_can')->willReturn(true);
+        $this->ajaxSecurity->method('enforce')->willReturn(true);
 
         // Mock submission not found
         $this->submissionManager->method('getEntityById')->with(999)->willReturn(null);
@@ -454,8 +452,7 @@ class InstantTranslationControllerTest extends TestCase
         $_POST = ['submissionId' => 123];
 
         // Mock nonce and permission checks pass
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-        $this->wpProxy->method('current_user_can')->willReturn(true);
+        $this->ajaxSecurity->method('enforce')->willReturn(true);
 
         // Mock submission found
         $submission = $this->createMock(SubmissionEntity::class);
@@ -493,39 +490,29 @@ class InstantTranslationControllerTest extends TestCase
         $this->assertEquals('pending', $method->invoke($this->controller, 'unknown_status'));
     }
 
-    public function testHandleRequestTranslationReturns403WhenCapabilityMissing(): void
+    /**
+     * The 403 response itself (invalid nonce vs insufficient capability, status code,
+     * message) is AjaxSecurityChecker::enforce()'s own responsibility now - see
+     * AjaxSecurityCheckerTest. All the controller needs to do is stop before touching
+     * anything when enforce() reports the request unauthorized.
+     */
+    public function testHandleRequestTranslationDoesNothingWhenUnauthorized(): void
     {
-        $this->wpProxy->method('check_ajax_referer')->willReturn(1);
-        $this->wpProxy->method('current_user_can')->willReturn(false);
-
-        $errorArgs = null;
-        $this->wpProxy->method('wp_send_json_error')->willReturnCallback(
-            function (array $data, int $status) use (&$errorArgs) {
-                $errorArgs = ['data' => $data, 'status' => $status];
-            }
-        );
+        $this->ajaxSecurity->method('enforce')->willReturn(false);
+        $this->wpProxy->expects($this->never())->method('sanitize_text_field');
+        $this->wpProxy->expects($this->never())->method('wp_send_json_success');
+        $this->ftsService->expects($this->never())->method('requestInstantTranslationBatch');
 
         $this->controller->handleRequestTranslation();
-
-        $this->assertNotNull($errorArgs);
-        $this->assertSame(403, $errorArgs['status']);
     }
 
-    public function testHandlePollStatusReturns403WhenCapabilityMissing(): void
+    public function testHandlePollStatusDoesNothingWhenUnauthorized(): void
     {
-        $this->wpProxy->method('check_ajax_referer')->willReturn(1);
-        $this->wpProxy->method('current_user_can')->willReturn(false);
-
-        $errorArgs = null;
-        $this->wpProxy->method('wp_send_json_error')->willReturnCallback(
-            function (array $data, int $status) use (&$errorArgs) {
-                $errorArgs = ['data' => $data, 'status' => $status];
-            }
-        );
+        $this->ajaxSecurity->method('enforce')->willReturn(false);
+        $this->submissionManager->expects($this->never())->method('getEntityById');
+        $this->wpProxy->expects($this->never())->method('wp_send_json_success');
+        $this->ftsService->expects($this->never())->method('checkAndApplyTranslation');
 
         $this->controller->handlePollStatus();
-
-        $this->assertNotNull($errorArgs);
-        $this->assertSame(403, $errorArgs['status']);
     }
 }

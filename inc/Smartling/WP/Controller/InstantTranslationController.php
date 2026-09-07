@@ -3,7 +3,7 @@
 namespace Smartling\WP\Controller;
 
 use Smartling\FTS\FtsService;
-use Smartling\Helpers\AjaxSecurityTrait;
+use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\LoggerSafeTrait;
@@ -16,7 +16,6 @@ use Smartling\WP\WPHookInterface;
 
 class InstantTranslationController implements WPHookInterface
 {
-    use AjaxSecurityTrait;
     use LoggerSafeTrait;
 
     private const ACTION_REQUEST_TRANSLATION = 'smartling_instant_translation';
@@ -28,6 +27,7 @@ class InstantTranslationController implements WPHookInterface
         private SubmissionFactory $submissionFactory,
         private FileUriHelper $fileUriHelper,
         private WordpressFunctionProxyHelper $wpProxy,
+        private AjaxSecurityChecker $ajaxSecurity,
     ) {
     }
 
@@ -39,7 +39,7 @@ class InstantTranslationController implements WPHookInterface
 
     public function handleRequestTranslation(): void
     {
-        if (!$this->enforceAjaxAuthorization(
+        if (!$this->ajaxSecurity->enforce(
             'smartling_translation',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
             self::ACTION_REQUEST_TRANSLATION,
@@ -142,7 +142,7 @@ class InstantTranslationController implements WPHookInterface
 
     public function handlePollStatus(): void
     {
-        if (!$this->enforceAjaxAuthorization(
+        if (!$this->ajaxSecurity->enforce(
             'smartling_translation',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
             self::ACTION_POLL_STATUS,

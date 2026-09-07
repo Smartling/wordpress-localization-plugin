@@ -7,6 +7,7 @@ use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
+use Smartling\Helpers\NonceVerifier;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -37,6 +38,7 @@ class TranslationLockControllerTest extends TestCase
             $this->createMock(Cache::class),
             $this->createMock(ContentHelper::class),
             $this->wpProxy,
+            new NonceVerifier($this->wpProxy),
         );
     }
 

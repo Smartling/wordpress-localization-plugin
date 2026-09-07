@@ -227,6 +227,7 @@ services:
     arguments:
       - "@service.relations-discovery"
       - "@wp.proxy"
+      - "@helper.ajax-security"
 
   entrypoint:
     class: Smartling\Base\SmartlingCore
@@ -383,6 +384,16 @@ services:
   wp.proxy:
     class: Smartling\Helpers\WordpressFunctionProxyHelper
 
+  helper.nonce-verifier:
+    class: Smartling\Helpers\NonceVerifier
+    arguments:
+      - "@wp.proxy"
+
+  helper.ajax-security:
+    class: Smartling\Helpers\AjaxSecurityChecker
+    arguments:
+      - "@wp.proxy"
+
   wp.i18n:
     class: Smartling\WP\i18n
     arguments:
@@ -424,6 +435,7 @@ services:
       - "@site.cache"
       - "@queue.db"
       - "@wp.proxy"
+      - "@helper.nonce-verifier"
 
   wp.taxonomy.linker:
     class: Smartling\WP\Controller\TaxonomyLinksController
@@ -482,6 +494,7 @@ services:
       - "@manager.upload.queue"
       - "@site.cache"
       - "@wp.proxy"
+      - "@helper.nonce-verifier"
 
   wp.instant.translation:
     class: Smartling\WP\Controller\InstantTranslationController
@@ -491,12 +504,14 @@ services:
       - "@factory.submission"
       - "@file.uri.helper"
       - "@wp.proxy"
+      - "@helper.ajax-security"
 
   wp.upload-queue-count:
     class: Smartling\WP\Controller\UploadQueueCountController
     arguments:
       - "@manager.upload.queue"
       - "@wp.proxy"
+      - "@helper.ajax-security"
 
   helper.gutenberg:
     class: Smartling\Helpers\GutenbergBlockHelper
@@ -646,6 +661,8 @@ services:
       - "@manager.submission"
       - "@site.cache"
       - "@content.helper"
+      - "@wp.proxy"
+      - "@helper.nonce-verifier"
       - "@wp.proxy"
 
   live_notification.service:

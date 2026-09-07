@@ -3,6 +3,7 @@
 namespace Smartling\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\UserTranslationRequest;
@@ -27,7 +28,7 @@ class ContentRelationsHandlerTest extends TestCase
             $this->request = $request;
         });
         $proxy = $this->makeWpProxy();
-        $x = new class($service, $proxy) extends ContentRelationsHandler {
+        $x = new class($service, $proxy, new AjaxSecurityChecker($proxy)) extends ContentRelationsHandler {
             public function returnResponse(array $data, $responseCode = 200): void
             {
             }
@@ -53,7 +54,7 @@ class ContentRelationsHandlerTest extends TestCase
         });
         $targetBlogId = 2;
         $proxy = $this->makeWpProxy();
-        $x = new class($service, $proxy) extends ContentRelationsHandler {
+        $x = new class($service, $proxy, new AjaxSecurityChecker($proxy)) extends ContentRelationsHandler {
             public function returnResponse(array $data, $responseCode = 200): void
             {
             }
@@ -83,7 +84,7 @@ class ContentRelationsHandlerTest extends TestCase
 
         $proxy = $this->makeWpProxy(false);
 
-        $x = new class($service, $proxy) extends ContentRelationsHandler {
+        $x = new class($service, $proxy, new AjaxSecurityChecker($proxy)) extends ContentRelationsHandler {
             public ?string $capturedErrorKey = null;
             public ?int $capturedErrorCode = null;
 

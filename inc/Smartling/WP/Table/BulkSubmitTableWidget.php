@@ -17,7 +17,7 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\LoggerSafeTrait;
-use Smartling\Helpers\NonceVerificationTrait;
+use Smartling\Helpers\NonceVerifier;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
@@ -34,7 +34,6 @@ class BulkSubmitTableWidget extends SmartlingListTable
 {
     use CommonLogMessagesTrait;
     use LoggerSafeTrait;
-    use NonceVerificationTrait;
 
     private const CUSTOM_CONTROLS_NAMESPACE = 'smartling-bulk-submit-page';
 
@@ -82,6 +81,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         protected UploadQueueManager $uploadQueueManager,
         protected ConfigurationProfileEntity $profile,
         protected WordpressFunctionProxyHelper $wpProxy,
+        protected NonceVerifier $nonceVerifier,
     ) {
         $this->setSource($_REQUEST);
 
@@ -189,7 +189,15 @@ class BulkSubmitTableWidget extends SmartlingListTable
         $smartlingData = is_array($smartlingData) ? $smartlingData : [];
         $profile = $this->getProfile();
 
-        if ($this->isPostRequest() && !$this->verifyBulkActionNonce()) {
+        // processBulkAction() reads from $_REQUEST (GET+POST+COOKIE), so gating this
+        // check on isPostRequest() alone would let a GET request carrying the same
+        // actionable fields skip it entirely and still enqueue submissions - a GET-based
+        // CSRF vector. Require the nonce whenever a request could plausibly cause a side
+        // effect: any POST (regardless of which fields it carries, so a future
+        // side-effecting field is covered automatically), or any request - GET included -
+        // that already carries an action payload.
+        $hasBulkActionPayload = !empty($smartlingData) || !empty($data['locales']);
+        if (($this->isPostRequest() || $hasBulkActionPayload) && !$this->verifyBulkActionNonce()) {
             $this->getLogger()->warning('Rejected Bulk Submit action: missing or invalid nonce.');
             return;
         }
@@ -265,7 +273,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
     private function verifyBulkActionNonce(): bool
     {
-        return $this->verifyNonce($this->getFromSource(self::BULK_ACTION_NONCE_FIELD, ''), self::BULK_ACTION_NONCE_ACTION);
+        return $this->nonceVerifier->verify($this->getFromSource(self::BULK_ACTION_NONCE_FIELD, ''), self::BULK_ACTION_NONCE_ACTION);
     }
 
     private function isPostRequest(): bool

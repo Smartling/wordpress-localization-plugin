@@ -31,6 +31,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
     use Smartling\ApiWrapperInterface;
     use Smartling\DbAl\LocalizationPluginProxyInterface;
+    use Smartling\Helpers\NonceVerifier;
     use Smartling\Helpers\SiteHelper;
     use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Queue\QueueInterface;
@@ -127,6 +128,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $submissionManager,
                 $queue,
                 $wpProxy,
+                new NonceVerifier($wpProxy),
             ) extends SubmissionTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
                 public function __construct(
@@ -137,6 +139,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     protected SubmissionManager $submissionManager,
                     protected QueueInterface $queue,
                     protected WordpressFunctionProxyHelper $wpProxy,
+                    protected NonceVerifier $nonceVerifier,
                 ) {
                 }
 

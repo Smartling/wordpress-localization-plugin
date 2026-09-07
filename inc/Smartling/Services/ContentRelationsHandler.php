@@ -5,8 +5,7 @@ namespace Smartling\Services;
 use Exception;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\AjaxAuthorizationFailure;
-use Smartling\Helpers\AjaxSecurityTrait;
-use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\UserTranslationRequest;
@@ -37,9 +36,6 @@ use Smartling\Models\UserTranslationRequest;
  */
 class ContentRelationsHandler extends BaseAjaxServiceAbstract
 {
-    use AjaxSecurityTrait;
-    use LoggerSafeTrait;
-
     public const ACTION_NAME = 'smartling-get-relations';
 
     public const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
@@ -48,8 +44,11 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
 
     private ContentRelationsDiscoveryService $service;
 
-    public function __construct(ContentRelationsDiscoveryService $service, private WordpressFunctionProxyHelper $wpProxy)
-    {
+    public function __construct(
+        ContentRelationsDiscoveryService $service,
+        private WordpressFunctionProxyHelper $wpProxy,
+        private AjaxSecurityChecker $ajaxSecurity,
+    ) {
         parent::__construct($_GET);
         $this->service = $service;
     }
@@ -82,7 +81,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
      */
     public function createSubmissionsHandler(array $data = null): void
     {
-        $authFailure = $this->checkAjaxNonceAndCapability(
+        $authFailure = $this->ajaxSecurity->check(
             'smartling_translation',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
             self::ACTION_NAME_CREATE_SUBMISSIONS,
@@ -109,7 +108,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
 
     public function actionHandler(): void
     {
-        $authFailure = $this->checkAjaxNonceAndCapability(
+        $authFailure = $this->ajaxSecurity->check(
             'smartling_translation',
             SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
             static::ACTION_NAME,

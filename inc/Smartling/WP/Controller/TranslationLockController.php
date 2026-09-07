@@ -9,7 +9,7 @@ use Smartling\Helpers\Cache;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
-use Smartling\Helpers\NonceVerificationTrait;
+use Smartling\Helpers\NonceVerifier;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
@@ -23,8 +23,6 @@ use Smartling\WP\WPHookInterface;
 
 class TranslationLockController extends WPAbstract implements WPHookInterface
 {
-    use NonceVerificationTrait;
-
     public const LOCK_ACTION_NONCE_ACTION = 'smartling-translation-lock-action';
     public const LOCK_ACTION_NONCE_FIELD = '_wpnonce';
 
@@ -38,6 +36,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
         Cache $cache,
         private ContentHelper $contentHelper,
         private WordpressFunctionProxyHelper $wpProxy,
+        private NonceVerifier $nonceVerifier,
     ) {
         parent::__construct($api, $connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
@@ -163,7 +162,7 @@ class TranslationLockController extends WPAbstract implements WPHookInterface
 
     private function verifyLockActionNonce(): bool
     {
-        return $this->verifyNonce($_POST[self::LOCK_ACTION_NONCE_FIELD] ?? '', self::LOCK_ACTION_NONCE_ACTION);
+        return $this->nonceVerifier->verify($_POST[self::LOCK_ACTION_NONCE_FIELD] ?? '', self::LOCK_ACTION_NONCE_ACTION);
     }
 
     public function notAllowed()

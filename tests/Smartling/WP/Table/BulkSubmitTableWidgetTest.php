@@ -35,6 +35,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
     use Smartling\DbAl\UploadQueueManager;
     use Smartling\DbAl\WordpressContentEntities\EntityAbstract;
     use Smartling\Helpers\SiteHelper;
+    use Smartling\Helpers\NonceVerifier;
     use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Jobs\JobEntityWithBatchUid;
     use Smartling\Models\IntegerIterator;
@@ -113,6 +114,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $uploadQueueManager,
                 $profile,
                 $wpProxy,
+                new NonceVerifier($wpProxy),
             ) extends BulkSubmitTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
                 public function __construct(
@@ -123,6 +125,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     protected UploadQueueManager $uploadQueueManager,
                     protected ConfigurationProfileEntity $profile,
                     protected WordpressFunctionProxyHelper $wpProxy,
+                    protected NonceVerifier $nonceVerifier,
                 ) {
                 }
             };
@@ -180,6 +183,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $uploadQueueManager,
                 $profile,
                 $wpProxy,
+                new NonceVerifier($wpProxy),
             ) extends BulkSubmitTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
                 public function __construct(
@@ -190,6 +194,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     protected UploadQueueManager $uploadQueueManager,
                     protected ConfigurationProfileEntity $profile,
                     protected WordpressFunctionProxyHelper $wpProxy,
+                    protected NonceVerifier $nonceVerifier,
                 ) {
                 }
             };
@@ -241,6 +246,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $uploadQueueManager,
                 $profile,
                 $wpProxy,
+                new NonceVerifier($wpProxy),
             ) extends BulkSubmitTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
                 public function __construct(
@@ -251,6 +257,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     protected UploadQueueManager $uploadQueueManager,
                     protected ConfigurationProfileEntity $profile,
                     protected WordpressFunctionProxyHelper $wpProxy,
+                    protected NonceVerifier $nonceVerifier,
                 ) {
                 }
             };
@@ -290,6 +297,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $uploadQueueManager,
                 $profile,
                 $wpProxy,
+                new NonceVerifier($wpProxy),
             ) extends BulkSubmitTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
                 public function __construct(
@@ -300,6 +308,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     protected UploadQueueManager $uploadQueueManager,
                     protected ConfigurationProfileEntity $profile,
                     protected WordpressFunctionProxyHelper $wpProxy,
+                    protected NonceVerifier $nonceVerifier,
                 ) {
                 }
             };
@@ -343,6 +352,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $uploadQueueManager,
                 $profile,
                 $wpProxy,
+                new NonceVerifier($wpProxy),
             ) extends BulkSubmitTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
                 public function __construct(
@@ -353,6 +363,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     protected UploadQueueManager $uploadQueueManager,
                     protected ConfigurationProfileEntity $profile,
                     protected WordpressFunctionProxyHelper $wpProxy,
+                    protected NonceVerifier $nonceVerifier,
                 ) {
                 }
             };
@@ -360,6 +371,72 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 // No 'submission', 'bulk-submit-locales', or 'smartling' field at all - exactly
                 // the shape the old $hasBulkActionPayload heuristic would have let through
                 // unchecked.
+                '_wpnonce' => 'not-a-valid-nonce',
+            ]);
+            $x->processBulkAction();
+        }
+
+        /**
+         * processBulkAction() reads its input from $_REQUEST (GET+POST+COOKIE - see
+         * setSource($_REQUEST) in the constructor), but gating the nonce check on
+         * isPostRequest() alone let a GET request carrying the exact same actionable
+         * fields a POST would (locales enabled, submissions selected) skip the check
+         * entirely and still enqueue submissions for translation. A crafted link or
+         * <img> tag visited by a logged-in admin could trigger it: GET-based CSRF.
+         */
+        public function testProcessBulkActionRequiresNonceForGetRequestWithPayload()
+        {
+            WordpressFunctionsMockHelper::injectFunctionsMocks();
+            // No $_SERVER['REQUEST_METHOD'] set to 'POST': this must not matter.
+            $submissionId = 3;
+            $submissionType = 'post';
+            $targetBlogId = 5;
+
+            $core = $this->createMock(SmartlingCore::class);
+            $core->expects($this->never())->method('prepareForUpload');
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+
+            $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+            $uploadQueueManager->expects($this->never())->method('enqueue');
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->expects($this->once())->method('wp_verify_nonce')
+                ->with('not-a-valid-nonce', BulkSubmitTableWidget::BULK_ACTION_NONCE_ACTION)
+                ->willReturn(false);
+
+            $x = new class($this->createMock(
+                LocalizationPluginProxyInterface::class),
+                $this->createMock(SiteHelper::class),
+                $core,
+                $this->createMock(SubmissionManager::class),
+                $uploadQueueManager,
+                $profile,
+                $wpProxy,
+                new NonceVerifier($wpProxy),
+            ) extends BulkSubmitTableWidget {
+                /** @noinspection PhpMissingParentConstructorInspection */
+                public function __construct(
+                    protected LocalizationPluginProxyInterface $localizationPluginProxy,
+                    protected SiteHelper $siteHelper,
+                    protected SmartlingCore $core,
+                    protected SubmissionManager $manager,
+                    protected UploadQueueManager $uploadQueueManager,
+                    protected ConfigurationProfileEntity $profile,
+                    protected WordpressFunctionProxyHelper $wpProxy,
+                    protected NonceVerifier $nonceVerifier,
+                ) {
+                }
+            };
+            $x->setSource([
+                'smartling-bulk-submit-page-content-type' => $submissionType,
+                'smartling-bulk-submit-page-submission' => ["$submissionId-$submissionType"],
+                'bulk-submit-locales' => ['locales' => [$targetBlogId => [
+                    'blog' => (string)$targetBlogId,
+                    'locale' => 'Test',
+                    'enabled' => 'on',
+                ]]],
+                'action' => 'add-to-existing-job',
                 '_wpnonce' => 'not-a-valid-nonce',
             ]);
             $x->processBulkAction();

@@ -5,6 +5,7 @@ namespace Smartling\WP\Controller;
 use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Helpers\Cache;
+use Smartling\Helpers\NonceVerifier;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
@@ -28,6 +29,7 @@ class SubmissionsPageController extends WPAbstract implements WPHookInterface
         Cache $cache,
         private Queue $queue,
         private WordpressFunctionProxyHelper $wpProxy,
+        private NonceVerifier $nonceVerifier,
     ) {
         parent::__construct($api, $connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
@@ -69,6 +71,7 @@ class SubmissionsPageController extends WPAbstract implements WPHookInterface
             $this->submissionManager,
             $this->queue,
             $this->wpProxy,
+            $this->nonceVerifier,
         );
         $table->prepare_items();
         $this->view($table);

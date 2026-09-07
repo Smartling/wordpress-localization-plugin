@@ -4,11 +4,12 @@ namespace Smartling\WP\Controller;
 
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\UploadQueueManager;
+use Smartling\Helpers\AjaxSecurityChecker;
+use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 
 class UploadQueueCountControllerTest extends TestCase
 {
-    private UploadQueueCountController $controller;
     private UploadQueueManager $uploadQueueManager;
     private WordpressFunctionProxyHelper $wpProxy;
 
@@ -18,54 +19,25 @@ class UploadQueueCountControllerTest extends TestCase
 
         $this->uploadQueueManager = $this->createMock(UploadQueueManager::class);
         $this->wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-
-        $this->controller = new UploadQueueCountController(
-            $this->uploadQueueManager,
-            $this->wpProxy,
-        );
     }
 
-    public function testHandleGetCountReturns403WhenNonceInvalid(): void
+    public function testHandleGetCountDoesNotReturnCountWhenUnauthorized(): void
     {
-        $this->wpProxy->method('check_ajax_referer')->willReturn(false);
+        $ajaxSecurity = $this->createMock(AjaxSecurityChecker::class);
+        $ajaxSecurity->method('enforce')
+            ->with('smartling_connector_ajax', SmartlingUserCapabilities::SMARTLING_CAPABILITY_PROFILE_CAP, $this->anything())
+            ->willReturn(false);
 
-        $errorArgs = null;
-        $this->wpProxy->method('wp_send_json_error')->willReturnCallback(
-            function (array $data, int $status) use (&$errorArgs) {
-                $errorArgs = ['data' => $data, 'status' => $status];
-            }
-        );
         $this->uploadQueueManager->expects($this->never())->method('count');
+        $this->wpProxy->expects($this->never())->method('wp_send_json_success');
 
-        $this->controller->handleGetCount();
-
-        $this->assertNotNull($errorArgs);
-        $this->assertSame(403, $errorArgs['status']);
-    }
-
-    public function testHandleGetCountReturns403WhenCapabilityMissing(): void
-    {
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-        $this->wpProxy->method('current_user_can')->willReturn(false);
-
-        $errorArgs = null;
-        $this->wpProxy->method('wp_send_json_error')->willReturnCallback(
-            function (array $data, int $status) use (&$errorArgs) {
-                $errorArgs = ['data' => $data, 'status' => $status];
-            }
-        );
-        $this->uploadQueueManager->expects($this->never())->method('count');
-
-        $this->controller->handleGetCount();
-
-        $this->assertNotNull($errorArgs);
-        $this->assertSame(403, $errorArgs['status']);
+        (new UploadQueueCountController($this->uploadQueueManager, $this->wpProxy, $ajaxSecurity))->handleGetCount();
     }
 
     public function testHandleGetCountReturnsCurrentQueueCount(): void
     {
-        $this->wpProxy->method('check_ajax_referer')->willReturn(true);
-        $this->wpProxy->method('current_user_can')->willReturn(true);
+        $ajaxSecurity = $this->createMock(AjaxSecurityChecker::class);
+        $ajaxSecurity->method('enforce')->willReturn(true);
         $this->uploadQueueManager->method('count')->willReturn(7);
 
         $successArgs = null;
@@ -75,7 +47,7 @@ class UploadQueueCountControllerTest extends TestCase
             }
         );
 
-        $this->controller->handleGetCount();
+        (new UploadQueueCountController($this->uploadQueueManager, $this->wpProxy, $ajaxSecurity))->handleGetCount();
 
         $this->assertSame(['count' => 7], $successArgs);
     }
