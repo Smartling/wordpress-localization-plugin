@@ -62,6 +62,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 5.7.1 =
+* Added source and target content links to the Translation Progress screen
+* Fixed possible misconfiguration where target locales were being saved as a duplicate of a newly changed source locale
+
 = 5.7.0 =
 * Reworked upload queue, added a live-refreshing upload queue count with visual feedback on change
 
