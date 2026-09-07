@@ -552,6 +552,12 @@ trait SmartlingCoreUploadTrait
                 try {
                     $this->cloneContent($submission);
                 } catch (\Throwable $e) {
+                    // Marks the submission FAILED (see SubmissionManager::setErrorMessage()) -
+                    // terminal, not retried automatically. There is no longer a poll that would
+                    // pick a New-status cloned submission back up (that was UploadJob's removed
+                    // processCloning()), so a silent failure here would otherwise leave the
+                    // submission stuck invisibly. This matches how every other upload failure in
+                    // this method is handled: visible and requiring manual resubmission.
                     $this->getSubmissionManager()->setErrorMessage(
                         $submission, vsprintf('Error occurred while cloning: %s', [$e->getMessage()])
                     );
