@@ -532,7 +532,7 @@ trait SmartlingCoreUploadTrait
 
         $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile($item->getSubmissions()[0]->getSourceBlogId());
 
-        // Mark attachment submission as "Cloned" if there is "Clone attachment"
+        // Clone attachment submission instead of uploading it, if "Clone attachment"
         // option is enabled in configuration profile.
         foreach ($item->getSubmissions() as $submission) {
             if (1 === $configurationProfile->getCloneAttachment() && $submission->getContentType() === 'attachment') {
@@ -541,7 +541,7 @@ trait SmartlingCoreUploadTrait
 
                 $this->getLogger()->info(
                     sprintf(
-                        'Attachment submissionId="%s" marked as cloned (sourceBlogId="%s", sourceId="%s", contentType="%s", batchUid="%s").',
+                        'Cloning attachment submissionId="%s" (sourceBlogId="%s", sourceId="%s", contentType="%s", batchUid="%s").',
                         $submission->getId(),
                         $submission->getSourceBlogId(),
                         $submission->getSourceId(),
@@ -549,6 +549,24 @@ trait SmartlingCoreUploadTrait
                         $item->getBatchUid(),
                     )
                 );
+                try {
+                    $this->cloneContent($submission);
+                } catch (\Throwable $e) {
+                    // Marks the submission FAILED (see SubmissionManager::setErrorMessage()) -
+                    // terminal, not retried automatically. There is no longer a poll that would
+                    // pick a New-status cloned submission back up (that was UploadJob's removed
+                    // processCloning()), so a silent failure here would otherwise leave the
+                    // submission stuck invisibly. This matches how every other upload failure in
+                    // this method is handled: visible and requiring manual resubmission.
+                    $this->getSubmissionManager()->setErrorMessage(
+                        $submission, vsprintf('Error occurred while cloning: %s', [$e->getMessage()])
+                    );
+                    $this->getLogger()->error(sprintf(
+                        'Failed cloning attachment submissionId="%s": %s',
+                        $submission->getId(),
+                        $e->getMessage(),
+                    ));
+                }
                 $item = $item->removeSubmission($submission);
             }
         }
@@ -610,7 +628,7 @@ trait SmartlingCoreUploadTrait
         }
     }
 
-    public function prepareForUpload(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone): SubmissionEntity
+    public function prepareForUpload(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, JobEntityWithBatchUid $jobInfo): SubmissionEntity
     {
         $translationHelper = $this->getTranslationHelper();
         $submission = $translationHelper
@@ -629,8 +647,7 @@ trait SmartlingCoreUploadTrait
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
         }
 
-        $isCloned = true === $clone ? 1 : 0;
-        $submission->setIsCloned($isCloned);
+        $submission->setIsCloned(0);
         $submission->setJobInfo($jobInfo->getJobInformationEntity());
 
         return $this->getSubmissionManager()->storeEntity($submission);

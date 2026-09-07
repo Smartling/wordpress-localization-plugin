@@ -10,9 +10,11 @@ use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
+use Smartling\Helpers\NonceVerifier;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\WP\Table\BulkSubmitTableWidget;
@@ -32,6 +34,8 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
         SubmissionManager $manager,
         private UploadQueueManager $uploadQueueManager,
         Cache $cache,
+        private WordpressFunctionProxyHelper $wpProxy,
+        private NonceVerifier $nonceVerifier,
     ) {
         parent::__construct($api, $connector, $pluginInfo, $settingsManager, $siteHelper, $manager, $cache);
     }
@@ -89,7 +93,9 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
                 $this->core,
                 $this->submissionManager,
                 $this->uploadQueueManager,
-                $profile
+                $profile,
+                $this->wpProxy,
+                $this->nonceVerifier,
             );
             $this->view($table);
         }

@@ -455,3 +455,14 @@ span.circle {
 .smartling-border-table .numeric {
     text-align: right;
 }
+
+#smartling-upload-queue-count {
+    --smartling-queue-count-highlight: #2271b1;
+    color: inherit;
+    transition: color 900ms ease;
+}
+
+#smartling-upload-queue-count.smartling-queue-count-changed {
+    color: var(--smartling-queue-count-highlight);
+    transition: none;
+}

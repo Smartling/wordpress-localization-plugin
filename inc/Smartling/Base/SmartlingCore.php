@@ -40,7 +40,6 @@ class SmartlingCore extends SmartlingCoreAbstract
     ) {
         parent::__construct();
 
-        $this->wpProxy->add_action(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, [$this, 'cloneContent']);
         $this->wpProxy->add_action(ExportedAPI::ACTION_SMARTLING_PREPARE_SUBMISSION_UPLOAD, [$this, 'prepareUpload']);
         $this->wpProxy->add_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, [$this, 'sendForTranslation']);
         $this->wpProxy->add_action(ExportedAPI::ACTION_SMARTLING_DOWNLOAD_TRANSLATION, [$this, 'downloadTranslationBySubmission',]);

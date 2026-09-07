@@ -6,7 +6,6 @@ use Smartling\ApiWrapperInterface;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
-use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\DownloadTranslationJob;
 use Smartling\Jobs\JobAbstract;
 use Smartling\Jobs\LastModifiedCheckJob;
@@ -38,7 +37,6 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         protected SettingsManager $settingsManager,
         protected SubmissionManager $submissionManager,
         protected UploadQueueManager $uploadQueueManager,
-        protected WordpressFunctionProxyHelper $wpProxy,
     )
     {
         $this->setSource($_REQUEST);
@@ -81,7 +79,7 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         $data = [
             [
                 'cron_name'   => __('Upload'),
-                'run_cron' => $this->getUploadCronActionCell($profile, $newSubmissionsCount),
+                'run_cron' => $this->getUploadCronActionCell($newSubmissionsCount),
                 'queue_name'  => __('&nbsp;'),
                 'queue_purge' => 0 === $newSubmissionsCount
                     ? __('Nothing to purge')
@@ -140,23 +138,17 @@ class QueueManagerTableWidget extends SmartlingListTable implements WPHookInterf
         $this->items = $data;
     }
 
-    private function getUploadCronActionCell(?ConfigurationProfileEntity $profile, int $count): string
+    private function getUploadCronActionCell(int $count): string
     {
-        if ($count === 0 && $this->submissionManager->findSubmissionForCloning($this->wpProxy->get_current_blog_id()) === null) {
+        if ($count === 0) {
             return self::MESSAGE_NOTHING_TO_DO;
         }
 
-        $jobName = UploadJob::JOB_HOOK_NAME;
-        try {
-            $this->testLock($profile, $jobName);
-            return sprintf(
-                '%s (%s submissions waiting)',
-                $this->getLockTag($jobName),
-                $count,
-            );
-        } catch (SmartlingApiException $e) {
-            return sprintf('%s (%s submissions queued)', $this->getRunningMessage($e), $count);
-        }
+        return sprintf(
+            '<span id="smartling-upload-cron-cell">%s (<span id="smartling-upload-queue-count">%s</span> submissions waiting)</span>',
+            $this->getLockTag(UploadJob::JOB_HOOK_NAME),
+            $count,
+        );
     }
 
     private function getCheckStatusHelperCronActionCell(?ConfigurationProfileEntity $profile, int $count): string

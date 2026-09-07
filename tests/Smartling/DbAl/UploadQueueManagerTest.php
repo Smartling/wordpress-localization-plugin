@@ -262,6 +262,67 @@ class UploadQueueManagerTest extends TestCase {
         $this->assertNull($uploadQueueManager->dequeue(1), 'Must not hand out an item whose claim could not be confirmed');
     }
 
+    public function testDequeueDoesNotHandOutItemWhenClaimLosesRaceToAnotherProcess()
+    {
+        $this->mockDbAl();
+        $db = $this->getMockBuilder(DB::class)
+            ->setConstructorArgs([new class {
+                public string $base_prefix = '';
+                public function getRowArray() {}
+                public function query() {}
+            }])
+            ->onlyMethods(['getRowArray', 'query'])
+            ->getMock();
+        $db->method('getRowArray')->willReturnOnConsecutiveCalls(
+            ['id' => 7, 'batch_uid' => '', 'submission_ids' => '1', 'claimed' => null, 'attempts' => 0],
+            null,
+        );
+        $db->method('query')->willReturn(0); // matched zero rows: another process claimed it first
+
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getId')->willReturn(1);
+        $submission->method('getSourceId')->willReturn(1);
+        $submission->method('getSourceBlogId')->willReturn(1);
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('getEntityById')->willReturn($submission);
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getSmartlingLocaleBySubmission')->willReturn('de-DE');
+
+        $uploadQueueManager = new UploadQueueManager(
+            $this->createMock(ApiWrapperInterface::class),
+            $settingsManager,
+            $db,
+            $submissionManager,
+        );
+
+        $this->assertNull($uploadQueueManager->dequeue(1), 'A lost claim race must not be handed out');
+    }
+
+    public function testClaimQueryRechecksRowIsStillUnclaimed()
+    {
+        $queries = [];
+        $manager = $this->buildManager(
+            [['id' => 7, 'batch_uid' => '', 'submission_ids' => '1', 'claimed' => null, 'attempts' => 0], null],
+            [1 => 1],
+            $queries,
+        );
+
+        $manager->dequeue(1);
+
+        $this->assertStringStartsWith('UPDATE', $queries[0]);
+        $this->assertStringContainsString(
+            'is null',
+            strtolower($queries[0]),
+            'Expected the claim to re-check the row is still unclaimed',
+        );
+        $this->assertMatchesRegularExpression(
+            '/claimed`? <|<.*claimed/i',
+            $queries[0],
+            'Expected the claim to re-check the claim has not gone stale',
+        );
+    }
+
     public function testDequeueOnlyConsidersUnclaimedOrStaleRows()
     {
         $queries = [];
@@ -288,13 +349,6 @@ class UploadQueueManagerTest extends TestCase {
         );
     }
 
-    /**
-     * A queue row groups submissions that share the same content, so one submission
-     * with an unresolvable locale takes the whole row down. Every submission that
-     * still exists - the one that failed to resolve and any sibling that resolved
-     * just fine - must not just vanish: each needs a visible error instead of being
-     * left in New status with no queue row and no explanation.
-     */
     public function testDequeueSetsErrorOnResolvedSiblingsWhenGroupIsUnprocessable()
     {
         $resolvableSubmission = $this->createMock(SubmissionEntity::class);
@@ -399,12 +453,6 @@ class UploadQueueManagerTest extends TestCase {
         );
     }
 
-    /**
-     * $wpdb->query() returns false on failure (deadlock, lock-wait timeout, connection
-     * blip) without throwing. If discardQueueItem()'s delete() silently fails, dequeue()
-     * must not treat the row as gone and re-select: the row comes back unchanged, so
-     * continuing the while loop would spin on it forever inside a single dequeue() call.
-     */
     public function testDequeueStopsInsteadOfSpinningWhenDiscardFailsToDelete()
     {
         $this->mockDbAl();
@@ -443,13 +491,6 @@ class UploadQueueManagerTest extends TestCase {
         );
     }
 
-    /**
-     * dequeue() claims a row only after resolving every submission in it. If that
-     * resolution throws anything unexpected, the row must still end up discarded
-     * rather than left permanently unclaimed - otherwise a single misbehaving
-     * submission blocks the entire per-blog queue forever, since every future
-     * dequeue() call would hit the same exception before ever reaching claim().
-     */
     public function testDequeueDiscardsItemWhenResolvingASubmissionThrowsUnexpectedException()
     {
         $this->mockDbAl();

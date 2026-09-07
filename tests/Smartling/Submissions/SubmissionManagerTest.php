@@ -107,24 +107,6 @@ class SubmissionManagerTest extends TestCase
         $x->searchByCondition($block);
     }
 
-    /**
-     * Locked submissions should not get cloned
-     */
-    public function testFindSubmissionsForCloning()
-    {
-        $db = $this->db;
-        $x = $this->subject;
-        $x->method('getDbal')->willReturn($db);
-        $x->expects($this->once())->method('fetchData')->willReturnCallback(function(string $query) {
-            $this->assertStringContainsString("`is_cloned` = '1'", $query);
-            $this->assertStringContainsString("`is_locked` = '0'", $query);
-            $this->assertStringContainsString("`source_blog_id` = '1'", $query);
-            return [];
-        });
-
-        $x->findSubmissionForCloning(1);
-    }
-
     public function testStoreEmptyEntity()
     {
         $x = $this->subject;

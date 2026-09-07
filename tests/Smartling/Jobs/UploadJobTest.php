@@ -5,7 +5,6 @@ namespace Smartling\Tests\Smartling\Jobs;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
-use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\Cache;
@@ -205,46 +204,17 @@ class UploadJobTest extends TestCase
         return [$item, $submission1, $submission2];
     }
 
-    /**
-     * processUploadQueue() dispatches through the WordPress function proxy so the hook
-     * call can be mocked in tests; processCloning() must do the same, or bugs in the
-     * cloning dispatch have no unit-test coverage.
-     */
-    public function testCloningDispatchesThroughWordpressProxy()
+    public function testRunDoesNotUseDistributedLockApi()
     {
-        $uploadQueueManager = $this->createMock(UploadQueueManager::class);
-        $uploadQueueManager->method('length')->willReturn(0);
-        $uploadQueueManager->method('dequeue')->willReturn(null);
+        $item = $this->buildItem();
+        $uploadQueueManager = $this->buildQueueManager($item);
 
-        $submission = $this->createMock(SubmissionEntity::class);
-        $submissionManager = $this->createMock(SubmissionManager::class);
-        $calls = 0;
-        $submissionManager->method('findSubmissionForCloning')->willReturnCallback(
-            function () use ($submission, &$calls) {
-                return $calls++ === 0 ? $submission : null;
-            },
-        );
+        $api = $this->createMock(ApiWrapperInterface::class);
+        $api->expects($this->never())->method('acquireLock');
+        $api->expects($this->never())->method('renewLock');
+        $api->expects($this->never())->method('releaseLock');
 
-        $settingsManager = $this->createMock(SettingsManager::class);
-        $settingsManager->method('getActiveProfile')
-            ->willReturn($this->createMock(ConfigurationProfileEntity::class));
-
-        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $wpProxy->method('get_current_blog_id')->willReturn(1);
-        $wpProxy->expects($this->once())->method('do_action')
-            ->with(ExportedAPI::ACTION_SMARTLING_CLONE_CONTENT, $submission);
-
-        (new UploadJob(
-            $this->createMock(ApiWrapperInterface::class),
-            $this->createMock(Cache::class),
-            $this->createMock(FileUriHelper::class),
-            $settingsManager,
-            $submissionManager,
-            $uploadQueueManager,
-            $wpProxy,
-            0,
-            'hourly',
-        ))->run('');
+        $this->buildJob($uploadQueueManager, null, null, null, $api)->run('');
     }
 
     private function buildItem(?SubmissionEntity $submission = null): UploadQueueItem
@@ -294,7 +264,6 @@ class UploadJobTest extends TestCase
             ->willReturn($this->createMock(ConfigurationProfileEntity::class));
 
         $submissionManager ??= $this->createMock(SubmissionManager::class);
-        $submissionManager->method('findSubmissionForCloning')->willReturn(null);
 
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
         $wpProxy->method('get_current_blog_id')->willReturn(1);

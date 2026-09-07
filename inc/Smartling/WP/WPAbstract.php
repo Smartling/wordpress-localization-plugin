@@ -74,20 +74,6 @@ class WPAbstract
             ]);
     }
 
-    public static function bulkSubmitCloneButton()
-    {
-        return HtmlTagGeneratorHelper::tag(
-            'input',
-            '',
-            [
-                'type'  => 'submit',
-                'value' => 'Clone',
-                'class' => 'button button-primary',
-                'id'    => 'clone-locally',
-                'name'  => 'submit',
-            ]);
-    }
-
     public static function submitBlock()
     {
         $downloadButton = HtmlTagGeneratorHelper::tag(

@@ -52,7 +52,6 @@ namespace Smartling\Tests\Services {
     use Smartling\Jobs\SubmissionJobEntity;
     use Smartling\Jobs\SubmissionsJobsManager;
     use Smartling\Models\GutenbergBlock;
-    use Smartling\Models\UserCloneRequest;
     use Smartling\Models\UserTranslationRequest;
     use Smartling\Processors\ContentEntitiesIOFactory;
     use Smartling\Replacers\ContentIdReplacer;
@@ -517,79 +516,6 @@ namespace Smartling\Tests\Services {
             $containerBuilder = Bootstrap::getContainer();
             $containerBuilder->set('site.db', $this->db);
             $containerBuilder->set('factory.contentIO', $this->factory);
-        }
-
-        public function testCloningNoDuplication()
-        {
-            $this->prepareDependencyInjection(VirtualEntityAbstract::class);
-
-            $contentType = 'post';
-            $childPostId = 2;
-            $rootPostId = 1;
-            $sourceBlogId = 1;
-            $targetBlogId = 2;
-
-            $siteHelper = $this->createMock(SiteHelper::class);
-            $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
-
-            $contentHelper = $this->createMock(ContentHelper::class);
-            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
-            $submissionManager = $this->createMock(SubmissionManager::class);
-
-            $matcher = $this->exactly(2);
-            $submissionManager->expects($matcher)->method('findTargetBlogSubmission')->willReturnCallback(function ($actualContentType, $actualSourceBlogId, $contentId, $actualTargetBlogId) use ($contentType, $childPostId, $rootPostId, $sourceBlogId, $targetBlogId, $matcher) {
-                $this->assertEquals($contentType, $actualContentType);
-                $this->assertEquals($sourceBlogId, $actualSourceBlogId);
-                $this->assertEquals($targetBlogId, $actualTargetBlogId);
-                switch ($matcher->getInvocationCount()) {
-                    case 1:
-                        $this->assertEquals($childPostId, $contentId);
-                        break;
-                    case 2:
-                        $this->assertEquals($rootPostId, $contentId);
-                        break;
-                }
-            });
-
-            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
-
-            $x = $this->getContentRelationDiscoveryService(
-                $this->createMock(ApiWrapper::class),
-                $contentHelper,
-                $this->createMock(SettingsManager::class),
-                $submissionManager,
-                wpProxy: $wpProxy,
-            );
-            $x->clone(new UserCloneRequest($rootPostId, $contentType, [$targetBlogId => [$contentType => [$childPostId]]], [$targetBlogId]));
-
-            $this->restoreDependencyInjection();
-        }
-
-        public function testCloningSkipsLockedSubmissions()
-        {
-            $contentType = 'post';
-            $contentId = 1;
-            $targetBlogId = 2;
-            $existing = $this->createMock(SubmissionEntity::class);
-            $existing->method('isLocked')->willReturn(true);
-            $existing->expects($this->never())->method('setStatus');
-
-            $submissionManager = $this->createMock(SubmissionManager::class);
-            $submissionManager->expects($this->once())->method('findTargetBlogSubmission')->willReturn($existing);
-            $submissionManager->expects($this->once())->method('storeSubmissions')->with([]);
-
-            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-            $wpProxy->method('get_current_blog_id')->willReturn(1);
-
-            $x = $this->getContentRelationDiscoveryService(
-                $this->createMock(ApiWrapper::class),
-                $this->createMock(ContentHelper::class),
-                $this->createMock(SettingsManager::class),
-                $submissionManager,
-                wpProxy: $wpProxy,
-            );
-            $x->clone(new UserCloneRequest($contentId, $contentType, [], [$targetBlogId]));
         }
 
         public function testParentPageReferenceDetected()

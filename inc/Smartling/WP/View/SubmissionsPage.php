@@ -53,6 +53,7 @@ $data = $this->viewData;
             </tr>
         </table>
         <form id="submissions-main" method="post">
+            <?php wp_nonce_field(SubmissionTableWidget::BULK_ACTION_NONCE_ACTION, SubmissionTableWidget::BULK_ACTION_NONCE_FIELD); ?>
             <!-- For plugins, we also need to ensure that the form posts back to our current page -->
             <input type="hidden" name="page" value="<?= $_REQUEST['page']; ?>"/>
             <!-- Now we can render the completed list table -->

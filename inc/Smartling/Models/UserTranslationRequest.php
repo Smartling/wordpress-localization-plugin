@@ -2,18 +2,57 @@
 
 namespace Smartling\Models;
 
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\ArrayHelper;
 
-class UserTranslationRequest extends UserCloneRequest
+class UserTranslationRequest
 {
+    private int $contentId;
+    private string $contentType;
+    private string $description;
+    private array $relations;
+    private array $targetBlogIds;
     private JobInformation $jobInformation;
     private array $ids;
 
     public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, JobInformation $jobInformation, array $ids = [], string $description = '')
     {
-        parent::__construct($contentId, $contentType, $relations, $targetBlogIds, $description);
+        $this->contentId = $contentId;
+        $this->contentType = $contentType;
+        $this->description = $description;
+        krsort($relations);
+        $this->relations = $relations;
+        $this->targetBlogIds = ArrayHelper::toArrayOfIntegers($targetBlogIds, 'Target blog id expected to be numeric');
         $this->jobInformation = $jobInformation;
         $this->ids = self::toIntegerArray($ids);
+    }
+
+    public function getContentId(): int
+    {
+        return $this->contentId;
+    }
+
+    public function getContentType(): string
+    {
+        return $this->contentType;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    public function getRelationsOrdered(): array
+    {
+        return $this->relations;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getTargetBlogIds(): array
+    {
+        return $this->targetBlogIds;
     }
 
     public function getJobInformation(): JobInformation
@@ -30,21 +69,31 @@ class UserTranslationRequest extends UserCloneRequest
     {
         self::validate($array);
         $ids = self::toIntegerArray($array['ids'] ?? []);
+        $contentId = count($ids) > 0 ? 0 : self::getSourceId($array);
 
         return new self(
-            self::getSourceId($array),
+            $contentId,
             $array['source']['contentType'] ?? '',
             $array['relations'] ?? [],
             explode(',', $array['targetBlogIds']),
             new JobInformation($array['job']['id'], $array['job']['authorize'] === 'true', $array['job']['name'], $array['job']['description'], $array['job']['dueDate'], $array['job']['timeZone']),
             $ids,
-            $array['description'] ?? count($ids) > 0 ? 'From Bulk Submit' : 'From Widget',
+            $array['description'] ?? (count($ids) > 0 ? 'From Bulk Submit' : 'From Widget'),
         );
     }
 
     public function isBulk(): bool
     {
         return count($this->ids) > 0;
+    }
+
+    private static function getSourceId(array $array): int
+    {
+        $id = $array['source']['id'][0] ?? null;
+        if ($id === null) {
+            throw new SmartlingHumanReadableException('Source content id is empty, please save content prior to uploading', 'source.id.empty', 400);
+        }
+        return (int)$id;
     }
 
     private static function validate(array $array): void

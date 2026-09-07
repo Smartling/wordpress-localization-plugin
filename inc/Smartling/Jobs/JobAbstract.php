@@ -85,6 +85,11 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         return self::CRON_FLAG_PREFIX . $this->getJobHookName();
     }
 
+    protected function usesDistributedLock(): bool
+    {
+        return true;
+    }
+
     /**
      * @throws EntityNotFoundException
      * @throws SmartlingApiException
@@ -117,6 +122,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
         if ($this->throttleIntervalSeconds > 0) {
             $this->cache->set($flagName, 1, $this->throttleIntervalSeconds);
         }
+        if (!$this->usesDistributedLock()) {
+            return;
+        }
         if ($renew) {
             $this->api->renewLock($profile, $flagName, $this->cronLockTtl);
         } else {
@@ -130,6 +138,9 @@ abstract class JobAbstract implements WPHookInterface, JobInterface, WPInstallab
      */
     public function dropLockFlag(): void
     {
+        if (!$this->usesDistributedLock()) {
+            return;
+        }
         $profile = $this->settingsManager->getActiveProfile();
         $flagName = $this->getCronFlagName();
         $this->getLogger()->debug(

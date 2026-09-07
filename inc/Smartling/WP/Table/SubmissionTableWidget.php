@@ -11,12 +11,14 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\NonceVerifier;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBuilder;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\JobEntity;
 use Smartling\Queue\QueueInterface;
 use Smartling\Settings\Locale;
@@ -36,6 +38,9 @@ class SubmissionTableWidget extends SmartlingListTable
     private const ACTION_LOCK = 'lock';
     private const ACTION_UNLOCK = 'unlock';
     private const ACTION_UPLOAD = 'upload';
+
+    public const BULK_ACTION_NONCE_ACTION = 'smartling-submissions-bulk-action';
+    public const BULK_ACTION_NONCE_FIELD = '_wpnonce';
 
     /**
      * base name of Content-type filtering select
@@ -75,6 +80,8 @@ class SubmissionTableWidget extends SmartlingListTable
         protected SiteHelper $siteHelper,
         protected SubmissionManager $submissionManager,
         protected QueueInterface $queue,
+        protected WordpressFunctionProxyHelper $wpProxy,
+        protected NonceVerifier $nonceVerifier,
     ) {
         $this->setSource($_REQUEST);
 
@@ -163,9 +170,17 @@ class SubmissionTableWidget extends SmartlingListTable
 
     public function processBulkAction(): void
     {
+        $requestedSubmissions = $this->getFormElementValue('submission', []);
+        $requestedSubmissions = is_array($requestedSubmissions) ? $requestedSubmissions : [];
+
+        if (count($requestedSubmissions) > 0 && !$this->verifyBulkActionNonce()) {
+            $this->getLogger()->warning('Rejected Translation Progress bulk action: missing or invalid nonce.');
+            return;
+        }
+
         $submissionsIds = array_map(static function ($value) {
             return (int)$value;
-        }, $this->getFormElementValue('submission', []));
+        }, $requestedSubmissions);
 
         if (0 < count($submissionsIds)) {
             $submissions = $this->submissionManager->findByIds($submissionsIds);
@@ -229,6 +244,11 @@ class SubmissionTableWidget extends SmartlingListTable
                 }
             }
         }
+    }
+
+    private function verifyBulkActionNonce(): bool
+    {
+        return $this->nonceVerifier->verify($this->getFromSource(self::BULK_ACTION_NONCE_FIELD, ''), self::BULK_ACTION_NONCE_ACTION);
     }
 
     /**

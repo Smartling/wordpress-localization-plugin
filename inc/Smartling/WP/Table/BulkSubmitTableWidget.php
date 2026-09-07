@@ -17,10 +17,12 @@ use Smartling\Helpers\CommonLogMessagesTrait;
 use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\NonceVerifier;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
+use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Jobs\JobEntityWithBatchUid;
 use Smartling\Models\IntegerIterator;
 use Smartling\Settings\ConfigurationProfileEntity;
@@ -34,6 +36,9 @@ class BulkSubmitTableWidget extends SmartlingListTable
     use LoggerSafeTrait;
 
     private const CUSTOM_CONTROLS_NAMESPACE = 'smartling-bulk-submit-page';
+
+    public const BULK_ACTION_NONCE_ACTION = 'smartling-bulk-submit-action';
+    public const BULK_ACTION_NONCE_FIELD = '_wpnonce';
 
     /**
      * base name of Content-type filtering select
@@ -75,6 +80,8 @@ class BulkSubmitTableWidget extends SmartlingListTable
         protected SubmissionManager $manager,
         protected UploadQueueManager $uploadQueueManager,
         protected ConfigurationProfileEntity $profile,
+        protected WordpressFunctionProxyHelper $wpProxy,
+        protected NonceVerifier $nonceVerifier,
     ) {
         $this->setSource($_REQUEST);
 
@@ -172,15 +179,30 @@ class BulkSubmitTableWidget extends SmartlingListTable
     {
         $action = $this->getFromSource('action', 'send');
         $submissions = $this->getFormElementValue('submission', []);
+        $submissions = is_array($submissions) ? $submissions : [];
         $locales = [];
         $batchUid = '';
         $data = $this->getFromSource('bulk-submit-locales', []);
+        $data = is_array($data) ? $data : [];
         $jobName = '';
-        $smartlingData = [];
+        $smartlingData = $this->getFromSource('smartling', []);
+        $smartlingData = is_array($smartlingData) ? $smartlingData : [];
         $profile = $this->getProfile();
 
+        // processBulkAction() reads from $_REQUEST (GET+POST+COOKIE), so gating this
+        // check on isPostRequest() alone would let a GET request carrying the same
+        // actionable fields skip it entirely and still enqueue submissions - a GET-based
+        // CSRF vector. Require the nonce whenever a request could plausibly cause a side
+        // effect: any POST (regardless of which fields it carries, so a future
+        // side-effecting field is covered automatically), or any request - GET included -
+        // that already carries an action payload.
+        $hasBulkActionPayload = !empty($smartlingData) || !empty($data['locales']);
+        if (($this->isPostRequest() || $hasBulkActionPayload) && !$this->verifyBulkActionNonce()) {
+            $this->getLogger()->warning('Rejected Bulk Submit action: missing or invalid nonce.');
+            return;
+        }
+
         if ($action === 'send') {
-            $smartlingData = $this->getFromSource('smartling', []);
             if (empty($smartlingData)) {
                 return;
             }
@@ -219,7 +241,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
             }
         }
 
-        if (null !== $data && array_key_exists('locales', $data)) {
+        if (array_key_exists('locales', $data)) {
             foreach ($data['locales'] as $blogId => $blogName) {
                 if (array_key_exists('enabled', $blogName) && 'on' === $blogName['enabled']) {
                     $locales[$blogId] = $blogName['locale'];
@@ -228,29 +250,35 @@ class BulkSubmitTableWidget extends SmartlingListTable
 
             $queueIds = new IntegerIterator();
             if (is_array($submissions) && count($locales) > 0) {
-                $clone = 'clone' === $action;
                 foreach ($submissions as $submission) {
                     [$id] = explode('-', $submission);
                     $type = $this->getContentTypeFilterValue();
                     $curBlogId = $this->getProfile()->getSourceLocale()->getBlogId();
                     foreach ($locales as $blogId => $blogName) {
-                        $submissionId =  $this->core->prepareForUpload(
+                        $submissionId = $this->core->prepareForUpload(
                             $type,
                             $curBlogId,
                             $id,
                             (int)$blogId,
-                            new JobEntityWithBatchUid($batchUid, $jobName, $clone ? '' : $smartlingData['jobId'], $profile->getProjectId()),
-                            $clone,
+                            new JobEntityWithBatchUid($batchUid, $jobName, $smartlingData['jobId'] ?? '', $profile->getProjectId()),
                         )->getId();
-                        if (!$clone) {
-                            $queueIds[] = $submissionId;
-                        }
+                        $queueIds[] = $submissionId;
                     }
 
                 }
                 $this->uploadQueueManager->enqueue($queueIds, $batchUid);
             }
         }
+    }
+
+    private function verifyBulkActionNonce(): bool
+    {
+        return $this->nonceVerifier->verify($this->getFromSource(self::BULK_ACTION_NONCE_FIELD, ''), self::BULK_ACTION_NONCE_ACTION);
+    }
+
+    private function isPostRequest(): bool
+    {
+        return ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
     }
 
     private function getContentTypeFilterValue(): ?string

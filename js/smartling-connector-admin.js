@@ -234,6 +234,51 @@ jQuery(document).ready(function () {
         });
     })
 
+    if (jQuery('#smartling-upload-queue-count').length > 0 && typeof smartlingConnector !== 'undefined') {
+        var uploadQueueCountConsecutiveFailures = 0;
+        var uploadQueueCountMaxConsecutiveFailures = 5;
+        var uploadQueueCountRequestInFlight = false;
+        var uploadQueueCountInterval = setInterval(function () {
+            var $counter = jQuery('#smartling-upload-queue-count');
+            if ($counter.length === 0) {
+                clearInterval(uploadQueueCountInterval);
+                return;
+            }
+            if (uploadQueueCountRequestInFlight) {
+                return;
+            }
+            uploadQueueCountRequestInFlight = true;
+            jQuery.getJSON(ajaxurl, {
+                action: 'smartling_upload_queue_count',
+                _wpnonce: smartlingConnector.nonce
+            }).done(function (response) {
+                uploadQueueCountConsecutiveFailures = 0;
+                if (response && response.success && response.data && typeof response.data.count !== 'undefined') {
+                    if (response.data.count === 0) {
+                        jQuery('#smartling-upload-cron-cell').text('Nothing to do');
+                        clearInterval(uploadQueueCountInterval);
+                        return;
+                    }
+                    var $current = jQuery('#smartling-upload-queue-count');
+                    var newCount = String(response.data.count);
+                    if ($current.text() !== newCount) {
+                        $current.text(newCount);
+                        $current.addClass('smartling-queue-count-changed');
+                        void $current.get(0).offsetWidth; // force reflow
+                        $current.removeClass('smartling-queue-count-changed');
+                    }
+                }
+            }).fail(function () {
+                uploadQueueCountConsecutiveFailures++;
+                if (uploadQueueCountConsecutiveFailures >= uploadQueueCountMaxConsecutiveFailures) {
+                    clearInterval(uploadQueueCountInterval);
+                }
+            }).always(function () {
+                uploadQueueCountRequestInFlight = false;
+            });
+        }, 1000);
+    }
+
 });
 
 function ajaxDownload() {

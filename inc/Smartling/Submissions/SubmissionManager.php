@@ -288,24 +288,6 @@ class SubmissionManager extends EntityManagerAbstract
         return null;
     }
 
-    public function findSubmissionForCloning(int $blogId): ?SubmissionEntity
-    {
-        $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_AND);
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_STATUS, [SubmissionEntity::SUBMISSION_STATUS_NEW]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_CLONED, [1]));
-        $block->addCondition(Condition::getCondition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_IS_LOCKED, [0]));
-        $block->addCondition(new Condition(ConditionBuilder::CONDITION_SIGN_EQ, SubmissionEntity::FIELD_SOURCE_BLOG_ID, [$blogId]));
-
-        $data = $this->fetchData(QueryBuilder::buildSelectQuery(
-            $this->getDbal()->completeTableName(SubmissionEntity::getTableName()),
-            array_keys(SubmissionEntity::getFieldDefinitions()),
-            $block,
-            ['id' => 'asc'],
-            ['limit' => 1, 'page' => 1],
-        ));
-
-        return ArrayHelper::first($data) ?: null;
-    }
     /**
      * @param int[] $ids
      * @return SubmissionEntity[]

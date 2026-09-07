@@ -46,7 +46,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
     use PHPUnit\Framework\TestCase;
     use Smartling\ApiWrapperInterface;
     use Smartling\DbAl\UploadQueueManager;
-    use Smartling\Helpers\WordpressFunctionProxyHelper;
     use Smartling\Queue\QueueInterface;
     use Smartling\Settings\ConfigurationProfileEntity;
     use Smartling\Settings\Locale;
@@ -63,6 +62,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
         private function buildWidget(
             ApiWrapperInterface $api,
             int $uploadQueueCount = 1,
+            int $downloadQueueCount = 0,
         ): QueueManagerTableWidget {
             $profile = $this->createMock(ConfigurationProfileEntity::class);
             $profile->method('getProjectId')->willReturn('testProject');
@@ -77,7 +77,7 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $queue = $this->createMock(QueueInterface::class);
             $queue->method('stats')->willReturn([
                 QueueInterface::QUEUE_NAME_LAST_MODIFIED_CHECK_QUEUE => 0,
-                QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE => 0,
+                QueueInterface::QUEUE_NAME_DOWNLOAD_QUEUE => $downloadQueueCount,
             ]);
 
             $uploadQueueManager = $this->createMock(UploadQueueManager::class);
@@ -85,10 +85,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
 
             $submissionManager = $this->createMock(SubmissionManager::class);
             $submissionManager->method('getTotalInCheckStatusHelperQueue')->willReturn(0);
-            $submissionManager->method('findSubmissionForCloning')->willReturn(null);
-
-            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-            $wpProxy->method('get_current_blog_id')->willReturn(1);
 
             // Use an anonymous subclass to bypass WP_List_Table::__construct(), which
             // calls convert_to_screen() / get_current_screen() and requires a fully
@@ -99,7 +95,6 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $settingsManager,
                 $submissionManager,
                 $uploadQueueManager,
-                $wpProxy,
             ) extends QueueManagerTableWidget {
                 /** @noinspection PhpMissingParentConstructorInspection */
                 public function __construct(
@@ -108,13 +103,11 @@ namespace Smartling\Tests\Smartling\WP\Table {
                     protected SettingsManager $settingsManager,
                     protected SubmissionManager $submissionManager,
                     protected UploadQueueManager $uploadQueueManager,
-                    protected WordpressFunctionProxyHelper $wpProxy,
                 ) {
                     $this->setSource([]);
                 }
             };
         }
-
         public function testPrepareItemsDoesNotThrowWhenApiCredentialsAreInvalid(): void
         {
             $authError = new SmartlingApiException(
@@ -125,14 +118,14 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $api = $this->createMock(ApiWrapperInterface::class);
             $api->method('acquireLock')->willThrowException($authError);
 
-            $widget = $this->buildWidget($api, uploadQueueCount: 3);
+            $widget = $this->buildWidget($api, downloadQueueCount: 3);
 
             $widget->prepare_items();
 
             $this->assertNotEmpty($widget->items);
-            $uploadRow = $widget->items[0];
-            $this->assertStringContainsString('API error', $uploadRow['run_cron']);
-            $this->assertStringContainsString('Invalid credentials', $uploadRow['run_cron']);
+            $downloadRow = $widget->items[3];
+            $this->assertStringContainsString('API error', $downloadRow['run_cron']);
+            $this->assertStringContainsString('Invalid credentials', $downloadRow['run_cron']);
         }
 
         public function testPrepareItemsShowsRunningMessageWhenLockHeld(): void
@@ -145,12 +138,12 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $api = $this->createMock(ApiWrapperInterface::class);
             $api->method('acquireLock')->willThrowException($lockError);
 
-            $widget = $this->buildWidget($api, uploadQueueCount: 3);
+            $widget = $this->buildWidget($api, downloadQueueCount: 3);
 
             $widget->prepare_items();
 
-            $uploadRow = $widget->items[0];
-            $this->assertStringContainsString('Running', $uploadRow['run_cron']);
+            $downloadRow = $widget->items[3];
+            $this->assertStringContainsString('Running', $downloadRow['run_cron']);
         }
 
         public function testPrepareItemsShowsRunningMessageWhenSdkWrapsGuzzle423(): void
@@ -170,13 +163,53 @@ namespace Smartling\Tests\Smartling\WP\Table {
                 $guzzleException,
             ));
 
+            $widget = $this->buildWidget($api, downloadQueueCount: 3);
+
+            $widget->prepare_items();
+
+            $downloadRow = $widget->items[3];
+            $this->assertStringContainsString('Running', $downloadRow['run_cron']);
+            $this->assertStringNotContainsString('API error', $downloadRow['run_cron']);
+        }
+
+        public function testUploadRowDoesNotProbeDistributedLock(): void
+        {
+            $api = $this->createMock(ApiWrapperInterface::class);
+            $api->expects($this->never())->method('acquireLock');
+
             $widget = $this->buildWidget($api, uploadQueueCount: 3);
 
             $widget->prepare_items();
 
             $uploadRow = $widget->items[0];
-            $this->assertStringContainsString('Running', $uploadRow['run_cron']);
-            $this->assertStringNotContainsString('API error', $uploadRow['run_cron']);
+            $this->assertStringNotContainsString('Running', $uploadRow['run_cron']);
+        }
+
+        public function testUploadRowShowsLiveCounterSpanWithCurrentCount(): void
+        {
+            $api = $this->createMock(ApiWrapperInterface::class);
+
+            $widget = $this->buildWidget($api, uploadQueueCount: 3);
+
+            $widget->prepare_items();
+
+            $uploadRow = $widget->items[0];
+            $this->assertStringContainsString('<span id="smartling-upload-queue-count">3</span>', $uploadRow['run_cron']);
+        }
+
+        public function testUploadRowWrapsCellStateInStableContainer(): void
+        {
+            $api = $this->createMock(ApiWrapperInterface::class);
+
+            $widget = $this->buildWidget($api, uploadQueueCount: 3);
+
+            $widget->prepare_items();
+
+            $uploadRow = $widget->items[0];
+            $this->assertStringContainsString(
+                '<span id="smartling-upload-cron-cell">',
+                $uploadRow['run_cron'],
+            );
         }
     }
 }

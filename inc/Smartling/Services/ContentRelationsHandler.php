@@ -4,10 +4,10 @@ namespace Smartling\Services;
 
 use Exception;
 use Smartling\Exception\SmartlingHumanReadableException;
-use Smartling\Helpers\LoggerSafeTrait;
+use Smartling\Helpers\AjaxAuthorizationFailure;
+use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
-use Smartling\Models\UserCloneRequest;
 use Smartling\Models\UserTranslationRequest;
 
 /**
@@ -36,19 +36,19 @@ use Smartling\Models\UserTranslationRequest;
  */
 class ContentRelationsHandler extends BaseAjaxServiceAbstract
 {
-    use LoggerSafeTrait;
-
     public const ACTION_NAME = 'smartling-get-relations';
 
     public const ACTION_NAME_CREATE_SUBMISSIONS = 'smartling-create-submissions';
 
-    public const FORM_ACTION_CLONE = 'clone';
     public const FORM_ACTION_UPLOAD = 'upload';
 
     private ContentRelationsDiscoveryService $service;
 
-    public function __construct(ContentRelationsDiscoveryService $service, private WordpressFunctionProxyHelper $wpProxy)
-    {
+    public function __construct(
+        ContentRelationsDiscoveryService $service,
+        private WordpressFunctionProxyHelper $wpProxy,
+        private AjaxSecurityChecker $ajaxSecurity,
+    ) {
         parent::__construct($_GET);
         $this->service = $service;
     }
@@ -81,13 +81,16 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
      */
     public function createSubmissionsHandler(array $data = null): void
     {
-        if ($this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce', false) === false) {
-            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', 'smartling_translation', get_current_user_id()));
+        $authFailure = $this->ajaxSecurity->check(
+            'smartling_translation',
+            SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
+            self::ACTION_NAME_CREATE_SUBMISSIONS,
+        );
+        if ($authFailure === AjaxAuthorizationFailure::INVALID_NONCE) {
             $this->returnError('invalid.nonce', 'Invalid nonce', 403);
             return;
         }
-        if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
-            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
+        if ($authFailure === AjaxAuthorizationFailure::INSUFFICIENT_CAPABILITY) {
             $this->returnError('permission.denied', 'Insufficient permissions', 403);
             return;
         }
@@ -96,11 +99,7 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
             $data = $_POST;
         }
         try {
-            if ($data['formAction'] === self::FORM_ACTION_CLONE) {
-                $this->service->clone(UserCloneRequest::fromArray($data));
-            } else {
-                $this->service->createSubmissions(UserTranslationRequest::fromArray($data));
-            }
+            $this->service->createSubmissions(UserTranslationRequest::fromArray($data));
             $this->returnResponse(['status' => BaseAjaxServiceAbstract::RESPONSE_SUCCESS]);
         } catch (Exception $e) {
             $this->returnError('content.submission.failed', $e->getMessage());
@@ -109,13 +108,16 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
 
     public function actionHandler(): void
     {
-        if ($this->wpProxy->check_ajax_referer('smartling_translation', '_wpnonce', false) === false) {
-            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', 'smartling_translation', get_current_user_id()));
+        $authFailure = $this->ajaxSecurity->check(
+            'smartling_translation',
+            SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP,
+            static::ACTION_NAME,
+        );
+        if ($authFailure === AjaxAuthorizationFailure::INVALID_NONCE) {
             $this->returnError('invalid.nonce', 'Invalid nonce', 403);
             return;
         }
-        if (!$this->wpProxy->current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
-            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
+        if ($authFailure === AjaxAuthorizationFailure::INSUFFICIENT_CAPABILITY) {
             $this->returnError('permission.denied', 'Insufficient permissions', 403);
             return;
         }

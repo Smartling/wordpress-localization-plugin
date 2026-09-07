@@ -2,6 +2,7 @@
 
 use Smartling\Helpers\HtmlTagGeneratorHelper;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\WP\Controller\TranslationLockController;
 use Smartling\WP\Table\TranslationLockTableWidget;
 
 defined('IFRAME_REQUEST') || define('IFRAME_REQUEST', true);
@@ -65,6 +66,7 @@ include(ABSPATH . 'wp-admin/admin-header.php');
     ?>
 
     <form method="post">
+        <?php wp_nonce_field(TranslationLockController::LOCK_ACTION_NONCE_ACTION, TranslationLockController::LOCK_ACTION_NONCE_FIELD); ?>
         <div>
             <?=
             HtmlTagGeneratorHelper::tag(
