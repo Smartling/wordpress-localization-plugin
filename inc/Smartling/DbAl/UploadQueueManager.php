@@ -168,6 +168,10 @@ SQL,
      */
     private function staleClaimCondition(string $fieldPrefix = ''): ConditionBlock
     {
+        // QueryBuilder::escapeName() wraps a bare column name in backticks, but would
+        // incorrectly wrap a full "alias.column" reference (e.g. 'q.claimed') the same
+        // way, producing invalid SQL - a prefixed reference must be used unescaped.
+        // Hence escaping only when there is no prefix to worry about.
         $escapeField = $fieldPrefix === '';
         $block = new ConditionBlock(ConditionBuilder::CONDITION_BLOCK_LEVEL_OPERATOR_OR);
         $block->addCondition(new Condition(
