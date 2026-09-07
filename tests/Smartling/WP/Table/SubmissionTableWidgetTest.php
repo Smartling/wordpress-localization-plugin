@@ -113,6 +113,48 @@ namespace Smartling\Tests\Smartling\WP\Table {
             $x->processBulkAction();
         }
 
+        /**
+         * The Title column must link to the source content's WP edit screen when a source
+         * edit URL is available.
+         */
+        public function testBuildSourceTitleCellWrapsTitleInLinkWhenUrlAvailable(): void
+        {
+            $this->assertSame(
+                '<a href="https://example.com/wp-admin/post.php?post=1&amp;action=edit">My Title</a>',
+                SubmissionTableWidget::buildSourceTitleCell('My Title', 'https://example.com/wp-admin/post.php?post=1&action=edit')
+            );
+        }
+
+        /**
+         * With no source edit URL (e.g. unsupported content type), the Title column must
+         * fall back to plain text instead of rendering a dead/empty link.
+         */
+        public function testBuildSourceTitleCellReturnsPlainTextWhenUrlMissing(): void
+        {
+            $this->assertSame('My Title', SubmissionTableWidget::buildSourceTitleCell('My Title', ''));
+        }
+
+        /**
+         * The Locale column must link to the target content's WP edit screen when a target
+         * edit URL is available (e.g. translation already applied).
+         */
+        public function testBuildTargetLocaleCellWrapsLabelInLinkWhenUrlAvailable(): void
+        {
+            $this->assertSame(
+                '<a href="https://de.example.com/wp-admin/post.php?post=2&amp;action=edit">German</a>',
+                SubmissionTableWidget::buildTargetLocaleCell('German', 'https://de.example.com/wp-admin/post.php?post=2&action=edit')
+            );
+        }
+
+        /**
+         * With no target edit URL (e.g. translation not yet applied, target_id === 0), the
+         * Locale column must fall back to plain text instead of rendering a dead link.
+         */
+        public function testBuildTargetLocaleCellReturnsPlainTextWhenUrlMissing(): void
+        {
+            $this->assertSame('German', SubmissionTableWidget::buildTargetLocaleCell('German', ''));
+        }
+
         private function buildWidget(
             ApiWrapperInterface $apiWrapper,
             SettingsManager $settingsManager,

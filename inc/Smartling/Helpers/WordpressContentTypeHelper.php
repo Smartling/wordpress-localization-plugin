@@ -146,6 +146,19 @@ class WordpressContentTypeHelper
 
     public static function getEditUrl(SubmissionEntity $submission)
     {
+        return static::buildEditUrl($submission, $submission->getTargetBlogId(), $submission->getTargetId());
+    }
+
+    /**
+     * Same as getEditUrl(), but builds a link to the source content instead of the target.
+     */
+    public static function getSourceEditUrl(SubmissionEntity $submission): string
+    {
+        return static::buildEditUrl($submission, $submission->getSourceBlogId(), $submission->getSourceId());
+    }
+
+    private static function buildEditUrl(SubmissionEntity $submission, int $blogId, int $contentId): string
+    {
         /**
          * @var ContentTypeAbstract $ctHandler
          */
@@ -155,16 +168,16 @@ class WordpressContentTypeHelper
             $tail = '';
             switch ($ctHandler->getBaseType()) {
                 case 'post':
-                    $tail = vsprintf('/post.php?post=%s&action=edit', [$submission->getTargetId()]);
+                    $tail = vsprintf('/post.php?post=%s&action=edit', [$contentId]);
                     break;
                 case 'taxonomy':
-                    $tail = sprintf('/term.php?taxonomy=%s&tag_ID=%s',  $submission->getContentType(), $submission->getTargetId());
+                    $tail = sprintf('/term.php?taxonomy=%s&tag_ID=%s',  $submission->getContentType(), $contentId);
                     break;
                 default:
                     return '';
             }
 
-            return get_admin_url($submission->getTargetBlogId(), $tail);
+            return get_admin_url($blogId, $tail);
         } else {
             Bootstrap::getLogger()->warning(
                 vsprintf(
