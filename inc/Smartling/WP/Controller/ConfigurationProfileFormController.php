@@ -277,6 +277,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         int $blogId,
         string $smartlingName,
         bool $enabled,
+        bool $disabled = false,
     ): string {
         $parts = [];
 
@@ -290,20 +291,30 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             $checkboxProperties['checked'] = 'checked';
         }
 
+        if (true === $disabled) {
+            $checkboxProperties['disabled'] = 'disabled';
+        }
+
         $parts[] = HtmlTagGeneratorHelper::tag('input', '', $checkboxProperties);
         $parts[] = HtmlTagGeneratorHelper::tag('span', htmlspecialchars($displayName));
         $parts = [
             HtmlTagGeneratorHelper::tag('label', implode('', $parts), ['class' => 'radio-label']),
         ];
 
+        $targetLocaleProperties = [
+            'name' => sprintf('smartling_settings[targetLocales][%s][target]', $blogId),
+        ];
+
+        if (true === $disabled) {
+            $targetLocaleProperties['disabled'] = 'disabled';
+        }
+
         if (0 === count($locales)) {
             $sLocale = HtmlTagGeneratorHelper::tag(
                 'input',
                 '',
-                [
-                    'name' => sprintf('smartling_settings[targetLocales][%s][target]', $blogId),
-                    'type' => 'text',
-                ]);
+                $targetLocaleProperties + ['type' => 'text'],
+            );
         } else {
             $sLocale = HtmlTagGeneratorHelper::tag(
                 'select',
@@ -311,9 +322,8 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
                     $smartlingName,
                     $locales
                 ),
-                [
-                    'name' => sprintf('smartling_settings[targetLocales][%s][target]', $blogId),
-                ]);
+                $targetLocaleProperties,
+            );
         }
 
         $parts = [

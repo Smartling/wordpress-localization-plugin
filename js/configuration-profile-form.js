@@ -11,6 +11,26 @@
             });
             $('#smartling-configuration-profile-form').validate()
         }
+
+        // Keep the target-locale list in sync with the chosen source locale: the row matching
+        // the current source is hidden and disabled (so it can never be submitted as a target),
+        // while any previously selected source becomes available again as soon as it stops
+        // being the source - all without a page reload.
+        const syncTargetLocaleRows = function (sourceLocaleSelect) {
+            const sourceBlogId = String(sourceLocaleSelect.value);
+            $('#target-locale-block tr.target-locale-row').each(function () {
+                const row = $(this);
+                const isSource = String(row.data('blog-id')) === sourceBlogId;
+                row.toggleClass('hidden', isSource);
+                row.find('input, select').prop('disabled', isSource);
+            });
+        };
+
+        $('#default-locales, #default-locales-new').each(function () {
+            syncTargetLocaleRows(this);
+        }).on('change', function () {
+            syncTargetLocaleRows(this);
+        });
         $('a.toggleExpert').on('click', function () {
             $('.toggleExpert').removeClass('hidden');
             $('a.toggleExpert').addClass('hidden');

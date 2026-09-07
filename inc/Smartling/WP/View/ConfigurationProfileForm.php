@@ -473,13 +473,8 @@ if (0 === $profileId) {
                         <?php
                         $targetLocales = $profile->getTargetLocales();
                         $supportedLocales = $this->api->getSupportedLocales($profile);
+                        $currentSourceBlogId = $profile->getSourceLocale()->getBlogId();
                         foreach ($locales as $blogId => $label) {
-                            if ($blogId === $profile->getSourceLocale()
-                                    ->getBlogId()
-                            ) {
-                                continue;
-                            }
-
                             $smartlingLocale = '';
                             $enabled = false;
 
@@ -490,10 +485,15 @@ if (0 === $profileId) {
                                     break;
                                 }
                             }
+
+                            // The current source locale is never a selectable target: its row
+                            // stays in the DOM (hidden/disabled) so JS can reveal it again if the
+                            // source locale is changed to a different blog before the form is saved.
+                            $isSourceLocaleRow = $blogId === $currentSourceBlogId;
                             ?>
 
-                            <tr>
-                                <?= $this->renderLocales($supportedLocales, $label, $blogId, $smartlingLocale, $enabled) ?>
+                            <tr class="target-locale-row<?= $isSourceLocaleRow ? ' hidden' : '' ?>" data-blog-id="<?= $blogId ?>">
+                                <?= $this->renderLocales($supportedLocales, $label, $blogId, $smartlingLocale, $enabled, $isSourceLocaleRow) ?>
                             </tr>
                             <?php
                         }

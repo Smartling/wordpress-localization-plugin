@@ -129,5 +129,33 @@ namespace Smartling\Tests\WP\Controller {
 
             $controller->save();
         }
+
+        public function testRenderLocalesDisablesInputsForSourceLocaleRow(): void
+        {
+            $controller = $this->createController(
+                $this->createMock(SettingsManager::class),
+                $this->createMock(SiteHelper::class),
+            );
+
+            $method = new \ReflectionMethod(ConfigurationProfileFormController::class, 'renderLocales');
+
+            $html = $method->invoke($controller, ['en-US' => 'English'], 'French', 3, 'fr-FR', true, true);
+
+            $this->assertStringContainsString('disabled="disabled"', $html);
+        }
+
+        public function testRenderLocalesDoesNotDisableInputsForRegularRow(): void
+        {
+            $controller = $this->createController(
+                $this->createMock(SettingsManager::class),
+                $this->createMock(SiteHelper::class),
+            );
+
+            $method = new \ReflectionMethod(ConfigurationProfileFormController::class, 'renderLocales');
+
+            $html = $method->invoke($controller, ['en-US' => 'English'], 'French', 3, 'fr-FR', true, false);
+
+            $this->assertStringNotContainsString('disabled="disabled"', $html);
+        }
     }
 }
