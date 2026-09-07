@@ -138,6 +138,9 @@ namespace Smartling\Tests\WP\Controller {
             );
 
             $method = new \ReflectionMethod(ConfigurationProfileFormController::class, 'renderLocales');
+            // PHP 8.0 (this project's target) still requires setAccessible() to invoke a
+            // protected method via reflection; it only became a no-op starting PHP 8.1.
+            $method->setAccessible(true);
 
             $html = $method->invoke($controller, ['en-US' => 'English'], 'French', 3, 'fr-FR', true, true);
 
@@ -152,6 +155,7 @@ namespace Smartling\Tests\WP\Controller {
             );
 
             $method = new \ReflectionMethod(ConfigurationProfileFormController::class, 'renderLocales');
+            $method->setAccessible(true);
 
             $html = $method->invoke($controller, ['en-US' => 'English'], 'French', 3, 'fr-FR', true, false);
 
