@@ -238,8 +238,6 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
 
             foreach ($settings['targetLocales'] as $blogId => $settings) {
                 if ((int)$blogId === $sourceBlogId) {
-                    // Never persist the source locale as a target locale, even if a stale
-                    // form submission still includes it after the source locale was changed.
                     continue;
                 }
                 try {
@@ -276,8 +274,8 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         string $displayName,
         int $blogId,
         string $smartlingName,
-        bool $enabled,
-        bool $disabled = false,
+        bool $checked,
+        bool $disabled,
     ): string {
         $parts = [];
 
@@ -287,7 +285,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
             'name' => sprintf('smartling_settings[targetLocales][%s][enabled]', $blogId),
         ];
 
-        if (true === $enabled) {
+        if (true === $checked) {
             $checkboxProperties['checked'] = 'checked';
         }
 

@@ -9,10 +9,6 @@ use Smartling\ContentTypes\ContentTypeManager;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class WordpressContentTypeHelper
- * @package Smartling\Helpers
- */
 class WordpressContentTypeHelper
 {
     /**
@@ -144,14 +140,11 @@ class WordpressContentTypeHelper
         return $ctHandler->getBaseType();
     }
 
-    public static function getEditUrl(SubmissionEntity $submission)
+    public static function getTargetEditUrl(SubmissionEntity $submission)
     {
         return static::buildEditUrl($submission, $submission->getTargetBlogId(), $submission->getTargetId());
     }
 
-    /**
-     * Same as getEditUrl(), but builds a link to the source content instead of the target.
-     */
     public static function getSourceEditUrl(SubmissionEntity $submission): string
     {
         return static::buildEditUrl($submission, $submission->getSourceBlogId(), $submission->getSourceId());
@@ -160,22 +153,14 @@ class WordpressContentTypeHelper
     private static function buildEditUrl(SubmissionEntity $submission, int $blogId, int $contentId): string
     {
         try {
-            /**
-             * @var ContentTypeAbstract $ctHandler
-             */
             $ctHandler = static::getContentTypeManager()->getHandler($submission->getContentType());
         } catch (\Exception $e) {
-            // getHandler() throws for a content type that isn't currently registered as a
-            // descriptor - e.g. a historical submission whose custom-post-type integration
-            // has since been removed or deactivated. That must degrade to "no link", not
-            // crash the whole page (this is rendered for every row on the Submissions Board).
             Bootstrap::getLogger()->warning(sprintf('%s (submissionId=%d)', $e->getMessage(), $submission->getId()));
 
             return '';
         }
 
         if ($ctHandler instanceof ContentTypeAbstract) {
-            $tail = '';
             switch ($ctHandler->getBaseType()) {
                 case 'post':
                     $tail = vsprintf('/post.php?post=%s&action=edit', [$contentId]);
@@ -188,18 +173,18 @@ class WordpressContentTypeHelper
             }
 
             return get_admin_url($blogId, $tail);
-        } else {
-            Bootstrap::getLogger()->warning(
-                vsprintf(
-                    'Requested edit URI for unknown content-type \'%s\'',
-                    [
-                        $submission->getContentType(),
-                    ]
-                )
-            );
-
-            return '';
         }
+
+        Bootstrap::getLogger()->warning(
+            vsprintf(
+                'Requested edit URI for unknown content-type \'%s\'',
+                [
+                    $submission->getContentType(),
+                ]
+            )
+        );
+
+        return '';
 
     }
 }

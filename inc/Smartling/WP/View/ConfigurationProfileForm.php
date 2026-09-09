@@ -486,9 +486,6 @@ if (0 === $profileId) {
                                 }
                             }
 
-                            // The current source locale is never a selectable target: its row
-                            // stays in the DOM (hidden/disabled) so JS can reveal it again if the
-                            // source locale is changed to a different blog before the form is saved.
                             $isSourceLocaleRow = $blogId === $currentSourceBlogId;
                             ?>
 

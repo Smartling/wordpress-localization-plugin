@@ -12,10 +12,6 @@
             $('#smartling-configuration-profile-form').validate()
         }
 
-        // Keep the target-locale list in sync with the chosen source locale: the row matching
-        // the current source is hidden and disabled (so it can never be submitted as a target),
-        // while any previously selected source becomes available again as soon as it stops
-        // being the source - all without a page reload.
         const syncTargetLocaleRows = function (sourceLocaleSelect) {
             const sourceBlogId = String(sourceLocaleSelect.value);
             $('#target-locale-block tr.target-locale-row').each(function () {

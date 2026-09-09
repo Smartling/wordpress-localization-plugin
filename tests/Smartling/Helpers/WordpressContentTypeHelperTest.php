@@ -92,7 +92,7 @@ namespace Smartling\Tests\Smartling\Helpers {
                 ->setTargetBlogId(1)
                 ->setTargetId(1);
 
-            $this->assertSame('', WordpressContentTypeHelper::getEditUrl($submission));
+            $this->assertSame('', WordpressContentTypeHelper::getTargetEditUrl($submission));
         }
 
         public function testGetSourceEditUrlBuildsPostEditLink(): void
@@ -179,7 +179,7 @@ namespace Smartling\Tests\Smartling\Helpers {
 
             $this->assertSame(
                 'https://blog-9.test/post.php?post=101&action=edit',
-                WordpressContentTypeHelper::getEditUrl($submission)
+                WordpressContentTypeHelper::getTargetEditUrl($submission)
             );
         }
     }

@@ -135,11 +135,6 @@ class SubmissionTableWidget extends SmartlingListTable
         );
     }
 
-    /**
-     * Wraps an already HTML-escaped source title in a link to the source content's WP edit
-     * screen. Falls back to plain text when no source edit URL could be built (e.g. an
-     * unsupported content type).
-     */
     public static function buildSourceTitleCell(string $escapedTitle, string $sourceEditUrl): string
     {
         if ($sourceEditUrl === '') {
@@ -149,11 +144,6 @@ class SubmissionTableWidget extends SmartlingListTable
         return HtmlTagGeneratorHelper::tag('a', $escapedTitle, ['href' => $sourceEditUrl]);
     }
 
-    /**
-     * Wraps the target blog label in a link to the target content's WP edit screen. Falls
-     * back to plain text when no target edit URL could be built (e.g. translation not yet
-     * applied, or an unsupported content type).
-     */
     public static function buildTargetLocaleCell(string $blogLabel, string $targetEditUrl): string
     {
         if ($targetEditUrl === '') {
@@ -440,7 +430,7 @@ class SubmissionTableWidget extends SmartlingListTable
             }
             $row[SubmissionEntity::FIELD_TARGET_LOCALE] = static::buildTargetLocaleCell(
                 $blogLabel,
-                0 !== $element->getTargetId() ? WordpressContentTypeHelper::getEditUrl($element) : ''
+                0 !== $element->getTargetId() ? WordpressContentTypeHelper::getTargetEditUrl($element) : ''
             );
             $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo->getJobName() === '' ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">" . esc_html($jobInfo->getJobName()) . '</a>';
 

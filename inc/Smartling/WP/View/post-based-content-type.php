@@ -85,7 +85,7 @@ if (!empty($locales)) {
                             $enabled = !(1 === $item->getIsCloned() || 1 === $item->hasLocks());
 
                             if (0 !== (int) $item->getTargetId()) {
-                                $editUrl = WordpressContentTypeHelper::getEditUrl($item);
+                                $editUrl = WordpressContentTypeHelper::getTargetEditUrl($item);
                             }
 
                             /**
