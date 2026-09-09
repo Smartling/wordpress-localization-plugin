@@ -163,7 +163,7 @@ class WordpressContentTypeHelper
         if ($ctHandler instanceof ContentTypeAbstract) {
             switch ($ctHandler->getBaseType()) {
                 case 'post':
-                    $tail = vsprintf('/post.php?post=%s&action=edit', [$contentId]);
+                    $tail = sprintf('/post.php?post=%s&action=edit', $contentId);
                     break;
                 case 'taxonomy':
                     $tail = sprintf('/term.php?taxonomy=%s&tag_ID=%s',  $submission->getContentType(), $contentId);
