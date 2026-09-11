@@ -11,6 +11,22 @@
             });
             $('#smartling-configuration-profile-form').validate()
         }
+
+        const syncTargetLocaleRows = function (sourceLocaleSelect) {
+            const sourceBlogId = String(sourceLocaleSelect.value);
+            $('#target-locale-block tr.target-locale-row').each(function () {
+                const row = $(this);
+                const isSource = String(row.data('blog-id')) === sourceBlogId;
+                row.toggleClass('hidden', isSource);
+                row.find('input, select').prop('disabled', isSource);
+            });
+        };
+
+        $('#default-locales, #default-locales-new').each(function () {
+            syncTargetLocaleRows(this);
+        }).on('change', function () {
+            syncTargetLocaleRows(this);
+        });
         $('a.toggleExpert').on('click', function () {
             $('.toggleExpert').removeClass('hidden');
             $('a.toggleExpert').addClass('hidden');

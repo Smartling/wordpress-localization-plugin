@@ -9,10 +9,6 @@ use Smartling\ContentTypes\ContentTypeManager;
 use Smartling\Exception\SmartlingDirectRunRuntimeException;
 use Smartling\Submissions\SubmissionEntity;
 
-/**
- * Class WordpressContentTypeHelper
- * @package Smartling\Helpers
- */
 class WordpressContentTypeHelper
 {
     /**
@@ -144,39 +140,51 @@ class WordpressContentTypeHelper
         return $ctHandler->getBaseType();
     }
 
-    public static function getEditUrl(SubmissionEntity $submission)
+    public static function getTargetEditUrl(SubmissionEntity $submission)
     {
-        /**
-         * @var ContentTypeAbstract $ctHandler
-         */
-        $ctHandler = static::getContentTypeManager()->getHandler($submission->getContentType());
+        return static::buildEditUrl($submission, $submission->getTargetBlogId(), $submission->getTargetId());
+    }
+
+    public static function getSourceEditUrl(SubmissionEntity $submission): string
+    {
+        return static::buildEditUrl($submission, $submission->getSourceBlogId(), $submission->getSourceId());
+    }
+
+    private static function buildEditUrl(SubmissionEntity $submission, int $blogId, int $contentId): string
+    {
+        try {
+            $ctHandler = static::getContentTypeManager()->getHandler($submission->getContentType());
+        } catch (\Exception $e) {
+            Bootstrap::getLogger()->warning(sprintf('%s (submissionId=%d)', $e->getMessage(), $submission->getId()));
+
+            return '';
+        }
 
         if ($ctHandler instanceof ContentTypeAbstract) {
-            $tail = '';
             switch ($ctHandler->getBaseType()) {
                 case 'post':
-                    $tail = vsprintf('/post.php?post=%s&action=edit', [$submission->getTargetId()]);
+                    $tail = sprintf('/post.php?post=%s&action=edit', $contentId);
                     break;
                 case 'taxonomy':
-                    $tail = sprintf('/term.php?taxonomy=%s&tag_ID=%s',  $submission->getContentType(), $submission->getTargetId());
+                    $tail = sprintf('/term.php?taxonomy=%s&tag_ID=%s',  $submission->getContentType(), $contentId);
                     break;
                 default:
                     return '';
             }
 
-            return get_admin_url($submission->getTargetBlogId(), $tail);
-        } else {
-            Bootstrap::getLogger()->warning(
-                vsprintf(
-                    'Requested edit URI for unknown content-type \'%s\'',
-                    [
-                        $submission->getContentType(),
-                    ]
-                )
-            );
-
-            return '';
+            return get_admin_url($blogId, $tail);
         }
+
+        Bootstrap::getLogger()->warning(
+            vsprintf(
+                'Requested edit URI for unknown content-type \'%s\'',
+                [
+                    $submission->getContentType(),
+                ]
+            )
+        );
+
+        return '';
 
     }
 }

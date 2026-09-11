@@ -473,13 +473,8 @@ if (0 === $profileId) {
                         <?php
                         $targetLocales = $profile->getTargetLocales();
                         $supportedLocales = $this->api->getSupportedLocales($profile);
+                        $currentSourceBlogId = $profile->getSourceLocale()->getBlogId();
                         foreach ($locales as $blogId => $label) {
-                            if ($blogId === $profile->getSourceLocale()
-                                    ->getBlogId()
-                            ) {
-                                continue;
-                            }
-
                             $smartlingLocale = '';
                             $enabled = false;
 
@@ -490,10 +485,12 @@ if (0 === $profileId) {
                                     break;
                                 }
                             }
+
+                            $isSourceLocaleRow = $blogId === $currentSourceBlogId;
                             ?>
 
-                            <tr>
-                                <?= $this->renderLocales($supportedLocales, $label, $blogId, $smartlingLocale, $enabled) ?>
+                            <tr class="target-locale-row<?= $isSourceLocaleRow ? ' hidden' : '' ?>" data-blog-id="<?= $blogId ?>">
+                                <?= $this->renderLocales($supportedLocales, $label, $blogId, $smartlingLocale, $enabled, $isSourceLocaleRow) ?>
                             </tr>
                             <?php
                         }

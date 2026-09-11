@@ -135,6 +135,24 @@ class SubmissionTableWidget extends SmartlingListTable
         );
     }
 
+    public static function buildSourceTitleCell(string $escapedTitle, string $sourceEditUrl): string
+    {
+        if ($sourceEditUrl === '') {
+            return $escapedTitle;
+        }
+
+        return HtmlTagGeneratorHelper::tag('a', $escapedTitle, ['href' => $sourceEditUrl]);
+    }
+
+    public static function buildTargetLocaleCell(string $blogLabel, string $targetEditUrl): string
+    {
+        if ($targetEditUrl === '') {
+            return $blogLabel;
+        }
+
+        return HtmlTagGeneratorHelper::tag('a', $blogLabel, ['href' => $targetEditUrl]);
+    }
+
     public function get_columns(): array
     {
         $columns = $this->submissionManager->getColumnsLabels();
@@ -398,7 +416,10 @@ class SubmissionTableWidget extends SmartlingListTable
 
             $fileName = htmlentities($row[SubmissionEntity::FIELD_FILE_URI]);
             $row[SubmissionEntity::FIELD_FILE_URI] = $fileName;
-            $row[SubmissionEntity::FIELD_SOURCE_TITLE] = htmlentities($row[SubmissionEntity::FIELD_SOURCE_TITLE]);
+            $row[SubmissionEntity::FIELD_SOURCE_TITLE] = static::buildSourceTitleCell(
+                htmlentities($row[SubmissionEntity::FIELD_SOURCE_TITLE]),
+                0 !== $element->getSourceId() ? WordpressContentTypeHelper::getSourceEditUrl($element) : ''
+            );
             $row[SubmissionEntity::FIELD_CONTENT_TYPE] = WordpressContentTypeHelper::getLocalizedContentType($row[SubmissionEntity::FIELD_CONTENT_TYPE]);
             $row[SubmissionEntity::FIELD_SUBMISSION_DATE] = $this->sqlToReadableDate($row[SubmissionEntity::FIELD_SUBMISSION_DATE]);
             $row[SubmissionEntity::FIELD_APPLIED_DATE] = $this->sqlToReadableDate($row[SubmissionEntity::FIELD_APPLIED_DATE]);
@@ -407,7 +428,10 @@ class SubmissionTableWidget extends SmartlingListTable
             } catch (BlogNotFoundException $e) {
                 $blogLabel = "*blog id {$row[SubmissionEntity::FIELD_TARGET_BLOG_ID]} not found*";
             }
-            $row[SubmissionEntity::FIELD_TARGET_LOCALE] = $blogLabel;
+            $row[SubmissionEntity::FIELD_TARGET_LOCALE] = static::buildTargetLocaleCell(
+                htmlentities($blogLabel),
+                0 !== $element->getTargetId() ? WordpressContentTypeHelper::getTargetEditUrl($element) : ''
+            );
             $row[SubmissionEntity::VIRTUAL_FIELD_JOB_LINK] = $jobInfo->getJobName() === '' ? '' : "<a href=\"https://dashboard.smartling.com/app/projects/{$jobInfo->getProjectUid()}/account-jobs/?filename=$fileName\">" . esc_html($jobInfo->getJobName()) . '</a>';
 
             $flagBlockParts = [];
