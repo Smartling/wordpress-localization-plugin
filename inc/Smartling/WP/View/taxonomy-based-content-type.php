@@ -97,7 +97,9 @@ if (!empty($locales)) {
                             $percent = $item->getCompletionPercentage();
                             $status = $item->getStatusColor();
                             $statusFlags = $item->getStatusFlags();
-                            $editUrl = WordpressContentTypeHelper::getTargetEditUrl($item);
+                            if (0 !== $item->getTargetId()) {
+                                $editUrl = WordpressContentTypeHelper::getTargetEditUrl($item);
+                            }
                             $enabled = !(1 === $item->getIsCloned() || 1 === $item->getIsLocked());
                             break;
                         }

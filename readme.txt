@@ -64,6 +64,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 == Changelog ==
 = 5.7.3 =
 * Fixed possible misconfiguration where target locales were being saved as a duplicate of a newly changed source locale
+* Added links to the source and target content (if available) on the Translation Progress screen
 
 = 5.7.0 =
 * Reworked upload queue, added a live-refreshing upload queue count with visual feedback on change

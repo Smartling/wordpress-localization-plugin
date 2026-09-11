@@ -236,7 +236,7 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
         if (array_key_exists('targetLocales', $settings)) {
             $locales = [];
 
-            foreach ($settings['targetLocales'] as $blogId => $settings) {
+            foreach ($settings['targetLocales'] as $blogId => $targetLocaleSettings) {
                 if ((int)$blogId === $sourceBlogId) {
                     continue;
                 }
@@ -244,9 +244,9 @@ class ConfigurationProfileFormController extends WPAbstract implements WPHookInt
                     $tLocale = new TargetLocale();
                     $tLocale->setBlogId($blogId);
                     $tLocale->setLabel($this->siteHelper->getBlogLabelById($this->localizationPluginProxy, $blogId));
-                    $enabled = 'on' === $settings['enabled'];
-                    $tLocale->setEnabled(array_key_exists('enabled', $settings) && $enabled);
-                    $smartlingLocale = array_key_exists('target', $settings) ? $settings['target'] : -1;
+                    $enabled = 'on' === $targetLocaleSettings['enabled'];
+                    $tLocale->setEnabled(array_key_exists('enabled', $targetLocaleSettings) && $enabled);
+                    $smartlingLocale = array_key_exists('target', $targetLocaleSettings) ? $targetLocaleSettings['target'] : -1;
                     $tLocale->setSmartlingLocale($smartlingLocale);
                     if ($smartlingLocale !== -1 && $enabled) {
                         $usedTargetLocales[] = $smartlingLocale;
