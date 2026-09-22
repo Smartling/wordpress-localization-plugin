@@ -61,23 +61,36 @@ restore_current_blog();
 $submissionsTable = $wpdb->base_prefix . 'smartling_submissions';
 $lockedFields = serialize(['entity/post_title']);
 
-$existingSubmissionId = (int) $wpdb->get_var($wpdb->prepare(
-    "SELECT id FROM {$submissionsTable}
-     WHERE source_blog_id = %d AND source_id = %d AND target_blog_id = %d AND target_id = %d AND content_type = %s",
-    1,
-    $sourceId,
+// Keyed on (target_blog_id, target_id, content_type) - the same uniqueness
+// TranslationLockController::getSubmission() assumes via findOne(). Not keyed
+// on source_id: re-running this fixture with a different source post (e.g.
+// repeated local runs) must reuse the same target submission, never create a
+// second one - findOne() returns null (ambiguous) when more than one row
+// matches, which silently hides the Translation Lock meta box entirely.
+$existingIds = $wpdb->get_col($wpdb->prepare(
+    "SELECT id FROM {$submissionsTable} WHERE target_blog_id = %d AND target_id = %d AND content_type = %s",
     $targetBlogId,
     $targetPostId,
     'post'
 ));
 
+if (count($existingIds) > 1) {
+    $keepId = array_shift($existingIds);
+    $wpdb->query("DELETE FROM {$submissionsTable} WHERE id IN (" . implode(',', array_map('intval', $existingIds)) . ")");
+    $existingSubmissionId = $keepId;
+} else {
+    $existingSubmissionId = $existingIds ? (int) $existingIds[0] : 0;
+}
+
 if ($existingSubmissionId) {
     $wpdb->update(
         $submissionsTable,
         [
-            'status'        => 'Completed',
-            'is_locked'     => 1,
-            'locked_fields' => $lockedFields,
+            'source_blog_id' => 1,
+            'source_id'      => $sourceId,
+            'status'         => 'Completed',
+            'is_locked'      => 1,
+            'locked_fields'  => $lockedFields,
         ],
         ['id' => $existingSubmissionId]
     );

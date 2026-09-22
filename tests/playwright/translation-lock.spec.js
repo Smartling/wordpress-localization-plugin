@@ -33,6 +33,22 @@ test.describe('Translation Lock screen', () => {
             waitUntil: 'commit',
         });
 
+        // A first-time-per-user "Welcome to the editor" guide overlays the
+        // whole screen and blocks every click until dismissed. Only shown
+        // once per user (persisted server-side), but the E2E DB is fresh each
+        // run, so it reliably appears here. Escape (not a click) dismisses
+        // it: clicking its own Close button is flaky because the guide can
+        // still be animating in, and the modal's own overlay div briefly
+        // intercepts pointer events aimed at content inside it.
+        const guideOverlay = page.locator('.components-modal__screen-overlay').first();
+        try {
+            await guideOverlay.waitFor({ state: 'visible', timeout: 5000 });
+            await page.keyboard.press('Escape');
+            await guideOverlay.waitFor({ state: 'hidden', timeout: 5000 });
+        } catch {
+            // Guide never appeared (already dismissed for this user) — nothing to do.
+        }
+
         const lockLink = page.locator('a.thickbox', { hasText: 'Translation lock' });
         await expect(lockLink, 'Translation Lock meta box link must be present on a locked submission\'s target post').toBeVisible({ timeout: 30000 });
         await lockLink.click();
