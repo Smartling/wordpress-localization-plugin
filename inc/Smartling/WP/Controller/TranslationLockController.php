@@ -24,7 +24,12 @@ use Smartling\WP\WPHookInterface;
 class TranslationLockController extends WPAbstract implements WPHookInterface
 {
     public const LOCK_ACTION_NONCE_ACTION = 'smartling-translation-lock-action';
-    public const LOCK_ACTION_NONCE_FIELD = '_wpnonce';
+    // Must not be '_wpnonce': TranslationLockTableWidget::display() (inherited
+    // from WP_List_Table) renders its own hidden `_wpnonce` field for its
+    // (unused) bulk actions. A same-named field here would submit twice, and
+    // $_POST would keep only the list table's value, so verifyLockActionNonce()
+    // would reject every save.
+    public const LOCK_ACTION_NONCE_FIELD = 'smartling_lock_nonce';
 
     public function __construct(
         protected ApiWrapperInterface $api,

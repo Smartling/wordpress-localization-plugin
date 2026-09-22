@@ -102,4 +102,24 @@ class TranslationLockControllerTest extends TestCase
 
         $this->controller->handleFormPost();
     }
+
+    /**
+     * Regression WP-1019: TranslationLockTableWidget::display() (inherited from
+     * WP_List_Table) renders its own hidden `_wpnonce` field for its bulk
+     * actions. If our own nonce field used that same name, the popup form
+     * would submit two identically-named `_wpnonce` inputs; PHP keeps only the
+     * last one in $_POST, which is the list table's value, so
+     * verifyLockActionNonce() would reject every save with a valid-looking but
+     * wrong nonce. See TranslationLock.php and TranslationLockTableWidget.php.
+     */
+    public function testNonceFieldNameDoesNotCollideWithListTableBulkNonce(): void
+    {
+        $this->assertNotSame(
+            '_wpnonce',
+            TranslationLockController::LOCK_ACTION_NONCE_FIELD,
+            'LOCK_ACTION_NONCE_FIELD must not be "_wpnonce" - WP_List_Table::display() ' .
+            'already renders a hidden field with that name for its own bulk actions, ' .
+            'and a duplicate would silently break every Translation Lock save.'
+        );
+    }
 }
