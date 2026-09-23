@@ -63,7 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 5.7.4 =
-* Fixed Translation Lock popup silently failing to save unlocked fields
+* Fixed Translation Lock popup silently failing to save any change (locking or unlocking fields)
 
 = 5.7.3 =
 * Fixed possible misconfiguration where target locales were being saved as a duplicate of a newly changed source locale

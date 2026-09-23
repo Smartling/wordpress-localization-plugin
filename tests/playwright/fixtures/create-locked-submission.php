@@ -83,7 +83,7 @@ if (count($existingIds) > 1) {
 }
 
 if ($existingSubmissionId) {
-    $wpdb->update(
+    $result = $wpdb->update(
         $submissionsTable,
         [
             'source_blog_id' => 1,
@@ -94,6 +94,9 @@ if ($existingSubmissionId) {
         ],
         ['id' => $existingSubmissionId]
     );
+    if (false === $result) {
+        WP_CLI::error('Failed updating locked submission: ' . $wpdb->last_error);
+    }
 } else {
     $now = current_time('mysql');
     $wpdb->insert($submissionsTable, [

@@ -271,6 +271,11 @@ LOCK_FIXTURE_OUTPUT=$(E2E_TEST_POST_ID="${E2E_TEST_POST_ID}" ${WPCLI} eval-file 
 echo "${LOCK_FIXTURE_OUTPUT}"
 E2E_LOCK_TARGET_BLOG_PATH=$(echo "${LOCK_FIXTURE_OUTPUT}" | grep -oP 'E2E_LOCK_TARGET_BLOG_PATH=\K\S+')
 E2E_LOCK_TARGET_POST_ID=$(echo "${LOCK_FIXTURE_OUTPUT}" | grep -oP 'E2E_LOCK_TARGET_POST_ID=\K\d+')
+# Fail fast rather than letting translation-lock.spec.js silently test.skip()
+# in CI - a regression test written to catch "silently failing to save" must
+# not itself silently stop running.
+[ -n "${E2E_LOCK_TARGET_BLOG_PATH}" ] || { echo "ERROR: Failed to extract E2E_LOCK_TARGET_BLOG_PATH from create-locked-submission.php output"; exit 1; }
+[ -n "${E2E_LOCK_TARGET_POST_ID}" ] || { echo "ERROR: Failed to extract E2E_LOCK_TARGET_POST_ID from create-locked-submission.php output"; exit 1; }
 
 echo "--- DIAGNOSTIC: Profile table ---"
 ${WPCLI} db query \

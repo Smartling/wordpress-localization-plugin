@@ -111,6 +111,17 @@ class TranslationLockControllerTest extends TestCase
      * last one in $_POST, which is the list table's value, so
      * verifyLockActionNonce() would reject every save with a valid-looking but
      * wrong nonce. See TranslationLock.php and TranslationLockTableWidget.php.
+     *
+     * WP_List_Table::display_tablenav() always names its bulk-action nonce
+     * field '_wpnonce' (wp_nonce_field()'s own default, not something a
+     * subclass configures), so that literal is the complete collision surface
+     * - not an approximation of one. This unit test is intentionally a cheap,
+     * fast canary; this suite has no WP core loaded (bootstrap_units.php only
+     * requires the plugin's own autoloader, so WP_List_Table doesn't exist
+     * here), so actually rendering the table to prove the two fields never
+     * co-occur belongs in an E2E test - see
+     * tests/playwright/translation-lock.spec.js, which drives the real popup
+     * end to end and asserts the save behavior this bug broke.
      */
     public function testNonceFieldNameDoesNotCollideWithListTableBulkNonce(): void
     {
