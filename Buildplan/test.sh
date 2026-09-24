@@ -419,6 +419,21 @@ if [ -n "${CURRENT_SITEURL}" ] && [ "${CURRENT_SITEURL}" != "${EXPECTED_SITEURL}
     # -> http://test.com/WP_INSTALL_DIR).
     ${WPCLI} search-replace "${EXPECTED_SITEURL}" "http://${INSTALLED_DOMAIN}" \
         --all-tables --skip-columns=guid
+    # The *main* site's own siteurl/home must additionally regain the
+    # install-dir path segment (e.g. http://test.com -> http://test.com/WP_INSTALL_DIR).
+    # WordPress's files physically live under WP_INSTALL_DIR - that's not an
+    # artifact to discard here, unlike the one-time multisite-convert quirk
+    # cleaned up in the normalization above. PHPUnit's integration tests
+    # (e.g. ImageTranslationTest) build a filesystem path by stripping just
+    # "http://<domain>" from an attachment's guid and asserting the remainder
+    # is a real file, which only holds when the main site's own url still
+    # carries this segment. Scoped to `wp option update` (main site only, not
+    # --all-tables) so it doesn't leak onto every subsite's own url the way
+    # the single-search-replace-to-CURRENT_SITEURL this block used to do
+    # accidentally got "right" for the main site, at the cost of being wrong
+    # for every subsite (see the normalization step above).
+    ${WPCLI} option update siteurl "http://${INSTALLED_DOMAIN}${WP_INSTALL_DIR}"
+    ${WPCLI} option update home "http://${INSTALLED_DOMAIN}${WP_INSTALL_DIR}"
     ${WPCLI} db query \
         "UPDATE ${WP_DB_TABLE_PREFIX}site SET domain='${INSTALLED_DOMAIN}' WHERE domain='${E2E_DOMAIN}'"
     ${WPCLI} db query \
