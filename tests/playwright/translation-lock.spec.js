@@ -32,6 +32,7 @@ test.describe('Translation Lock screen', () => {
         await page.goto(`/${TARGET_BLOG_PATH}/wp-admin/post.php?post=${TARGET_POST_ID}&action=edit`, {
             waitUntil: 'commit',
         });
+        console.log(`[translation-lock] navigated to: ${page.url()}`);
 
         // A first-time-per-user "Welcome to the editor" guide overlays the
         // whole screen and blocks every click until dismissed. Only shown
@@ -50,7 +51,16 @@ test.describe('Translation Lock screen', () => {
         }
 
         const lockLink = page.locator('a.thickbox', { hasText: 'Translation lock' });
-        await expect(lockLink, 'Translation Lock meta box link must be present on a locked submission\'s target post').toBeVisible({ timeout: 30000 });
+        try {
+            await expect(lockLink, 'Translation Lock meta box link must be present on a locked submission\'s target post').toBeVisible({ timeout: 30000 });
+        } catch (err) {
+            // Diagnostic for CI-only failures: which page did we actually end up
+            // on? (This test is the only spec that navigates to a *subsite's*
+            // admin via a path prefix, e.g. /es/wp-admin/..., rather than the
+            // main site's /wp-admin/ directly.)
+            console.log(`[translation-lock] lock link not found; final url: ${page.url()}, title: ${await page.title().catch(() => '?')}`);
+            throw err;
+        }
         await lockLink.click();
 
         // Thickbox opens the popup in an iframe; wait for it to attach and load.
