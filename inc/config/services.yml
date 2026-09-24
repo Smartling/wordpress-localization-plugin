@@ -663,7 +663,6 @@ services:
       - "@content.helper"
       - "@wp.proxy"
       - "@helper.nonce-verifier"
-      - "@wp.proxy"
 
   live_notification.service:
     class: Smartling\WP\Controller\LiveNotificationController

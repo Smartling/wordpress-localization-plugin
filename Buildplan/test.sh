@@ -262,6 +262,21 @@ E2E_TEST_POST_ID=$(${WPCLI} post create \
 ${WPCLI} eval-file "${LOCAL_GIT_DIR}/tests/playwright/fixtures/create-profile.php" \
     --url="${E2E_DOMAIN}"
 
+# Seed a submission targeting a real post on a target site, already in the
+# "locked" state, so translation-lock.spec.js has a Translation Lock meta box
+# to open (WP-1019 regression coverage).
+LOCK_FIXTURE_OUTPUT=$(E2E_TEST_POST_ID="${E2E_TEST_POST_ID}" ${WPCLI} eval-file \
+    "${LOCAL_GIT_DIR}/tests/playwright/fixtures/create-locked-submission.php" \
+    --url="${E2E_DOMAIN}")
+echo "${LOCK_FIXTURE_OUTPUT}"
+E2E_LOCK_TARGET_BLOG_PATH=$(echo "${LOCK_FIXTURE_OUTPUT}" | grep -oP 'E2E_LOCK_TARGET_BLOG_PATH=\K\S+')
+E2E_LOCK_TARGET_POST_ID=$(echo "${LOCK_FIXTURE_OUTPUT}" | grep -oP 'E2E_LOCK_TARGET_POST_ID=\K\d+')
+# Fail fast rather than letting translation-lock.spec.js silently test.skip()
+# in CI - a regression test written to catch "silently failing to save" must
+# not itself silently stop running.
+[ -n "${E2E_LOCK_TARGET_BLOG_PATH}" ] || { echo "ERROR: Failed to extract E2E_LOCK_TARGET_BLOG_PATH from create-locked-submission.php output"; exit 1; }
+[ -n "${E2E_LOCK_TARGET_POST_ID}" ] || { echo "ERROR: Failed to extract E2E_LOCK_TARGET_POST_ID from create-locked-submission.php output"; exit 1; }
+
 echo "--- DIAGNOSTIC: Profile table ---"
 ${WPCLI} db query \
     "SELECT id, profile_name, is_active, original_blog_id, LEFT(target_locales,120) AS locales \
@@ -301,6 +316,8 @@ NODE_PATH="$(npm root -g)" \
     CI=true \
     PLAYWRIGHT_BASE_URL="${EXPECTED_SITEURL}" \
     E2E_TEST_POST_ID="${E2E_TEST_POST_ID}" \
+    E2E_LOCK_TARGET_BLOG_PATH="${E2E_LOCK_TARGET_BLOG_PATH}" \
+    E2E_LOCK_TARGET_POST_ID="${E2E_LOCK_TARGET_POST_ID}" \
     WP_ADMIN_USER=wp \
     WP_ADMIN_PASSWORD=wp \
     timeout 900 playwright test --reporter=junit,line
