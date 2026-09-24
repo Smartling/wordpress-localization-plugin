@@ -165,8 +165,22 @@ CURRENT_SITEURL=$(${WPCLI} option get siteurl 2>/dev/null | tr -d '\n\r ')
 echo "Current siteurl: ${CURRENT_SITEURL:-<empty>}"
 if [ -n "${CURRENT_SITEURL}" ] && [ "${CURRENT_SITEURL}" != "${EXPECTED_SITEURL}" ]; then
     echo "Normalizing WordPress base URL to ${EXPECTED_SITEURL}"
-    # Replace all full-URL occurrences in the database (handles serialized data)
-    ${WPCLI} search-replace "${CURRENT_SITEURL}" "${EXPECTED_SITEURL}" \
+    # Replace the bare domain (not CURRENT_SITEURL, which is read from the
+    # *main* site and may carry an extra install-dir path segment left by
+    # multisite-convert, e.g. http://test.com/WP_INSTALL_DIR) so every
+    # SUBSITE's own siteurl/home also gets rewritten
+    # (http://test.com/es -> http://localhost/es). Using the main site's
+    # full, decorated URL as the search string only ever matched that one
+    # site: every subsite's siteurl - a plain http://test.com/<slug>, with no
+    # WP_INSTALL_DIR segment - silently kept pointing at test.com, so admin
+    # screens for any subsite loaded their JS/CSS from the real test.com
+    # domain and got ERR_NAME_NOT_RESOLVED for everything (WP-1019).
+    ${WPCLI} search-replace "http://${INSTALLED_DOMAIN}" "${EXPECTED_SITEURL}" \
+        --all-tables --skip-columns=guid
+    # multisite-convert's install-dir path artifact (see above) only ever
+    # lands on the main site; clean it up there specifically, now that it's
+    # http://localhost/WP_INSTALL_DIR after the domain-only replace above.
+    ${WPCLI} search-replace "${EXPECTED_SITEURL}${WP_INSTALL_DIR}" "${EXPECTED_SITEURL}" \
         --all-tables --skip-columns=guid
     # Fix path-only multisite columns (domain still holds INSTALLED_DOMAIN here)
     ${WPCLI} db query "UPDATE ${WP_DB_TABLE_PREFIX}site \
@@ -238,7 +252,31 @@ if (is_file($file) || is_dir($file)) {
 if (preg_match('#^/[A-Za-z0-9_-]+/(wp-admin/.*|wp-content/.*|wp-includes/.*|.*\.php)$#', $uri, $m)) {
     $strippedFile = $_SERVER['DOCUMENT_ROOT'] . '/' . $m[1];
     if (is_file($strippedFile)) {
-        require $strippedFile;
+        if (substr($strippedFile, -4) === '.php') {
+            require $strippedFile;
+        } else {
+            // Static asset (js/css/fonts/images/etc.) reached via a
+            // blog-path-prefixed URL, e.g. /es/wp-includes/js/dist/hooks.min.js
+            // - a normal, expected URL shape for multisite subdirectory sites
+            // (includes_url() for a subsite is built from its own siteurl).
+            // require()-ing it would execute/output it under PHP's default
+            // text/html content type, which browsers reject for <script
+            // type="module"> (strict MIME checking) - this broke Gutenberg's
+            // block-editor worker bootstrap ("Failed to execute
+            // importScripts") the first time this router stripped the prefix.
+            static $mimeTypes = [
+                'js' => 'application/javascript', 'mjs' => 'application/javascript',
+                'css' => 'text/css', 'json' => 'application/json',
+                'svg' => 'image/svg+xml', 'png' => 'image/png',
+                'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif',
+                'webp' => 'image/webp', 'ico' => 'image/x-icon',
+                'woff' => 'font/woff', 'woff2' => 'font/woff2', 'ttf' => 'font/ttf',
+                'eot' => 'application/vnd.ms-fontobject',
+            ];
+            $ext = strtolower(pathinfo($strippedFile, PATHINFO_EXTENSION));
+            header('Content-Type: ' . ($mimeTypes[$ext] ?? 'application/octet-stream'));
+            readfile($strippedFile);
+        }
         return true;
     }
 }
@@ -363,7 +401,13 @@ rm -f "${WP_INSTALL_DIR}/wp-content/mu-plugins/e2e-fast-http.php"
 # search-replace before PHPUnit runs, or WordPress can't find the current site.
 if [ -n "${CURRENT_SITEURL}" ] && [ "${CURRENT_SITEURL}" != "${EXPECTED_SITEURL}" ]; then
     echo "Restoring WordPress domain for PHPUnit (localhost → ${INSTALLED_DOMAIN})..."
-    ${WPCLI} search-replace "${EXPECTED_SITEURL}" "${CURRENT_SITEURL}" \
+    # Domain-only, mirroring the normalization above: replacing every
+    # occurrence of EXPECTED_SITEURL with CURRENT_SITEURL (the *main* site's
+    # full, possibly install-dir-decorated URL) would collapse every
+    # subsite's siteurl to that same single URL instead of restoring each
+    # one's own (http://localhost/es -> http://test.com/es, not
+    # -> http://test.com/WP_INSTALL_DIR).
+    ${WPCLI} search-replace "${EXPECTED_SITEURL}" "http://${INSTALLED_DOMAIN}" \
         --all-tables --skip-columns=guid
     ${WPCLI} db query \
         "UPDATE ${WP_DB_TABLE_PREFIX}site SET domain='${INSTALLED_DOMAIN}' WHERE domain='${E2E_DOMAIN}'"
