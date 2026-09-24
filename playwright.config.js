@@ -18,9 +18,12 @@ if (fs.existsSync(envFile)) {
 module.exports = defineConfig({
     testDir: 'tests/playwright',
     timeout: 120000,
-    // 4 Playwright workers match the 4 PHP workers (PHP_CLI_SERVER_WORKERS=4).
-    // Static files are served without PHP (custom router), and REST API calls
-    // are aborted in beforeEach, so page loads each occupy exactly one PHP worker.
+    // test.sh runs PHP_CLI_SERVER_WORKERS=16 - oversubscribed relative to
+    // these 4 Playwright workers on purpose, since a single admin page load
+    // fires many concurrent sub-requests (CSS, JS, ajax) on its own; matching
+    // PHP workers 1:1 to Playwright workers starved every page load under
+    // real concurrent load (observed as intermittent CI timeouts at
+    // different points each run - a resource-contention signature).
     workers: 4,
     retries: process.env.CI ? 1 : 0,
     reporter: [

@@ -285,7 +285,17 @@ chdir($_SERVER['DOCUMENT_ROOT']);
 require_once $_SERVER['DOCUMENT_ROOT'] . '/index.php';
 ROUTER_EOF
 
-PHP_CLI_SERVER_WORKERS=4 php -S 0.0.0.0:80 -t "${WP_INSTALL_DIR}" /tmp/wp-e2e-router.php \
+# 16, not 4: a single Playwright worker's page load (especially a heavy
+# Gutenberg admin screen) fires many concurrent sub-requests (CSS, JS,
+# ajax) on its own. Matching PHP workers 1:1 to the 4 Playwright workers
+# starves every one of them - each of the 4 test workers competes for a
+# share of only 4 total PHP workers, queuing sub-requests and turning a
+# normally-fast page load into one that can exceed a 30s Playwright
+# assertion timeout under load (observed in CI as translation-lock.spec.js
+# intermittently timing out at different points each run - link not found,
+# link present but still hidden, save's navigation aborted - a classic
+# resource-contention signature, not a fixed failure point).
+PHP_CLI_SERVER_WORKERS=16 php -S 0.0.0.0:80 -t "${WP_INSTALL_DIR}" /tmp/wp-e2e-router.php \
     > /var/log/php-e2e-server.log 2>&1 &
 WP_SERVER_PID=$!
 

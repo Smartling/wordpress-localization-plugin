@@ -41,14 +41,25 @@ test.describe('Translation Lock screen', () => {
         // it: clicking its own Close button is flaky because the guide can
         // still be animating in, and the modal's own overlay div briefly
         // intercepts pointer events aimed at content inside it.
+        //
+        // The guide can take a while to mount (Gutenberg/React bootstrap on a
+        // cold OPcache), so this needs a generous window - a short one here
+        // just means we "miss" it and it pops up moments later, right as we
+        // try to click the lock link, which blocks that click for the rest
+        // of the test's timeout (Playwright retries the click, but nothing
+        // ever dismisses the now-static overlay).
         const guideOverlay = page.locator('.components-modal__screen-overlay').first();
-        try {
-            await guideOverlay.waitFor({ state: 'visible', timeout: 5000 });
-            await page.keyboard.press('Escape');
-            await guideOverlay.waitFor({ state: 'hidden', timeout: 5000 });
-        } catch {
-            // Guide never appeared (already dismissed for this user) — nothing to do.
-        }
+        const dismissWelcomeGuideIfPresent = async () => {
+            try {
+                await guideOverlay.waitFor({ state: 'visible', timeout: 30000 });
+                await page.keyboard.press('Escape');
+                await guideOverlay.waitFor({ state: 'hidden', timeout: 10000 });
+                return true;
+            } catch {
+                return false; // Guide never appeared (already dismissed for this user).
+            }
+        };
+        await dismissWelcomeGuideIfPresent();
 
         const lockLink = page.locator('a.thickbox', { hasText: 'Translation lock' });
         try {
@@ -61,7 +72,18 @@ test.describe('Translation Lock screen', () => {
             console.log(`[translation-lock] lock link not found; final url: ${page.url()}, title: ${await page.title().catch(() => '?')}`);
             throw err;
         }
-        await lockLink.click();
+        try {
+            await lockLink.click({ timeout: 15000 });
+        } catch (err) {
+            // Defense in depth against the guide appearing in the narrow race
+            // window between the check above and this click.
+            console.log('[translation-lock] click intercepted, checking for a late-appearing welcome guide');
+            const dismissed = await dismissWelcomeGuideIfPresent();
+            if (!dismissed) {
+                throw err;
+            }
+            await lockLink.click();
+        }
 
         // Thickbox opens the popup in an iframe; wait for it to attach and load.
         await page.waitForSelector('#TB_iframeContent', { timeout: 30000 });
