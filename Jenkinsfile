@@ -42,6 +42,18 @@ pipeline {
                     }
                 }
             }
+
+            post {
+                // Runs regardless of pass/fail, before the pipeline's final
+                // deleteDir() wipes the workspace - otherwise Playwright's
+                // failure screenshots/traces and JUnit report are written to
+                // disk (bind-mounted from the container) but never archived,
+                // so they're lost the moment the build finishes.
+                always {
+                    archiveArtifacts artifacts: 'test-results/**', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'tests/playwright-results.xml', allowEmptyArchive: true
+                }
+            }
         }
 
         stage('Archive release') {
