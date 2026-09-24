@@ -223,6 +223,26 @@ $file = $_SERVER['DOCUMENT_ROOT'] . $uri;
 if (is_file($file) || is_dir($file)) {
     return false;
 }
+
+// Multisite subdirectory sites (e.g. /es/wp-admin/post.php) have no
+// corresponding file on disk - WordPress's own multisite .htaccess rewrite
+// rules strip the blog-path segment before wp-admin/wp-content/wp-includes
+// (and any other *.php) requests reach the filesystem:
+//   RewriteRule ^([_0-9a-zA-Z-]+/)?(wp-(content|admin|includes).*) $2 [L]
+//   RewriteRule ^([_0-9a-zA-Z-]+/)?(.*\.php)$ $2 [L]
+// PHP's built-in server has no .htaccess support, so replicate that
+// stripping here. Without it, these requests fall through to index.php (the
+// FRONT-END router), which has no route for them - observed in CI as
+// translation-lock.spec.js landing on the target subsite's front page
+// instead of the intended wp-admin edit screen (WP-1019).
+if (preg_match('#^/[A-Za-z0-9_-]+/(wp-admin/.*|wp-content/.*|wp-includes/.*|.*\.php)$#', $uri, $m)) {
+    $strippedFile = $_SERVER['DOCUMENT_ROOT'] . '/' . $m[1];
+    if (is_file($strippedFile)) {
+        require $strippedFile;
+        return true;
+    }
+}
+
 chdir($_SERVER['DOCUMENT_ROOT']);
 require_once $_SERVER['DOCUMENT_ROOT'] . '/index.php';
 ROUTER_EOF
