@@ -5,6 +5,7 @@ namespace Smartling\Tests\Extensions;
 use PHPUnit\Framework\TestCase;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Extensions\PublishPressRevisions;
+use Smartling\Helpers\DetectChangesHelper;
 use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Submissions\SubmissionEntity;
@@ -28,12 +29,14 @@ class PublishPressRevisionsTest extends TestCase
         ?SubmissionManager $manager = null,
         ?LocalizationPluginProxyInterface $multilang = null,
         ?WordpressFunctionProxyHelper $wp = null,
+        ?DetectChangesHelper $detectChanges = null,
     ): PublishPressRevisions {
         return new PublishPressRevisions(
             $this->createMock(PluginHelper::class),
             $wp ?? $this->createMock(WordpressFunctionProxyHelper::class),
             $multilang ?? $this->createMock(LocalizationPluginProxyInterface::class),
             $manager ?? $this->createMock(SubmissionManager::class),
+            $detectChanges ?? $this->createMock(DetectChangesHelper::class),
         );
     }
 
@@ -119,5 +122,21 @@ class PublishPressRevisionsTest extends TestCase
 
         $this->assertSame(0, $x->sanitizeTargetField('post_parent', 10, $this->submission(20, 0)));
         $this->assertSame(10, $x->sanitizeTargetField('post_parent', 10, $this->submission(30, 0)));
+    }
+
+    public function testChangeDetectionIsSuppressedUntilRevisionIsApplied(): void
+    {
+        $wp = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wp->method('get_current_blog_id')->willReturn(1);
+        $manager = $this->createMock(SubmissionManager::class);
+        $manager->method('find')->willReturn([]);
+        $detectChanges = $this->createMock(DetectChangesHelper::class);
+        $detectChanges->expects($this->once())->method('suppress')->with(1, 10);
+        $detectChanges->expects($this->once())->method('resume')->with(1, 10);
+        $x = $this->x($manager, null, $wp, $detectChanges);
+
+        $x->moveSubmissionsToOriginal([], (object)['ID' => 20], (object)['ID' => 10, 'post_type' => 'page']);
+        $x->resumeChangeDetection(10);
+        $x->resumeChangeDetection(10);
     }
 }

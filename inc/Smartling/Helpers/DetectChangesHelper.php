@@ -15,6 +15,9 @@ class DetectChangesHelper
 {
     use LoggerSafeTrait;
 
+    /** @var array<string, true> */
+    private array $suppressed = [];
+
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,
         private ContentSerializationHelper $contentSerializationHelper,
@@ -22,6 +25,20 @@ class DetectChangesHelper
         private SettingsManager $settingsManager,
         private SubmissionManager $submissionManager,
     ) {
+    }
+
+    /**
+     * Ignore content changes of the given content until resume() is called, for the cases when content is
+     * updated with the data the submissions already represent.
+     */
+    public function suppress(int $blogId, int $contentId): void
+    {
+        $this->suppressed["$blogId:$contentId"] = true;
+    }
+
+    public function resume(int $blogId, int $contentId): void
+    {
+        unset($this->suppressed["$blogId:$contentId"]);
     }
 
     /**
@@ -59,10 +76,10 @@ class DetectChangesHelper
         return $this->settingsManager->findEntityByMainLocale($blogId);
     }
 
-    private function update(SubmissionEntity $submission, bool $needUpdateStatus, string $currentHash): SubmissionEntity
+    private function update(SubmissionEntity $submission, bool $needUpdateStatus, string $currentHash, ?string $legacyHash = null): SubmissionEntity
     {
         $this->getLogger()->debug(vsprintf('Checking submission id=%s.', [$submission->getId()]));
-        if ($currentHash !== $submission->getSourceContentHash()) {
+        if ($currentHash !== $submission->getSourceContentHash() && ($legacyHash === null || $legacyHash !== $submission->getSourceContentHash())) {
             $this->getLogger()->debug(
                 vsprintf('Submission id=%s has outdated hash. Setting up Outdated flag.', [$submission->getId()])
             );
@@ -105,6 +122,12 @@ class DetectChangesHelper
 
     public function detectChanges(int $blogId, int $contentId, string $contentType): void
     {
+        if (array_key_exists("$blogId:$contentId", $this->suppressed)) {
+            $this->getLogger()->debug("Change detection suppressed for $contentType blog=$blogId, id=$contentId");
+
+            return;
+        }
+
         $submissions = $this->getSubmissions($blogId, $contentId, [$contentType]);
 
         if (0 === count($submissions)) {
@@ -129,11 +152,12 @@ class DetectChangesHelper
                 $profile = $profiles[0];
 
                 $currentHash = $this->contentSerializationHelper->calculateHash($submissions[0]);
+                $legacyHash = $this->contentSerializationHelper->calculateLegacyHash($submissions[0]);
 
                 $needUpdateStatus = $profile->getUploadOnUpdate() === ConfigurationProfileEntity::UPLOAD_ON_CHANGE_AUTO;
 
                 foreach ($submissions as $submission) {
-                    $this->update($submission, $needUpdateStatus, $currentHash);
+                    $this->update($submission, $needUpdateStatus, $currentHash, $legacyHash);
                 }
 
                 $this->submissionManager->storeSubmissions($submissions);
