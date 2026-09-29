@@ -45,4 +45,44 @@ class JsonFieldRuleTest extends TestCase
         $this->assertSame('$.x', $rule->getPropertyPath());
         $this->assertSame('copy', $rule->getReplacerId());
     }
+
+    public function testExtendedFieldsRoundTrip(): void
+    {
+        $conditions = [['ancestor' => 2, 'key' => 'pattern_type', 'value' => 'sovos-list-items']];
+        $rule = new JsonFieldRule('_elementor_data', '$..a-b.text', 'translate', 'sovos-hero', $conditions);
+        $this->assertTrue($rule->isExtended());
+        $this->assertSame(['a-b', 'text'], $rule->getKeySuffix());
+        $this->assertEquals($rule, JsonFieldRule::fromArray($rule->toArray()));
+        $this->assertSame('sovos-hero', $rule->toArray()['widgetType']);
+        $this->assertSame($conditions, $rule->toArray()['conditions']);
+    }
+
+    public function testLegacyRuleIsNotExtendedAndOmitsNewFields(): void
+    {
+        $rule = new JsonFieldRule('_elementor_data', '$.elements[*].x', 'copy');
+        $this->assertFalse($rule->isExtended());
+        $this->assertSame(['metaKey', 'propertyPath', 'replacerId'], array_keys($rule->toArray()));
+    }
+
+    /**
+     * @dataProvider invalidExtendedProvider
+     */
+    public function testInvalidExtendedRuleThrows(string $path, string $widgetType, array $conditions): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new JsonFieldRule('_elementor_data', $path, 'translate', $widgetType, $conditions);
+    }
+
+    public static function invalidExtendedProvider(): array
+    {
+        $ok = ['ancestor' => 0, 'key' => 'k', 'value' => 'v'];
+        return [
+            'positional path with widget' => ['$.elements[*].x', 'w', []],
+            'bad widget type' => ['$..x', 'bad widget!', []],
+            'too many conditions' => ['$..x', '', array_fill(0, 6, $ok)],
+            'condition missing value' => ['$..x', '', [['ancestor' => 0, 'key' => 'k']]],
+            'negative ancestor' => ['$..x', '', [['ancestor' => -1, 'key' => 'k', 'value' => 'v']]],
+            'empty key' => ['$..x', '', [['ancestor' => 0, 'key' => '', 'value' => 'v']]],
+        ];
+    }
 }

@@ -9,6 +9,7 @@ use Smartling\Replacers\ReplacerFactory;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tuner\JsonFieldRule;
 use Smartling\Tuner\JsonFieldRulesManager;
+use Smartling\Tuner\JsonLeafMatcher;
 use Smartling\Vendor\JsonPath\JsonObject;
 
 class ExternalContentJsonRules implements ContentTypeModifyingInterface
@@ -17,11 +18,15 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
 
     public const PLUGIN_ID = 'json-rules';
 
+    private JsonLeafMatcher $matcher;
+
     public function __construct(
         private JsonFieldRulesManager $rulesManager,
         private ReplacerFactory $replacerFactory,
         private WordpressFunctionProxyHelper $wpProxy,
+        ?JsonLeafMatcher $matcher = null,
     ) {
+        $this->matcher = $matcher ?? new JsonLeafMatcher();
     }
 
     public function getMaxVersion(): string
@@ -75,6 +80,14 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
                 if ($this->parseReplacer($rule->getReplacerId())[0] !== ReplacerFactory::REPLACER_TRANSLATE) {
                     continue;
                 }
+                if ($rule->isExtended()) {
+                    foreach ($this->matcher->match($json, $rule) as $leaf) {
+                        if (is_string($leaf['value']) && $leaf['value'] !== '') {
+                            $result[$this->buildLeafKey($metaKey, $leaf['segments'])] = $leaf['value'];
+                        }
+                    }
+                    continue;
+                }
                 $matches = $this->safeGet($json, $rule->getPropertyPath());
                 foreach ($matches as $index => $value) {
                     if (is_string($value) && $value !== '') {
@@ -84,6 +97,16 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
             }
         }
         return $result;
+    }
+
+    /**
+     * @return array<int, mixed> values matched by the rule in document order, used for previews
+     */
+    public function getMatchedValues(array $json, JsonFieldRule $rule): array
+    {
+        return $rule->isExtended()
+            ? array_column($this->matcher->match($json, $rule), 'value')
+            : array_values($this->safeGet($json, $rule->getPropertyPath()));
     }
 
     public function getRelatedContent(string $contentType, int $contentId): array
@@ -101,7 +124,10 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
                     continue;
                 }
                 $referencedType = $hint !== '' ? $hint : ContentTypeHelper::CONTENT_TYPE_UNKNOWN;
-                foreach ($this->safeGet($json, $rule->getPropertyPath()) as $value) {
+                $values = $rule->isExtended()
+                    ? array_column($this->matcher->match($json, $rule), 'value')
+                    : $this->safeGet($json, $rule->getPropertyPath());
+                foreach ($values as $value) {
                     if (is_numeric($value) && (int)$value > 0) {
                         $result[$referencedType][] = (int)$value;
                     }
@@ -205,6 +231,19 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
 
     private function applyTranslateRule(JsonObject $jsonObject, JsonFieldRule $rule, string $metaKey, array $translations): bool
     {
+        if ($rule->isExtended()) {
+            $data = &$jsonObject->getValue();
+            $changed = false;
+            foreach ($this->matcher->match($data, $rule) as $leaf) {
+                $key = $this->buildLeafKey($metaKey, $leaf['segments']);
+                if (array_key_exists($key, $translations)) {
+                    $changed = $this->matcher->setValue($data, $leaf['segments'], $translations[$key]) || $changed;
+                }
+            }
+            unset($data);
+
+            return $changed;
+        }
         $objects = $jsonObject->getJsonObjects($rule->getPropertyPath());
         if ($objects === false || $objects === null) {
             return false;
@@ -232,6 +271,23 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
         } catch (\Throwable $e) {
             $this->getLogger()->notice("Unable to resolve replacer {$rule->getReplacerId()}: " . $e->getMessage());
             return false;
+        }
+        if ($rule->isExtended()) {
+            $data = &$jsonObject->getValue();
+            $changed = false;
+            foreach ($this->matcher->match($data, $rule) as $leaf) {
+                $original = $leaf['value'];
+                if (!is_numeric($original) || (int)$original <= 0) {
+                    continue;
+                }
+                $replaced = $replacer->processAttributeOnDownload($original, $original, $submission);
+                if ($replaced !== $original) {
+                    $changed = $this->matcher->setValue($data, $leaf['segments'], $replaced) || $changed;
+                }
+            }
+            unset($data);
+
+            return $changed;
         }
         $objects = $jsonObject->getJsonObjects($rule->getPropertyPath());
         if ($objects === false || $objects === null) {
@@ -265,6 +321,14 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
     {
         $parts = explode('|', $replacerId, 2);
         return [$parts[0], $parts[1] ?? ''];
+    }
+
+    /**
+     * @param array<int, string|int> $segments
+     */
+    private function buildLeafKey(string $metaKey, array $segments): string
+    {
+        return $metaKey . '|' . $this->matcher->pathToString($segments);
     }
 
     private function buildKey(string $metaKey, string $path, int $index): string

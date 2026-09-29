@@ -221,6 +221,192 @@ class VisualConfiguratorPageTest extends TestCase
         $this->assertTrue($errorCalled);
     }
 
+    /**
+     * The storage mock does not persist, so keep state across the controller's loadData() call
+     */
+    private function inMemoryManager(): JsonFieldRulesManager
+    {
+        return new class extends JsonFieldRulesManager {
+            public function loadData(): void
+            {
+            }
+
+            public function saveData(): void
+            {
+            }
+        };
+    }
+
+    private function passthroughProxy(): WordpressFunctionProxyHelper|MockObject
+    {
+        $wpProxy = $this->createWpProxy();
+        $wpProxy->method('sanitize_text_field')->willReturnCallback(fn(string $v): string => $v);
+        $wpProxy->method('wp_unslash')->willReturnCallback(fn(string $v): string => $v);
+        return $wpProxy;
+    }
+
+    public function testAjaxSaveRuleStoresExtendedRule(): void
+    {
+        $_POST = [
+            'metaKey' => '_elementor_data',
+            'propertyPath' => '$..title.text',
+            'replacerId' => 'translate',
+            'widgetType' => 'sovos-overview-hero',
+            'conditions' => json_encode([['ancestor' => 0, 'key' => 'pattern_type', 'value' => 'x']]),
+        ];
+        $saved = null;
+        $wpProxy = $this->passthroughProxy();
+        $wpProxy->method('wp_send_json_success')->willReturnCallback(function (array $p) use (&$saved) {
+            $saved = $p['rule'];
+        });
+        $manager = new JsonFieldRulesManager();
+
+        $this->makeController($manager, $wpProxy)->ajaxSaveRule();
+
+        $this->assertSame('sovos-overview-hero', $saved['widgetType']);
+        $this->assertSame('x', $saved['conditions'][0]['value']);
+        $this->assertCount(1, $manager->listItems());
+    }
+
+    /**
+     * @dataProvider invalidSaveProvider
+     */
+    public function testAjaxSaveRuleRejectsInvalidExtendedInput(array $extra, string $path = '$..title.text', string $replacer = 'translate'): void
+    {
+        $_POST = ['metaKey' => 'm', 'propertyPath' => $path, 'replacerId' => $replacer] + $extra;
+        $status = null;
+        $wpProxy = $this->passthroughProxy();
+        $wpProxy->method('wp_send_json_error')->willReturnCallback(function ($p, $s = null) use (&$status) {
+            $status = $s;
+        });
+        $manager = new JsonFieldRulesManager();
+
+        $this->makeController($manager, $wpProxy)->ajaxSaveRule();
+
+        $this->assertSame(400, $status);
+        $this->assertCount(0, $manager->listItems());
+    }
+
+    public static function invalidSaveProvider(): array
+    {
+        return [
+            'bad widget type' => [['widgetType' => 'bad widget!']],
+            'conditions not json' => [['conditions' => 'nope']],
+            'positional path with widget' => [['widgetType' => 'w'], '$.a[*].b'],
+            'unknown replacer' => [[], '$.a', 'bogus'],
+        ];
+    }
+
+    public function testAjaxExportReturnsRulesWithoutIds(): void
+    {
+        $manager = $this->inMemoryManager();
+        $manager->add(['metaKey' => 'm', 'propertyPath' => '$..a', 'replacerId' => 'translate', 'widgetType' => 'w']);
+        $export = null;
+        $wpProxy = $this->passthroughProxy();
+        $wpProxy->method('wp_send_json_success')->willReturnCallback(function (array $p) use (&$export) {
+            $export = $p['export'];
+        });
+
+        $this->makeController($manager, $wpProxy)->ajaxExport();
+
+        $this->assertSame(JsonFieldRulesManager::EXPORT_FORMAT_VERSION, $export['version']);
+        $this->assertSame([['metaKey' => 'm', 'propertyPath' => '$..a', 'replacerId' => 'translate', 'widgetType' => 'w']], $export['rules']);
+    }
+
+    public function testAjaxImportAddsNewRulesKeepsExistingAndReportsInvalid(): void
+    {
+        $manager = $this->inMemoryManager();
+        $existingId = $manager->add(['metaKey' => 'm', 'propertyPath' => '$.keep', 'replacerId' => 'copy']);
+        $_POST = ['payload' => json_encode(['version' => 1, 'rules' => [
+            ['metaKey' => 'm', 'propertyPath' => '$.keep', 'replacerId' => 'copy'],
+            ['metaKey' => 'm', 'propertyPath' => '$..new', 'replacerId' => 'translate', 'widgetType' => 'w'],
+            ['metaKey' => 'm', 'propertyPath' => '$..x', 'replacerId' => 'bogus'],
+            ['metaKey' => 'm'],
+            'garbage',
+        ]])];
+        $result = null;
+        $wpProxy = $this->passthroughProxy();
+        $wpProxy->method('wp_send_json_success')->willReturnCallback(function (array $p) use (&$result) {
+            $result = $p;
+        });
+
+        $this->makeController($manager, $wpProxy)->ajaxImport();
+
+        $this->assertSame(1, $result['added']);
+        $this->assertSame(1, $result['skipped']);
+        $this->assertSame([3, 4, 5], array_column($result['invalid'], 'index'));
+        $items = $manager->listItems();
+        $this->assertCount(2, $items);
+        $this->assertSame('$.keep', $items[$existingId]->getPropertyPath());
+    }
+
+    /**
+     * @dataProvider invalidImportProvider
+     */
+    public function testAjaxImportRejectsBadFiles(string $payload): void
+    {
+        $_POST = ['payload' => $payload];
+        $status = null;
+        $wpProxy = $this->passthroughProxy();
+        $wpProxy->method('wp_send_json_error')->willReturnCallback(function ($p, $s = null) use (&$status) {
+            $status = $s;
+        });
+        $manager = $this->inMemoryManager();
+        $manager->add(['metaKey' => 'm', 'propertyPath' => '$.keep', 'replacerId' => 'copy']);
+
+        $this->makeController($manager, $wpProxy)->ajaxImport();
+
+        $this->assertSame(400, $status);
+        $this->assertCount(1, $manager->listItems());
+    }
+
+    public static function invalidImportProvider(): array
+    {
+        return [
+            'empty' => [''],
+            'not json' => ['{{'],
+            'no rules key' => [json_encode(['version' => 1])],
+            'newer version' => [json_encode(['version' => 99, 'rules' => []])],
+            'too large' => [str_repeat('a', 1048577)],
+        ];
+    }
+
+    public function testAjaxPreviewReturnsCountAndValues(): void
+    {
+        $_POST = [
+            'id' => '7',
+            'metaKey' => '_elementor_data',
+            'propertyPath' => '$..title.text',
+            'replacerId' => 'translate',
+            'widgetType' => 'sovos-overview-hero',
+        ];
+        $result = null;
+        $wpProxy = $this->passthroughProxy();
+        $wpProxy->method('getPostMeta')->willReturn(json_encode(\Smartling\Tests\Smartling\Tuner\JsonLeafMatcherTest::sovosData()));
+        $wpProxy->method('wp_send_json_success')->willReturnCallback(function (array $p) use (&$result) {
+            $result = $p;
+        });
+
+        $this->makeController(new JsonFieldRulesManager(), $wpProxy)->ajaxPreview();
+
+        $this->assertSame(['count' => 1, 'values' => ['Sovi AI']], $result);
+    }
+
+    public function testImportAndExportRequireCapability(): void
+    {
+        $errors = 0;
+        $wpProxy = $this->createWpProxy(false);
+        $wpProxy->method('wp_send_json_error')->willReturnCallback(function ($p, $s = null) use (&$errors) {
+            $this->assertSame(403, $s);
+            $errors++;
+        });
+        $controller = $this->makeController(new JsonFieldRulesManager(), $wpProxy);
+        $controller->ajaxImport();
+        $controller->ajaxExport();
+        $controller->ajaxPreview();
+        $this->assertSame(3, $errors);
+    }
+
     private function createWpProxy(bool $currentUserCan = true): WordpressFunctionProxyHelper|MockObject
     {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
