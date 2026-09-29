@@ -60,6 +60,11 @@ class ExternalContentElementor4Test extends TestCase
         return $submission;
     }
 
+    public function testPluginIdDiffersFromElementor3ForUnambiguousLogs(): void
+    {
+        $this->assertSame('elementor4', $this->getHandler($this->makeProxy(''))->getPluginId());
+    }
+
     public function testCanHandle(): void
     {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
@@ -293,7 +298,7 @@ class ExternalContentElementor4Test extends TestCase
         // Translation strings are keyed as {containerId: {widgetId: {settingKey: translatedValue}}}
         $translation = [
             'meta' => [ExternalContentElementor4::META_FIELD_NAME => json_encode($elementData)],
-            'elementor' => [
+            'elementor4' => [
                 'container1' => [
                     'heading1' => ['title' => 'Translated heading'],
                 ],

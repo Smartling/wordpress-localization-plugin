@@ -13,4 +13,9 @@ class ExternalContentElementor4 extends ExternalContentElementorAbstract
     {
         return '4';
     }
+
+    public function getPluginId(): string
+    {
+        return 'elementor4';
+    }
 }
