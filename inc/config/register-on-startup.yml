@@ -22,6 +22,7 @@ services:
       - [ "addService", [ "@smartling.helper.relative-image-path-support" ]]
       - [ "addService", [ "@smartling.helper.absolute-image-path-support" ]]
       - [ "addService", [ "@service.submission-cleanup" ]]
+      - [ "addService", [ "@plugin.publishpress-revisions" ]]
       - [ "addService", [ "@helper.shortcode" ]]
       - [ "addService", [ "@helper.gutenberg" ]]
       - [ "addService", [ "@meta-field.processor.manager" ]]

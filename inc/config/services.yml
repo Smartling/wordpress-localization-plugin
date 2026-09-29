@@ -222,6 +222,14 @@ services:
       - "@helper.plugins"
       - "@wp.proxy"
 
+  plugin.publishpress-revisions:
+    class: Smartling\Extensions\PublishPressRevisions
+    arguments:
+      - "@helper.plugins"
+      - "@wp.proxy"
+      - "@multilang.proxy"
+      - "@manager.submission"
+
   content.relations.handler:
     class: Smartling\Services\ContentRelationsHandler
     arguments:
