@@ -353,7 +353,8 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                             setDescription(job.description || '');
                             setDueDate(job.dueDate ? new Date(job.dueDate).toISOString().slice(0, 16) : '');
                             setSelectedLocales((job.targetLocaleIds || [])
-                                .map(localeCode => locales.find(l => l.smartlingLocale === localeCode)?.blogId));
+                                .map(localeCode => locales.find(l => l.smartlingLocale === localeCode)?.blogId)
+                                .filter(blogId => blogId !== undefined));
                         }
                     }
                 }),
