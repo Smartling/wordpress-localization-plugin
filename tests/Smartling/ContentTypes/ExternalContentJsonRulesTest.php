@@ -411,6 +411,39 @@ class ExternalContentJsonRulesTest extends TestCase
         $this->assertSame(110, $decoded[0]['settings']['image']['id']);
     }
 
+    public function testRelatedPositionRuleReplacesFromSourceIdAndIgnoresIdAlreadyRemapped(): void
+    {
+        $source = ['elements' => [['image' => ['id' => 11]], ['image' => ['id' => 22]]]];
+        // Another handler already remapped 11 => 110 and 22 => 220, 110 is also an unrelated source id mapped to 999
+        $alreadyRemapped = ['elements' => [['image' => ['id' => 110]], ['image' => ['id' => 220]]]];
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('findOne')->willReturnCallback(function (array $params) {
+            $target = [11 => 110, 22 => 220, 110 => 999][$params[SubmissionEntity::FIELD_SOURCE_ID] ?? 0] ?? null;
+            if ($target === null) {
+                return null;
+            }
+            $related = $this->createMock(SubmissionEntity::class);
+            $related->method('getTargetId')->willReturn($target);
+            $related->method('getId')->willReturn(0);
+            return $related;
+        });
+        $engine = new ExternalContentJsonRules(
+            $this->mockRulesManager([$this->rule('_elementor_data', '$.elements[*].image.id', 'related|attachment')]),
+            new ReplacerFactory($submissionManager),
+            $this->createMock(WordpressFunctionProxyHelper::class),
+        );
+
+        $result = $engine->setContentFields(
+            ['meta' => ['_elementor_data' => json_encode($source)]],
+            ['meta' => ['_elementor_data' => json_encode($alreadyRemapped)]],
+            $this->submission('page', 100),
+        );
+
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $this->assertSame(110, $decoded['elements'][0]['image']['id']);
+        $this->assertSame(220, $decoded['elements'][1]['image']['id']);
+    }
+
     private function rule(string $metaKey, string $path, string $replacerId): JsonFieldRule
     {
         return new JsonFieldRule($metaKey, $path, $replacerId);

@@ -308,17 +308,17 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
 
             return $changed;
         }
-        $objects = $jsonObject->getJsonObjects($rule->getPropertyPath());
-        if ($objects === false || $objects === null) {
-            return false;
-        }
-        if (!is_array($objects)) {
-            $objects = [$objects];
+        $objects = $this->getNodes($jsonObject, $rule->getPropertyPath());
+        // Read ids from the source, the copy may already hold ids remapped by another handler (see extended branch)
+        $sourceObjects = $this->getNodes(new JsonObject($matchSource), $rule->getPropertyPath());
+        $usesSource = count($sourceObjects) === count($objects);
+        if (!$usesSource) {
+            $this->getLogger()->notice("Source and translation differ in structure for path={$rule->getPropertyPath()}, using translated values");
         }
         $changed = false;
-        foreach ($objects as $node) {
+        foreach ($objects as $index => $node) {
             $ref = &$node->getValue();
-            $original = $ref;
+            $original = $usesSource ? $sourceObjects[$index]->getValue() : $ref;
             if (!is_numeric($original) || (int)$original <= 0) {
                 unset($ref);
                 continue;
@@ -331,6 +331,19 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
             unset($ref);
         }
         return $changed;
+    }
+
+    /**
+     * @return JsonObject[]
+     */
+    private function getNodes(JsonObject $jsonObject, string $path): array
+    {
+        $objects = $jsonObject->getJsonObjects($path);
+        if ($objects === false || $objects === null) {
+            return [];
+        }
+
+        return is_array($objects) ? array_values($objects) : [$objects];
     }
 
     /**
