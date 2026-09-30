@@ -74,7 +74,7 @@ class JsonFieldRulesManagerTest extends TestCase
         $this->assertSame(JsonFieldRulesManager::EXPORT_FORMAT_VERSION, $export['version']);
         $this->assertSame([
             ['metaKey' => 'm', 'propertyPath' => '$.x', 'replacerId' => 'copy'],
-            ['metaKey' => 'm', 'propertyPath' => '$..y', 'replacerId' => 'translate', 'widgetType' => 'w'],
+            ['metaKey' => 'm', 'propertyPath' => '$..y', 'replacerId' => 'translate', 'matchMode' => 'anywhere', 'widgetType' => 'w'],
         ], $export['rules']);
     }
 

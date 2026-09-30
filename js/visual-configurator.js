@@ -267,7 +267,7 @@
         const activeWidget = extended && limitToWidget ? widgetType : '';
         const activeConditions = extended ? conditions : [];
         const composedReplacerId = replacerId === 'related' ? `related|${refType}` : replacerId;
-        const previewKey = JSON.stringify([propertyPath, activeWidget, activeConditions, composedReplacerId]);
+        const previewKey = JSON.stringify([propertyPath, activeWidget, activeConditions, composedReplacerId, mode]);
 
         useEffect(() => {
             if (!draft || draft.path === '' || !replacerId) {
@@ -284,6 +284,7 @@
                         replacerId: composedReplacerId,
                         widgetType: activeWidget,
                         conditions: JSON.stringify(activeConditions),
+                        matchMode: mode,
                     });
                     if (!cancelled) {
                         setPreview(response && response.success
@@ -387,6 +388,7 @@
                             replacerId: composedReplacerId,
                             widgetType: activeWidget,
                             conditions: JSON.stringify(activeConditions),
+                            matchMode: mode,
                         }),
                     }, 'Save rule'),
                     ' ',

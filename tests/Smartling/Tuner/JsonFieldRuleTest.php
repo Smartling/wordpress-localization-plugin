@@ -85,4 +85,59 @@ class JsonFieldRuleTest extends TestCase
             'empty key' => ['$..x', '', [['ancestor' => 0, 'key' => '', 'value' => 'v']]],
         ];
     }
+
+    public function testAnywhereModeWithoutWidgetOrConditionsIsExtended(): void
+    {
+        $rule = new JsonFieldRule('_elementor_data', '$..items.title', 'translate', '', [], JsonFieldRule::MATCH_ANYWHERE);
+        $this->assertTrue($rule->isExtended());
+        $this->assertSame('anywhere', $rule->toArray()['matchMode']);
+        $this->assertEquals($rule, JsonFieldRule::fromArray($rule->toArray()));
+    }
+
+    public function testAnywhereModeRequiresRecursivePath(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new JsonFieldRule('_elementor_data', '$.items[*].title', 'translate', '', [], JsonFieldRule::MATCH_ANYWHERE);
+    }
+
+    public function testPositionModeWithWidgetThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new JsonFieldRule('_elementor_data', '$..title', 'translate', 'w', [], JsonFieldRule::MATCH_POSITION);
+    }
+
+    public function testUnknownMatchModeThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new JsonFieldRule('_elementor_data', '$.x', 'translate', '', [], 'sideways');
+    }
+
+    public function testStoredRulesWithoutMatchModeKeepLegacyBehavior(): void
+    {
+        $rule = JsonFieldRule::fromArray(['metaKey' => 'm', 'propertyPath' => '$..x', 'replacerId' => 'copy']);
+        $this->assertFalse($rule->isExtended());
+        $this->assertArrayNotHasKey('matchMode', $rule->toArray());
+    }
+
+    /**
+     * @dataProvider invalidFieldProvider
+     */
+    public function testInvalidBaseFieldsThrow(string $metaKey, string $path, string $replacer): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        new JsonFieldRule($metaKey, $path, $replacer);
+    }
+
+    public static function invalidFieldProvider(): array
+    {
+        return [
+            'empty meta key' => ['', '$.x', 'copy'],
+            'empty path' => ['m', '', 'copy'],
+            'empty replacer' => ['m', '$.x', ''],
+            'long meta key' => [str_repeat('a', 256), '$.x', 'copy'],
+            'long path' => ['m', '$.' . str_repeat('a', 511), 'copy'],
+            'long replacer' => ['m', '$.x', str_repeat('a', 65)],
+            'control character' => ["m\n", '$.x', 'copy'],
+        ];
+    }
 }

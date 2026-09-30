@@ -160,13 +160,16 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
                 $this->getLogger()->debug("Failed to parse meta $metaKey as JSON: " . $e->getMessage());
                 continue;
             }
+            // Extended rules are matched against the source, not the (possibly already translated) copy being edited:
+            // conditions on translatable siblings must see the same values as they did on upload
+            $matchSource = $this->decodeJson($original['meta'][$metaKey] ?? null) ?? $jsonObject->getValue();
             $modified = false;
             foreach ($rules as $rule) {
                 [$replacer] = $this->parseReplacer($rule->getReplacerId());
                 if ($replacer === ReplacerFactory::REPLACER_TRANSLATE) {
-                    $modified = $this->applyTranslateRule($jsonObject, $rule, $metaKey, $translations) || $modified;
+                    $modified = $this->applyTranslateRule($jsonObject, $matchSource, $rule, $metaKey, $translations) || $modified;
                 } elseif ($replacer === ReplacerFactory::REPLACER_RELATED) {
-                    $modified = $this->applyRelatedRule($jsonObject, $rule, $submission) || $modified;
+                    $modified = $this->applyRelatedRule($jsonObject, $matchSource, $rule, $submission) || $modified;
                 }
             }
             if ($modified) {
@@ -229,12 +232,26 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
         return $result;
     }
 
-    private function applyTranslateRule(JsonObject $jsonObject, JsonFieldRule $rule, string $metaKey, array $translations): bool
+    private function decodeJson(mixed $value): ?array
+    {
+        if (!is_string($value) || $value === '') {
+            return null;
+        }
+        try {
+            $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    private function applyTranslateRule(JsonObject $jsonObject, array $matchSource, JsonFieldRule $rule, string $metaKey, array $translations): bool
     {
         if ($rule->isExtended()) {
             $data = &$jsonObject->getValue();
             $changed = false;
-            foreach ($this->matcher->match($data, $rule) as $leaf) {
+            foreach ($this->matcher->match($matchSource, $rule) as $leaf) {
                 $key = $this->buildLeafKey($metaKey, $leaf['segments']);
                 if (array_key_exists($key, $translations)) {
                     $changed = $this->matcher->setValue($data, $leaf['segments'], $translations[$key]) || $changed;
@@ -264,7 +281,7 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
         return $changed;
     }
 
-    private function applyRelatedRule(JsonObject $jsonObject, JsonFieldRule $rule, SubmissionEntity $submission): bool
+    private function applyRelatedRule(JsonObject $jsonObject, array $matchSource, JsonFieldRule $rule, SubmissionEntity $submission): bool
     {
         try {
             $replacer = $this->replacerFactory->getReplacer($rule->getReplacerId());
@@ -275,7 +292,9 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
         if ($rule->isExtended()) {
             $data = &$jsonObject->getValue();
             $changed = false;
-            foreach ($this->matcher->match($data, $rule) as $leaf) {
+            foreach ($this->matcher->match($matchSource, $rule) as $leaf) {
+                // Replace from the source id: ids another handler already remapped in the copy must not be remapped
+                // again, a target id can collide with an unrelated source id in multisite
                 $original = $leaf['value'];
                 if (!is_numeric($original) || (int)$original <= 0) {
                     continue;

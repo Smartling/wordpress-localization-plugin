@@ -4,12 +4,21 @@ namespace Smartling\Tuner;
 
 final class JsonFieldRule
 {
+    public const MATCH_POSITION = 'position';
+    public const MATCH_ANYWHERE = 'anywhere';
     public const MAX_CONDITIONS = 5;
     public const MAX_STRING_LENGTH = 256;
+    public const MAX_META_KEY_LENGTH = 255;
+    public const MAX_PATH_LENGTH = 512;
+    public const MAX_REPLACER_ID_LENGTH = 64;
     private const EXTENDED_PATH_PATTERN = '~^\$\.\.[A-Za-z_][\w-]*(\.[A-Za-z_][\w-]*)*$~';
     private const WIDGET_TYPE_PATTERN = '~^[A-Za-z0-9_-]{1,64}$~';
 
+    private string $matchMode;
+
     /**
+     * @param string $matchMode MATCH_POSITION rules are evaluated as JSONPath, MATCH_ANYWHERE rules by JsonLeafMatcher.
+     *                          Defaults to anywhere when a widget or conditions are set, position otherwise.
      * @param array<int, array{ancestor: int, key: string, value: string}> $conditions
      */
     public function __construct(
@@ -18,16 +27,44 @@ final class JsonFieldRule
         private string $replacerId,
         private string $widgetType = '',
         private array $conditions = [],
+        string $matchMode = '',
     ) {
+        foreach (['metaKey' => [$this->metaKey, self::MAX_META_KEY_LENGTH], 'propertyPath' => [$this->propertyPath, self::MAX_PATH_LENGTH], 'replacerId' => [$this->replacerId, self::MAX_REPLACER_ID_LENGTH]] as $field => [$value, $max]) {
+            if ($value === '') {
+                throw new \InvalidArgumentException("Field cannot be empty: $field");
+            }
+            if (strlen($value) > $max) {
+                throw new \InvalidArgumentException("$field exceeds maximum length of $max characters");
+            }
+            if (preg_match('~[\x00-\x1F\x7F]~', $value) === 1) {
+                throw new \InvalidArgumentException("$field contains invalid characters");
+            }
+        }
         if ($this->widgetType !== '' && preg_match(self::WIDGET_TYPE_PATTERN, $this->widgetType) !== 1) {
             throw new \InvalidArgumentException('Invalid widgetType');
         }
         $this->conditions = self::normalizeConditions($this->conditions);
+        $scoped = $this->widgetType !== '' || $this->conditions !== [];
+        if ($matchMode === '') {
+            $matchMode = $scoped ? self::MATCH_ANYWHERE : self::MATCH_POSITION;
+        }
+        if (!in_array($matchMode, [self::MATCH_POSITION, self::MATCH_ANYWHERE], true)) {
+            throw new \InvalidArgumentException("Unknown matchMode: $matchMode");
+        }
+        if ($scoped && $matchMode !== self::MATCH_ANYWHERE) {
+            throw new \InvalidArgumentException('Rules with a widget or conditions must use matchMode anywhere');
+        }
+        $this->matchMode = $matchMode;
         if ($this->isExtended() && preg_match(self::EXTENDED_PATH_PATTERN, $this->propertyPath) !== 1) {
             throw new \InvalidArgumentException(
-                'Rules with a widget or conditions must use a path in the form $..key.subkey',
+                'Rules that match anywhere must use a path in the form $..key.subkey',
             );
         }
+    }
+
+    public function getMatchMode(): string
+    {
+        return $this->matchMode;
     }
 
     public function getMetaKey(): string
@@ -63,7 +100,7 @@ final class JsonFieldRule
      */
     public function isExtended(): bool
     {
-        return $this->widgetType !== '' || $this->conditions !== [];
+        return $this->matchMode === self::MATCH_ANYWHERE;
     }
 
     /**
@@ -81,6 +118,9 @@ final class JsonFieldRule
             'propertyPath' => $this->propertyPath,
             'replacerId' => $this->replacerId,
         ];
+        if ($this->isExtended()) {
+            $result['matchMode'] = self::MATCH_ANYWHERE;
+        }
         if ($this->widgetType !== '') {
             $result['widgetType'] = $this->widgetType;
         }
@@ -105,6 +145,7 @@ final class JsonFieldRule
             (string)$data['replacerId'],
             (string)($data['widgetType'] ?? ''),
             is_array($data['conditions'] ?? null) ? $data['conditions'] : [],
+            (string)($data['matchMode'] ?? ''),
         );
     }
 

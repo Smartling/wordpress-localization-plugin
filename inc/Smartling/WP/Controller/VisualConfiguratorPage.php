@@ -212,47 +212,40 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
      */
     private function readRule(): JsonFieldRule
     {
-        $get = function (string $key): string {
+        $data = [];
+        foreach (['metaKey', 'propertyPath', 'replacerId'] as $key) {
             if (!isset($_POST[$key]) || !is_string($_POST[$key])) {
                 throw new \InvalidArgumentException("Missing field: $key");
             }
-            return $this->wpProxy->sanitize_text_field($this->wpProxy->wp_unslash($_POST[$key]));
-        };
-        $payload = [
-            'metaKey' => $get('metaKey'),
-            'propertyPath' => $get('propertyPath'),
-            'replacerId' => $get('replacerId'),
-        ];
-        foreach ($payload as $k => $v) {
-            if ($v === '') {
-                throw new \InvalidArgumentException("Field cannot be empty: $k");
-            }
+            $data[$key] = $this->wpProxy->wp_unslash($_POST[$key]);
         }
-        if (strlen($payload['propertyPath']) > 512) {
-            throw new \InvalidArgumentException('propertyPath exceeds maximum length of 512 characters');
+        foreach (['widgetType', 'matchMode'] as $key) {
+            $data[$key] = isset($_POST[$key]) && is_string($_POST[$key]) ? $this->wpProxy->wp_unslash($_POST[$key]) : '';
         }
-        $widgetType = isset($_POST['widgetType']) && is_string($_POST['widgetType'])
-            ? $this->wpProxy->sanitize_text_field($this->wpProxy->wp_unslash($_POST['widgetType']))
-            : '';
-        $conditions = [];
         if (isset($_POST['conditions']) && is_string($_POST['conditions']) && $_POST['conditions'] !== '') {
             $decoded = json_decode($this->wpProxy->wp_unslash($_POST['conditions']), true);
             if (!is_array($decoded)) {
                 throw new \InvalidArgumentException('conditions must be a JSON list');
             }
-            $conditions = $decoded;
+            $data['conditions'] = $decoded;
         }
 
-        return $this->buildRule($payload + ['widgetType' => $widgetType, 'conditions' => $conditions]);
+        return $this->buildRule($data);
     }
 
     /**
-     * Validates everything about a rule, including that the replacer exists
+     * The only way to turn untrusted input (UI or imported file) into a rule: sanitizes the text fields,
+     * JsonFieldRule validates them and this checks that the replacer exists
      *
      * @throws \InvalidArgumentException
      */
     private function buildRule(array $data): JsonFieldRule
     {
+        foreach (['metaKey', 'propertyPath', 'replacerId', 'widgetType', 'matchMode'] as $key) {
+            if (isset($data[$key]) && is_string($data[$key])) {
+                $data[$key] = $this->wpProxy->sanitize_text_field($data[$key]);
+            }
+        }
         $rule = JsonFieldRule::fromArray($data);
         try {
             $this->replacerFactory->getReplacer($rule->getReplacerId());

@@ -297,6 +297,55 @@ class VisualConfiguratorPageTest extends TestCase
         ];
     }
 
+    public function testAjaxSaveRuleStoresAnywhereRuleWithoutWidgetOrConditions(): void
+    {
+        $_POST = [
+            'metaKey' => '_elementor_data',
+            'propertyPath' => '$..items.title',
+            'replacerId' => 'translate',
+            'matchMode' => 'anywhere',
+            'widgetType' => '',
+            'conditions' => '[]',
+        ];
+        $saved = null;
+        $wpProxy = $this->passthroughProxy();
+        $wpProxy->method('wp_send_json_success')->willReturnCallback(function (array $p) use (&$saved) {
+            $saved = $p['rule'];
+        });
+
+        $this->makeController(new JsonFieldRulesManager(), $wpProxy)->ajaxSaveRule();
+
+        $this->assertSame('anywhere', $saved['matchMode']);
+    }
+
+    public function testAjaxImportAppliesSameValidationAsSave(): void
+    {
+        $manager = $this->inMemoryManager();
+        $_POST = ['payload' => json_encode(['version' => 1, 'rules' => [
+            ['metaKey' => '', 'propertyPath' => '$.a', 'replacerId' => 'copy'],
+            ['metaKey' => 'm', 'propertyPath' => '$.' . str_repeat('a', 600), 'replacerId' => 'copy'],
+            ['metaKey' => "m\n", 'propertyPath' => '$.a', 'replacerId' => 'copy'],
+            ['metaKey' => 'm', 'propertyPath' => '$.ok', 'replacerId' => 'copy'],
+        ]])];
+        $result = null;
+        $sanitized = [];
+        $wpProxy = $this->createWpProxy();
+        $wpProxy->method('wp_unslash')->willReturnCallback(fn(string $v): string => $v);
+        $wpProxy->method('sanitize_text_field')->willReturnCallback(function (string $v) use (&$sanitized): string {
+            $sanitized[] = $v;
+            return $v;
+        });
+        $wpProxy->method('wp_send_json_success')->willReturnCallback(function (array $p) use (&$result) {
+            $result = $p;
+        });
+
+        $this->makeController($manager, $wpProxy)->ajaxImport();
+
+        $this->assertSame(1, $result['added']);
+        $this->assertSame([1, 2, 3], array_column($result['invalid'], 'index'));
+        $this->assertContains('$.ok', $sanitized, 'imported text fields must be sanitized like UI input');
+    }
+
     public function testAjaxExportReturnsRulesWithoutIds(): void
     {
         $manager = $this->inMemoryManager();
@@ -310,7 +359,7 @@ class VisualConfiguratorPageTest extends TestCase
         $this->makeController($manager, $wpProxy)->ajaxExport();
 
         $this->assertSame(JsonFieldRulesManager::EXPORT_FORMAT_VERSION, $export['version']);
-        $this->assertSame([['metaKey' => 'm', 'propertyPath' => '$..a', 'replacerId' => 'translate', 'widgetType' => 'w']], $export['rules']);
+        $this->assertSame([['metaKey' => 'm', 'propertyPath' => '$..a', 'replacerId' => 'translate', 'matchMode' => 'anywhere', 'widgetType' => 'w']], $export['rules']);
     }
 
     public function testAjaxImportAddsNewRulesKeepsExistingAndReportsInvalid(): void

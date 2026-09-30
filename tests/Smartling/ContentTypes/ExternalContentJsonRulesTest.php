@@ -324,6 +324,93 @@ class ExternalContentJsonRulesTest extends TestCase
         $this->assertSame('Not in the hero', $decoded[0]['elements'][0]['elements'][1]['settings']['title']['text']);
     }
 
+    public function testAnywhereRuleWithoutScopeMatchesRepeaterItems(): void
+    {
+        $source = [['settings' => ['items' => [['title' => 'A'], ['title' => 'B']]]]];
+        $sourceJson = json_encode($source);
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('getPostMeta')->willReturn($sourceJson);
+        $engine = $this->buildEngine($this->mockRulesManager([
+            new JsonFieldRule('_elementor_data', '$..items.title', 'translate', '', [], JsonFieldRule::MATCH_ANYWHERE),
+        ]), $wpProxy);
+
+        $fields = $engine->getContentFields($this->submission('page', 100), false);
+        $this->assertSame(['A', 'B'], array_values($fields));
+
+        $result = $engine->setContentFields(
+            ['meta' => ['_elementor_data' => $sourceJson]],
+            [ExternalContentJsonRules::PLUGIN_ID => array_map(static fn(string $v): string => "tr:$v", $fields), 'meta' => []],
+            $this->submission('page', 100),
+        );
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $this->assertSame('tr:A', $decoded[0]['settings']['items'][0]['title']);
+        $this->assertSame('tr:B', $decoded[0]['settings']['items'][1]['title']);
+    }
+
+    public function testConditionOnTranslatableSiblingStillMatchesAfterAnotherHandlerTranslatedTheCopy(): void
+    {
+        $source = [['settings' => ['block' => ['kind' => 'Hello', 'text' => 'Body']]]];
+        $translatedByOtherHandler = [['settings' => ['block' => ['kind' => 'Hola', 'text' => 'Body']]]];
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('getPostMeta')->willReturn(json_encode($source));
+        $engine = $this->buildEngine($this->mockRulesManager([
+            new JsonFieldRule('_elementor_data', '$..block.text', 'translate', '', [
+                ['ancestor' => 0, 'key' => 'kind', 'value' => 'Hello'],
+            ]),
+        ]), $wpProxy);
+
+        $fields = $engine->getContentFields($this->submission('page', 100), false);
+        $this->assertSame(['Body'], array_values($fields));
+
+        $result = $engine->setContentFields(
+            ['meta' => ['_elementor_data' => json_encode($source)]],
+            [
+                ExternalContentJsonRules::PLUGIN_ID => array_map(static fn(string $v): string => "tr:$v", $fields),
+                'meta' => ['_elementor_data' => json_encode($translatedByOtherHandler)],
+            ],
+            $this->submission('page', 100),
+        );
+
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $this->assertSame('tr:Body', $decoded[0]['settings']['block']['text']);
+        $this->assertSame('Hola', $decoded[0]['settings']['block']['kind'], 'other handler work is preserved');
+    }
+
+    public function testRelatedExtendedRuleReplacesFromSourceIdAndIgnoresIdAlreadyRemapped(): void
+    {
+        $source = [['settings' => ['image' => ['id' => 11]]]];
+        // Another handler already remapped 11 => 110, and 110 also exists as an unrelated source id mapped to 999
+        $alreadyRemapped = [['settings' => ['image' => ['id' => 110]]]];
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('findOne')->willReturnCallback(function (array $params) {
+            $map = [11 => 110, 110 => 999];
+            $target = $map[$params[SubmissionEntity::FIELD_SOURCE_ID] ?? 0] ?? null;
+            if ($target === null) {
+                return null;
+            }
+            $related = $this->createMock(SubmissionEntity::class);
+            $related->method('getTargetId')->willReturn($target);
+            $related->method('getId')->willReturn(0);
+            return $related;
+        });
+        $engine = new ExternalContentJsonRules(
+            $this->mockRulesManager([new JsonFieldRule('_elementor_data', '$..image.id', 'related|attachment', 'w')]),
+            new ReplacerFactory($submissionManager),
+            $this->createMock(WordpressFunctionProxyHelper::class),
+        );
+        $source[0]['elType'] = $alreadyRemapped[0]['elType'] = 'widget';
+        $source[0]['widgetType'] = $alreadyRemapped[0]['widgetType'] = 'w';
+
+        $result = $engine->setContentFields(
+            ['meta' => ['_elementor_data' => json_encode($source)]],
+            ['meta' => ['_elementor_data' => json_encode($alreadyRemapped)]],
+            $this->submission('page', 100),
+        );
+
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $this->assertSame(110, $decoded[0]['settings']['image']['id']);
+    }
+
     private function rule(string $metaKey, string $path, string $replacerId): JsonFieldRule
     {
         return new JsonFieldRule($metaKey, $path, $replacerId);
