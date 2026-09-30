@@ -67,7 +67,7 @@ class DetectChangesHelper
                 vsprintf('Submission id=%s has outdated hash. Setting up Outdated flag.', [$submission->getId()])
             );
             $submission->setOutdated(SubmissionEntity::FLAG_CONTENT_IS_OUT_OF_DATE);
-            if ($needUpdateStatus) {
+            if ($needUpdateStatus && !$submission->isInstantTranslation()) {
                 $newStatus = SubmissionEntity::SUBMISSION_STATUS_NEW;
 
                 $this->getLogger()->debug(

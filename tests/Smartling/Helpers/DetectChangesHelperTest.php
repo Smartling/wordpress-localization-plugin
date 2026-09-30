@@ -107,6 +107,51 @@ class DetectChangesHelperTest extends TestCase
             ->detectChanges(1, 2, AcfDynamicSupport::REFERENCED_TYPE_POST);
     }
 
+    /**
+     * @dataProvider outdatedSubmissionDataProvider
+     */
+    public function testOutdatedSubmissionUploadEnqueue(bool $instantTranslation): void
+    {
+        $profile = $this->createMock(ConfigurationProfileEntity::class);
+        $profile->method('getUploadOnUpdate')->willReturn(ConfigurationProfileEntity::UPLOAD_ON_CHANGE_AUTO);
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('findEntityByMainLocale')->willReturn([$profile]);
+        $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getId')->willReturn(5);
+        $submission->method('getSourceContentHash')->willReturn('old');
+        $submission->method('isInstantTranslation')->willReturn($instantTranslation);
+        $submission->expects($instantTranslation ? $this->never() : $this->once())->method('setStatus')
+            ->with(SubmissionEntity::SUBMISSION_STATUS_NEW);
+        $submission->expects($this->once())->method('setOutdated')->with(SubmissionEntity::FLAG_CONTENT_IS_OUT_OF_DATE);
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('find')->willReturn([$submission]);
+
+        $contentSerializationHelper = $this->createMock(ContentSerializationHelper::class);
+        $contentSerializationHelper->method('calculateHash')->willReturn('new');
+
+        $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+        $uploadQueueManager->expects($instantTranslation ? $this->never() : $this->once())->method('enqueue');
+
+        (new DetectChangesHelper(
+            $this->createMock(AcfDynamicSupport::class),
+            $contentSerializationHelper,
+            $uploadQueueManager,
+            $settingsManager,
+            $submissionManager,
+        ))->detectChanges(1, 2, 'post');
+    }
+
+    public function outdatedSubmissionDataProvider(): array
+    {
+        return [
+            'regular submission is moved to New and enqueued' => [false],
+            'instant translation submission is only flagged outdated' => [true],
+        ];
+    }
+
     public function testAcfFieldGroupNoSubmissionStatusChange()
     {
         $settingsManager = $this->createMock(SettingsManager::class);

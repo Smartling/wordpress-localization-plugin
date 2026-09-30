@@ -62,6 +62,9 @@ class SubmissionCollectorJob extends JobAbstract
         if (0 < count($preparedList)) {
             foreach ($preparedList as $_result) {
                 $fileUri = &$_result['fileUri'];
+                if (SubmissionEntity::isInstantTranslationFileUri((string)$fileUri)) {
+                    continue;
+                }
                 $idsList = explode(',', $_result['ids']);
                 array_walk($idsList, function (& $id) {
                     $id = (int)$id;

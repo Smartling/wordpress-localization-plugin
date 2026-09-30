@@ -238,6 +238,19 @@ class SubmissionEntity extends SmartlingEntityAbstract implements Submission
         $this->stateFields[static::FIELD_OUTDATED] = $outdated;
     }
 
+    /**
+     * Instant translation stores "fileUid:mtUid" in file_uri instead of a Smartling file URI.
+     */
+    public static function isInstantTranslationFileUri(string $fileUri): bool
+    {
+        return preg_match('/^[A-Za-z0-9_-]+:[A-Za-z0-9_-]+$/', $fileUri) === 1;
+    }
+
+    public function isInstantTranslation(): bool
+    {
+        return self::isInstantTranslationFileUri($this->getFileUri());
+    }
+
     public function isCloned(): bool
     {
         return $this->getIsCloned() === 1;
