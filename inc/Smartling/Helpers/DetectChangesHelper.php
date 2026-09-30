@@ -15,7 +15,7 @@ class DetectChangesHelper
 {
     use LoggerSafeTrait;
 
-    /** @var array<string, true> */
+    /** @var array<string, bool> */
     private array $suppressed = [];
 
     public function __construct(
@@ -76,10 +76,10 @@ class DetectChangesHelper
         return $this->settingsManager->findEntityByMainLocale($blogId);
     }
 
-    private function update(SubmissionEntity $submission, bool $needUpdateStatus, string $currentHash, ?string $legacyHash = null): SubmissionEntity
+    private function update(SubmissionEntity $submission, bool $needUpdateStatus, string $currentHash): SubmissionEntity
     {
         $this->getLogger()->debug(vsprintf('Checking submission id=%s.', [$submission->getId()]));
-        if ($currentHash !== $submission->getSourceContentHash() && ($legacyHash === null || $legacyHash !== $submission->getSourceContentHash())) {
+        if ($currentHash !== $submission->getSourceContentHash()) {
             $this->getLogger()->debug(
                 vsprintf('Submission id=%s has outdated hash. Setting up Outdated flag.', [$submission->getId()])
             );
@@ -152,12 +152,11 @@ class DetectChangesHelper
                 $profile = $profiles[0];
 
                 $currentHash = $this->contentSerializationHelper->calculateHash($submissions[0]);
-                $legacyHash = $this->contentSerializationHelper->calculateLegacyHash($submissions[0]);
 
                 $needUpdateStatus = $profile->getUploadOnUpdate() === ConfigurationProfileEntity::UPLOAD_ON_CHANGE_AUTO;
 
                 foreach ($submissions as $submission) {
-                    $this->update($submission, $needUpdateStatus, $currentHash, $legacyHash);
+                    $this->update($submission, $needUpdateStatus, $currentHash);
                 }
 
                 $this->submissionManager->storeSubmissions($submissions);

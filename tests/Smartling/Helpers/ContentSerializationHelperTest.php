@@ -42,10 +42,6 @@ class ContentSerializationHelperTest extends TestCase
         $publishedHash = $this->helper($published)->calculateHash($this->submission(102));
 
         $this->assertSame($draftHash, $publishedHash);
-        $this->assertNotSame(
-            $this->helper($draft)->calculateLegacyHash($this->submission(103)),
-            $this->helper($published)->calculateLegacyHash($this->submission(104)),
-        );
     }
 
     public function testContentChangeChangesHash(): void

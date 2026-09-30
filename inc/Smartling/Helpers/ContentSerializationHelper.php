@@ -24,6 +24,9 @@ class ContentSerializationHelper
                 'post_password',
                 'post_modified',
                 'post_modified_gmt',
+                // change when a draft is published, not a change of content to translate
+                'post_status',
+                'post_name',
             ],
             'meta' => [
                 '_edit_lock',
@@ -34,25 +37,9 @@ class ContentSerializationHelper
         ];
     }
 
-    /**
-     * Fields that change when a draft is published without any change in content to translate.
-     * Ignoring them prevents marking translated submissions outdated on publishing.
-     * Submissions hashed before these fields were ignored are matched with calculateLegacyHash().
-     */
-    private function getPublishingFields(): array
+    private function cleanUpFields(array $fields): array
     {
-        return [
-            'entity' => [
-                'post_status',
-                'post_name',
-            ],
-        ];
-    }
-
-    private function cleanUpFields(array $fields, bool $legacy = false): array
-    {
-        $removeFields = $legacy ? $this->getRemoveFields() : array_merge_recursive($this->getRemoveFields(), $this->getPublishingFields());
-        foreach ($removeFields as $part => $keys) {
+        foreach ($this->getRemoveFields() as $part => $keys) {
             foreach ($keys as $key) {
                 if (array_key_exists($part, $fields) && array_key_exists($key, $fields[$part])) {
                     unset($fields[$part][$key]);
@@ -65,19 +52,6 @@ class ContentSerializationHelper
 
     public function calculateHash(SubmissionEntity $submission): string
     {
-        return $this->calculateHashInternal($submission, false);
-    }
-
-    /**
-     * Hash as it was calculated before publishing related fields were ignored
-     */
-    public function calculateLegacyHash(SubmissionEntity $submission): string
-    {
-        return $this->calculateHashInternal($submission, true);
-    }
-
-    private function calculateHashInternal(SubmissionEntity $submission, bool $legacy): string
-    {
         $cache = RuntimeCacheHelper::getInstance();
         $key = implode(
             ':',
@@ -87,16 +61,15 @@ class ContentSerializationHelper
                 $submission->getSourceId(),
             ]
         );
-        $cacheGroup = $legacy ? 'legacyHashCalculator' : 'hashCalculator';
 
-        if (false === ($cached = $cache->get($key, $cacheGroup))) {
+        if (false === ($cached = $cache->get($key, 'hashCalculator'))) {
             $collectedContent = $this->collectSubmissionSourceContent($submission);
-            $collectedContent = $this->cleanUpFields($collectedContent, $legacy);
+            $collectedContent = $this->cleanUpFields($collectedContent);
             $serializedContent = serialize($collectedContent);
             $this->getLogger()->debug(vsprintf('Calculating hash for submission=%s using data=%s', [$submission->getId(), base64_encode($serializedContent)]));
             $hash = md5($serializedContent);
             $cached = $hash;
-            $cache->set($key, $hash, $cacheGroup);
+            $cache->set($key, $hash, 'hashCalculator');
         }
 
         return $cached;

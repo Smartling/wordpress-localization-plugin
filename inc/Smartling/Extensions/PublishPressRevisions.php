@@ -14,7 +14,7 @@ use Smartling\WP\WPHookInterface;
 
 /**
  * PublishPress Revisions stores a revision as a post (post_mime_type = *-revision, post_parent = original) and
- * deletes it after applying it to the original. Without this class the submissions of the revision would be removed
+ * deletes it after applying it to the original. Without this class, the submissions of the revision would be removed
  * by SubmissionCleanupHelper together with the link to the translated drafts.
  */
 class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
@@ -71,21 +71,30 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
     /**
      * Fires before PublishPress Revisions deletes the applied revision, so submissions can still be preserved.
      *
-     * @param array|mixed $update
-     * @param \WP_Post|object|mixed $revision
-     * @param \WP_Post|object|mixed $published
+     * @param \WP_Post $revision
+     * @param \WP_Post $published
      */
-    public function moveSubmissionsToOriginal($update, $revision, $published)
+    public function moveSubmissionsToOriginal(mixed $update, mixed $revision, mixed $published)
     {
-        $revisionId = (int)($revision->ID ?? 0);
-        $originalId = (int)($published->ID ?? 0);
+        if (!is_object($revision)
+            || !is_object($published)
+            || !property_exists($revision, 'ID')
+            || !property_exists($published, 'ID')
+            || !property_exists($published, 'post_type')
+            || !property_exists($revision, 'post_type')
+        ) {
+            $this->getLogger()->warning('Invalid arguments passed to moveSubmissionsToOriginal');
+            return $update;
+        }
+        $revisionId = ($revision->ID ?? 0);
+        $originalId = ($published->ID ?? 0);
         if ($revisionId === 0 || $originalId === 0 || $revisionId === $originalId) {
             return $update;
         }
 
         try {
             $sourceBlogId = $this->wpProxy->get_current_blog_id();
-            $contentType = (string)($published->post_type ?? $revision->post_type ?? 'post');
+            $contentType = $published->post_type ?? $revision->post_type ?? 'post';
             // the original is about to be updated with the content the submissions were created from
             $this->detectChangesHelper->suppress($sourceBlogId, $originalId);
             $this->suppressedOriginals[$originalId] = $sourceBlogId;
@@ -103,10 +112,7 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
         return $update;
     }
 
-    /**
-     * @param int|mixed $originalId
-     */
-    public function resumeChangeDetection($originalId): void
+    public function resumeChangeDetection(mixed $originalId): void
     {
         $originalId = (int)$originalId;
         if (array_key_exists($originalId, $this->suppressedOriginals)) {
@@ -154,13 +160,9 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
     }
 
     /**
-     * Target of a revision must be an ordinary post: no revision status and no parent (the original is the parent).
-     *
-     * @param mixed $name
-     * @param mixed $value
-     * @param mixed $submission
+     * The target of a revision must be an ordinary post: no revision status and no parent (the original is the parent).
      */
-    public function sanitizeTargetField($name, $value, $submission = null)
+    public function sanitizeTargetField(mixed $name, mixed $value, mixed $submission = null)
     {
         if ($name === 'post_mime_type' && in_array($value, self::REVISION_STATUSES, true)) {
             return '';

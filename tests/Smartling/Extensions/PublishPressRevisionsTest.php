@@ -75,7 +75,7 @@ class PublishPressRevisionsTest extends TestCase
         $manager->expects($this->once())->method('delete')->with($existing);
         $manager->expects($this->once())->method('storeEntity')->willReturnArgument(0);
 
-        $this->x($manager, null, $wp)->moveSubmissionsToOriginal([], (object)['ID' => 20], (object)['ID' => 10, 'post_type' => 'page']);
+        $this->x($manager, null, $wp)->moveSubmissionsToOriginal([], (object)['ID' => 20, 'post_type' => 'page'], (object)['ID' => 10, 'post_type' => 'page']);
     }
 
     public function testExistingOriginalSubmissionWithNewerTargetIsKept(): void
@@ -135,7 +135,7 @@ class PublishPressRevisionsTest extends TestCase
         $detectChanges->expects($this->once())->method('resume')->with(1, 10);
         $x = $this->x($manager, null, $wp, $detectChanges);
 
-        $x->moveSubmissionsToOriginal([], (object)['ID' => 20], (object)['ID' => 10, 'post_type' => 'page']);
+        $x->moveSubmissionsToOriginal([], (object)['ID' => 20, 'post_type' => 'page'], (object)['ID' => 10, 'post_type' => 'page']);
         $x->resumeChangeDetection(10);
         $x->resumeChangeDetection(10);
     }
