@@ -24,7 +24,6 @@ class ContentSerializationHelper
                 'post_password',
                 'post_modified',
                 'post_modified_gmt',
-                // change when a draft is published, not a change of content to translate
                 'post_status',
                 'post_name',
             ],
