@@ -32,4 +32,25 @@ class SubmissionEntityTest extends TestCase {
             [1000000, 0, 999999, 0, 99, 'Must return 99% even if 99.9999% translated'],
         ];
     }
+
+    /**
+     * @dataProvider instantTranslationFileUriDataProvider
+     */
+    public function testIsInstantTranslation(string $fileUri, bool $expected): void
+    {
+        $x = new SubmissionEntity();
+        $x->setFileUri($fileUri);
+
+        $this->assertSame($expected, $x->isInstantTranslation());
+    }
+
+    public function instantTranslationFileUriDataProvider(): array
+    {
+        return [
+            'fts file uid and mt uid' => ['abc123def456:xyz789', true],
+            'regular file uri' => ['/sample-page_post_1_5.xml', false],
+            'regular file uri with colon in title' => ['Title: subtitle_post_1_5.xml', false],
+            'empty' => ['', false],
+        ];
+    }
 }

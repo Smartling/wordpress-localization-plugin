@@ -149,7 +149,10 @@ class LastModifiedCheckJob extends JobAbstract
                 continue;
             }
             foreach ($serializedPair as $serializedSubmissions) {
-                $submissionList = $this->processTestRun($this->submissionManager->findByIds($serializedSubmissions));
+                $submissionList = array_values(array_filter(
+                    $this->processTestRun($this->submissionManager->findByIds($serializedSubmissions)),
+                    static fn (SubmissionEntity $submission) => !$submission->isInstantTranslation(),
+                ));
 
                 try {
                     $submissions = $this->processFileUriSet($submissionList, $failMissing);
