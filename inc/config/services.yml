@@ -230,6 +230,7 @@ services:
       - "@multilang.proxy"
       - "@manager.submission"
       - "@detect-changes.helper"
+      - "@content-serialization.helper"
 
   content.relations.handler:
     class: Smartling\Services\ContentRelationsHandler

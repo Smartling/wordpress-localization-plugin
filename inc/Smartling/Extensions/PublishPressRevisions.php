@@ -4,6 +4,7 @@ namespace Smartling\Extensions;
 
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Base\ExportedAPI;
+use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\DetectChangesHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginHelper;
@@ -27,12 +28,16 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
     /** @var array<int, int> original post id => blog id */
     private array $suppressedOriginals = [];
 
+    /** @var array<int, array{originalId: int, blogId: int, contentType: string, upToDate: array<int, bool>}> revision id => move to do */
+    private array $pendingMoves = [];
+
     public function __construct(
         PluginHelper $pluginHelper,
         WordpressFunctionProxyHelper $wpProxy,
         private LocalizationPluginProxyInterface $multilangProxy,
         private SubmissionManager $submissionManager,
         private DetectChangesHelper $detectChangesHelper,
+        private ContentSerializationHelper $contentSerializationHelper,
     ) {
         parent::__construct($pluginHelper, $wpProxy);
     }
@@ -63,18 +68,23 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
             return;
         }
 
-        $this->wpProxy->add_filter('revisionary_apply_revision_data', [$this, 'moveSubmissionsToOriginal'], 10, 3);
+        $this->wpProxy->add_filter('revisionary_apply_revision_data', [$this, 'recordPendingMove'], 10, 3);
+        // priority is lower than that of SubmissionCleanupHelper, so submissions are moved before they are cleaned up
+        $this->wpProxy->add_action('before_delete_post', [$this, 'moveSubmissions'], 5);
         $this->wpProxy->add_action('revision_applied', [$this, 'resumeChangeDetection']);
+        $this->wpProxy->add_action('shutdown', [$this, 'resumeAllChangeDetection']);
         $this->wpProxy->add_filter(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, [$this, 'sanitizeTargetField'], 5, 3);
     }
 
     /**
-     * Fires before PublishPress Revisions deletes the applied revision, so submissions can still be preserved.
+     * Fires before PublishPress Revisions updates the original with the revision, and the update may fail. Nothing is
+     * changed here except remembering what to move once the revision is deleted, which happens only after a
+     * successful update.
      *
      * @param \WP_Post $revision
      * @param \WP_Post $published
      */
-    public function moveSubmissionsToOriginal(mixed $update, mixed $revision, mixed $published)
+    public function recordPendingMove(mixed $update, mixed $revision, mixed $published)
     {
         if (!is_object($revision)
             || !is_object($published)
@@ -83,7 +93,7 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
             || !property_exists($published, 'post_type')
             || !property_exists($revision, 'post_type')
         ) {
-            $this->getLogger()->warning('Invalid arguments passed to moveSubmissionsToOriginal');
+            $this->getLogger()->warning('Invalid arguments passed to recordPendingMove');
             return $update;
         }
         $revisionId = ($revision->ID ?? 0);
@@ -95,21 +105,56 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
         try {
             $sourceBlogId = $this->wpProxy->get_current_blog_id();
             $contentType = $published->post_type ?? $revision->post_type ?? 'post';
-            // the original is about to be updated with the content the submissions were created from
-            $this->detectChangesHelper->suppress($sourceBlogId, $originalId);
-            $this->suppressedOriginals[$originalId] = $sourceBlogId;
+            $upToDate = [];
             foreach ($this->submissionManager->find([
                 SubmissionEntity::FIELD_SOURCE_BLOG_ID => $sourceBlogId,
                 SubmissionEntity::FIELD_CONTENT_TYPE => $contentType,
                 SubmissionEntity::FIELD_SOURCE_ID => $revisionId,
             ]) as $submission) {
-                $this->moveSubmission($submission, $originalId);
+                // the revision is not modified yet, so this tells if the translation matches its content
+                $upToDate[(int)$submission->getId()] = $this->contentSerializationHelper->calculateHash($submission) === $submission->getSourceContentHash();
+            }
+            if ($upToDate !== []) {
+                // the original is about to be updated with the content the submissions were created from
+                $this->detectChangesHelper->suppress($sourceBlogId, $originalId);
+                $this->suppressedOriginals[$originalId] = $sourceBlogId;
+                $this->pendingMoves[$revisionId] = [
+                    'originalId' => $originalId,
+                    'blogId' => $sourceBlogId,
+                    'contentType' => $contentType,
+                    'upToDate' => $upToDate,
+                ];
             }
         } catch (\Throwable $e) {
-            $this->getLogger()->error("Unable to preserve submissions of revision id=$revisionId, original id=$originalId: {$e->getMessage()}");
+            $this->getLogger()->error("Unable to record submissions of revision id=$revisionId, original id=$originalId: {$e->getMessage()}");
         }
 
         return $update;
+    }
+
+    /**
+     * Moves submissions of the revision that is being deleted after it was applied to the original
+     */
+    public function moveSubmissions(mixed $postId): void
+    {
+        $revisionId = (int)$postId;
+        if (!array_key_exists($revisionId, $this->pendingMoves)) {
+            return;
+        }
+        $pending = $this->pendingMoves[$revisionId];
+        unset($this->pendingMoves[$revisionId]);
+
+        try {
+            foreach ($this->submissionManager->find([
+                SubmissionEntity::FIELD_SOURCE_BLOG_ID => $pending['blogId'],
+                SubmissionEntity::FIELD_CONTENT_TYPE => $pending['contentType'],
+                SubmissionEntity::FIELD_SOURCE_ID => $revisionId,
+            ]) as $submission) {
+                $this->moveSubmission($submission, $pending['originalId'], $pending['upToDate'][(int)$submission->getId()] ?? false);
+            }
+        } catch (\Throwable $e) {
+            $this->getLogger()->error("Unable to preserve submissions of revision id=$revisionId, original id={$pending['originalId']}: {$e->getMessage()}");
+        }
     }
 
     public function resumeChangeDetection(mixed $originalId): void
@@ -121,7 +166,17 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
         }
     }
 
-    private function moveSubmission(SubmissionEntity $submission, int $originalId): void
+    /**
+     * revision_applied does not fire if PublishPress Revisions fails to update the original
+     */
+    public function resumeAllChangeDetection(): void
+    {
+        foreach (array_keys($this->suppressedOriginals) as $originalId) {
+            $this->resumeChangeDetection($originalId);
+        }
+    }
+
+    private function moveSubmission(SubmissionEntity $submission, int $originalId, bool $wasUpToDate): void
     {
         $existing = $this->submissionManager->findTargetBlogSubmission(
             $submission->getContentType(),
@@ -131,7 +186,7 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
         );
 
         if ($existing !== null) {
-            if ($existing->getTargetId() > $submission->getTargetId()) {
+            if ($this->getAppliedAt($existing) > $this->getAppliedAt($submission)) {
                 // original already has a newer translation, nothing to preserve
                 return;
             }
@@ -141,6 +196,10 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
 
         $this->unlink($submission);
         $submission->setSourceId($originalId);
+        if ($wasUpToDate) {
+            // hash was calculated from the revision, which has meta and fields the original doesn't
+            $submission->setSourceContentHash($this->contentSerializationHelper->calculateHash($submission));
+        }
         $submission = $this->submissionManager->storeEntity($submission);
         try {
             $this->multilangProxy->linkObjects($submission);
@@ -148,6 +207,13 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
             $this->getLogger()->notice("Unable to link objects for submission id={$submission->getId()}: {$e->getMessage()}");
         }
         $this->getLogger()->info("Moved submission id={$submission->getId()} to original post id=$originalId");
+    }
+
+    private function getAppliedAt(SubmissionEntity $submission): string
+    {
+        $appliedDate = $submission->getAppliedDate() ?? '';
+
+        return str_starts_with($appliedDate, '0000') ? '' : $appliedDate;
     }
 
     private function unlink(SubmissionEntity $submission): void

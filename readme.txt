@@ -62,6 +62,10 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 5.8.0 =
+* Added support for PublishPress Revisions: translations of a revision are kept and linked to the original post when the revision is published. A revision is translated into a separate post in each target site, whose status on download follows the "Translation publishing mode" profile setting. If the original post already had a translation, that previous translation is no longer linked and keeps its status, so remove or replace it when publishing the new one.
+* Publishing a draft or changing its slug no longer marks its translation as outdated. Submissions created before this release can be marked as outdated once on the next save.
+
 = 5.7.4 =
 * Fixed Translation Lock popup silently failing to save any change (locking or unlocking fields)
 
