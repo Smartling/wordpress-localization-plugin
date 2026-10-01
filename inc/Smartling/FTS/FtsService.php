@@ -114,7 +114,7 @@ class FtsService
         try {
             $fileUid = $this->uploadFile($firstSubmission);
 
-            $profile = $this->settingsManager->getSingleSettingsProfile($firstSubmission->getSourceBlogId());
+            $profile = $this->settingsManager->getProfileBySubmission($firstSubmission);
             $sourceLocale = $this->apiWrapper->getSourceLocale($profile);
             $targetLocales = [];
 
@@ -304,7 +304,7 @@ class FtsService
     {
         $this->getLogger()->debug("Submitting file for instant translation, submissionId={$submission->getId()}, fileUid=$fileUid");
 
-        $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+        $profile = $this->settingsManager->getProfileBySubmission($submission);
         $sourceLocale = $this->apiWrapper->getSourceLocale($profile);
         $targetLocale = $profile->getSmartlingLocale($submission->getTargetBlogId());
 
@@ -398,7 +398,7 @@ class FtsService
     {
         $this->getLogger()->info("Downloading and applying translation, submissionId={$submission->getId()}, fileUid=$fileUid, mtUid=$mtUid");
 
-        $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+        $profile = $this->settingsManager->getProfileBySubmission($submission);
         $targetLocale = $profile->getSmartlingLocale($submission->getTargetBlogId());
 
         if (empty($targetLocale)) {

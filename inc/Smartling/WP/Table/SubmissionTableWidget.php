@@ -216,7 +216,7 @@ class SubmissionTableWidget extends SmartlingListTable
                         $profile = null;
                         foreach ($submissions as $submission) {
                             if ($profile === null) {
-                                $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+                                $profile = $this->settingsManager->getProfileBySubmission($submission);
                             }
                             $logSubmissions[] = [
                                 'sourceBlogId' => $submission->getSourceBlogId(),

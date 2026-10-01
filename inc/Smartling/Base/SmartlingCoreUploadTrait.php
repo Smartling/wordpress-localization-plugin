@@ -259,7 +259,7 @@ trait SmartlingCoreUploadTrait
                 $targetContent = $targetContent->fromArray($translation['entity']);
             }
             $configurationProfile = $this->getSettingsManager()
-                ->getSingleSettingsProfile($submission->getSourceBlogId());
+                ->getProfileBySubmission($submission);
 
             $percentage = $submission->getCompletionPercentage();
             $this->getLogger()->debug(vsprintf('Current percentage is %s', [$percentage]));
@@ -424,7 +424,7 @@ trait SmartlingCoreUploadTrait
         }
         $submission = $item->getSubmissions()[0];
         $locales = $item->getSmartlingLocales()->getList();
-        $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+        $profile = $this->getSettingsManager()->getProfileBySubmission($submission);
         try {
             $xml = $this->getXMLFiltered($submission);
             if ($xml === '') {
@@ -530,7 +530,7 @@ trait SmartlingCoreUploadTrait
             return;
         }
 
-        $configurationProfile = $this->getSettingsManager()->getSingleSettingsProfile($item->getSubmissions()[0]->getSourceBlogId());
+        $configurationProfile = $this->getSettingsManager()->getProfileBySubmission($item->getSubmissions()[0]);
 
         // Clone attachment submission instead of uploading it, if "Clone attachment"
         // option is enabled in configuration profile.

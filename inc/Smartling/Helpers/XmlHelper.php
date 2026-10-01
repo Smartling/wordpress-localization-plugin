@@ -90,7 +90,7 @@ class XmlHelper
     {
         $this->getLogger()->debug(sprintf('Started creating XML for fields: %s', base64_encode(var_export($source, true))));
         try {
-            $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+            $profile = $this->settingsManager->getProfileBySubmission($submission);
         } catch (SmartlingDbException) {
             $profile = null;
         }

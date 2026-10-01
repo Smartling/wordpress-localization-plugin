@@ -96,7 +96,7 @@ class DetectChangesHelper
 
                 LiveNotificationController::pushNotification(
                     $this->settingsManager
-                        ->getSingleSettingsProfile($submission->getSourceBlogId())
+                        ->getProfileBySubmission($submission)
                         ->getProjectId(),
                     LiveNotificationController::getContentId($submission),
                     LiveNotificationController::SEVERITY_WARNING,

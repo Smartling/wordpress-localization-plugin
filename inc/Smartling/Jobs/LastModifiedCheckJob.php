@@ -194,7 +194,7 @@ class LastModifiedCheckJob extends JobAbstract
     protected function processDownloadOnChange(array $submissions): void
     {
         foreach ($submissions as $submission) {
-            $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+            $profile = $this->settingsManager->getProfileBySubmission($submission);
 
             if (ConfigurationProfileEntity::TRANSLATION_DOWNLOAD_MODE_PROGRESS_CHANGES === $profile->getDownloadOnChange()) {
                 $this->getLogger()
@@ -238,7 +238,7 @@ class LastModifiedCheckJob extends JobAbstract
         $submissions = $this->submissionManager->storeSubmissions($statusCheckResult);
 
         foreach ($submissions as $submission) {
-            $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+            $profile = $this->settingsManager->getProfileBySubmission($submission);
             if ($profile->getDownloadOnChange() !== ConfigurationProfileEntity::TRANSLATION_DOWNLOAD_MODE_MANUAL) {
                 $this->checkEntityForDownload($submission);
             }
@@ -273,7 +273,7 @@ class LastModifiedCheckJob extends JobAbstract
     {
         return $this->settingsManager
             ->getSmartlingLocaleIdBySettingsProfile(
-                $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId()),
+                $this->settingsManager->getProfileBySubmission($submission),
                 $submission->getTargetBlogId()
             );
     }

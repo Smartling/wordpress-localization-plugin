@@ -138,7 +138,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                 if ($submission !== null) {
                     $submissions[] = $submission;
                     if ($profile === null) {
-                        $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+                        $profile = $this->settingsManager->getProfileBySubmission($submission);
                     }
                     $logSubmissions[] = [
                         'sourceBlogId' => $submission->getSourceBlogId(),

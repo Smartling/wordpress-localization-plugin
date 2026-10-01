@@ -5,6 +5,7 @@ namespace Smartling\Submissions;
 use Smartling\DbAl\EntityManagerAbstract;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\DateTimeHelper;
@@ -20,6 +21,7 @@ use Smartling\Jobs\JobManager;
 use Smartling\Jobs\SubmissionJobEntity;
 use Smartling\Jobs\SubmissionsJobsManager;
 use Smartling\Models\DuplicateSubmissionDetails;
+use Smartling\Settings\SettingsManager;
 
 class SubmissionManager extends EntityManagerAbstract
 {
@@ -39,7 +41,7 @@ class SubmissionManager extends EntityManagerAbstract
         return SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS;
     }
 
-    public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, int $pageSize, JobManager $jobManager, LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionsJobsManager $submissionsJobsManager)
+    public function __construct(SmartlingToCMSDatabaseAccessWrapperInterface $dbal, int $pageSize, JobManager $jobManager, LocalizationPluginProxyInterface $localizationPluginProxy, SiteHelper $siteHelper, SubmissionsJobsManager $submissionsJobsManager, private SettingsManager $settingsManager)
     {
         parent::__construct($dbal, $pageSize, $siteHelper, $localizationPluginProxy);
         $this->jobManager = $jobManager;
@@ -484,8 +486,22 @@ class SubmissionManager extends EntityManagerAbstract
             $entity->setSourceTitle('no title');
             $entity->setCreatedAt(DateTimeHelper::nowAsString());
         }
+        $this->stampConfigurationProfile($entity);
 
         return $entity;
+    }
+
+    /**
+     * Remembers the profile used for this translation request, so that delivery uses the same profile
+     * even if the active profile has been switched in the meantime.
+     */
+    private function stampConfigurationProfile(SubmissionEntity $entity): void
+    {
+        try {
+            $entity->setConfigurationProfileId($this->settingsManager->getSingleSettingsProfile($entity->getSourceBlogId())->getId());
+        } catch (SmartlingDbException) {
+            $this->getLogger()->debug("No active profile for source blog {$entity->getSourceBlogId()}, configuration profile not stored for submission");
+        }
     }
 
     /**
