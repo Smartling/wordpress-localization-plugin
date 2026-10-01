@@ -126,6 +126,31 @@ class UploadJobTest extends TestCase
     }
 
     /**
+     * Existing submissions are loaded from the queue by id and never pass through
+     * SubmissionManager::getSubmissionEntity(), so the profile has to be stored on upload.
+     */
+    public function testStoresConfigurationProfileOfExistingSubmissionOnUpload()
+    {
+        $submission = new SubmissionEntity();
+        $submission->setId(1);
+        $submission->setFileUri('file.xml');
+        $submission->setSourceBlogId(1);
+        $item = $this->buildItem($submission);
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('stampConfigurationProfile')->willReturnCallback(
+            static function (SubmissionEntity $submission) {
+                $submission->setConfigurationProfileId(5);
+            },
+        );
+        $submissionManager->expects($this->once())->method('storeEntity')->with($submission);
+
+        $this->buildJob($this->buildQueueManager($item), $submissionManager)->run('');
+
+        $this->assertSame(5, $submission->getConfigurationProfileId());
+    }
+
+    /**
      * A queue item groups submissions for the same content across multiple target
      * locales; only the first one is used to look up the profile/batch job. If either
      * lookup fails, every submission in the group must be failed visibly, not just the
