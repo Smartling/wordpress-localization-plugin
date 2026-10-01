@@ -44,6 +44,11 @@ class ExternalContentJsonRules implements ContentTypeModifyingInterface
         return self::PLUGIN_ID;
     }
 
+    public function getLogName(): string
+    {
+        return self::PLUGIN_ID;
+    }
+
     public function getPluginPaths(): array
     {
         return [];

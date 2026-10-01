@@ -60,9 +60,11 @@ class ExternalContentElementor4Test extends TestCase
         return $submission;
     }
 
-    public function testPluginIdDiffersFromElementor3ForUnambiguousLogs(): void
+    public function testLogNameDiffersFromElementor3ButDataKeyIsUnchanged(): void
     {
-        $this->assertSame('elementor4', $this->getHandler($this->makeProxy(''))->getPluginId());
+        $handler = $this->getHandler($this->makeProxy(''));
+        $this->assertSame('elementor4', $handler->getLogName());
+        $this->assertSame('elementor', $handler->getPluginId());
     }
 
     public function testCanHandle(): void
@@ -298,7 +300,7 @@ class ExternalContentElementor4Test extends TestCase
         // Translation strings are keyed as {containerId: {widgetId: {settingKey: translatedValue}}}
         $translation = [
             'meta' => [ExternalContentElementor4::META_FIELD_NAME => json_encode($elementData)],
-            'elementor4' => [
+            'elementor' => [
                 'container1' => [
                     'heading1' => ['title' => 'Translated heading'],
                 ],

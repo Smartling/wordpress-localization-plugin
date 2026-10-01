@@ -10,6 +10,11 @@ abstract class PluggableAbstract implements Pluggable {
     {
     }
 
+    public function getLogName(): string
+    {
+        return $this->getPluginId();
+    }
+
     public function getPluginSupportLevel(): string
     {
         $result = Pluggable::NOT_SUPPORTED;

@@ -266,6 +266,12 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
             $this->wpProxy->wp_send_json_error(['message' => 'Missing or invalid id'], 400);
             return;
         }
+        // The capability check above is global, the preview must not expose meta of posts the user cannot edit
+        if (!$this->wpProxy->current_user_can('edit_post', $id)) {
+            $this->getLogger()->warning(sprintf('User %d cannot edit postId=%d, preview denied', get_current_user_id(), $id));
+            $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+            return;
+        }
         try {
             $rule = $this->readRule();
         } catch (\InvalidArgumentException $e) {

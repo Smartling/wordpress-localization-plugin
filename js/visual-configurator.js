@@ -252,7 +252,9 @@
         for (let distance = 0; distance < ancestors.length; distance++) {
             const object = ancestors[ancestors.length - 1 - distance];
             Object.entries(object).forEach(([key, val]) => {
-                if (typeof val === 'string' && key !== 'elType' && key !== 'widgetType') {
+                // The leaf's own value would limit the rule to that single source string
+                const isLeafItself = distance === 0 && key === keys[keys.length - 1];
+                if (typeof val === 'string' && key !== 'elType' && key !== 'widgetType' && !isLeafItself) {
                     conditionOptions.push({ id: `${distance}|${key}`, ancestor: distance, key, value: val });
                 }
             });
@@ -405,8 +407,14 @@
         const [error, setError] = useState('');
         const [rules, setRules] = useState([]);
         const [draft, setDraft] = useState(null);
+        const [draftSeq, setDraftSeq] = useState(0);
         const [deleteConfirmId, setDeleteConfirmId] = useState(null);
         const [importResult, setImportResult] = useState(null);
+        // Every opened draft gets a fresh editor, otherwise match mode, keys and ticked conditions leak into the next rule
+        const openDraft = useCallback((next) => {
+            setDraftSeq((n) => n + 1);
+            setDraft(next);
+        }, []);
         const fileInput = useRef(null);
 
         const refreshRules = useCallback(async () => {
@@ -569,13 +577,14 @@
                             key: name,
                             name,
                             value,
-                            onAddRule: setDraft,
+                            onAddRule: openDraft,
                             rulesByPath,
                         }),
                     ),
                 ),
             ),
             el(RuleEditor, {
+                key: draftSeq,
                 draft,
                 contentId,
                 onCancel: () => setDraft(null),

@@ -441,6 +441,24 @@ class VisualConfiguratorPageTest extends TestCase
         $this->assertSame(['count' => 1, 'values' => ['Sovi AI']], $result);
     }
 
+    public function testAjaxPreviewDeniedForPostUserCannotEdit(): void
+    {
+        $_POST = ['id' => '7', 'metaKey' => '_elementor_data', 'propertyPath' => '$..title.text', 'replacerId' => 'translate'];
+        $status = null;
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('current_user_can')->willReturnCallback(fn(string $cap): bool => $cap !== 'edit_post');
+        $wpProxy->method('sanitize_text_field')->willReturnCallback(fn(string $v): string => $v);
+        $wpProxy->method('wp_unslash')->willReturnCallback(fn(string $v): string => $v);
+        $wpProxy->expects($this->never())->method('getPostMeta');
+        $wpProxy->method('wp_send_json_error')->willReturnCallback(function ($p, $s = null) use (&$status) {
+            $status = $s;
+        });
+
+        $this->makeController(new JsonFieldRulesManager(), $wpProxy)->ajaxPreview();
+
+        $this->assertSame(403, $status);
+    }
+
     public function testImportAndExportRequireCapability(): void
     {
         $errors = 0;
