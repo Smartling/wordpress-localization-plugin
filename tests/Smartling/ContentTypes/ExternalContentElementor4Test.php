@@ -60,6 +60,13 @@ class ExternalContentElementor4Test extends TestCase
         return $submission;
     }
 
+    public function testLogNameDiffersFromElementor3ButDataKeyIsUnchanged(): void
+    {
+        $handler = $this->getHandler($this->makeProxy(''));
+        $this->assertSame('elementor4', $handler->getLogName());
+        $this->assertSame('elementor', $handler->getPluginId());
+    }
+
     public function testCanHandle(): void
     {
         $proxy = $this->createMock(WordpressFunctionProxyHelper::class);

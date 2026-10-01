@@ -1,10 +1,11 @@
 /* global wp, jQuery, smartlingVisualConfigurator */
 (function () {
-    const { render, createElement: el, useState, useEffect, useCallback, Fragment } = wp.element;
+    const { render, createElement: el, useState, useEffect, useCallback, useRef, Fragment } = wp.element;
     const {
         Button,
         Card,
         CardBody,
+        CheckboxControl,
         CardHeader,
         Modal,
         Notice,
@@ -74,7 +75,38 @@
         return String(value);
     }
 
-    function JsonNode({ value, path, metaKey, onAddRule, rulesByPath, depth = 0 }) {
+    const KEY_PATTERN = /^[A-Za-z_][\w-]*$/;
+    const PREVIEW_DEBOUNCE_MS = 400;
+
+    // String properties of an object that can be used to tell otherwise identical structures apart
+    function scalarProps(object) {
+        const props = {};
+        Object.entries(object).forEach(([k, v]) => {
+            if (typeof v === 'string' && v !== '' && v.length <= 64 && k !== 'id' && k !== '_id') {
+                props[k] = v;
+            }
+        });
+        return props;
+    }
+
+    function findWidgetType(ancestors) {
+        for (let i = ancestors.length - 1; i >= 0; i--) {
+            if (ancestors[i].elType === 'widget' && ancestors[i].widgetType) {
+                return ancestors[i].widgetType;
+            }
+        }
+        return '';
+    }
+
+    function describeCondition(c) {
+        return `${c.key} = "${c.value}" (${c.ancestor === 0 ? 'same object' : `${c.ancestor} levels up`})`;
+    }
+
+    function post(action, data) {
+        return jQuery.post(settings.ajaxUrl, { action, _wpnonce: settings.nonce, ...data });
+    }
+
+    function JsonNode({ value, path, metaKey, onAddRule, rulesByPath, depth = 0, ancestors = [], keys = [] }) {
         const [expanded, setExpanded] = useState(true);
         if (valueIsLeaf(value)) {
             const existing = rulesByPath[`${metaKey}|${path}`];
@@ -98,7 +130,7 @@
                           Button,
                           {
                               variant: 'link',
-                              onClick: () => onAddRule({ path, metaKey, value, isString, isNumeric }),
+                              onClick: () => onAddRule({ path, metaKey, value, isString, isNumeric, keys, ancestors }),
                           },
                           'Add rule',
                       ),
@@ -107,6 +139,7 @@
         const entries = Array.isArray(value)
             ? value.map((v, i) => [i, v])
             : Object.entries(value);
+        const childAncestors = Array.isArray(value) ? ancestors : [...ancestors, { ...scalarProps(value), elType: value.elType, widgetType: value.widgetType }];
         return el(
             'div',
             { style: { paddingLeft: depth === 0 ? 0 : 16 } },
@@ -140,6 +173,8 @@
                                 onAddRule,
                                 rulesByPath,
                                 depth: depth + 1,
+                                ancestors: childAncestors,
+                                keys: Array.isArray(value) ? keys : [...keys, String(k)],
                             }),
                         ),
                     ),
@@ -198,18 +233,84 @@
         );
     }
 
-    function RuleEditor({ draft, onCancel, onSave }) {
+    function RuleEditor({ draft, contentId, onCancel, onSave }) {
         const [replacerId, setReplacerId] = useState('copy');
         const [refType, setRefType] = useState('attachment');
-        if (!draft) return null;
+        const [mode, setMode] = useState('position');
+        const [keyCount, setKeyCount] = useState(1);
+        const [limitToWidget, setLimitToWidget] = useState(false);
+        const [selected, setSelected] = useState({});
+        const [preview, setPreview] = useState(null);
+
+        const keys = draft ? draft.keys || [] : [];
+        const ancestors = draft ? draft.ancestors || [] : [];
+        const widgetType = findWidgetType(ancestors);
+        const canGeneralize = draft && draft.path !== '' && keys.length > 0 && keys.every((k) => KEY_PATTERN.test(k));
+
+        // One option per string property of every enclosing object, nearest object first
+        const conditionOptions = [];
+        for (let distance = 0; distance < ancestors.length; distance++) {
+            const object = ancestors[ancestors.length - 1 - distance];
+            Object.entries(object).forEach(([key, val]) => {
+                // The leaf's own value would limit the rule to that single source string
+                const isLeafItself = distance === 0 && key === keys[keys.length - 1];
+                if (typeof val === 'string' && key !== 'elType' && key !== 'widgetType' && !isLeafItself) {
+                    conditionOptions.push({ id: `${distance}|${key}`, ancestor: distance, key, value: val });
+                }
+            });
+        }
+        const conditions = conditionOptions.filter((o) => selected[o.id]).map(({ ancestor, key, value }) => ({ ancestor, key, value }));
+        const extended = mode === 'anywhere';
+        const propertyPath = !draft
+            ? ''
+            : extended
+                ? `$..${keys.slice(-keyCount).join('.')}`
+                : draft.path;
+        const activeWidget = extended && limitToWidget ? widgetType : '';
+        const activeConditions = extended ? conditions : [];
         const composedReplacerId = replacerId === 'related' ? `related|${refType}` : replacerId;
+        const previewKey = JSON.stringify([propertyPath, activeWidget, activeConditions, composedReplacerId, mode]);
+
+        useEffect(() => {
+            if (!draft || draft.path === '' || !replacerId) {
+                setPreview(null);
+                return undefined;
+            }
+            let cancelled = false;
+            const timer = setTimeout(async () => {
+                try {
+                    const response = await post(settings.actions.preview, {
+                        id: contentId,
+                        metaKey: draft.metaKey,
+                        propertyPath,
+                        replacerId: composedReplacerId,
+                        widgetType: activeWidget,
+                        conditions: JSON.stringify(activeConditions),
+                        matchMode: mode,
+                    });
+                    if (!cancelled) {
+                        setPreview(response && response.success
+                            ? response.data
+                            : { error: (response && response.data && response.data.message) || 'Preview failed' });
+                    }
+                } catch (e) {
+                    if (!cancelled) setPreview({ error: 'Preview failed' });
+                }
+            }, PREVIEW_DEBOUNCE_MS);
+            return () => {
+                cancelled = true;
+                clearTimeout(timer);
+            };
+        }, [previewKey, draft && draft.metaKey, contentId]);
+
+        if (!draft) return null;
         return el(
             Modal,
             {
                 title: 'Add rule',
                 onRequestClose: onCancel,
                 shouldCloseOnClickOutside: false,
-                style: { maxWidth: 520 },
+                style: { maxWidth: 620 },
             },
             el('p', null,
                 'Target: ',
@@ -225,14 +326,71 @@
                           onChange: setRefType,
                       })
                     : null,
+                canGeneralize
+                    ? el(SelectControl, {
+                          label: 'Match',
+                          value: mode,
+                          options: [
+                              { label: 'This position only (array indices become wildcards)', value: 'position' },
+                              { label: 'Anywhere in the content with this key path', value: 'anywhere' },
+                          ],
+                          onChange: setMode,
+                          help: extended ? 'Also matches widgets nested at a different depth.' : undefined,
+                      })
+                    : null,
+                extended && keys.length > 1
+                    ? el(SelectControl, {
+                          label: 'Keys in path',
+                          value: String(keyCount),
+                          options: keys.map((k, idx) => ({
+                              label: keys.slice(-(idx + 1)).join('.'),
+                              value: String(idx + 1),
+                          })),
+                          onChange: (v) => setKeyCount(parseInt(v, 10)),
+                          help: 'Use more keys when the last key alone is too generic.',
+                      })
+                    : null,
+                extended && widgetType
+                    ? el(CheckboxControl, {
+                          label: `Only inside "${widgetType}" widgets`,
+                          checked: limitToWidget,
+                          onChange: setLimitToWidget,
+                      })
+                    : null,
+                extended && conditionOptions.length > 0
+                    ? el('div', null,
+                          el('strong', null, 'Only when'),
+                          conditionOptions.map((o) =>
+                              el(CheckboxControl, {
+                                  key: o.id,
+                                  label: describeCondition(o),
+                                  checked: !!selected[o.id],
+                                  onChange: (checked) => setSelected({ ...selected, [o.id]: checked }),
+                              }),
+                          ),
+                      )
+                    : null,
+                preview && preview.error ? el(Notice, { status: 'warning', isDismissible: false }, preview.error) : null,
+                preview && !preview.error
+                    ? el('div', { style: { background: '#f6f7f7', padding: 8, maxHeight: 180, overflow: 'auto' } },
+                          el('strong', null, `${preview.count} match${preview.count === 1 ? '' : 'es'} in this content`),
+                          el('ul', { style: { margin: '4px 0 0 16px', listStyle: 'disc' } },
+                              preview.values.map((v, idx) => el('li', { key: idx }, el('code', null, v))),
+                          ),
+                          preview.count > preview.values.length ? el('em', null, `…and ${preview.count - preview.values.length} more`) : null,
+                      )
+                    : null,
                 el('div', null,
                     el(Button, {
                         variant: 'primary',
                         disabled: !replacerId,
                         onClick: () => onSave({
                             metaKey: draft.metaKey,
-                            propertyPath: draft.path,
+                            propertyPath,
                             replacerId: composedReplacerId,
+                            widgetType: activeWidget,
+                            conditions: JSON.stringify(activeConditions),
+                            matchMode: mode,
                         }),
                     }, 'Save rule'),
                     ' ',
@@ -249,7 +407,15 @@
         const [error, setError] = useState('');
         const [rules, setRules] = useState([]);
         const [draft, setDraft] = useState(null);
+        const [draftSeq, setDraftSeq] = useState(0);
         const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+        const [importResult, setImportResult] = useState(null);
+        // Every opened draft gets a fresh editor, otherwise match mode, keys and ticked conditions leak into the next rule
+        const openDraft = useCallback((next) => {
+            setDraftSeq((n) => n + 1);
+            setDraft(next);
+        }, []);
+        const fileInput = useRef(null);
 
         const refreshRules = useCallback(async () => {
             try {
@@ -339,6 +505,47 @@
             }
         }, [deleteConfirmId, refreshRules]);
 
+        const handleExport = useCallback(async () => {
+            try {
+                const response = await post(settings.actions.export, {});
+                if (!response || !response.success) {
+                    setError((response && response.data && response.data.message) || 'Export failed');
+                    return;
+                }
+                const blob = new Blob([JSON.stringify(response.data.export, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'smartling-visual-configurator-rules.json';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                setError('Export failed: ' + (e.message || 'unknown'));
+            }
+        }, []);
+
+        const handleImportFile = useCallback(async (event) => {
+            const file = event.target.files && event.target.files[0];
+            event.target.value = '';
+            if (!file) return;
+            setError('');
+            setImportResult(null);
+            try {
+                const payload = await file.text();
+                const response = await post(settings.actions.import, { payload });
+                if (!response || !response.success) {
+                    setError((response && response.data && response.data.message) || 'Import failed');
+                    return;
+                }
+                setImportResult(response.data);
+                await refreshRules();
+            } catch (e) {
+                setError('Import failed: ' + (e.message || 'unknown'));
+            }
+        }, [refreshRules]);
+
         const rulesByPath = {};
         rules.forEach((r) => {
             const key = r.propertyPath ? `${r.metaKey}|${r.propertyPath}` : r.metaKey;
@@ -370,14 +577,16 @@
                             key: name,
                             name,
                             value,
-                            onAddRule: setDraft,
+                            onAddRule: openDraft,
                             rulesByPath,
                         }),
                     ),
                 ),
             ),
             el(RuleEditor, {
+                key: draftSeq,
                 draft,
+                contentId,
                 onCancel: () => setDraft(null),
                 onSave: handleSaveRule,
             }),
@@ -393,8 +602,28 @@
                     el(Button, { variant: 'secondary', onClick: () => setDeleteConfirmId(null) }, 'Cancel'),
                 ),
             ),
+            importResult && el(Notice, { status: importResult.invalid.length > 0 ? 'warning' : 'success', onRemove: () => setImportResult(null) },
+                `Import finished: ${importResult.added} added, ${importResult.skipped} skipped (already exist), ${importResult.invalid.length} invalid. Existing rules were not changed.`,
+                importResult.invalid.length > 0 && el('ul', { style: { margin: '4px 0 0 16px', listStyle: 'disc' } },
+                    importResult.invalid.map((i) => el('li', { key: i.index }, `Rule #${i.index}: ${i.message}`)),
+                ),
+            ),
             el(Card, null,
-                el(CardHeader, null, `Saved rules (${rules.length})`),
+                el(CardHeader, null,
+                    el('span', null, `Saved rules (${rules.length})`),
+                    el('span', null,
+                        el(Button, { variant: 'secondary', onClick: handleExport, disabled: rules.length === 0 }, 'Export'),
+                        ' ',
+                        el(Button, { variant: 'secondary', onClick: () => fileInput.current && fileInput.current.click() }, 'Import'),
+                        el('input', {
+                            ref: fileInput,
+                            type: 'file',
+                            accept: '.json,application/json',
+                            style: { display: 'none' },
+                            onChange: handleImportFile,
+                        }),
+                    ),
+                ),
                 el(CardBody, null,
                     rules.length === 0
                         ? el('em', null, 'No rules yet.')
@@ -403,6 +632,8 @@
                                 el('tr', null,
                                     el('th', null, 'Meta key'),
                                     el('th', null, 'Path'),
+                                    el('th', null, 'Widget'),
+                                    el('th', null, 'Only when'),
                                     el('th', null, 'Rule'),
                                     el('th', null, ''),
                                 ),
@@ -412,6 +643,10 @@
                                     el('tr', { key: r.id },
                                         el('td', null, el('code', null, r.metaKey)),
                                         el('td', null, el('code', null, r.propertyPath || '(whole field)')),
+                                        el('td', null, r.widgetType ? el('code', null, r.widgetType) : '—'),
+                                        el('td', null, (r.conditions || []).length > 0
+                                            ? (r.conditions || []).map((c, idx) => el('div', { key: idx }, describeCondition(c)))
+                                            : '—'),
                                         el('td', null, r.replacerId),
                                         el('td', null,
                                             el(Button, {

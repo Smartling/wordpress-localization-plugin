@@ -14,6 +14,7 @@ use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
 use Smartling\Tuner\JsonFieldRule;
+use Smartling\Tests\Smartling\Tuner\JsonLeafMatcherTest;
 use Smartling\Tuner\JsonFieldRulesManager;
 
 class ExternalContentJsonRulesTest extends TestCase
@@ -250,6 +251,197 @@ class ExternalContentJsonRulesTest extends TestCase
         $this->assertArrayNotHasKey('_elementor_data', $result['meta']);
         $this->assertArrayHasKey('_other', $result['meta']);
         $this->assertSame('preserved', $result['entity']['post_content']);
+    }
+
+    private function sovosRules(): array
+    {
+        $p = 'accordions__sovos-accordions__items__sovos-accordion__';
+        $hero = 'sovos-overview-hero';
+        return [
+            new JsonFieldRule('_elementor_data', '$..title.text', 'translate', $hero),
+            new JsonFieldRule('_elementor_data', "\$..{$p}label.text", 'translate', $hero),
+            new JsonFieldRule('_elementor_data', "\$..{$p}content__sovos-rich-text__text", 'translate', $hero, [
+                ['ancestor' => 0, 'key' => 'pattern_type', 'value' => 'sovos-rich-text'],
+            ]),
+            new JsonFieldRule('_elementor_data', "\$..{$p}content__sovos-list-items__items__sovos-list-item__text.text", 'translate', $hero, [
+                ['ancestor' => 2, 'key' => 'pattern_type', 'value' => 'sovos-list-items'],
+            ]),
+            new JsonFieldRule('_elementor_data', '$..image.id', 'related|attachment', $hero),
+        ];
+    }
+
+    public function testExtendedRulesExtractOnlyVisibleWidgetStrings(): void
+    {
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('getPostMeta')->willReturn(json_encode(JsonLeafMatcherTest::sovosData()));
+        $engine = $this->buildEngine($this->mockRulesManager($this->sovosRules()), $wpProxy);
+
+        $fields = $engine->getContentFields($this->submission('page', 100), false);
+
+        $this->assertSame(
+            ['Sovi AI', 'Description', 'Features', '<p>Real body</p>', 'Feature one', 'Feature two'],
+            array_values($fields),
+        );
+        $this->assertSame([269318], $engine->getRelatedContent('page', 100)['attachment']);
+    }
+
+    public function testExtendedRulesWriteTranslationsAndReplaceIdsInPlace(): void
+    {
+        $source = JsonLeafMatcherTest::sovosData();
+        $sourceJson = json_encode($source);
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('getPostMeta')->willReturn($sourceJson);
+        $rules = $this->mockRulesManager($this->sovosRules());
+
+        $related = $this->createMock(SubmissionEntity::class);
+        $related->method('getTargetId')->willReturn(555);
+        $related->method('getId')->willReturn(0);
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('findOne')->willReturn($related);
+        $engine = new ExternalContentJsonRules($rules, new ReplacerFactory($submissionManager), $wpProxy);
+
+        $fields = $engine->getContentFields($this->submission('page', 100), false);
+        $translated = array_map(static fn(string $v): string => "tr:$v", $fields);
+        $result = $engine->setContentFields(
+            ['meta' => ['_elementor_data' => $sourceJson]],
+            [ExternalContentJsonRules::PLUGIN_ID => $translated, 'meta' => []],
+            $this->submission('page', 100),
+        );
+
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $widget = $decoded[0]['elements'][0]['elements'][0];
+        $items = $widget['settings']['accordions_repeater'][0]['accordions__sovos-accordions__items_repeater'];
+        $p = 'accordions__sovos-accordions__items__sovos-accordion__';
+        $this->assertSame('tr:Sovi AI', $widget['settings']['title']['text']);
+        $this->assertSame(555, $widget['settings']['image']['id']);
+        $this->assertSame('tr:Description', $items[0][$p . 'label']['text']);
+        $this->assertSame('tr:<p>Real body</p>', $items[0][$p . 'content_repeater'][0][$p . 'content__sovos-rich-text__text']);
+        // placeholders are untouched
+        $this->assertSame('<p>Sample rich text</p>', $items[1][$p . 'content_repeater'][0][$p . 'content__sovos-rich-text__text']);
+        $this->assertSame('List Item 1', $items[0][$p . 'content_repeater'][0][$p . 'content__sovos-list-items__items_repeater'][0][$p . 'content__sovos-list-items__items__sovos-list-item__text']['text']);
+        $this->assertSame('tr:Feature one', $items[1][$p . 'content_repeater'][0][$p . 'content__sovos-list-items__items_repeater'][0][$p . 'content__sovos-list-items__items__sovos-list-item__text']['text']);
+        // unrelated widget is untouched
+        $this->assertSame('Not in the hero', $decoded[0]['elements'][0]['elements'][1]['settings']['title']['text']);
+    }
+
+    public function testAnywhereRuleWithoutScopeMatchesRepeaterItems(): void
+    {
+        $source = [['settings' => ['items' => [['title' => 'A'], ['title' => 'B']]]]];
+        $sourceJson = json_encode($source);
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('getPostMeta')->willReturn($sourceJson);
+        $engine = $this->buildEngine($this->mockRulesManager([
+            new JsonFieldRule('_elementor_data', '$..items.title', 'translate', '', [], JsonFieldRule::MATCH_ANYWHERE),
+        ]), $wpProxy);
+
+        $fields = $engine->getContentFields($this->submission('page', 100), false);
+        $this->assertSame(['A', 'B'], array_values($fields));
+
+        $result = $engine->setContentFields(
+            ['meta' => ['_elementor_data' => $sourceJson]],
+            [ExternalContentJsonRules::PLUGIN_ID => array_map(static fn(string $v): string => "tr:$v", $fields), 'meta' => []],
+            $this->submission('page', 100),
+        );
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $this->assertSame('tr:A', $decoded[0]['settings']['items'][0]['title']);
+        $this->assertSame('tr:B', $decoded[0]['settings']['items'][1]['title']);
+    }
+
+    public function testConditionOnTranslatableSiblingStillMatchesAfterAnotherHandlerTranslatedTheCopy(): void
+    {
+        $source = [['settings' => ['block' => ['kind' => 'Hello', 'text' => 'Body']]]];
+        $translatedByOtherHandler = [['settings' => ['block' => ['kind' => 'Hola', 'text' => 'Body']]]];
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('getPostMeta')->willReturn(json_encode($source));
+        $engine = $this->buildEngine($this->mockRulesManager([
+            new JsonFieldRule('_elementor_data', '$..block.text', 'translate', '', [
+                ['ancestor' => 0, 'key' => 'kind', 'value' => 'Hello'],
+            ]),
+        ]), $wpProxy);
+
+        $fields = $engine->getContentFields($this->submission('page', 100), false);
+        $this->assertSame(['Body'], array_values($fields));
+
+        $result = $engine->setContentFields(
+            ['meta' => ['_elementor_data' => json_encode($source)]],
+            [
+                ExternalContentJsonRules::PLUGIN_ID => array_map(static fn(string $v): string => "tr:$v", $fields),
+                'meta' => ['_elementor_data' => json_encode($translatedByOtherHandler)],
+            ],
+            $this->submission('page', 100),
+        );
+
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $this->assertSame('tr:Body', $decoded[0]['settings']['block']['text']);
+        $this->assertSame('Hola', $decoded[0]['settings']['block']['kind'], 'other handler work is preserved');
+    }
+
+    public function testRelatedExtendedRuleReplacesFromSourceIdAndIgnoresIdAlreadyRemapped(): void
+    {
+        $source = [['settings' => ['image' => ['id' => 11]]]];
+        // Another handler already remapped 11 => 110, and 110 also exists as an unrelated source id mapped to 999
+        $alreadyRemapped = [['settings' => ['image' => ['id' => 110]]]];
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('findOne')->willReturnCallback(function (array $params) {
+            $map = [11 => 110, 110 => 999];
+            $target = $map[$params[SubmissionEntity::FIELD_SOURCE_ID] ?? 0] ?? null;
+            if ($target === null) {
+                return null;
+            }
+            $related = $this->createMock(SubmissionEntity::class);
+            $related->method('getTargetId')->willReturn($target);
+            $related->method('getId')->willReturn(0);
+            return $related;
+        });
+        $engine = new ExternalContentJsonRules(
+            $this->mockRulesManager([new JsonFieldRule('_elementor_data', '$..image.id', 'related|attachment', 'w')]),
+            new ReplacerFactory($submissionManager),
+            $this->createMock(WordpressFunctionProxyHelper::class),
+        );
+        $source[0]['elType'] = $alreadyRemapped[0]['elType'] = 'widget';
+        $source[0]['widgetType'] = $alreadyRemapped[0]['widgetType'] = 'w';
+
+        $result = $engine->setContentFields(
+            ['meta' => ['_elementor_data' => json_encode($source)]],
+            ['meta' => ['_elementor_data' => json_encode($alreadyRemapped)]],
+            $this->submission('page', 100),
+        );
+
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $this->assertSame(110, $decoded[0]['settings']['image']['id']);
+    }
+
+    public function testRelatedPositionRuleReplacesFromSourceIdAndIgnoresIdAlreadyRemapped(): void
+    {
+        $source = ['elements' => [['image' => ['id' => 11]], ['image' => ['id' => 22]]]];
+        // Another handler already remapped 11 => 110 and 22 => 220, 110 is also an unrelated source id mapped to 999
+        $alreadyRemapped = ['elements' => [['image' => ['id' => 110]], ['image' => ['id' => 220]]]];
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('findOne')->willReturnCallback(function (array $params) {
+            $target = [11 => 110, 22 => 220, 110 => 999][$params[SubmissionEntity::FIELD_SOURCE_ID] ?? 0] ?? null;
+            if ($target === null) {
+                return null;
+            }
+            $related = $this->createMock(SubmissionEntity::class);
+            $related->method('getTargetId')->willReturn($target);
+            $related->method('getId')->willReturn(0);
+            return $related;
+        });
+        $engine = new ExternalContentJsonRules(
+            $this->mockRulesManager([$this->rule('_elementor_data', '$.elements[*].image.id', 'related|attachment')]),
+            new ReplacerFactory($submissionManager),
+            $this->createMock(WordpressFunctionProxyHelper::class),
+        );
+
+        $result = $engine->setContentFields(
+            ['meta' => ['_elementor_data' => json_encode($source)]],
+            ['meta' => ['_elementor_data' => json_encode($alreadyRemapped)]],
+            $this->submission('page', 100),
+        );
+
+        $decoded = json_decode($result['meta']['_elementor_data'], true);
+        $this->assertSame(110, $decoded['elements'][0]['image']['id']);
+        $this->assertSame(220, $decoded['elements'][1]['image']['id']);
     }
 
     private function rule(string $metaKey, string $path, string $replacerId): JsonFieldRule

@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\ContentTypes\ExternalContentJsonRules;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SmartlingUserCapabilities;
@@ -21,13 +22,24 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
     public const ACTION_SAVE_RULE = 'smartling_visual_configurator_save_rule';
     public const ACTION_DELETE_RULE = 'smartling_visual_configurator_delete_rule';
     public const ACTION_RESOLVE_TYPE = 'smartling_visual_configurator_resolve_type';
+    public const ACTION_PREVIEW = 'smartling_visual_configurator_preview';
+    public const ACTION_EXPORT = 'smartling_visual_configurator_export';
+    public const ACTION_IMPORT = 'smartling_visual_configurator_import';
+    private const MAX_IMPORT_BYTES = 1048576;
+    private const MAX_IMPORT_RULES = 500;
+    private const PREVIEW_LIMIT = 15;
+    private const PREVIEW_VALUE_LENGTH = 120;
+
+    private ExternalContentJsonRules $evaluator;
 
     public function __construct(
         private JsonFieldRulesManager $rulesManager,
         private ReplacerFactory $replacerFactory,
         private PluginInfo $pluginInfo,
         private WordpressFunctionProxyHelper $wpProxy,
+        ?ExternalContentJsonRules $evaluator = null,
     ) {
+        $this->evaluator = $evaluator ?? new ExternalContentJsonRules($rulesManager, $replacerFactory, $wpProxy);
     }
 
     public function register(): void
@@ -39,6 +51,9 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
         $this->wpProxy->add_action('wp_ajax_' . self::ACTION_SAVE_RULE, [$this, 'ajaxSaveRule']);
         $this->wpProxy->add_action('wp_ajax_' . self::ACTION_DELETE_RULE, [$this, 'ajaxDeleteRule']);
         $this->wpProxy->add_action('wp_ajax_' . self::ACTION_RESOLVE_TYPE, [$this, 'ajaxResolveType']);
+        $this->wpProxy->add_action('wp_ajax_' . self::ACTION_PREVIEW, [$this, 'ajaxPreview']);
+        $this->wpProxy->add_action('wp_ajax_' . self::ACTION_EXPORT, [$this, 'ajaxExport']);
+        $this->wpProxy->add_action('wp_ajax_' . self::ACTION_IMPORT, [$this, 'ajaxImport']);
     }
 
     public function menu(): void
@@ -83,6 +98,9 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
                 'save' => self::ACTION_SAVE_RULE,
                 'delete' => self::ACTION_DELETE_RULE,
                 'resolveType' => self::ACTION_RESOLVE_TYPE,
+                'preview' => self::ACTION_PREVIEW,
+                'export' => self::ACTION_EXPORT,
+                'import' => self::ACTION_IMPORT,
             ],
         ]);
         wp_enqueue_style('wp-components');
@@ -107,17 +125,11 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
             return;
         }
         try {
-            $payload = $this->readRulePayload();
+            $data = $this->readRule()->toArray();
         } catch (\InvalidArgumentException $e) {
             $this->wpProxy->wp_send_json_error(['message' => $e->getMessage()], 400);
             return;
         }
-
-        $data = (new JsonFieldRule(
-            $payload['metaKey'],
-            $payload['propertyPath'],
-            $payload['replacerId'],
-        ))->toArray();
 
         $id = isset($_POST['id']) && is_string($_POST['id'])
             ? $this->wpProxy->sanitize_text_field($this->wpProxy->wp_unslash($_POST['id']))
@@ -196,29 +208,142 @@ class VisualConfiguratorPage extends ControllerAbstract implements WPHookInterfa
     }
 
     /**
-     * @return array{metaKey:string,propertyPath:string,replacerId:string}
+     * @throws \InvalidArgumentException
      */
-    private function readRulePayload(): array
+    private function readRule(): JsonFieldRule
     {
-        $get = function (string $key): string {
+        $data = [];
+        foreach (['metaKey', 'propertyPath', 'replacerId'] as $key) {
             if (!isset($_POST[$key]) || !is_string($_POST[$key])) {
                 throw new \InvalidArgumentException("Missing field: $key");
             }
-            return $this->wpProxy->sanitize_text_field($this->wpProxy->wp_unslash($_POST[$key]));
-        };
-        $payload = [
-            'metaKey' => $get('metaKey'),
-            'propertyPath' => $get('propertyPath'),
-            'replacerId' => $get('replacerId'),
-        ];
-        foreach ($payload as $k => $v) {
-            if ($v === '') {
-                throw new \InvalidArgumentException("Field cannot be empty: $k");
+            $data[$key] = $this->wpProxy->wp_unslash($_POST[$key]);
+        }
+        foreach (['widgetType', 'matchMode'] as $key) {
+            $data[$key] = isset($_POST[$key]) && is_string($_POST[$key]) ? $this->wpProxy->wp_unslash($_POST[$key]) : '';
+        }
+        if (isset($_POST['conditions']) && is_string($_POST['conditions']) && $_POST['conditions'] !== '') {
+            $decoded = json_decode($this->wpProxy->wp_unslash($_POST['conditions']), true);
+            if (!is_array($decoded)) {
+                throw new \InvalidArgumentException('conditions must be a JSON list');
+            }
+            $data['conditions'] = $decoded;
+        }
+
+        return $this->buildRule($data);
+    }
+
+    /**
+     * The only way to turn untrusted input (UI or imported file) into a rule: sanitizes the text fields,
+     * JsonFieldRule validates them and this checks that the replacer exists
+     *
+     * @throws \InvalidArgumentException
+     */
+    private function buildRule(array $data): JsonFieldRule
+    {
+        foreach (['metaKey', 'propertyPath', 'replacerId', 'widgetType', 'matchMode'] as $key) {
+            if (isset($data[$key]) && is_string($data[$key])) {
+                $data[$key] = $this->wpProxy->sanitize_text_field($data[$key]);
             }
         }
-        if (strlen($payload['propertyPath']) > 512) {
-            throw new \InvalidArgumentException('propertyPath exceeds maximum length of 512 characters');
+        $rule = JsonFieldRule::fromArray($data);
+        try {
+            $this->replacerFactory->getReplacer($rule->getReplacerId());
+        } catch (\Throwable) {
+            throw new \InvalidArgumentException("Unknown rule type: {$rule->getReplacerId()}");
         }
-        return $payload;
+
+        return $rule;
+    }
+
+    public function ajaxPreview(): void
+    {
+        if (!$this->verifyNonceAndCapabilities()) {
+            return;
+        }
+        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        if ($id <= 0) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Missing or invalid id'], 400);
+            return;
+        }
+        // The capability check above is global, the preview must not expose meta of posts the user cannot edit
+        if (!$this->wpProxy->current_user_can('edit_post', $id)) {
+            $this->getLogger()->warning(sprintf('User %d cannot edit postId=%d, preview denied', get_current_user_id(), $id));
+            $this->wpProxy->wp_send_json_error(['message' => 'Insufficient permissions'], 403);
+            return;
+        }
+        try {
+            $rule = $this->readRule();
+        } catch (\InvalidArgumentException $e) {
+            $this->wpProxy->wp_send_json_error(['message' => $e->getMessage()], 400);
+            return;
+        }
+        $value = $this->wpProxy->getPostMeta($id, $rule->getMetaKey(), true);
+        $json = is_string($value) ? json_decode($value, true) : null;
+        if (!is_array($json)) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Meta field is missing or is not JSON'], 404);
+            return;
+        }
+        $matches = $this->evaluator->getMatchedValues($json, $rule);
+        $values = [];
+        foreach (array_slice($matches, 0, self::PREVIEW_LIMIT) as $match) {
+            $string = is_scalar($match) ? (string)$match : '';
+            $values[] = mb_strlen($string) > self::PREVIEW_VALUE_LENGTH
+                ? mb_substr($string, 0, self::PREVIEW_VALUE_LENGTH) . '…'
+                : $string;
+        }
+        $this->wpProxy->wp_send_json_success(['count' => count($matches), 'values' => $values]);
+    }
+
+    public function ajaxExport(): void
+    {
+        if (!$this->verifyNonceAndCapabilities()) {
+            return;
+        }
+        $this->rulesManager->loadData();
+        $this->wpProxy->wp_send_json_success(['export' => $this->rulesManager->export()]);
+    }
+
+    public function ajaxImport(): void
+    {
+        if (!$this->verifyNonceAndCapabilities()) {
+            return;
+        }
+        $raw = isset($_POST['payload']) && is_string($_POST['payload']) ? $this->wpProxy->wp_unslash($_POST['payload']) : '';
+        if ($raw === '' || strlen($raw) > self::MAX_IMPORT_BYTES) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Import file is missing or too large'], 400);
+            return;
+        }
+        $payload = json_decode($raw, true);
+        if (!is_array($payload) || !is_array($payload['rules'] ?? null)) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Not a valid rules export file'], 400);
+            return;
+        }
+        if ((int)($payload['version'] ?? 0) > JsonFieldRulesManager::EXPORT_FORMAT_VERSION) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Export file was created by a newer version of the connector'], 400);
+            return;
+        }
+        if (count($payload['rules']) > self::MAX_IMPORT_RULES) {
+            $this->wpProxy->wp_send_json_error(['message' => 'Too many rules, maximum is ' . self::MAX_IMPORT_RULES], 400);
+            return;
+        }
+        $rules = [];
+        $invalid = [];
+        foreach (array_values($payload['rules']) as $index => $data) {
+            try {
+                if (!is_array($data)) {
+                    throw new \InvalidArgumentException('Rule must be an object');
+                }
+                $rules[] = $this->buildRule($data);
+            } catch (\InvalidArgumentException $e) {
+                $invalid[] = ['index' => $index + 1, 'message' => $e->getMessage()];
+            }
+        }
+        $this->rulesManager->loadData();
+        $result = $this->rulesManager->import($rules);
+        $this->rulesManager->saveData();
+        $this->getLogger()->info(sprintf('Imported JSON field rules: added=%d, skipped=%d, invalid=%d', $result['added'], $result['skipped'], count($invalid)));
+
+        $this->wpProxy->wp_send_json_success($result + ['invalid' => $invalid]);
     }
 }

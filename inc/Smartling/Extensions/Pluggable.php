@@ -13,7 +13,15 @@ interface Pluggable {
 
     public function getMinVersion(): string;
 
+    /**
+     * Key under which the handler's data is stored in submissions, must stay stable across versions
+     */
     public function getPluginId(): string;
+
+    /**
+     * Name to use in logs, may differ from the plugin id when handlers share it
+     */
+    public function getLogName(): string;
 
     /**
      * @return array with possible paths to the plugin file relative to the plugins directory.

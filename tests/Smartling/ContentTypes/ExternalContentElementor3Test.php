@@ -27,6 +27,13 @@ class ExternalContentElementor3Test extends TestCase {
         $this->assertEquals(Pluggable::SUPPORTED, $this->getExternalContentElementor($proxy)->getSupportLevel('post', 1));
     }
 
+    public function testLogNameDiffersFromElementor4ButDataKeyIsUnchanged()
+    {
+        $handler = $this->getExternalContentElementor($this->createMock(WordpressFunctionProxyHelper::class));
+        $this->assertSame('elementor3', $handler->getLogName());
+        $this->assertSame('elementor', $handler->getPluginId());
+    }
+
     /**
      * @dataProvider extractElementorDataProvider
      */

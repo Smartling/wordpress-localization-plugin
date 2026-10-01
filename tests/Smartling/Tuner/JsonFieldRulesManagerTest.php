@@ -62,4 +62,51 @@ class JsonFieldRulesManagerTest extends TestCase
 
         $this->assertCount(0, $m->listItems());
     }
+
+    public function testExportOmitsIdsAndIncludesExtendedFields(): void
+    {
+        $m = new JsonFieldRulesManager();
+        $m->add(['metaKey' => 'm', 'propertyPath' => '$.x', 'replacerId' => 'copy']);
+        $m->add(['metaKey' => 'm', 'propertyPath' => '$..y', 'replacerId' => 'translate', 'widgetType' => 'w']);
+
+        $export = $m->export();
+
+        $this->assertSame(JsonFieldRulesManager::EXPORT_FORMAT_VERSION, $export['version']);
+        $this->assertSame([
+            ['metaKey' => 'm', 'propertyPath' => '$.x', 'replacerId' => 'copy'],
+            ['metaKey' => 'm', 'propertyPath' => '$..y', 'replacerId' => 'translate', 'matchMode' => 'anywhere', 'widgetType' => 'w'],
+        ], $export['rules']);
+    }
+
+    public function testImportPreservesExistingRulesAndSkipsDuplicates(): void
+    {
+        $m = new JsonFieldRulesManager();
+        $existingId = $m->add(['metaKey' => 'm', 'propertyPath' => '$.keep', 'replacerId' => 'copy']);
+        $legacyId = $m->add(['contentType' => 'page', 'metaKey' => 'm', 'propertyPath' => '$.legacy', 'replacerId' => 'translate']);
+
+        $result = $m->import([
+            new JsonFieldRule('m', '$.keep', 'copy'),
+            new JsonFieldRule('m', '$.legacy', 'translate'),
+            new JsonFieldRule('m', '$.new', 'translate'),
+            new JsonFieldRule('m', '$.new', 'translate'),
+            new JsonFieldRule('m', '$..scoped', 'translate', 'w'),
+        ]);
+
+        $this->assertSame(['added' => 2, 'skipped' => 3], $result);
+        $items = $m->listItems();
+        $this->assertCount(4, $items);
+        $this->assertSame('$.keep', $items[$existingId]->getPropertyPath());
+        $this->assertSame('$.legacy', $items[$legacyId]->getPropertyPath());
+    }
+
+    public function testExportThenImportIntoEmptyManagerRoundTrips(): void
+    {
+        $source = new JsonFieldRulesManager();
+        $source->add(['metaKey' => 'm', 'propertyPath' => '$..y', 'replacerId' => 'related|attachment', 'conditions' => [['ancestor' => 0, 'key' => 'k', 'value' => 'v']]]);
+        $target = new JsonFieldRulesManager();
+
+        $target->import(array_map(JsonFieldRule::fromArray(...), $source->export()['rules']));
+
+        $this->assertEquals(array_values($source->listItems()), array_values($target->listItems()));
+    }
 }
