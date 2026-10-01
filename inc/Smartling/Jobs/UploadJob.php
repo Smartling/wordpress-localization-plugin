@@ -77,6 +77,13 @@ class UploadJob extends JobAbstract
                 $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $this->submissionManager->storeEntity($submission);
             }
+            // Existing submissions are loaded from the queue by id, so they never pass through
+            // SubmissionManager::getSubmissionEntity(): remember the profile used for this upload here.
+            $previousProfileId = $submission->getConfigurationProfileId();
+            $this->submissionManager->stampConfigurationProfile($submission);
+            if ($submission->getConfigurationProfileId() !== $previousProfileId) {
+                $this->submissionManager->storeEntity($submission);
+            }
             $profileKey = $submission->getConfigurationProfileId() ?? "blog{$submission->getSourceBlogId()}";
             if (!array_key_exists($profileKey, $profiles)) {
                 try {

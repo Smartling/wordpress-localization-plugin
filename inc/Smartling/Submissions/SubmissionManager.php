@@ -495,7 +495,7 @@ class SubmissionManager extends EntityManagerAbstract
      * Remembers the profile used for this translation request, so that delivery uses the same profile
      * even if the active profile has been switched in the meantime.
      */
-    private function stampConfigurationProfile(SubmissionEntity $entity): void
+    public function stampConfigurationProfile(SubmissionEntity $entity): void
     {
         try {
             $entity->setConfigurationProfileId($this->settingsManager->getSingleSettingsProfile($entity->getSourceBlogId())->getId());

@@ -61,6 +61,8 @@ trait SmartlingCoreUploadTrait
 
     public function prepareUpload(SubmissionEntity $submission): SubmissionEntity
     {
+        $this->getSubmissionManager()->stampConfigurationProfile($submission);
+
         return $this->renewContentHash(
             $this->createTargetContent(
                 $this->setFileUriIfNullId($submission)
