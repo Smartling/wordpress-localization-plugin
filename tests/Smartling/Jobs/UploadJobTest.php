@@ -255,9 +255,9 @@ class UploadJobTest extends TestCase
     ): UploadJob {
         $settingsManager = $this->createMock(SettingsManager::class);
         if ($onGetSingleSettingsProfile !== null) {
-            $settingsManager->method('getSingleSettingsProfile')->willReturnCallback($onGetSingleSettingsProfile);
+            $settingsManager->method('getProfileBySubmission')->willReturnCallback($onGetSingleSettingsProfile);
         } else {
-            $settingsManager->method('getSingleSettingsProfile')
+            $settingsManager->method('getProfileBySubmission')
                 ->willReturn($this->createMock(ConfigurationProfileEntity::class));
         }
         $settingsManager->method('getActiveProfile')

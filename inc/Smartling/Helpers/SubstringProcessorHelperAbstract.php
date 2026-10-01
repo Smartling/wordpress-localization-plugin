@@ -256,7 +256,7 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
         $fFilter = $this->getFieldsFilter();
 
         $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
-        $removeAsRegExp = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp();
+        $removeAsRegExp = $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp();
         $attributes = $fFilter->removeFields($attributes, $settings['ignore'], $removeAsRegExp);
         $attributes = $fFilter->removeFields($attributes, $settings['copy']['name'], $removeAsRegExp);
 

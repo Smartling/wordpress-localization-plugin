@@ -466,6 +466,7 @@ namespace Smartling\Tests\Services {
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(SiteHelper::class),
                 $submissionsJobsManager,
+                $this->createMock(SettingsManager::class),
             ])->onlyMethods(['find'])->getMock();
             $submissionManager->method('find')->willReturn([]);
 

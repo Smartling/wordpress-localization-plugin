@@ -105,7 +105,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $fieldsFilterHelper->method('applyTranslatedValues')->willReturnArgument(2);
 
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
-        $settingsManager->method('getSingleSettingsProfile')->willReturn($this->createMock(ConfigurationProfileEntity::class));
+        $settingsManager->method('getProfileBySubmission')->willReturn($this->createMock(ConfigurationProfileEntity::class));
 
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
@@ -143,7 +143,7 @@ class SmartlingCoreUploadTraitTest extends TestCase
         $profile->method('getFilterSkipArray')->willReturn(['excluded']);
 
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
-        $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+        $settingsManager->method('getProfileBySubmission')->willReturn($profile);
 
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);
@@ -297,7 +297,7 @@ HTML;
         $profile = $this->getMockBuilder(ConfigurationProfileEntity::class)->disableOriginalConstructor()->getMock();
 
         $settingsManager = $this->getMockBuilder(SettingsManager::class)->disableOriginalConstructor()->getMock();
-        $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+        $settingsManager->method('getProfileBySubmission')->willReturn($profile);
 
         $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
         $submissionManager->method('storeEntity')->willReturnArgument(0);

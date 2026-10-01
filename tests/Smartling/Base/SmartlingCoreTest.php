@@ -474,7 +474,7 @@ class SmartlingCoreTest extends TestCase
         ?SubmissionManager $submissionManager = null,
     ): SmartlingCore|\PHPUnit\Framework\MockObject\MockObject {
         $settingsManager = $this->createMock(SettingsManager::class);
-        $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+        $settingsManager->method('getProfileBySubmission')->willReturn($profile);
 
         $submissionManager ??= $this->createMock(SubmissionManager::class);
 

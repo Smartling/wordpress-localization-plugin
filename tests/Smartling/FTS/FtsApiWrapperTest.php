@@ -35,7 +35,7 @@ class FtsApiWrapperTest extends TestCase
         $submission->method('getSourceBlogId')->willReturn(1);
 
         $this->settingsManager
-            ->method('getSingleSettingsProfile')
+            ->method('getProfileBySubmission')
             ->willThrowException(new SmartlingDbException('No profile found'));
 
         $this->ftsApiWrapper->uploadFile(
@@ -53,7 +53,7 @@ class FtsApiWrapperTest extends TestCase
         $submission->method('getSourceBlogId')->willReturn(1);
 
         $this->settingsManager
-            ->method('getSingleSettingsProfile')
+            ->method('getProfileBySubmission')
             ->willThrowException(new SmartlingDbException('No profile found'));
 
         $this->ftsApiWrapper->submitForInstantTranslation(
@@ -72,7 +72,7 @@ class FtsApiWrapperTest extends TestCase
         $submission->method('getSourceBlogId')->willReturn(1);
 
         $this->settingsManager
-            ->method('getSingleSettingsProfile')
+            ->method('getProfileBySubmission')
             ->willThrowException(new SmartlingDbException('No profile found'));
 
         $this->ftsApiWrapper->pollTranslationStatus(
@@ -90,7 +90,7 @@ class FtsApiWrapperTest extends TestCase
         $submission->method('getSourceBlogId')->willReturn(1);
 
         $this->settingsManager
-            ->method('getSingleSettingsProfile')
+            ->method('getProfileBySubmission')
             ->willThrowException(new SmartlingDbException('No profile found'));
 
         $this->ftsApiWrapper->downloadTranslatedFile(

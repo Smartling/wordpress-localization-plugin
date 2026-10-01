@@ -120,6 +120,26 @@ class SettingsManager extends EntityManagerAbstract
     }
 
     /**
+     * Returns the profile the submission was requested with, so delivery doesn't depend on which profile is active now.
+     * Falls back to the active profile of the source blog for submissions without a stored (or an existing) profile.
+     *
+     * @throws SmartlingDbException
+     */
+    public function getProfileBySubmission(SubmissionEntity $submission): ConfigurationProfileEntity
+    {
+        $profileId = $submission->getConfigurationProfileId();
+        if ($profileId !== null) {
+            $profile = ArrayHelper::first($this->getEntityById($profileId));
+            if ($profile instanceof ConfigurationProfileEntity) {
+                return $profile;
+            }
+            $this->getLogger()->warning("Profile id=$profileId stored for submission id={$submission->getId()} not found, using active profile of source blog");
+        }
+
+        return $this->getSingleSettingsProfile($submission->getSourceBlogId());
+    }
+
+    /**
      * @return int[]
      * @throws SmartlingDbException
      * @throws SmartlingConfigException
