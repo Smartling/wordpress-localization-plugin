@@ -15,6 +15,9 @@ class DetectChangesHelper
 {
     use LoggerSafeTrait;
 
+    /** @var array<string, bool> */
+    private array $suppressed = [];
+
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,
         private ContentSerializationHelper $contentSerializationHelper,
@@ -22,6 +25,20 @@ class DetectChangesHelper
         private SettingsManager $settingsManager,
         private SubmissionManager $submissionManager,
     ) {
+    }
+
+    /**
+     * Ignore content changes of the given content until resume() is called, for the cases when content is
+     * updated with the data the submissions already represent.
+     */
+    public function suppress(int $blogId, int $contentId): void
+    {
+        $this->suppressed["$blogId:$contentId"] = true;
+    }
+
+    public function resume(int $blogId, int $contentId): void
+    {
+        unset($this->suppressed["$blogId:$contentId"]);
     }
 
     /**
@@ -105,6 +122,12 @@ class DetectChangesHelper
 
     public function detectChanges(int $blogId, int $contentId, string $contentType): void
     {
+        if (array_key_exists("$blogId:$contentId", $this->suppressed)) {
+            $this->getLogger()->debug("Change detection suppressed for $contentType blog=$blogId, id=$contentId");
+
+            return;
+        }
+
         $submissions = $this->getSubmissions($blogId, $contentId, [$contentType]);
 
         if (0 === count($submissions)) {

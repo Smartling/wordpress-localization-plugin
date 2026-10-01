@@ -24,6 +24,8 @@ class ContentSerializationHelper
                 'post_password',
                 'post_modified',
                 'post_modified_gmt',
+                'post_status',
+                'post_name',
             ],
             'meta' => [
                 '_edit_lock',
