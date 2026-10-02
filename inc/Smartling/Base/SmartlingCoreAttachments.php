@@ -35,7 +35,7 @@ trait SmartlingCoreAttachments
                 $submission->getTargetId(),
             ])
         );
-        $profile = $this->getSettingsManager()->getSingleSettingsProfile($submission->getSourceBlogId());
+        $profile = $this->getSettingsManager()->getProfileBySubmission($submission);
         if (1 === $profile->getAlwaysSyncImagesOnUpload() || ($submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_NEW && !$targetFileExists)) {
             $this->syncMediaFile($submission);
         }

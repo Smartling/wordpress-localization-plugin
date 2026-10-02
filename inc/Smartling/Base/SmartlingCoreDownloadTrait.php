@@ -50,7 +50,7 @@ trait SmartlingCoreDownloadTrait
             LiveNotificationController::pushNotification(
                 $this
                     ->getSettingsManager()
-                    ->getSingleSettingsProfile($entity->getSourceBlogId())
+                    ->getProfileBySubmission($entity)
                     ->getProjectId(),
                 LiveNotificationController::getContentId($entity),
                 LiveNotificationController::SEVERITY_SUCCESS,
@@ -65,7 +65,7 @@ trait SmartlingCoreDownloadTrait
             LiveNotificationController::pushNotification(
                 $this
                     ->getSettingsManager()
-                    ->getSingleSettingsProfile($entity->getSourceBlogId())
+                    ->getProfileBySubmission($entity)
                     ->getProjectId(),
                 LiveNotificationController::getContentId($entity),
                 LiveNotificationController::SEVERITY_SUCCESS,
@@ -78,7 +78,7 @@ trait SmartlingCoreDownloadTrait
             LiveNotificationController::pushNotification(
                 $this
                     ->getSettingsManager()
-                    ->getSingleSettingsProfile($entity->getSourceBlogId())
+                    ->getProfileBySubmission($entity)
                     ->getProjectId(),
                 LiveNotificationController::getContentId($entity),
                 LiveNotificationController::SEVERITY_SUCCESS,
@@ -100,7 +100,7 @@ trait SmartlingCoreDownloadTrait
             LiveNotificationController::pushNotification(
                 $this
                     ->getSettingsManager()
-                    ->getSingleSettingsProfile($entity->getSourceBlogId())
+                    ->getProfileBySubmission($entity)
                     ->getProjectId(),
                 LiveNotificationController::getContentId($entity),
                 LiveNotificationController::SEVERITY_ERROR,

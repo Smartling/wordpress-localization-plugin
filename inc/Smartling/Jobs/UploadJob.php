@@ -77,16 +77,24 @@ class UploadJob extends JobAbstract
                 $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $this->submissionManager->storeEntity($submission);
             }
-            if (!array_key_exists($submission->getSourceBlogId(), $profiles)) {
+            // Existing submissions are loaded from the queue by id, so they never pass through
+            // SubmissionManager::getSubmissionEntity(): remember the profile used for this upload here.
+            $previousProfileId = $submission->getConfigurationProfileId();
+            $this->submissionManager->stampConfigurationProfile($submission);
+            if ($submission->getConfigurationProfileId() !== $previousProfileId) {
+                $this->submissionManager->storeEntity($submission);
+            }
+            $profileKey = $submission->getConfigurationProfileId() ?? "blog{$submission->getSourceBlogId()}";
+            if (!array_key_exists($profileKey, $profiles)) {
                 try {
-                    $profiles[$submission->getSourceBlogId()] = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+                    $profiles[$profileKey] = $this->settingsManager->getProfileBySubmission($submission);
                 } catch (SmartlingDbException) {
                     $this->failItem($item, 'Skipping upload of', "No active profile found for blogId={$submission->getSourceBlogId()}");
                     $this->uploadQueueManager->complete($item);
                     continue;
                 }
             }
-            $profile = $profiles[$submission->getSourceBlogId()];
+            $profile = $profiles[$profileKey];
             if ($item->getBatchUid() === '') {
                 try {
                     $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());

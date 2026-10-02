@@ -300,6 +300,7 @@ services:
      - "@multilang.proxy"
      - "@site.helper"
      - "@manager.submissions.jobs"
+     - "@manager.settings"
 
   manager.submissions.jobs:
     class: Smartling\Jobs\SubmissionsJobsManager

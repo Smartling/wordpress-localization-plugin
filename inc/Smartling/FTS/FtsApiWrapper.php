@@ -32,7 +32,7 @@ class FtsApiWrapper
      */
     private function getConfigurationProfile(SubmissionEntity $submission): ConfigurationProfileEntity
     {
-        return $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+        return $this->settingsManager->getProfileBySubmission($submission);
     }
 
     private function getFileTranslationsApi(ConfigurationProfileEntity $profile): FileTranslationsApiExtended

@@ -111,7 +111,7 @@ class FieldsFilterHelper
                     $this->prepareSourceData($data)
                 ),
                 $this->contentSerializationHelper->prepareFieldProcessorValues($submission)['ignore'],
-                $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp()),
+                $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp()),
         );
     }
 
@@ -135,11 +135,11 @@ class FieldsFilterHelper
                 $this->removeFields(
                     $this->flattenArray($data),
                     $settings['ignore'],
-                    $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+                    $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp(),
                 )
             ),
             $strategy,
-            $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+            $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp(),
             $settings,
         );
     }
@@ -180,11 +180,11 @@ class FieldsFilterHelper
                 $this->removeFields(
                     $array,
                     $settings['ignore'],
-                    $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+                    $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp(),
                 ),
             ),
             $strategy,
-            $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+            $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp(),
             $this->contentSerializationHelper->prepareFieldProcessorValues($submission),
         );
     }

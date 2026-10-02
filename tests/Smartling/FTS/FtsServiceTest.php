@@ -173,7 +173,7 @@ class FtsServiceTest extends TestCase
         $profile->method('getSmartlingLocale')->willReturn('de-DE');
 
         $this->settingsManager
-            ->method('getSingleSettingsProfile')
+            ->method('getProfileBySubmission')
             ->willReturn($profile);
 
         $this->ftsApiWrapper
@@ -329,7 +329,7 @@ class FtsServiceTest extends TestCase
         $profile->method('getSmartlingLocale')->willReturn('de-DE');
 
         $this->settingsManager
-            ->method('getSingleSettingsProfile')
+            ->method('getProfileBySubmission')
             ->willReturn($profile);
 
         $this->ftsApiWrapper

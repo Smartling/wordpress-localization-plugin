@@ -10,6 +10,7 @@ use Smartling\Exception\SmartlingDbException;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Settings\TargetLocale;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\SettingsManagerMock;
 
 class SettingsManagerTest extends TestCase
@@ -85,6 +86,51 @@ class SettingsManagerTest extends TestCase
             ->willReturn($profile);
 
         $mock->getProfileTargetBlogIdsByMainBlogId(5);
+    }
+
+    private function profileWithId(int $id): ConfigurationProfileEntity
+    {
+        $profile = new ConfigurationProfileEntity();
+        $profile->setId($id);
+
+        return $profile;
+    }
+
+    public function testGetProfileBySubmissionUsesStoredProfile()
+    {
+        $stored = $this->profileWithId(7);
+        $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById']);
+        $mock->expects(self::once())->method('getEntityById')->with(7)->willReturn([$stored]);
+        $mock->expects(self::never())->method('getSingleSettingsProfile');
+
+        $submission = (new SubmissionEntity())->setSourceBlogId(1)->setConfigurationProfileId(7);
+
+        self::assertSame($stored, $mock->getProfileBySubmission($submission));
+    }
+
+    public function testGetProfileBySubmissionFallsBackWithoutStoredProfile()
+    {
+        $active = $this->profileWithId(3);
+        $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById']);
+        $mock->expects(self::never())->method('getEntityById');
+        $mock->expects(self::once())->method('getSingleSettingsProfile')->with(1)->willReturn($active);
+
+        $submission = (new SubmissionEntity())->setSourceBlogId(1);
+
+        self::assertSame($active, $mock->getProfileBySubmission($submission));
+    }
+
+    public function testGetProfileBySubmissionFallsBackWhenStoredProfileWasDeleted()
+    {
+        $active = $this->profileWithId(3);
+        $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById', 'getLogger']);
+        $mock->method('getLogger')->willReturn(new NullLogger());
+        $mock->expects(self::once())->method('getEntityById')->with(7)->willReturn([]);
+        $mock->expects(self::once())->method('getSingleSettingsProfile')->with(1)->willReturn($active);
+
+        $submission = (new SubmissionEntity())->setSourceBlogId(1)->setConfigurationProfileId(7);
+
+        self::assertSame($active, $mock->getProfileBySubmission($submission));
     }
 
     public function testGetEntitiesQueries()

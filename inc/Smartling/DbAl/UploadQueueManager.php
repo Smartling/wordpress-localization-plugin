@@ -272,7 +272,7 @@ SQL,
                 }
                 if (!array_key_exists($submission->getSourceBlogId(), $profiles)) {
                     try {
-                        $profile = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+                        $profile = $this->settingsManager->getProfileBySubmission($submission);
                     } catch (SmartlingDbException) {
                         $profile = null;
                     }
