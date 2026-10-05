@@ -128,6 +128,7 @@ class FieldsFilterHelper
         }
 
         $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
+        $filterFieldNameRegExp = $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp();
 
         return $this->passConnectionProfileFilters(
             $this->passFieldProcessorsBeforeSendFilters(
@@ -135,11 +136,11 @@ class FieldsFilterHelper
                 $this->removeFields(
                     $this->flattenArray($data),
                     $settings['ignore'],
-                    $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp(),
+                    $filterFieldNameRegExp,
                 )
             ),
             $strategy,
-            $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp(),
+            $filterFieldNameRegExp,
             $settings,
         );
     }
@@ -174,17 +175,19 @@ class FieldsFilterHelper
 
     private function filterArray(array $array, SubmissionEntity $submission, string $strategy, array $settings): array
     {
+        $filterFieldNameRegExp = $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp();
+
         return $this->passConnectionProfileFilters(
             $this->passFieldProcessorsFilters(
                 $submission,
                 $this->removeFields(
                     $array,
                     $settings['ignore'],
-                    $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp(),
+                    $filterFieldNameRegExp,
                 ),
             ),
             $strategy,
-            $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp(),
+            $filterFieldNameRegExp,
             $this->contentSerializationHelper->prepareFieldProcessorValues($submission),
         );
     }

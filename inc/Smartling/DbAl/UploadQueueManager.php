@@ -270,15 +270,16 @@ SQL,
                 if ($submission === null) {
                     continue;
                 }
-                if (!array_key_exists($submission->getSourceBlogId(), $profiles)) {
+                $profileKey = $submission->getConfigurationProfileId() ?? "blog{$submission->getSourceBlogId()}";
+                if (!array_key_exists($profileKey, $profiles)) {
                     try {
                         $profile = $this->settingsManager->getProfileBySubmission($submission);
                     } catch (SmartlingDbException) {
                         $profile = null;
                     }
-                    $profiles[$submission->getSourceBlogId()] = $profile;
+                    $profiles[$profileKey] = $profile;
                 }
-                $profile = $profiles[$submission->getSourceBlogId()];
+                $profile = $profiles[$profileKey];
                 if (!$profile instanceof ConfigurationProfileEntity) {
                     continue;
                 }

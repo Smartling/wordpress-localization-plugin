@@ -118,7 +118,7 @@ class SubmissionEntity extends SmartlingEntityAbstract implements Submission
             static::FIELD_LAST_ERROR => static::DB_TYPE_STRING_TEXT,
             static::FIELD_LOCKED_FIELDS => 'TEXT NULL',
             static::FIELD_CREATED_AT => static::DB_TYPE_DATETIME,
-            static::FIELD_CONFIGURATION_PROFILE_ID => 'INT(20) UNSIGNED NULL',
+            static::FIELD_CONFIGURATION_PROFILE_ID => static::DB_TYPE_U_BIGINT_NULL,
         ];
     }
 

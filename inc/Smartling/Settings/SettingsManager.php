@@ -131,6 +131,9 @@ class SettingsManager extends EntityManagerAbstract
         if ($profileId !== null) {
             $profile = ArrayHelper::first($this->getEntityById($profileId));
             if ($profile instanceof ConfigurationProfileEntity) {
+                if ($profile->getSourceLocale()->getBlogId() !== $submission->getSourceBlogId()) {
+                    $this->getLogger()->warning("Profile id=$profileId stored for submission id={$submission->getId()} has source blog {$profile->getSourceLocale()->getBlogId()}, but submission source blog is {$submission->getSourceBlogId()}, profile may have been repurposed since the submission was stamped");
+                }
                 return $profile;
             }
             $this->getLogger()->warning("Profile id=$profileId stored for submission id={$submission->getId()} not found, using active profile of source blog");

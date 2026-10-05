@@ -8,6 +8,7 @@ use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
 use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
@@ -99,7 +100,26 @@ class SettingsManagerTest extends TestCase
     public function testGetProfileBySubmissionUsesStoredProfile()
     {
         $stored = $this->profileWithId(7);
+        $sourceLocale = new Locale();
+        $sourceLocale->setBlogId(1);
+        $stored->setSourceLocale($sourceLocale);
         $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById']);
+        $mock->expects(self::once())->method('getEntityById')->with(7)->willReturn([$stored]);
+        $mock->expects(self::never())->method('getSingleSettingsProfile');
+
+        $submission = (new SubmissionEntity())->setSourceBlogId(1)->setConfigurationProfileId(7);
+
+        self::assertSame($stored, $mock->getProfileBySubmission($submission));
+    }
+
+    public function testGetProfileBySubmissionLogsWarningWhenStoredProfileBlogMismatches()
+    {
+        $stored = $this->profileWithId(7);
+        $sourceLocale = new Locale();
+        $sourceLocale->setBlogId(2);
+        $stored->setSourceLocale($sourceLocale);
+        $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById', 'getLogger']);
+        $mock->method('getLogger')->willReturn(new NullLogger());
         $mock->expects(self::once())->method('getEntityById')->with(7)->willReturn([$stored]);
         $mock->expects(self::never())->method('getSingleSettingsProfile');
 

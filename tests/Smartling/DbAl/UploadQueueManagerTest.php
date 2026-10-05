@@ -8,6 +8,7 @@ use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Models\IntegerIterator;
 use Smartling\Models\UploadQueueEntity;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
@@ -110,6 +111,72 @@ class UploadQueueManagerTest extends TestCase {
             $db,
             $submissionManager,
         ))->enqueue(new IntegerIterator([1, 2, 3, 4, 7]), ''); // Submission with id 7 does not exist, and should not be stored
+    }
+
+    public function testPurgeUsesDistinctProfilePerSubmissionSharingSourceBlog()
+    {
+        $profileA = $this->createMock(ConfigurationProfileEntity::class);
+        $profileB = $this->createMock(ConfigurationProfileEntity::class);
+
+        $submission1 = $this->createMock(SubmissionEntity::class);
+        $submission1->method('getId')->willReturn(1);
+        $submission1->method('getSourceBlogId')->willReturn(1);
+        $submission1->method('getConfigurationProfileId')->willReturn(100);
+        $submission1->method('getFileUri')->willReturn('file1.xml');
+
+        $submission2 = $this->createMock(SubmissionEntity::class);
+        $submission2->method('getId')->willReturn(2);
+        $submission2->method('getSourceBlogId')->willReturn(1); // same source blog as submission1
+        $submission2->method('getConfigurationProfileId')->willReturn(200); // different profile
+        $submission2->method('getFileUri')->willReturn('file2.xml');
+
+        $stored = [$submission1, $submission2];
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('getEntityById')->willReturnCallback(function ($id) use ($stored) {
+            foreach ($stored as $submission) {
+                if ($submission->getId() === $id) {
+                    return $submission;
+                }
+            }
+            return null;
+        });
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getProfileBySubmission')->willReturnCallback(
+            function (SubmissionEntity $submission) use ($submission1, $profileA, $profileB) {
+                return $submission === $submission1 ? $profileA : $profileB;
+            },
+        );
+
+        $this->mockDbAl();
+        $db = $this->getMockBuilder(DB::class)
+            ->setConstructorArgs([new class {
+                public string $base_prefix = '';
+                public function getResultsArray() {}
+                public function query() {}
+            }])
+            ->onlyMethods(['getResultsArray', 'query'])
+            ->getMock();
+        $db->method('getResultsArray')->willReturn([
+            ['id' => 1, 'batch_uid' => 'batch-1', 'submission_ids' => '1,2'],
+        ]);
+
+        $cancelledWith = [];
+        $apiWrapper = $this->createMock(ApiWrapperInterface::class);
+        $apiWrapper->method('cancelBatchFile')->willReturnCallback(
+            function (ConfigurationProfileEntity $profile, string $batchUid, string $fileUri) use (&$cancelledWith) {
+                $cancelledWith[] = [$profile, $batchUid, $fileUri];
+            },
+        );
+
+        (new UploadQueueManager($apiWrapper, $settingsManager, $db, $submissionManager))->purge();
+
+        $this->assertCount(2, $cancelledWith, 'Expected cancelBatchFile to be called once per submission');
+        $this->assertSame($profileA, $cancelledWith[0][0], 'Submission 1 must be cancelled against its own stamped profile');
+        $this->assertSame('file1.xml', $cancelledWith[0][2]);
+        $this->assertSame($profileB, $cancelledWith[1][0], 'Submission 2 must be cancelled against its own stamped profile, not submission 1\'s cached one');
+        $this->assertSame('file2.xml', $cancelledWith[1][2]);
     }
 
     public function testDequeue()

@@ -14,6 +14,11 @@
 #   cp tests/.env.local.example tests/.env.local
 #   # Fill in your values in tests/.env.local
 #   bash tests/setup-local-test-db.sh
+#
+# This is a personal convenience script for local development, not shared tooling:
+# it dumps a developer's own "production" WordPress database into the test database.
+# All paths are read from tests/.env.local; there is no expectation it works unmodified
+# on another contributor's machine.
 
 set -e
 
@@ -38,7 +43,11 @@ WP_DB_PASS="${WP_DB_PASS:-}"
 WP_DB_HOST="${WP_DB_HOST:-127.0.0.1}"
 WP_DB_NAME="${WP_DB_NAME:-wordpress_test}"
 WP_DB_TABLE_PREFIX="${WP_DB_TABLE_PREFIX:-wptests_}"
-WP_INSTALL_DIR="${WP_INSTALL_DIR:-/opt/homebrew/var/www}"
+if [ -z "$WP_INSTALL_DIR" ]; then
+    echo "ERROR: WP_INSTALL_DIR not set in $ENV_FILE."
+    echo "See tests/.env.local.example for the expected value."
+    exit 1
+fi
 WPCLI_PATH="${WPCLI_PATH:-$SCRIPT_DIR/wp-test-install}"
 SOURCE_DB="${SOURCE_DB:-wordpress}"
 SOURCE_PREFIX="${SOURCE_PREFIX:-wp_}"
