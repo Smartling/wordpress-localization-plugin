@@ -54,4 +54,9 @@ class RuntimeCacheHelper
     {
         $this->storage[$scope][$key] = $value;
     }
+
+    public function clear(): void
+    {
+        $this->storage = [];
+    }
 }

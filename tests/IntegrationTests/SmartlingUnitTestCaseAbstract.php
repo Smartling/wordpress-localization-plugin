@@ -10,6 +10,7 @@ use Smartling\DbAl\UploadQueueManager;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
+use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\DownloadTranslationJob;
@@ -122,6 +123,14 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
     {
         parent::setUp();
         $this->cleanUpTables();
+        /*
+         * cleanUpTables() truncates posts/submissions, so every test's fixtures restart from
+         * auto-increment id 1. ContentHelper's RuntimeCacheHelper is a process-wide singleton
+         * keyed by contentType-sourceBlogId-sourceId, so without this, one test's "submission
+         * 1 / post 1" can serve cached (stale) metadata to every later test that also lands on
+         * id 1 - which is effectively all of them.
+         */
+        RuntimeCacheHelper::getInstance()->clear();
         $this->registerPostTypes();
         $this->ensureProfileExists();
     }
