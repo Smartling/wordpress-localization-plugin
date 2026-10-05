@@ -138,6 +138,18 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
         return getenv('WP_INSTALL_DIR');
     }
 
+    /**
+     * wp-cli needs a WordPress install whose wp-config.php points at the test database.
+     * WPCLI_PATH is that dedicated install (see tests/setup-local-test-db.sh); fall back to
+     * WP_INSTALL_DIR for environments that don't set it.
+     */
+    private static function getWPcliPathEnv(): string
+    {
+        $path = getenv('WPCLI_PATH');
+
+        return $path !== false && $path !== '' ? $path : self::getWPInstallDirEnv();
+    }
+
     public function getApiWrapper(): ApiWrapperInterface
     {
         return $this->get('api.wrapper.with.retries');
@@ -208,7 +220,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     protected static function wpCliExec(string $command, string $subCommand, string $parameters): void
     {
-        shell_exec(sprintf('%s %s %s %s --path=%s', self::getWPcliEnv(), $command, $subCommand, $parameters, self::getWPInstallDirEnv()));
+        shell_exec(sprintf('%s %s %s %s --path=%s', self::getWPcliEnv(), $command, $subCommand, $parameters, self::getWPcliPathEnv()));
     }
 
     protected function getContainer(): ContainerBuilder
