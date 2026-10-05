@@ -2,7 +2,6 @@
 
 namespace Smartling\Tests\IntegrationTests;
 
-use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\Bootstrap;
 use Smartling\ContentTypes\CustomPostType;
@@ -31,6 +30,7 @@ use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase

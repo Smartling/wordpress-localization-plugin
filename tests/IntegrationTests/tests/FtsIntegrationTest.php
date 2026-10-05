@@ -36,6 +36,8 @@ class FtsIntegrationTest extends SmartlingUnitTestCaseAbstract
      */
     public function testFullFtsWorkflow(): void
     {
+        $this->loadBuiltInFilters();
+
         $sourceContent = 'Hello world. This is a test post for instant translation.';
         $postId = $this->createPost('post', 'FTS Integration Test Post', $sourceContent);
         $this->assertGreaterThan(0, $postId, 'Post creation failed');
