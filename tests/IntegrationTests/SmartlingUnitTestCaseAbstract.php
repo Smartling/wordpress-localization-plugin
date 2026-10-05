@@ -107,6 +107,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
             'smartling_submissions',
             JobEntity::getTableName(),
             SubmissionJobEntity::getTableName(),
+            UploadQueueEntity::getTableName(),
         ];
 
         $tablePrefix = getenv('WP_DB_TABLE_PREFIX');
