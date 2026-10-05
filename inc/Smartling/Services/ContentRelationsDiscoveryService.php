@@ -106,6 +106,11 @@ class ContentRelationsDiscoveryService
                 $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->setIsCloned(0);
+                // Bulk-submitting is an explicit new translation request: (re)stamp with the
+                // profile this request's batch is being created under, for both a found
+                // existing submission (which bypasses getSubmissionEntity() above) and a new
+                // one (where this just confirms what getSubmissionEntity() already stamped).
+                $submission->setConfigurationProfileId($profile->getId());
                 $submission = $this->submissionManager->storeEntity($submission);
                 $queueIds[] = $submission->getId();
                 $this->logSubmissionCreated($submission, 'Bulk upload request', $jobInfo);
@@ -225,6 +230,11 @@ class ContentRelationsDiscoveryService
             } else {
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->setIsCloned(0);
+                // Resubmitting an existing submission is an explicit new translation request,
+                // so (re)stamp it with the profile active right now, same as
+                // SubmissionManager::getSubmissionEntity() does - this path never goes through
+                // that method, so it would otherwise keep whatever profile (or none) it had.
+                $submission->setConfigurationProfileId($profile->getId());
                 $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
                 $fileUris[] = $submission->getFileUri();
                 $queueIds[] = $submission->getId();
@@ -232,6 +242,10 @@ class ContentRelationsDiscoveryService
 
             $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
             $submissionTemplateArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
+            // New submissions built from this template bypass getSubmissionEntity() too; stamp
+            // them with the profile this request's batch is being created under (below), so
+            // UploadJob never has to guess at a profile for them later.
+            $submissionTemplateArray[SubmissionEntity::FIELD_CONFIGURATION_PROFILE_ID] = $profile->getId();
 
             foreach ($sources as $source) {
                 $submissionArray = array_merge($submissionTemplateArray, [

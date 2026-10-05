@@ -128,6 +128,31 @@ class SettingsManagerTest extends TestCase
         self::assertSame($stored, $mock->getProfileBySubmission($submission));
     }
 
+    /**
+     * Credentials/project now come from the stamped profile (getProfileBySubmission), so the
+     * locale must too - otherwise a profile switch between request and delivery can send the
+     * right project but the wrong (or a nonexistent) locale.
+     */
+    public function testGetSmartlingLocaleBySubmissionUsesStoredProfileNotActiveOne()
+    {
+        $stored = $this->profileWithId(9);
+        $storedSourceLocale = new Locale();
+        $storedSourceLocale->setBlogId(1);
+        $stored->setSourceLocale($storedSourceLocale);
+        $storedTargetLocale = new TargetLocale();
+        $storedTargetLocale->setBlogId(2);
+        $storedTargetLocale->setSmartlingLocale('de-DE');
+        $stored->setTargetLocales([$storedTargetLocale]);
+
+        $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById']);
+        $mock->expects(self::once())->method('getEntityById')->with(9)->willReturn([$stored]);
+        $mock->expects(self::never())->method('getSingleSettingsProfile');
+
+        $submission = (new SubmissionEntity())->setSourceBlogId(1)->setTargetBlogId(2)->setConfigurationProfileId(9);
+
+        self::assertSame('de-DE', $mock->getSmartlingLocaleBySubmission($submission));
+    }
+
     public function testGetProfileBySubmissionFallsBackWithoutStoredProfile()
     {
         $active = $this->profileWithId(3);

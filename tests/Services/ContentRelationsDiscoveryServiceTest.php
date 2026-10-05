@@ -154,6 +154,65 @@ namespace Smartling\Tests\Services {
             ]));
         }
 
+        /**
+         * The non-bulk path's "resubmit an existing submission" branch bypasses
+         * SubmissionManager::getSubmissionEntity() (and the profile stamp it does), so it
+         * must stamp the profile this request's batch is created under itself - this is an
+         * explicit new translation request, same as the bulk path.
+         */
+        public function testCreateSubmissionsHandlerStampsConfigurationProfileOnExistingSubmission()
+        {
+            $sourceBlogId = 1;
+            $sourceId = 48;
+            $contentType = 'post';
+            $targetBlogId = 2;
+            $jobName = 'Job Name';
+            $jobUid = 'abcdef123456';
+            $profileId = 5;
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+            $profile->method('getId')->willReturn($profileId);
+
+            $apiWrapper = $this->createMock(ApiWrapper::class);
+
+            $settingsManager = $this->createMock(SettingsManager::class);
+            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+
+            $siteHelper = $this->createMock(SiteHelper::class);
+            $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
+
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+
+            $submission = $this->createMock(SubmissionEntity::class);
+            $submission->method('getId')->willReturn(17);
+            $submission->expects(self::once())->method('setConfigurationProfileId')->with($profileId);
+
+            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+            $submissionManager->method('findOne')->willReturn($submission);
+            $submissionManager->method('storeEntity')->willReturnArgument(0);
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, wpProxy: $wpProxy);
+
+            $x->createSubmissions(UserTranslationRequest::fromArray([
+                'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
+                'job' =>
+                    [
+                        'id' => $jobUid,
+                        'name' => $jobName,
+                        'description' => '',
+                        'dueDate' => '',
+                        'timeZone' => 'Europe/Kiev',
+                        'authorize' => 'true',
+                    ],
+                'targetBlogIds' => $targetBlogId,
+                'relations' => [],
+            ]));
+        }
+
         public function testCreateSubmissionsRelations()
         {
             $sourceBlogId = 1;
@@ -288,6 +347,72 @@ namespace Smartling\Tests\Services {
             );
 
             $x->expects($this->never())->method('getTitle');
+
+            $x->createSubmissions(UserTranslationRequest::fromArray([
+                'source' => ['contentType' => $contentType, 'id' => [0]],
+                'job' =>
+                    [
+                        'id' => $jobUid,
+                        'name' => $jobName,
+                        'description' => '',
+                        'dueDate' => '',
+                        'timeZone' => 'Europe/Kiev',
+                        'authorize' => 'true',
+                    ],
+                'targetBlogIds' => $targetBlogId,
+                'ids' => $sourceIds,
+            ]));
+        }
+
+        /**
+         * bulkUpload() finds an existing submission via findTargetBlogSubmission(), bypassing
+         * SubmissionManager::getSubmissionEntity() (and the profile stamp it does). A bulk
+         * submit is an explicit new translation request, so it must stamp the profile the
+         * batch is created under itself, or the submission can be delivered via whatever
+         * profile happens to be active once the cron job picks it up.
+         */
+        public function testBulkSubmitHandlerStampsConfigurationProfile()
+        {
+            $sourceBlogId = 1;
+            $sourceIds = [48];
+            $contentType = 'post';
+            $targetBlogId = 2;
+            $jobName = 'Job Name';
+            $jobUid = 'abcdef123456';
+            $profileId = 5;
+
+            $apiWrapper = $this->createMock(ApiWrapper::class);
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+            $profile->method('getId')->willReturn($profileId);
+
+            $settingsManager = $this->createMock(SettingsManager::class);
+            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+
+            $siteHelper = $this->createMock(SiteHelper::class);
+            $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
+
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+
+            $submission = $this->createMock(SubmissionEntity::class);
+            $submission->method('getId')->willReturn(48);
+            $submission->expects(self::once())->method('setConfigurationProfileId')->with($profileId);
+
+            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+            $submissionManager->method('findTargetBlogSubmission')->willReturn($submission);
+            $submissionManager->method('storeEntity')->willReturnArgument(0);
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $apiWrapper,
+                $contentHelper,
+                $settingsManager,
+                $submissionManager,
+                wpProxy: $wpProxy,
+            );
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
                 'source' => ['contentType' => $contentType, 'id' => [0]],

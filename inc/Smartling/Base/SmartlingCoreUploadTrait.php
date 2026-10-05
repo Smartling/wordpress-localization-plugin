@@ -61,7 +61,14 @@ trait SmartlingCoreUploadTrait
 
     public function prepareUpload(SubmissionEntity $submission): SubmissionEntity
     {
-        $this->getSubmissionManager()->stampConfigurationProfile($submission);
+        // Only stamp if nothing stamped it yet (e.g. a creation path that bypasses
+        // SubmissionManager::getSubmissionEntity()). This method also runs on every
+        // getXMLFiltered() call, including read-only content fetches (ContentProvider),
+        // so re-stamping unconditionally would silently rebind an in-flight submission to
+        // whatever profile is currently active, not the one it was requested under.
+        if ($submission->getConfigurationProfileId() === null) {
+            $this->getSubmissionManager()->stampConfigurationProfile($submission);
+        }
 
         return $this->renewContentHash(
             $this->createTargetContent(

@@ -92,7 +92,7 @@ class SettingsManager extends EntityManagerAbstract
      */
     public function getSmartlingLocaleBySubmission(SubmissionEntity $submission): string
     {
-        $profile = $this->getSingleSettingsProfile($submission->getSourceBlogId());
+        $profile = $this->getProfileBySubmission($submission);
         if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
             if (count($profile->getTargetLocales()) === 0) {
                 throw new SmartlingConfigException('Profile ' . $profile->getProfileName() . ' (' . $profile->getProjectId() . ') is expected to have at least one target locale for test run');

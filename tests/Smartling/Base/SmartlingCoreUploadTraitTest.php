@@ -44,6 +44,7 @@ class SmartlingCoreUpload {
         private TestRunHelper $testRunHelper,
         private UploadQueueManager $uploadQueueManager,
         private WordpressFunctionProxyHelper $wpProxy,
+        private ?ContentSerializationHelper $contentSerializationHelper = null,
     ) {
     }
 
@@ -59,6 +60,11 @@ class SmartlingCoreUpload {
     public function getContentHelper(): ContentHelper
     {
         return $this->contentHelper;
+    }
+
+    public function getContentSerializationHelper(): ContentSerializationHelper
+    {
+        return $this->contentSerializationHelper;
     }
 
     public function getFieldsFilter(): FieldsFilterHelper
@@ -339,6 +345,7 @@ HTML;
         ?SettingsManager $settingsManager = null,
         ?SubmissionManager $submissionManager = null,
         ?UploadQueueManager $uploadQueueManager = null,
+        ?ContentSerializationHelper $contentSerializationHelper = null,
     ) {
         if ($contentHelper === null) {
             $contentHelper = $this->createMock(ContentHelper::class);
@@ -354,6 +361,9 @@ HTML;
         }
         if ($uploadQueueManager === null) {
             $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+        }
+        if ($contentSerializationHelper === null) {
+            $contentSerializationHelper = $this->createMock(ContentSerializationHelper::class);
         }
         $externalContentManager = $this->createMock(ExternalContentManager::class);
         $externalContentManager->method('setExternalContent')->willReturnArgument(1);
@@ -373,6 +383,78 @@ HTML;
             $this->createMock(TestRunHelper::class),
             $uploadQueueManager,
             $wpProxy,
+            $contentSerializationHelper,
         );
+    }
+
+    /**
+     * prepareUpload() runs on every getXMLFiltered() call, including read-only content
+     * fetches (ContentProvider::getContent()), not just explicit (re)submissions. It must
+     * not rebind an in-flight submission to whatever profile happens to be active now.
+     */
+    public function testPrepareUploadDoesNotRestampAlreadyStampedSubmission()
+    {
+        $submission = new SubmissionEntity();
+        $submission->setId(1);
+        $submission->setConfigurationProfileId(3); // profile A, stamped at request time
+
+        $contentHelper = $this->createMock(ContentHelper::class);
+        $sourceContent = new PostEntityStd();
+        $sourceContent->post_title = 'Test';
+        $contentHelper->method('readSourceContent')->willReturn($sourceContent);
+
+        $contentSerializationHelper = $this->createMock(ContentSerializationHelper::class);
+        $contentSerializationHelper->method('calculateHash')->willReturn('hash');
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->expects(self::never())->method('stampConfigurationProfile');
+        $submissionManager->method('storeEntity')->willReturnArgument(0);
+
+        $x = $this->getSmartlingCoreUpload(
+            contentHelper: $contentHelper,
+            submissionManager: $submissionManager,
+            contentSerializationHelper: $contentSerializationHelper,
+        );
+
+        $result = $x->prepareUpload($submission);
+
+        self::assertSame(3, $result->getConfigurationProfileId(), 'Must keep the profile stamped at request time, not whatever is active now');
+    }
+
+    /**
+     * A submission that bypasses SubmissionManager::getSubmissionEntity() (e.g. created
+     * directly by ContentRelationsDiscoveryService) has no profile stamped yet; this is the
+     * one case prepareUpload() must still stamp.
+     */
+    public function testPrepareUploadStampsUnstampedSubmission()
+    {
+        $submission = new SubmissionEntity();
+        $submission->setId(1);
+
+        $contentHelper = $this->createMock(ContentHelper::class);
+        $sourceContent = new PostEntityStd();
+        $sourceContent->post_title = 'Test';
+        $contentHelper->method('readSourceContent')->willReturn($sourceContent);
+
+        $contentSerializationHelper = $this->createMock(ContentSerializationHelper::class);
+        $contentSerializationHelper->method('calculateHash')->willReturn('hash');
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->expects(self::once())->method('stampConfigurationProfile')->willReturnCallback(
+            static function (SubmissionEntity $submission) {
+                $submission->setConfigurationProfileId(5);
+            },
+        );
+        $submissionManager->method('storeEntity')->willReturnArgument(0);
+
+        $x = $this->getSmartlingCoreUpload(
+            contentHelper: $contentHelper,
+            submissionManager: $submissionManager,
+            contentSerializationHelper: $contentSerializationHelper,
+        );
+
+        $result = $x->prepareUpload($submission);
+
+        self::assertSame(5, $result->getConfigurationProfileId());
     }
 }

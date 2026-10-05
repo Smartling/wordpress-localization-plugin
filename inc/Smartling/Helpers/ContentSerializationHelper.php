@@ -2,6 +2,7 @@
 
 namespace Smartling\Helpers;
 
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 
@@ -87,8 +88,6 @@ class ContentSerializationHelper
 
     public function prepareFieldProcessorValues(SubmissionEntity $submission): array
     {
-        $profiles = $this->settingsManager->findEntityByMainLocale($submission->getSourceBlogId());
-
         $filter = [
             'ignore' => [],
             'key'    => [
@@ -100,8 +99,8 @@ class ContentSerializationHelper
             ],
         ];
 
-        if (0 < count($profiles)) {
-            $profile = ArrayHelper::first($profiles);
+        try {
+            $profile = $this->settingsManager->getProfileBySubmission($submission);
 
             $filter['ignore'] = $profile->getFilterSkipArray();
             $filter['key']['seo'] = array_map('trim', explode(PHP_EOL, $profile->getFilterFlagSeo()));
@@ -109,6 +108,8 @@ class ContentSerializationHelper
             $filter['copy']['regexp'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldValueRegex()));
 
             LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
+        } catch (SmartlingDbException) {
+            // no profile available (stored or active) for this submission's source blog; leave filter at defaults
         }
 
         return $filter;

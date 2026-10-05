@@ -78,11 +78,19 @@ class UploadJob extends JobAbstract
                 $this->submissionManager->storeEntity($submission);
             }
             // Existing submissions are loaded from the queue by id, so they never pass through
-            // SubmissionManager::getSubmissionEntity(): remember the profile used for this upload here.
-            $previousProfileId = $submission->getConfigurationProfileId();
-            $this->submissionManager->stampConfigurationProfile($submission);
-            if ($submission->getConfigurationProfileId() !== $previousProfileId) {
-                $this->submissionManager->storeEntity($submission);
+            // SubmissionManager::getSubmissionEntity(): stamp the profile that was active when
+            // translation was requested, for any submission in this batch that never got one
+            // (e.g. created via a path that bypasses getSubmissionEntity()). Never overwrite an
+            // existing stamp here - the batch was already created under that profile, and
+            // re-stamping to whatever is active when this cron job happens to run would send
+            // the upload with the wrong project's credentials against that batch.
+            foreach ($item->getSubmissions() as $itemSubmission) {
+                if ($itemSubmission->getConfigurationProfileId() === null) {
+                    $this->submissionManager->stampConfigurationProfile($itemSubmission);
+                    if ($itemSubmission->getConfigurationProfileId() !== null) {
+                        $this->submissionManager->storeEntity($itemSubmission);
+                    }
+                }
             }
             $profileKey = $submission->getConfigurationProfileId() ?? "blog{$submission->getSourceBlogId()}";
             if (!array_key_exists($profileKey, $profiles)) {
