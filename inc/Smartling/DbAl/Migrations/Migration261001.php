@@ -8,8 +8,10 @@ use Smartling\Submissions\SubmissionEntity;
 /**
  * Stores the configuration profile a submission was requested with.
  *
- * Existing rows are left NULL on purpose: the profile active today is not necessarily the
- * one they were uploaded with, so they keep resolving the profile by source blog.
+ * Existing rows are left NULL: until stamped, they keep resolving the profile by source
+ * blog. SubmissionManager::getSubmissionEntity() backfills the column with the currently
+ * active profile the first time a pre-existing submission is (re)submitted for translation,
+ * so an in-flight row stays NULL only until it is next touched by an upload/resubmit flow.
  */
 class Migration261001 implements SmartlingDbMigrationInterface
 {
