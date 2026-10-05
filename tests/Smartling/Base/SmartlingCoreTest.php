@@ -52,7 +52,13 @@ class SmartlingCoreTest extends TestCase
     protected function setUp(): void
     {
         WordpressFunctionsMockHelper::injectFunctionsMocks();
-        $wpProxy = new WordpressFunctionProxyHelper();
+        // add_action/add_filter are stubbed out: SmartlingCore::__construct() registers real
+        // WordPress hooks bound to $this, and under a real WP bootstrap (as used when this
+        // suite runs alongside the integration tests) those hooks leak into global state for
+        // the rest of the process, firing against this un-DI-wired instance in later tests.
+        $wpProxy = $this->getMockBuilder(WordpressFunctionProxyHelper::class)
+            ->onlyMethods(['add_action', 'add_filter'])
+            ->getMock();
         $acf = $this->createMock(AcfDynamicSupport::class);
         $gutenbergBlockHelper = new GutenbergBlockHelper(
             $acf,
