@@ -83,6 +83,7 @@ class SubmissionEntity extends SmartlingEntityAbstract implements Submission
     public const FIELD_LAST_ERROR = 'last_error';
     public const FIELD_LOCKED_FIELDS = 'locked_fields';
     public const FIELD_CREATED_AT = 'created_at';
+    public const FIELD_CONFIGURATION_PROFILE_ID = 'configuration_profile_id';
 
     public const VIRTUAL_FIELD_JOB_LINK = 'job_link';
 
@@ -117,6 +118,7 @@ class SubmissionEntity extends SmartlingEntityAbstract implements Submission
             static::FIELD_LAST_ERROR => static::DB_TYPE_STRING_TEXT,
             static::FIELD_LOCKED_FIELDS => 'TEXT NULL',
             static::FIELD_CREATED_AT => static::DB_TYPE_DATETIME,
+            static::FIELD_CONFIGURATION_PROFILE_ID => static::DB_TYPE_U_BIGINT_NULL,
         ];
     }
 
@@ -511,6 +513,20 @@ class SubmissionEntity extends SmartlingEntityAbstract implements Submission
     public function setSubmitter(string $submitter): SubmissionEntity
     {
         $this->stateFields[static::FIELD_SUBMITTER] = $submitter;
+
+        return $this;
+    }
+
+    public function getConfigurationProfileId(): ?int
+    {
+        $value = $this->stateFields[static::FIELD_CONFIGURATION_PROFILE_ID];
+
+        return $value === null ? null : (int)$value;
+    }
+
+    public function setConfigurationProfileId(?int $configurationProfileId): self
+    {
+        $this->stateFields[static::FIELD_CONFIGURATION_PROFILE_ID] = $configurationProfileId;
 
         return $this;
     }

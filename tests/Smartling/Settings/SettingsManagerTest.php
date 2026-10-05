@@ -8,8 +8,10 @@ use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Settings\ConfigurationProfileEntity;
+use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
 use Smartling\Settings\TargetLocale;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\SettingsManagerMock;
 
 class SettingsManagerTest extends TestCase
@@ -85,6 +87,95 @@ class SettingsManagerTest extends TestCase
             ->willReturn($profile);
 
         $mock->getProfileTargetBlogIdsByMainBlogId(5);
+    }
+
+    private function profileWithId(int $id): ConfigurationProfileEntity
+    {
+        $profile = new ConfigurationProfileEntity();
+        $profile->setId($id);
+
+        return $profile;
+    }
+
+    public function testGetProfileBySubmissionUsesStoredProfile()
+    {
+        $stored = $this->profileWithId(7);
+        $sourceLocale = new Locale();
+        $sourceLocale->setBlogId(1);
+        $stored->setSourceLocale($sourceLocale);
+        $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById']);
+        $mock->expects(self::once())->method('getEntityById')->with(7)->willReturn([$stored]);
+        $mock->expects(self::never())->method('getSingleSettingsProfile');
+
+        $submission = (new SubmissionEntity())->setSourceBlogId(1)->setConfigurationProfileId(7);
+
+        self::assertSame($stored, $mock->getProfileBySubmission($submission));
+    }
+
+    public function testGetProfileBySubmissionLogsWarningWhenStoredProfileBlogMismatches()
+    {
+        $stored = $this->profileWithId(7);
+        $sourceLocale = new Locale();
+        $sourceLocale->setBlogId(2);
+        $stored->setSourceLocale($sourceLocale);
+        $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById', 'getLogger']);
+        $mock->method('getLogger')->willReturn(new NullLogger());
+        $mock->expects(self::once())->method('getEntityById')->with(7)->willReturn([$stored]);
+        $mock->expects(self::never())->method('getSingleSettingsProfile');
+
+        $submission = (new SubmissionEntity())->setSourceBlogId(1)->setConfigurationProfileId(7);
+
+        self::assertSame($stored, $mock->getProfileBySubmission($submission));
+    }
+
+    /**
+     * Credentials/project now come from the stamped profile (getProfileBySubmission), so the
+     * locale must too - otherwise a profile switch between request and delivery can send the
+     * right project but the wrong (or a nonexistent) locale.
+     */
+    public function testGetSmartlingLocaleBySubmissionUsesStoredProfileNotActiveOne()
+    {
+        $stored = $this->profileWithId(9);
+        $storedSourceLocale = new Locale();
+        $storedSourceLocale->setBlogId(1);
+        $stored->setSourceLocale($storedSourceLocale);
+        $storedTargetLocale = new TargetLocale();
+        $storedTargetLocale->setBlogId(2);
+        $storedTargetLocale->setSmartlingLocale('de-DE');
+        $stored->setTargetLocales([$storedTargetLocale]);
+
+        $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById']);
+        $mock->expects(self::once())->method('getEntityById')->with(9)->willReturn([$stored]);
+        $mock->expects(self::never())->method('getSingleSettingsProfile');
+
+        $submission = (new SubmissionEntity())->setSourceBlogId(1)->setTargetBlogId(2)->setConfigurationProfileId(9);
+
+        self::assertSame('de-DE', $mock->getSmartlingLocaleBySubmission($submission));
+    }
+
+    public function testGetProfileBySubmissionFallsBackWithoutStoredProfile()
+    {
+        $active = $this->profileWithId(3);
+        $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById']);
+        $mock->expects(self::never())->method('getEntityById');
+        $mock->expects(self::once())->method('getSingleSettingsProfile')->with(1)->willReturn($active);
+
+        $submission = (new SubmissionEntity())->setSourceBlogId(1);
+
+        self::assertSame($active, $mock->getProfileBySubmission($submission));
+    }
+
+    public function testGetProfileBySubmissionFallsBackWhenStoredProfileWasDeleted()
+    {
+        $active = $this->profileWithId(3);
+        $mock = $this->createPartialMock(SettingsManager::class, ['getSingleSettingsProfile', 'getEntityById', 'getLogger']);
+        $mock->method('getLogger')->willReturn(new NullLogger());
+        $mock->expects(self::once())->method('getEntityById')->with(7)->willReturn([]);
+        $mock->expects(self::once())->method('getSingleSettingsProfile')->with(1)->willReturn($active);
+
+        $submission = (new SubmissionEntity())->setSourceBlogId(1)->setConfigurationProfileId(7);
+
+        self::assertSame($active, $mock->getProfileBySubmission($submission));
     }
 
     public function testGetEntitiesQueries()

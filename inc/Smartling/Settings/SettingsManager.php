@@ -92,7 +92,7 @@ class SettingsManager extends EntityManagerAbstract
      */
     public function getSmartlingLocaleBySubmission(SubmissionEntity $submission): string
     {
-        $profile = $this->getSingleSettingsProfile($submission->getSourceBlogId());
+        $profile = $this->getProfileBySubmission($submission);
         if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
             if (count($profile->getTargetLocales()) === 0) {
                 throw new SmartlingConfigException('Profile ' . $profile->getProfileName() . ' (' . $profile->getProjectId() . ') is expected to have at least one target locale for test run');
@@ -117,6 +117,29 @@ class SettingsManager extends EntityManagerAbstract
         $message = vsprintf('No active profile found for main blog %s', [$mainBlogId]);
         $this->getLogger()->warning($message);
         throw new SmartlingDbException($message);
+    }
+
+    /**
+     * Returns the profile the submission was requested with, so delivery doesn't depend on which profile is active now.
+     * Falls back to the active profile of the source blog for submissions without a stored (or an existing) profile.
+     *
+     * @throws SmartlingDbException
+     */
+    public function getProfileBySubmission(SubmissionEntity $submission): ConfigurationProfileEntity
+    {
+        $profileId = $submission->getConfigurationProfileId();
+        if ($profileId !== null) {
+            $profile = ArrayHelper::first($this->getEntityById($profileId));
+            if ($profile instanceof ConfigurationProfileEntity) {
+                if ($profile->getSourceLocale()->getBlogId() !== $submission->getSourceBlogId()) {
+                    $this->getLogger()->warning("Profile id=$profileId stored for submission id={$submission->getId()} has source blog {$profile->getSourceLocale()->getBlogId()}, but submission source blog is {$submission->getSourceBlogId()}, profile may have been repurposed since the submission was stamped");
+                }
+                return $profile;
+            }
+            $this->getLogger()->warning("Profile id=$profileId stored for submission id={$submission->getId()} not found, using active profile of source blog");
+        }
+
+        return $this->getSingleSettingsProfile($submission->getSourceBlogId());
     }
 
     /**

@@ -2,7 +2,6 @@
 
 namespace Smartling\Tests\IntegrationTests;
 
-use Psr\Log\LoggerInterface;
 use Smartling\ApiWrapperInterface;
 use Smartling\Bootstrap;
 use Smartling\ContentTypes\CustomPostType;
@@ -11,6 +10,7 @@ use Smartling\DbAl\UploadQueueManager;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\ContentHelper;
 use Smartling\Helpers\GutenbergBlockHelper;
+use Smartling\Helpers\RuntimeCacheHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\TranslationHelper;
 use Smartling\Jobs\DownloadTranslationJob;
@@ -31,6 +31,7 @@ use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tuner\MediaAttachmentRulesManager;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\Vendor\Symfony\Component\DependencyInjection\ContainerBuilder;
 
 abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
@@ -106,6 +107,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
             'smartling_submissions',
             JobEntity::getTableName(),
             SubmissionJobEntity::getTableName(),
+            UploadQueueEntity::getTableName(),
         ];
 
         $tablePrefix = getenv('WP_DB_TABLE_PREFIX');
@@ -122,6 +124,14 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
     {
         parent::setUp();
         $this->cleanUpTables();
+        /*
+         * cleanUpTables() truncates posts/submissions, so every test's fixtures restart from
+         * auto-increment id 1. ContentHelper's RuntimeCacheHelper is a process-wide singleton
+         * keyed by contentType-sourceBlogId-sourceId, so without this, one test's "submission
+         * 1 / post 1" can serve cached (stale) metadata to every later test that also lands on
+         * id 1 - which is effectively all of them.
+         */
+        RuntimeCacheHelper::getInstance()->clear();
         $this->registerPostTypes();
         $this->ensureProfileExists();
     }
@@ -136,6 +146,18 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
     private static function getWPInstallDirEnv(): string
     {
         return getenv('WP_INSTALL_DIR');
+    }
+
+    /**
+     * wp-cli needs a WordPress install whose wp-config.php points at the test database.
+     * WPCLI_PATH is that dedicated install (see tests/setup-local-test-db.sh); fall back to
+     * WP_INSTALL_DIR for environments that don't set it.
+     */
+    private static function getWPcliPathEnv(): string
+    {
+        $path = getenv('WPCLI_PATH');
+
+        return $path !== false && $path !== '' ? $path : self::getWPInstallDirEnv();
     }
 
     public function getApiWrapper(): ApiWrapperInterface
@@ -208,7 +230,7 @@ abstract class SmartlingUnitTestCaseAbstract extends WP_UnitTestCase
 
     protected static function wpCliExec(string $command, string $subCommand, string $parameters): void
     {
-        shell_exec(sprintf('%s %s %s %s --path=%s', self::getWPcliEnv(), $command, $subCommand, $parameters, self::getWPInstallDirEnv()));
+        shell_exec(sprintf('%s %s %s %s --path=%s', self::getWPcliEnv(), $command, $subCommand, $parameters, self::getWPcliPathEnv()));
     }
 
     protected function getContainer(): ContainerBuilder

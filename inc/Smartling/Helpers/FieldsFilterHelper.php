@@ -111,7 +111,7 @@ class FieldsFilterHelper
                     $this->prepareSourceData($data)
                 ),
                 $this->contentSerializationHelper->prepareFieldProcessorValues($submission)['ignore'],
-                $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp()),
+                $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp()),
         );
     }
 
@@ -128,6 +128,7 @@ class FieldsFilterHelper
         }
 
         $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
+        $filterFieldNameRegExp = $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp();
 
         return $this->passConnectionProfileFilters(
             $this->passFieldProcessorsBeforeSendFilters(
@@ -135,11 +136,11 @@ class FieldsFilterHelper
                 $this->removeFields(
                     $this->flattenArray($data),
                     $settings['ignore'],
-                    $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+                    $filterFieldNameRegExp,
                 )
             ),
             $strategy,
-            $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+            $filterFieldNameRegExp,
             $settings,
         );
     }
@@ -174,17 +175,19 @@ class FieldsFilterHelper
 
     private function filterArray(array $array, SubmissionEntity $submission, string $strategy, array $settings): array
     {
+        $filterFieldNameRegExp = $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp();
+
         return $this->passConnectionProfileFilters(
             $this->passFieldProcessorsFilters(
                 $submission,
                 $this->removeFields(
                     $array,
                     $settings['ignore'],
-                    $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+                    $filterFieldNameRegExp,
                 ),
             ),
             $strategy,
-            $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId())->getFilterFieldNameRegExp(),
+            $filterFieldNameRegExp,
             $this->contentSerializationHelper->prepareFieldProcessorValues($submission),
         );
     }

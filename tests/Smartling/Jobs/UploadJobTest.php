@@ -126,6 +126,94 @@ class UploadJobTest extends TestCase
     }
 
     /**
+     * Existing submissions are loaded from the queue by id and never pass through
+     * SubmissionManager::getSubmissionEntity(), so the profile has to be stored on upload.
+     */
+    public function testStoresConfigurationProfileOfExistingSubmissionOnUpload()
+    {
+        $submission = new SubmissionEntity();
+        $submission->setId(1);
+        $submission->setFileUri('file.xml');
+        $submission->setSourceBlogId(1);
+        $item = $this->buildItem($submission);
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('stampConfigurationProfile')->willReturnCallback(
+            static function (SubmissionEntity $submission) {
+                $submission->setConfigurationProfileId(5);
+            },
+        );
+        $submissionManager->expects($this->once())->method('storeEntity')->with($submission);
+
+        $this->buildJob($this->buildQueueManager($item), $submissionManager)->run('');
+
+        $this->assertSame(5, $submission->getConfigurationProfileId());
+    }
+
+    /**
+     * The batch this upload is sent against was created under the profile active when the
+     * user requested translation. Re-stamping to whatever profile is active when this cron
+     * job happens to run would send the upload with the wrong project's credentials against
+     * that batch. Stored A, active B, run UploadJob -> still A.
+     */
+    public function testDoesNotRestampAlreadyStampedSubmissionOnUpload()
+    {
+        $submission = new SubmissionEntity();
+        $submission->setId(1);
+        $submission->setFileUri('file.xml');
+        $submission->setSourceBlogId(1);
+        $submission->setConfigurationProfileId(3); // profile A, stamped at request time
+        $item = $this->buildItem($submission);
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->expects($this->never())->method('stampConfigurationProfile');
+        $submissionManager->expects($this->never())->method('storeEntity');
+
+        $this->buildJob($this->buildQueueManager($item), $submissionManager)->run('');
+
+        $this->assertSame(3, $submission->getConfigurationProfileId(), 'Must keep the profile stamped at request time, not whatever is active now');
+    }
+
+    /**
+     * A queue item groups submissions for several target locales sharing one batch. If only
+     * the first submission gets stamped, the others would keep NULL profile ids until
+     * sendForTranslation stamps them individually later - and never get stamped at all if
+     * that fails first. Every submission in the item must be covered here.
+     */
+    public function testStampsEverySubmissionInItemNotJustTheFirst()
+    {
+        $stampedAlready = new SubmissionEntity();
+        $stampedAlready->setId(1);
+        $stampedAlready->setFileUri('file.xml');
+        $stampedAlready->setSourceBlogId(1);
+        $stampedAlready->setConfigurationProfileId(3);
+
+        $unstamped = new SubmissionEntity();
+        $unstamped->setId(2);
+        $unstamped->setFileUri('file.xml');
+        $unstamped->setSourceBlogId(1);
+
+        $item = new UploadQueueItem(
+            [$stampedAlready, $unstamped],
+            'batchUid',
+            new IntStringPairCollection([new IntStringPair(1, 'de-DE'), new IntStringPair(2, 'fr-FR')]),
+            42,
+        );
+
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('stampConfigurationProfile')->willReturnCallback(
+            static function (SubmissionEntity $submission) {
+                $submission->setConfigurationProfileId(5);
+            },
+        );
+
+        $this->buildJob($this->buildQueueManager($item), $submissionManager)->run('');
+
+        $this->assertSame(3, $stampedAlready->getConfigurationProfileId(), 'Must not touch a submission that already had a profile');
+        $this->assertSame(5, $unstamped->getConfigurationProfileId(), 'Must stamp every unstamped submission in the item, not just the first');
+    }
+
+    /**
      * A queue item groups submissions for the same content across multiple target
      * locales; only the first one is used to look up the profile/batch job. If either
      * lookup fails, every submission in the group must be failed visibly, not just the
@@ -255,9 +343,9 @@ class UploadJobTest extends TestCase
     ): UploadJob {
         $settingsManager = $this->createMock(SettingsManager::class);
         if ($onGetSingleSettingsProfile !== null) {
-            $settingsManager->method('getSingleSettingsProfile')->willReturnCallback($onGetSingleSettingsProfile);
+            $settingsManager->method('getProfileBySubmission')->willReturnCallback($onGetSingleSettingsProfile);
         } else {
-            $settingsManager->method('getSingleSettingsProfile')
+            $settingsManager->method('getProfileBySubmission')
                 ->willReturn($this->createMock(ConfigurationProfileEntity::class));
         }
         $settingsManager->method('getActiveProfile')

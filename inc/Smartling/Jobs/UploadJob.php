@@ -77,16 +77,32 @@ class UploadJob extends JobAbstract
                 $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 $this->submissionManager->storeEntity($submission);
             }
-            if (!array_key_exists($submission->getSourceBlogId(), $profiles)) {
+            // Existing submissions are loaded from the queue by id, so they never pass through
+            // SubmissionManager::getSubmissionEntity(): stamp the profile that was active when
+            // translation was requested, for any submission in this batch that never got one
+            // (e.g. created via a path that bypasses getSubmissionEntity()). Never overwrite an
+            // existing stamp here - the batch was already created under that profile, and
+            // re-stamping to whatever is active when this cron job happens to run would send
+            // the upload with the wrong project's credentials against that batch.
+            foreach ($item->getSubmissions() as $itemSubmission) {
+                if ($itemSubmission->getConfigurationProfileId() === null) {
+                    $this->submissionManager->stampConfigurationProfile($itemSubmission);
+                    if ($itemSubmission->getConfigurationProfileId() !== null) {
+                        $this->submissionManager->storeEntity($itemSubmission);
+                    }
+                }
+            }
+            $profileKey = $submission->getConfigurationProfileId() ?? "blog{$submission->getSourceBlogId()}";
+            if (!array_key_exists($profileKey, $profiles)) {
                 try {
-                    $profiles[$submission->getSourceBlogId()] = $this->settingsManager->getSingleSettingsProfile($submission->getSourceBlogId());
+                    $profiles[$profileKey] = $this->settingsManager->getProfileBySubmission($submission);
                 } catch (SmartlingDbException) {
                     $this->failItem($item, 'Skipping upload of', "No active profile found for blogId={$submission->getSourceBlogId()}");
                     $this->uploadQueueManager->complete($item);
                     continue;
                 }
             }
-            $profile = $profiles[$submission->getSourceBlogId()];
+            $profile = $profiles[$profileKey];
             if ($item->getBatchUid() === '') {
                 try {
                     $item = $item->setBatchUid($this->api->getOrCreateJobInfoForDailyBucketJob($profile, [$submission->getFileUri()])->getBatchUid());

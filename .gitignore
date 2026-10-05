@@ -21,6 +21,10 @@ tests/IntegrationTests/src
 #IDE
 .idea
 
+# macOS
+.DS_Store
+*-backups.zip
+
 # Playwright E2E
 .env.playwright
 tests/playwright/.auth/

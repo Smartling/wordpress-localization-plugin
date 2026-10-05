@@ -68,7 +68,7 @@ class ApiWrapper implements ApiWrapperInterface
      */
     private function getConfigurationProfile(SubmissionEntity $submission): ConfigurationProfileEntity
     {
-        $profile = $this->settings->getSingleSettingsProfile($submission->getSourceBlogId());
+        $profile = $this->settings->getProfileBySubmission($submission);
         LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
 
         if (TestRunHelper::isTestRunBlog($submission->getTargetBlogId())) {
