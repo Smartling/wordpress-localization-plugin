@@ -95,6 +95,7 @@ This is the **Smartling Connector** WordPress plugin - a translation and localiz
 - Dependency injection throughout the codebase
 - Extensive use of interfaces for testability
 - WordPress hooks for extensibility
+- Avoid traits in favor of composition
 
 ### Content Processing
 - All content goes through serialization/deserialization pipeline

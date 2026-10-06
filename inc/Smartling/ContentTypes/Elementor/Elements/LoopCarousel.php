@@ -3,13 +3,11 @@
 namespace Smartling\ContentTypes\Elementor\Elements;
 
 use Smartling\ContentTypes\ContentTypeHelper;
-use Smartling\ContentTypes\Elementor\ElementorQueryRelatedTrait;
+use Smartling\ContentTypes\Elementor\ElementorQueryRelated;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 
 class LoopCarousel extends Unknown {
-    use ElementorQueryRelatedTrait;
-
     public function getType(): string
     {
         return 'loop-carousel';
@@ -24,6 +22,6 @@ class LoopCarousel extends Unknown {
             $return->addContent(new Content($id, ContentTypeHelper::CONTENT_TYPE_POST), $this->id, "settings/$key");
         }
 
-        return $this->addQueryRelated($return, 'post_query_');
+        return (new ElementorQueryRelated())->addRelated($return, $this->settings, $this->id, 'post_query_');
     }
 }

@@ -445,14 +445,12 @@ foreach ($this->settings['post_query_include_term_ids'] ?? [] as $index => $term
 
 ### Pattern 5: Query Settings (Elementor 3)
 
-Widgets that run a `WP_Query` (Posts, Loop Grid, Loop Carousel) store the query as prefixed settings, e.g. `post_query_include_term_ids`, `post_query_exclude_term_ids`, `post_query_posts_ids`, `post_query_exclude_ids`. Use `ElementorQueryRelatedTrait::addQueryRelated($info, $prefix)` in `getRelated()` to register term IDs (taxonomy) and post IDs (post) as related content; `setRelations()` then rewrites each array entry with the translated ID.
+Widgets that run a `WP_Query` (Posts, Loop Grid, Loop Carousel) store the query as prefixed settings, e.g. `post_query_include_term_ids`, `post_query_exclude_term_ids`, `post_query_posts_ids`, `post_query_exclude_ids`. Use `ElementorQueryRelated::addRelated($info, $settings, $containerId, $prefix)` (composition, no trait) in `getRelated()` to register term IDs (taxonomy) and post IDs (post) as related content; `setRelations()` then rewrites each array entry with the translated ID.
 
 ```php
-use ElementorQueryRelatedTrait;
-
 public function getRelated(): RelatedContentInfo
 {
-    return $this->addQueryRelated(parent::getRelated(), 'post_query_');
+    return (new ElementorQueryRelated())->addRelated(parent::getRelated(), $this->settings, $this->id, 'post_query_');
 }
 ```
 
