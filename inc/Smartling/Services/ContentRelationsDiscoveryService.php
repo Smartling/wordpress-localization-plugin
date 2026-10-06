@@ -13,6 +13,7 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\DbAl\WordpressContentEntities\EntityWithMetadata;
 use Smartling\Exception\EntityNotFoundException;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
@@ -150,10 +151,34 @@ class ContentRelationsDiscoveryService
         return $queueIds;
     }
 
+    /**
+     * Resolves the profile the user explicitly chose for this request, rather than whichever
+     * one happens to be flagged active. Falls back to today's active-profile behavior if the
+     * requested id doesn't exist, belongs to a different blog, or isn't active - this can
+     * happen with stale client-side data (profile deactivated/deleted after the page loaded)
+     * and shouldn't hard-fail the whole request.
+     *
+     * @throws SmartlingDbException
+     */
+    private function resolveRequestedProfile(int $requestedProfileId, int $curBlogId): ConfigurationProfileEntity
+    {
+        $profile = ArrayHelper::first($this->settingsManager->getEntityById($requestedProfileId));
+        if ($profile instanceof ConfigurationProfileEntity) {
+            if ($profile->getSourceLocale()->getBlogId() === $curBlogId && 1 === $profile->getIsActive()) {
+                return $profile;
+            }
+            $this->getLogger()->warning("Requested profileId=$requestedProfileId is not an active profile for blogId=$curBlogId, falling back to active profile");
+        } else {
+            $this->getLogger()->warning("Requested profileId=$requestedProfileId not found, falling back to active profile");
+        }
+
+        return $this->settingsManager->getSingleSettingsProfile($curBlogId);
+    }
+
     public function createSubmissions(UserTranslationRequest $request): void
     {
         $curBlogId = $this->wordpressProxy->get_current_blog_id();
-        $profile = $this->settingsManager->getSingleSettingsProfile($curBlogId);
+        $profile = $this->resolveRequestedProfile($request->getProfileId(), $curBlogId);
         $job = $request->getJobInformation();
         $jobInfo = new JobEntity($job->getName(), $job->getId(), $profile->getProjectId());
 
