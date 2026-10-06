@@ -302,6 +302,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                     $this->view(
                         [
                             'profile'     => $profile,
+                            'profiles'    => $applicableProfiles,
                             'contentType' => $contentType,
                         ]
                     );
@@ -318,6 +319,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                         $this->view(
                             [
                                 'profile'     => $profile,
+                                'profiles'    => $applicableProfiles,
                                 'contentType' => $contentType,
                             ]
                         );

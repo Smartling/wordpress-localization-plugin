@@ -96,6 +96,7 @@ class BulkSubmitController extends WPAbstract implements WPHookInterface
                 $profile,
                 $this->wpProxy,
                 $this->nonceVerifier,
+                $applicableProfiles,
             );
             $this->view($table);
         }

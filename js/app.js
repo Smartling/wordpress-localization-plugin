@@ -1,8 +1,31 @@
 const { render, createElement: el, useState, useEffect, useCallback } = wp.element;
 const { Button, Card, CardBody, CardHeader, TabPanel, TextControl, TextareaControl, CheckboxControl, SelectControl, Spinner, Notice, Flex, __experimentalVStack: VStack } = wp.components;
 
-function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl, adminUrl, nonce }) {
+function getStoredProfileId(blogId) {
+    try {
+        const stored = window.localStorage.getItem(`smartling_last_profile_${blogId}`);
+        return stored ? parseInt(stored, 10) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function setStoredProfileId(blogId, profileId) {
+    try {
+        window.localStorage.setItem(`smartling_last_profile_${blogId}`, String(profileId));
+    } catch (e) {
+        // Ignore storage errors (private browsing, quota, etc.) - profile selection
+        // just won't be remembered across page loads.
+    }
+}
+
+function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }) {
     const [activeTab, setActiveTab] = useState('new');
+    const [selectedProfileId, setSelectedProfileId] = useState(() => {
+        const stored = getStoredProfileId(blogId);
+        return (stored !== null && profiles.some(p => p.id === stored)) ? stored : profiles[0]?.id;
+    });
+    const locales = profiles.find(p => p.id === selectedProfileId)?.locales || [];
     const [jobs, setJobs] = useState([]);
     const [selectedJob, setSelectedJob] = useState('');
     const [jobName, setJobName] = useState('');
@@ -33,7 +56,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                 action: 'smartling_job_api_proxy',
                 _wpnonce: nonce,
                 innerAction: 'list-jobs',
-                params: {}
+                params: { profileId: selectedProfileId }
             });
             if (response.status === 200) {
                 setJobs(response.data);
@@ -43,11 +66,23 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
         } finally {
             setLoading(false);
         }
-    }, [adminUrl]);
+    }, [adminUrl, selectedProfileId]);
 
     useEffect(() => {
         loadJobs();
     }, [loadJobs]);
+
+    const handleProfileChange = (val) => {
+        const newProfileId = parseInt(val, 10);
+        setSelectedProfileId(newProfileId);
+        setStoredProfileId(blogId, newProfileId);
+        const newLocales = (profiles.find(p => p.id === newProfileId)?.locales || []).map(l => l.blogId);
+        setSelectedLocales(prev => prev.filter(id => newLocales.includes(id)));
+        setSelectedJob('');
+        setJobName('');
+        setDescription('');
+        setDueDate('');
+    };
 
     const loadRelations = useCallback(async (type, id, level = 1) => {
         const localeList = locales.map(l => l.blogId).join(',');
@@ -250,6 +285,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
         const data = {
             _wpnonce: nonce,
             formAction: 'upload',
+            profileId: selectedProfileId,
             source: { contentType, id: isBulkSubmitPage ? [] : [contentId] },
             job: {
                 id: activeTab === 'new' ? '' : selectedJob,
@@ -289,6 +325,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                     _wpnonce: nonce,
                     innerAction: 'create-job',
                     params: {
+                        profileId: selectedProfileId,
                         jobName,
                         description,
                         dueDate,
@@ -387,6 +424,13 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, locales, ajaxUrl,
                 ),
 
                 el('div', {},
+                    tab.name !== 'instant' && profiles.length > 1 && el(SelectControl, {
+                        label: 'Translation profile',
+                        value: selectedProfileId,
+                        options: profiles.map(p => ({ label: p.name, value: p.id })),
+                        onChange: handleProfileChange
+                    }),
+
                     el('fieldset', { style: { marginTop: '16px', border: '1px solid #ddd', padding: '12px', borderRadius: '4px' } },
                         el('legend', { style: { fontWeight: 600, padding: '0 8px' } }, 'Target Locales'),
                         el('div', { style: { display: 'flex', gap: '8px', marginBottom: '8px' } },
@@ -508,13 +552,14 @@ if (document.getElementById('smartling-app')) {
     const isBulkSubmitPage = container.dataset.bulkSubmit === 'true';
     const contentType = container.dataset.contentType || '';
     const contentId = parseInt(container.dataset.contentId) || 0;
-    const locales = JSON.parse(container.dataset.locales || '[]');
+    const profiles = JSON.parse(container.dataset.profiles || '[]');
+    const blogId = parseInt(container.dataset.blogId) || 0;
     const ajaxUrl = container.dataset.ajaxUrl || '';
     const adminUrl = container.dataset.adminUrl || '';
     const nonce = container.dataset.nonce || '';
 
     render(
-        el(JobWizard, { isBulkSubmitPage, contentType, contentId, locales, ajaxUrl, adminUrl, nonce }),
+        el(JobWizard, { isBulkSubmitPage, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }),
         container
     );
 }
