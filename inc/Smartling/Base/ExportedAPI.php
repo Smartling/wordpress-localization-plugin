@@ -224,4 +224,17 @@ interface ExportedAPI
      * @param ConfigurationProfileEntity[]
      */
     public const FILTER_ACTIVE_PROFILES = 'smartling_filter_active_profiles';
+
+    /**
+     * Translates an id of the content that has been submitted for translation, so custom code does not have to
+     * hardcode ids that differ between blogs.
+     *
+     * @param int $sourceId id of the content in the source blog, the value returned when nothing is registered
+     * @param string $contentType submission content type (e.g. attachment, post, page, category), empty to ignore
+     * @param int|null $targetBlogId blog to get the id for, current blog when null
+     * @param bool $fallbackToSource return $sourceId when no translation is found, otherwise null is returned
+     * @param int|null $sourceBlogId blog the content was translated from, any blog when null
+     * @return int|null target id
+     */
+    public const FILTER_TARGET_ID = 'smartling_target_id';
 }
