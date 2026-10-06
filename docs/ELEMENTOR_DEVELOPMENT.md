@@ -442,3 +442,18 @@ foreach ($this->settings['post_query_include_term_ids'] ?? [] as $index => $term
 - `inc/Smartling/Models/Content.php` — Content reference model
 - `tests/Smartling/ContentTypes/Elementor/` — Test examples
 - `tests/Smartling/ContentTypes/ExternalContentElementor4Test.php` — Elementor 4 handler tests
+
+### Pattern 5: Query Settings (Elementor 3)
+
+Widgets that run a `WP_Query` (Posts, Loop Grid, Loop Carousel) store the query as prefixed settings, e.g. `post_query_include_term_ids`, `post_query_exclude_term_ids`, `post_query_posts_ids`, `post_query_exclude_ids`. Use `ElementorQueryRelatedTrait::addQueryRelated($info, $prefix)` in `getRelated()` to register term IDs (taxonomy) and post IDs (post) as related content; `setRelations()` then rewrites each array entry with the translated ID.
+
+```php
+use ElementorQueryRelatedTrait;
+
+public function getRelated(): RelatedContentInfo
+{
+    return $this->addQueryRelated(parent::getRelated(), 'post_query_');
+}
+```
+
+**Example:** `Elements/LoopGrid.php`, `Elements/Posts.php` (prefix `posts_`)

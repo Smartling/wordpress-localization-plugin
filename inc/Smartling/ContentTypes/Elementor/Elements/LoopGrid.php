@@ -7,12 +7,12 @@ use Smartling\ContentTypes\Elementor\ElementorQueryRelatedTrait;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 
-class LoopCarousel extends Unknown {
+class LoopGrid extends Unknown {
     use ElementorQueryRelatedTrait;
 
     public function getType(): string
     {
-        return 'loop-carousel';
+        return 'loop-grid';
     }
 
     public function getRelated(): RelatedContentInfo

@@ -3,11 +3,14 @@
 namespace Smartling\ContentTypes\Elementor\Elements;
 
 use Smartling\ContentTypes\ContentTypeHelper;
+use Smartling\ContentTypes\Elementor\ElementorQueryRelatedTrait;
 use Smartling\Models\Content;
 use Smartling\Models\RelatedContentInfo;
 
 class Posts extends Unknown
 {
+    use ElementorQueryRelatedTrait;
+
     public function getType(): string
     {
         return 'posts';
@@ -22,14 +25,7 @@ class Posts extends Unknown
             $return->addContent(new Content($id, ContentTypeHelper::CONTENT_TYPE_UNKNOWN), $this->id, "settings/$key");
         }
 
-        $key = 'posts_include_term_ids';
-        foreach ($this->settings[$key] ?? [] as $index => $termId) {
-            if (is_numeric($termId)) {
-                $return->addContent(new Content((int)$termId, ContentTypeHelper::CONTENT_TYPE_TAXONOMY), $this->id, "settings/$key/$index");
-            }
-        }
-
-        return $return;
+        return $this->addQueryRelated($return, 'posts_');
     }
 
     public function getTranslatableStrings(): array
