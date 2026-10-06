@@ -39,6 +39,7 @@ class SubmissionUploadTest extends SmartlingUnitTestCaseAbstract
             [],
             $targetBlogs,
             new JobInformation($job['translationJobUid'], false, $jobName, '', '', ''),
+            $profile->getId(),
         ));
         $submissions = $submissionManager->find([SubmissionEntity::FIELD_SOURCE_ID => $postId]);
         $this->assertCount(2, $submissions, 'Expected two new submissions to be created');
@@ -88,6 +89,7 @@ HTML);
             [2 => ['attachment' => [$attachmentId]]],
             $targetBlogs,
             new JobInformation($job['translationJobUid'], false, $jobName, '', '', ''),
+            $profile->getId(),
         ));
         $this->assertCount($existingSubmissionCount + 2, $submissionManager->find([1 => 1]));
         // findOne returns null on multiple submissions

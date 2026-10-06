@@ -13,9 +13,10 @@ class UserTranslationRequest
     private array $relations;
     private array $targetBlogIds;
     private JobInformation $jobInformation;
+    private int $profileId;
     private array $ids;
 
-    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, JobInformation $jobInformation, array $ids = [], string $description = '')
+    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, JobInformation $jobInformation, int $profileId, array $ids = [], string $description = '')
     {
         $this->contentId = $contentId;
         $this->contentType = $contentType;
@@ -24,6 +25,7 @@ class UserTranslationRequest
         $this->relations = $relations;
         $this->targetBlogIds = ArrayHelper::toArrayOfIntegers($targetBlogIds, 'Target blog id expected to be numeric');
         $this->jobInformation = $jobInformation;
+        $this->profileId = $profileId;
         $this->ids = self::toIntegerArray($ids);
     }
 
@@ -60,6 +62,11 @@ class UserTranslationRequest
         return $this->jobInformation;
     }
 
+    public function getProfileId(): int
+    {
+        return $this->profileId;
+    }
+
     public function getIds(): array
     {
         return $this->ids;
@@ -77,6 +84,7 @@ class UserTranslationRequest
             $array['relations'] ?? [],
             explode(',', $array['targetBlogIds']),
             new JobInformation($array['job']['id'], $array['job']['authorize'] === 'true', $array['job']['name'], $array['job']['description'], $array['job']['dueDate'], $array['job']['timeZone']),
+            (int)$array['profileId'],
             $ids,
             $array['description'] ?? (count($ids) > 0 ? 'From Bulk Submit' : 'From Widget'),
         );
@@ -121,6 +129,9 @@ class UserTranslationRequest
         }
         if (!array_key_exists('timeZone', $array['job'])) {
             throw new \InvalidArgumentException('Job time zone required');
+        }
+        if (!array_key_exists('profileId', $array)) {
+            throw new \InvalidArgumentException('Profile id required');
         }
     }
 

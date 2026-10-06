@@ -151,6 +151,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
+                'profileId' => 5,
             ]));
         }
 
@@ -210,6 +211,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
+                'profileId' => 5,
             ]));
         }
 
@@ -272,6 +274,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [$targetBlogId => ['post' => [17], 'attachment' => [23]]],
+                'profileId' => 5,
             ]));
         }
         public function testBulkSubmitHandler()
@@ -361,6 +364,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'ids' => $sourceIds,
+                'profileId' => 5,
             ]));
         }
 
@@ -427,6 +431,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'ids' => $sourceIds,
+                'profileId' => 5,
             ]));
         }
 
@@ -613,6 +618,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
+                'profileId' => 5,
             ]));
             $this->restoreDependencyInjection();
         }
@@ -804,6 +810,7 @@ namespace Smartling\Tests\Services {
                 'source' => ['id' => [$sourceId], 'contentType' => $contentType],
                 'relations' => [$targetBlogId => ['post' => [$depth1AttachmentId], 'attachment' => [$depth2AttachmentId]]],
                 'targetBlogIds' => (string)$targetBlogId,
+                'profileId' => 5,
             ]));
             if ($this->exception !== null) {
                 throw $this->exception;

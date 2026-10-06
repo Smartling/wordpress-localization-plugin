@@ -35,6 +35,7 @@ class TranslationRequestTest extends TestCase
                 2 => [$targetBlogId => ['attachment' => [5]]],
             ],
             'targetBlogIds' => (string)$targetBlogId,
+            'profileId' => 9,
         ]);
         $this->assertEquals($sourceId, $x->getContentId());
         $this->assertEquals($sourceContentType, $x->getContentType());
@@ -45,6 +46,15 @@ class TranslationRequestTest extends TestCase
         $this->assertEquals($jobName, $x->getJobInformation()->getName());
         $this->assertEquals($jobTimeZone, $x->getJobInformation()->getTimeZone());
         $this->assertEquals($jobUid, $x->getJobInformation()->getId());
+        $this->assertEquals(9, $x->getProfileId());
+    }
+
+    public function testFromArrayRequiresProfileId()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $array = $this->buildArray();
+        unset($array['profileId']);
+        UserTranslationRequest::fromArray($array);
     }
 
     public function testFromArrayBulkUploadWithEmptySourceId()
@@ -65,6 +75,7 @@ class TranslationRequestTest extends TestCase
             'relations' => [],
             'targetBlogIds' => (string)$targetBlogId,
             'ids' => $ids,
+            'profileId' => 9,
         ]);
         $this->assertTrue($x->isBulk());
         $this->assertEquals($ids, $x->getIds());
@@ -104,6 +115,7 @@ class TranslationRequestTest extends TestCase
             'source' => ['id' => [5], 'contentType' => 'post'],
             'relations' => [],
             'targetBlogIds' => '2',
+            'profileId' => 9,
         ], $overrides);
     }
 }

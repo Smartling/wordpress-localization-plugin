@@ -115,6 +115,7 @@ class ContentRelationsHandlerTest extends TestCase
                 'timeZone' => 'Europe/Kyiv',
                 'authorize' => 'true',
             ],
+            'profileId' => 5,
         ], $overrides);
     }
 }
