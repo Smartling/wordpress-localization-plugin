@@ -407,7 +407,39 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             add_action('save_post', [$this, 'save']); // old logic 2 be refactored
             add_action('wp_ajax_' . 'smartling_force_download_handler', [$this, 'ajaxDownloadHandler']);
             add_action('wp_ajax_' . 'smartling_upload_handler', [$this, 'ajaxUploadHandler']);
+            add_action('wp_ajax_' . 'smartling_refresh_post_widget', [$this, 'ajaxRefreshWidgetHandler']);
         }
+    }
+
+    /**
+     * Re-renders the widget for a post so the caller can swap it into the DOM, picking up
+     * submissions/target placeholders created after the page was first loaded (e.g. by the
+     * upload job wizard) without a full page reload.
+     */
+    public function ajaxRefreshWidgetHandler(): void
+    {
+        if (check_ajax_referer(self::AJAX_NONCE_ACTION, '_wpnonce', false) === false) {
+            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', self::AJAX_NONCE_ACTION, get_current_user_id()));
+            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Invalid nonce'], 403);
+            return;
+        }
+        if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
+            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
+            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Insufficient permissions'], 403);
+            return;
+        }
+
+        $post = get_post((int)($_POST['postId'] ?? 0));
+        if (!($post instanceof \WP_Post)) {
+            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Post not found'], 404);
+            return;
+        }
+
+        ob_start();
+        $this->preView($post);
+        $html = ob_get_clean();
+
+        wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_SUCCESS, 'html' => $html]);
     }
 
     /**

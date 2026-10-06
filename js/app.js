@@ -19,6 +19,47 @@ function setStoredProfileId(blogId, profileId) {
     }
 }
 
+async function refreshDownloadWidgetUntilReady(adminUrl, postId, targetBlogIds) {
+    if (!document.getElementById('smartling-post-widget') || !targetBlogIds.length) {
+        return;
+    }
+
+    const DELAYS = [3000, 5000, 10000, 15000, 15000];
+    for (const delay of DELAYS) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        let response;
+        try {
+            response = await jQuery.post(adminUrl, {
+                action: 'smartling_refresh_post_widget',
+                postId,
+                _wpnonce: (typeof smartlingConnector !== 'undefined' ? smartlingConnector.nonce : '')
+            });
+        } catch (e) {
+            continue;
+        }
+        if (response.status !== 'SUCCESS' || !response.html) {
+            continue;
+        }
+
+        const widget = document.getElementById('smartling-post-widget');
+        if (!widget) {
+            return;
+        }
+        widget.outerHTML = response.html;
+
+        const updated = document.getElementById('smartling-post-widget');
+        const allReady = targetBlogIds.every(blogId => {
+            const blogInput = updated?.querySelector(`input[name="smartling[locales][${blogId}][blog]"]`);
+            const row = blogInput?.closest('.smtPostWidget-rowWrapper');
+            return row?.querySelector('.smtPostWidget-row a') != null;
+        });
+        if (allReady) {
+            return;
+        }
+    }
+}
+
 function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }) {
     const [activeTab, setActiveTab] = useState('new');
     const [selectedProfileId, setSelectedProfileId] = useState(() => {
@@ -346,6 +387,9 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
                 throw new Error(submissionResponse.message?.global || 'Failed to add content to upload queue.');
             }
             setSuccess('Content successfully added to upload queue.');
+            if (!isBulkSubmitPage) {
+                refreshDownloadWidgetUntilReady(adminUrl, contentId, selectedLocales);
+            }
         } catch (e) {
             setError(e.message || 'Failed adding content to upload queue.');
         } finally {
