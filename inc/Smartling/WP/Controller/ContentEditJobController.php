@@ -7,6 +7,7 @@ use Exception;
 use Smartling\ApiWrapperInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Exception\SmartlingDbException;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
@@ -17,6 +18,7 @@ use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Smartling\Jobs\JobStatus;
@@ -81,6 +83,32 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
         $this->servedContentType = $servedContentType;
     }
 
+    /**
+     * Resolves the profile the user explicitly chose (e.g. from a profile dropdown), rather
+     * than whichever one happens to be flagged active. Falls back to today's active-profile
+     * behavior if no profile was requested, or the requested id doesn't exist, belongs to a
+     * different blog, or isn't active - this can happen with stale client-side data (profile
+     * deactivated/deleted after the page loaded) and shouldn't hard-fail the request.
+     *
+     * @throws SmartlingDbException
+     */
+    private function resolveRequestedProfile(?int $requestedProfileId, int $curBlogId): ConfigurationProfileEntity
+    {
+        if ($requestedProfileId !== null) {
+            $profile = ArrayHelper::first($this->settingsManager->getEntityById($requestedProfileId));
+            if ($profile instanceof ConfigurationProfileEntity) {
+                if ($profile->getSourceLocale()->getBlogId() === $curBlogId && 1 === $profile->getIsActive()) {
+                    return $profile;
+                }
+                $this->getLogger()->warning("Requested profileId=$requestedProfileId is not an active profile for blogId=$curBlogId, falling back to active profile");
+            } else {
+                $this->getLogger()->warning("Requested profileId=$requestedProfileId not found, falling back to active profile");
+            }
+        }
+
+        return $this->settingsManager->getSingleSettingsProfile($curBlogId);
+    }
+
     public function initJobApiProxy(): void
     {
         add_action('wp_ajax_' . self::SMARTLING_JOB_API_PROXY, function () {
@@ -101,8 +129,9 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                 'status' => 200,
             ];
 
-            $profile = $this->settingsManager->getSingleSettingsProfile($this->siteHelper->getCurrentBlogId());
             $params = &$data['params'];
+            $requestedProfileId = isset($params['profileId']) ? (int)$params['profileId'] : null;
+            $profile = $this->resolveRequestedProfile($requestedProfileId, $this->siteHelper->getCurrentBlogId());
 
             $validateRequires = static function ($fieldName) use (&$result, $params) {
                 $value = trim($params[$fieldName] ?? '');
