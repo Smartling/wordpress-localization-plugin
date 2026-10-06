@@ -66,18 +66,18 @@ class TargetIdFilterTest extends TestCase
 
     public function testNoTranslationReturnsNull(): void
     {
-        $this->assertNull($this->makeFilter(null)->getTargetId(10, 'post'));
+        $this->assertNull($this->makeFilter(null)->getTargetId(10, 'post', null, false));
     }
 
-    public function testNoTranslationFallsBackToSourceId(): void
+    public function testNoTranslationFallsBackToSourceIdByDefault(): void
     {
-        $this->assertSame(10, $this->makeFilter(null)->getTargetId(10, 'post', null, true));
+        $this->assertSame(10, $this->makeFilter(null)->getTargetId(10, 'post'));
     }
 
     public function testZeroTargetIdIsNotATranslation(): void
     {
-        $this->assertNull($this->makeFilter($this->makeSubmission(0))->getTargetId(10, 'post'));
-        $this->assertSame(10, $this->makeFilter($this->makeSubmission(0))->getTargetId(10, 'post', null, true));
+        $this->assertNull($this->makeFilter($this->makeSubmission(0))->getTargetId(10, 'post', null, false));
+        $this->assertSame(10, $this->makeFilter($this->makeSubmission(0))->getTargetId(10, 'post'));
     }
 
     public function testInvalidSourceIdIsNotLookedUp(): void
@@ -86,7 +86,7 @@ class TargetIdFilterTest extends TestCase
         $manager->expects($this->never())->method('findOne');
         $filter = new TargetIdFilter($manager, $this->createMock(WordpressFunctionProxyHelper::class));
 
-        $this->assertNull($filter->getTargetId('abc', 'post', null, true));
+        $this->assertNull($filter->getTargetId('abc', 'post'));
         $this->assertNull($filter->getTargetId(0, 'post'));
         $this->assertNull($filter->getTargetId(null, 'post'));
     }

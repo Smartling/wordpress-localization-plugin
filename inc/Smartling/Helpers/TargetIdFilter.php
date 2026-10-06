@@ -30,7 +30,7 @@ class TargetIdFilter implements WPHookInterface
         mixed $sourceId,
         string $contentType = '',
         ?int $targetBlogId = null,
-        bool $fallbackToSource = false,
+        bool $fallbackToSource = true,
         ?int $sourceBlogId = null,
     ): ?int {
         if (!is_numeric($sourceId) || (int)$sourceId <= 0) {

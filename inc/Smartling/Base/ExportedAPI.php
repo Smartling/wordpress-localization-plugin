@@ -232,7 +232,7 @@ interface ExportedAPI
      * @param int $sourceId id of the content in the source blog, the value returned when nothing is registered
      * @param string $contentType submission content type (e.g. attachment, post, page, category), empty to ignore
      * @param int|null $targetBlogId blog to get the id for, current blog when null
-     * @param bool $fallbackToSource return $sourceId when no translation is found, otherwise null is returned
+     * @param bool $fallbackToSource return $sourceId when no translation is found (default), otherwise null is returned
      * @param int|null $sourceBlogId blog the content was translated from, any blog when null
      * @return int|null target id
      */
