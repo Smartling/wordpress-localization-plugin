@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\Exception\SmartlingDbException;
 use Smartling\FTS\FtsService;
 use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\DateTimeHelper;
@@ -9,6 +10,8 @@ use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Models\UserTranslationRequest;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionFactory;
 use Smartling\Submissions\SubmissionManager;
@@ -28,6 +31,7 @@ class InstantTranslationController implements WPHookInterface
         private FileUriHelper $fileUriHelper,
         private WordpressFunctionProxyHelper $wpProxy,
         private AjaxSecurityChecker $ajaxSecurity,
+        private SettingsManager $settingsManager,
     ) {
     }
 
@@ -68,12 +72,23 @@ class InstantTranslationController implements WPHookInterface
 
             $sourceBlogId = $this->wpProxy->get_current_blog_id();
 
+            try {
+                $profileId = $this->settingsManager->resolveRequestedProfile(
+                    UserTranslationRequest::parseProfileId($_POST['profileId'] ?? null),
+                    $sourceBlogId,
+                )?->getId();
+            } catch (\InvalidArgumentException | SmartlingDbException $e) {
+                $this->wpProxy->wp_send_json_error(['message' => $e->getMessage()], 400);
+                return;
+            }
+
             $allSubmissions = $this->buildSubmissions(
                 $contentType,
                 $contentId,
                 $sourceBlogId,
                 $targetBlogIds,
                 $relations,
+                $profileId,
             );
 
             if (empty($allSubmissions)) {
@@ -208,7 +223,8 @@ class InstantTranslationController implements WPHookInterface
         int $contentId,
         int $sourceBlogId,
         array $targetBlogIds,
-        array $relations
+        array $relations,
+        ?int $profileId,
     ): array {
         $submissions = [];
 
@@ -218,6 +234,7 @@ class InstantTranslationController implements WPHookInterface
                 $targetBlogId,
                 $contentType,
                 $contentId,
+                $profileId,
             );
             if ($mainSubmission !== null) {
                 $submissions[] = $mainSubmission;
@@ -229,7 +246,8 @@ class InstantTranslationController implements WPHookInterface
                     $sourceBlogId,
                     $targetBlogId,
                     $source['type'],
-                    $source['id']
+                    $source['id'],
+                    $profileId,
                 );
                 if ($relatedSubmission !== null) {
                     $submissions[] = $relatedSubmission;
@@ -275,7 +293,8 @@ class InstantTranslationController implements WPHookInterface
         int $sourceBlogId,
         int $targetBlogId,
         string $contentType,
-        int $contentId
+        int $contentId,
+        ?int $profileId,
     ): ?SubmissionEntity {
         try {
             $submission = $this->submissionManager->findOne([
@@ -300,6 +319,9 @@ class InstantTranslationController implements WPHookInterface
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
             }
 
+            if ($profileId !== null) {
+                $submission->setConfigurationProfileId($profileId);
+            }
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
             return $this->submissionManager->storeEntity($submission);
         } catch (\Exception $e) {

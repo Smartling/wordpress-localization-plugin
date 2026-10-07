@@ -178,6 +178,88 @@ class SettingsManagerTest extends TestCase
         self::assertSame($active, $mock->getProfileBySubmission($submission));
     }
 
+    private function resolverMock(): SettingsManager
+    {
+        $mock = $this->createPartialMock(SettingsManager::class, ['getEntityById', 'findEntityByMainLocale', 'getLogger']);
+        $mock->method('getLogger')->willReturn(new NullLogger());
+
+        return $mock;
+    }
+
+    private function profileForBlog(int $id, int $blogId, int $active): ConfigurationProfileEntity
+    {
+        $profile = $this->profileWithId($id);
+        $locale = new Locale();
+        $locale->setBlogId($blogId);
+        $profile->setSourceLocale($locale);
+        $profile->setIsActive($active);
+
+        return $profile;
+    }
+
+    public function testResolveRequestedProfileUsesRequestedWhenValidAndActive()
+    {
+        $requested = $this->profileForBlog(5, 1, 1);
+        $mock = $this->resolverMock();
+        $mock->expects(self::once())->method('getEntityById')->with(5)->willReturn([$requested]);
+        $mock->expects(self::never())->method('findEntityByMainLocale');
+
+        self::assertSame($requested, $mock->resolveRequestedProfile(5, 1));
+    }
+
+    public function testResolveRequestedProfileRejectsUnknownProfile()
+    {
+        $this->expectException(SmartlingDbException::class);
+        $mock = $this->resolverMock();
+        $mock->method('getEntityById')->with(5)->willReturn([]);
+
+        $mock->resolveRequestedProfile(5, 1);
+    }
+
+    public function testResolveRequestedProfileRejectsProfileOfDifferentBlog()
+    {
+        $this->expectException(SmartlingDbException::class);
+        $mock = $this->resolverMock();
+        $mock->method('getEntityById')->with(5)->willReturn([$this->profileForBlog(5, 99, 1)]);
+
+        $mock->resolveRequestedProfile(5, 1);
+    }
+
+    public function testResolveRequestedProfileRejectsInactiveProfile()
+    {
+        $this->expectException(SmartlingDbException::class);
+        $mock = $this->resolverMock();
+        $mock->method('getEntityById')->with(5)->willReturn([$this->profileForBlog(5, 1, 0)]);
+
+        $mock->resolveRequestedProfile(5, 1);
+    }
+
+    public function testResolveRequestedProfileUsesTheOnlyActiveProfileWhenNoneRequested()
+    {
+        $only = $this->profileForBlog(3, 1, 1);
+        $mock = $this->resolverMock();
+        $mock->expects(self::never())->method('getEntityById');
+        $mock->method('findEntityByMainLocale')->with(1)->willReturn([$only]);
+
+        self::assertSame($only, $mock->resolveRequestedProfile(null, 1));
+    }
+
+    public function testResolveRequestedProfileReturnsNullWhenNoneRequestedAndSeveralActive()
+    {
+        $mock = $this->resolverMock();
+        $mock->method('findEntityByMainLocale')->with(1)->willReturn([$this->profileForBlog(3, 1, 1), $this->profileForBlog(4, 1, 1)]);
+
+        self::assertNull($mock->resolveRequestedProfile(null, 1));
+    }
+
+    public function testResolveRequestedProfileReturnsNullWhenNoneRequestedAndNoneActive()
+    {
+        $mock = $this->resolverMock();
+        $mock->method('findEntityByMainLocale')->with(1)->willReturn([]);
+
+        self::assertNull($mock->resolveRequestedProfile(null, 1));
+    }
+
     public function testGetEntitiesQueries()
     {
         $db = $this->createMock(SmartlingToCMSDatabaseAccessWrapperInterface::class);

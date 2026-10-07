@@ -36,20 +36,7 @@ if ($post instanceof WP_Post) {
 }
 
 $profiles = $data['profiles'] ?? [$profile];
-$profilesData = array_map(function(ConfigurationProfileEntity $p) {
-    $pLocales = $p->getTargetLocales();
-    ArrayHelper::sortLocales($pLocales);
-    return [
-        'id' => $p->getId(),
-        'name' => $p->getProfileName(),
-        'locales' => array_values(array_map(fn($l) => [
-            'blogId' => $l->getBlogId(),
-            'label' => $l->getLabel(),
-            'smartlingLocale' => $l->getSmartlingLocale(),
-            'enabled' => $l->isEnabled()
-        ], array_filter($pLocales, fn($l) => $l->isEnabled()))),
-    ];
-}, $profiles);
+$profilesData = array_map(static fn(ConfigurationProfileEntity $p) => $p->toWizardArray(), $profiles);
 
 if (!$isBulkSubmitPage) : ?>
 <?php if ($needWrapper) : ?>
@@ -61,7 +48,7 @@ if (!$isBulkSubmitPage) : ?>
                  data-bulk-submit="false"
                  data-content-type="<?= $data['contentType'] ?? $baseType ?>"
                  data-content-id="<?= $id ?>"
-                 data-blog-id="<?= $this->siteHelper->getCurrentBlogId() ?>"
+                 data-blog-id="<?= (int)$this->siteHelper->getCurrentBlogId() ?>"
                  data-profiles='<?= htmlspecialchars(json_encode(array_values($profilesData), JSON_THROW_ON_ERROR | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>'
                  data-ajax-url="<?= admin_url('admin-ajax.php') ?>"
                  data-admin-url="<?= admin_url('admin-ajax.php') ?>"

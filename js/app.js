@@ -4,7 +4,8 @@ const { Button, Card, CardBody, CardHeader, TabPanel, TextControl, TextareaContr
 function getStoredProfileId(blogId) {
     try {
         const stored = window.localStorage.getItem(`smartling_last_profile_${blogId}`);
-        return stored ? parseInt(stored, 10) : null;
+        const profileId = stored ? parseInt(stored, 10) : NaN;
+        return Number.isNaN(profileId) ? null : profileId;
     } catch (e) {
         return null;
     }
@@ -213,6 +214,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
             const response = await jQuery.post(ajaxUrl, {
                 action: 'smartling_instant_translation',
                 _wpnonce: nonce,
+                profileId: selectedProfileId,
                 contentType: contentType,
                 contentId: contentId,
                 targetBlogIds: selectedLocales,
@@ -468,7 +470,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
                 ),
 
                 el('div', {},
-                    tab.name !== 'instant' && profiles.length > 1 && el(SelectControl, {
+                    profiles.length > 1 && el(SelectControl, {
                         label: 'Translation profile',
                         value: selectedProfileId,
                         options: profiles.map(p => ({ label: p.name, value: p.id })),
@@ -602,9 +604,12 @@ if (document.getElementById('smartling-app')) {
     const adminUrl = container.dataset.adminUrl || '';
     const nonce = container.dataset.nonce || '';
 
-    render(
-        el(JobWizard, { isBulkSubmitPage, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }),
-        container
-    );
+    // Nothing to offer without an active profile
+    if (profiles.length > 0) {
+        render(
+            el(JobWizard, { isBulkSubmitPage, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }),
+            container
+        );
+    }
 }
 

@@ -90,11 +90,8 @@ class BulkSubmitTableWidget extends SmartlingListTable
         protected ConfigurationProfileEntity $profile,
         protected WordpressFunctionProxyHelper $wpProxy,
         protected NonceVerifier $nonceVerifier,
-        protected array $applicableProfiles = [],
+        protected array $applicableProfiles,
     ) {
-        if ([] === $this->applicableProfiles) {
-            $this->applicableProfiles = [$profile];
-        }
         $this->setSource($_REQUEST);
 
         $filteredAllowedTypes = $this->getFilteredAllowedTypes();

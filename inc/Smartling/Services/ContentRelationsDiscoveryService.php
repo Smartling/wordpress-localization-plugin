@@ -13,7 +13,6 @@ use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\DbAl\WordpressContentEntities\EntityWithMetadata;
 use Smartling\Exception\EntityNotFoundException;
-use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingGutenbergParserNotFoundException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
@@ -89,6 +88,7 @@ class ContentRelationsDiscoveryService
         ConfigurationProfileEntity $profile,
         array $targetBlogIds,
         bool $enqueue = true,
+        bool $stampProfile = true,
     ): array {
         $this->getLogger()->debug("Bulk upload request, contentIds=" . implode(',', $contentIds));
         $queueIds = [];
@@ -96,7 +96,8 @@ class ContentRelationsDiscoveryService
         foreach ($targetBlogIds as $targetBlogId) {
             foreach ($contentIds as $id) {
                 $submission = $this->submissionManager->findTargetBlogSubmission($contentType, $currentBlogId, $id, $targetBlogId);
-                if ($submission === null) {
+                $isNew = $submission === null;
+                if ($isNew) {
                     $submission = $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
                     $title = $this->getTitle($submission);
                     if ($title !== '') {
@@ -107,11 +108,13 @@ class ContentRelationsDiscoveryService
                 $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->setIsCloned(0);
-                // Bulk-submitting is an explicit new translation request: (re)stamp with the
-                // profile this request's batch is being created under, for both a found
-                // existing submission (which bypasses getSubmissionEntity() above) and a new
-                // one (where this just confirms what getSubmissionEntity() already stamped).
-                $submission->setConfigurationProfileId($profile->getId());
+                // Bulk-submitting is an explicit new translation request: (re)stamp with the profile it was requested with.
+                // Without a resolved profile, existing submissions keep theirs and new ones stay unstamped.
+                if ($stampProfile) {
+                    $submission->setConfigurationProfileId($profile->getId());
+                } elseif ($isNew) {
+                    $submission->setConfigurationProfileId(null);
+                }
                 $submission = $this->submissionManager->storeEntity($submission);
                 $queueIds[] = $submission->getId();
                 $this->logSubmissionCreated($submission, 'Bulk upload request', $jobInfo);
@@ -134,6 +137,7 @@ class ContentRelationsDiscoveryService
                 $profile,
                 $targetBlogIds,
                 false,
+                $stampProfile,
             ));
         }
         if ($enqueue) {
@@ -151,34 +155,12 @@ class ContentRelationsDiscoveryService
         return $queueIds;
     }
 
-    /**
-     * Resolves the profile the user explicitly chose for this request, rather than whichever
-     * one happens to be flagged active. Falls back to today's active-profile behavior if the
-     * requested id doesn't exist, belongs to a different blog, or isn't active - this can
-     * happen with stale client-side data (profile deactivated/deleted after the page loaded)
-     * and shouldn't hard-fail the whole request.
-     *
-     * @throws SmartlingDbException
-     */
-    private function resolveRequestedProfile(int $requestedProfileId, int $curBlogId): ConfigurationProfileEntity
-    {
-        $profile = ArrayHelper::first($this->settingsManager->getEntityById($requestedProfileId));
-        if ($profile instanceof ConfigurationProfileEntity) {
-            if ($profile->getSourceLocale()->getBlogId() === $curBlogId && 1 === $profile->getIsActive()) {
-                return $profile;
-            }
-            $this->getLogger()->warning("Requested profileId=$requestedProfileId is not an active profile for blogId=$curBlogId, falling back to active profile");
-        } else {
-            $this->getLogger()->warning("Requested profileId=$requestedProfileId not found, falling back to active profile");
-        }
-
-        return $this->settingsManager->getSingleSettingsProfile($curBlogId);
-    }
-
     public function createSubmissions(UserTranslationRequest $request): void
     {
         $curBlogId = $this->wordpressProxy->get_current_blog_id();
-        $profile = $this->resolveRequestedProfile($request->getProfileId(), $curBlogId);
+        $requestedProfile = $this->settingsManager->resolveRequestedProfile($request->getProfileId(), $curBlogId);
+        $stampProfile = $requestedProfile !== null;
+        $profile = $requestedProfile ?? $this->settingsManager->getSingleSettingsProfile($curBlogId);
         $job = $request->getJobInformation();
         $jobInfo = new JobEntity($job->getName(), $job->getId(), $profile->getProjectId());
 
@@ -190,6 +172,8 @@ class ContentRelationsDiscoveryService
                 $jobInfo,
                 $profile,
                 $request->getTargetBlogIds(),
+                true,
+                $stampProfile,
             );
             return;
         }
@@ -255,11 +239,11 @@ class ContentRelationsDiscoveryService
             } else {
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->setIsCloned(0);
-                // Resubmitting an existing submission is an explicit new translation request,
-                // so (re)stamp it with the profile active right now, same as
-                // SubmissionManager::getSubmissionEntity() does - this path never goes through
-                // that method, so it would otherwise keep whatever profile (or none) it had.
-                $submission->setConfigurationProfileId($profile->getId());
+                // Resubmitting an existing submission is an explicit new translation request, so restamp it with the
+                // profile it was requested with. Without a resolved profile it keeps whatever it had.
+                if ($stampProfile) {
+                    $submission->setConfigurationProfileId($profile->getId());
+                }
                 $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
                 $fileUris[] = $submission->getFileUri();
                 $queueIds[] = $submission->getId();
@@ -267,10 +251,8 @@ class ContentRelationsDiscoveryService
 
             $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
             $submissionTemplateArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
-            // New submissions built from this template bypass getSubmissionEntity() too; stamp
-            // them with the profile this request's batch is being created under (below), so
-            // UploadJob never has to guess at a profile for them later.
-            $submissionTemplateArray[SubmissionEntity::FIELD_CONFIGURATION_PROFILE_ID] = $profile->getId();
+            // New submissions built from this template bypass getSubmissionEntity(), stamp them with the requested profile.
+            $submissionTemplateArray[SubmissionEntity::FIELD_CONFIGURATION_PROFILE_ID] = $stampProfile ? $profile->getId() : null;
 
             foreach ($sources as $source) {
                 $submissionArray = array_merge($submissionTemplateArray, [

@@ -434,6 +434,11 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Post not found'], 404);
             return;
         }
+        if (!current_user_can('edit_post', $post->ID)) {
+            $this->getLogger()->warning(sprintf('User %d cannot edit post %d', get_current_user_id(), $post->ID));
+            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Insufficient permissions'], 403);
+            return;
+        }
 
         ob_start();
         $this->preView($post);
@@ -504,6 +509,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             'submissions' => $submissions,
                             'post' => $post,
                             'profile' => ArrayHelper::first($profile),
+                            'profiles' => $profile,
                         ]
                     );
                 } else {

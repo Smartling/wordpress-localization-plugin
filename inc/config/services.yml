@@ -516,6 +516,7 @@ services:
       - "@file.uri.helper"
       - "@wp.proxy"
       - "@helper.ajax-security"
+      - "@manager.settings"
 
   wp.upload-queue-count:
     class: Smartling\WP\Controller\UploadQueueCountController

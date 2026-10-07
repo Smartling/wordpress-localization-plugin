@@ -178,7 +178,7 @@ namespace Smartling\Tests\Services {
             $apiWrapper = $this->createMock(ApiWrapper::class);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->with(5, $sourceBlogId)->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -216,18 +216,10 @@ namespace Smartling\Tests\Services {
             ]));
         }
 
-        /**
-         * @dataProvider invalidRequestedProfileProvider
-         */
-        public function testCreateSubmissionsFallsBackToActiveProfileWhenRequestedOneIsNotUsable(?ConfigurationProfileEntity $requestedProfile)
+        public function testCreateSubmissionsDoesNotStampProfileWhenNoneCouldBeResolved()
         {
             $sourceBlogId = 1;
             $sourceId = 48;
-            $contentType = 'post';
-            $targetBlogId = 2;
-            $jobName = 'Job Name';
-            $jobUid = 'abcdef123456';
-            $requestedProfileId = 5;
 
             $activeProfile = $this->createMock(ConfigurationProfileEntity::class);
             $activeProfile->method('getProjectId')->willReturn('activeProjectUid');
@@ -235,12 +227,12 @@ namespace Smartling\Tests\Services {
             $apiWrapper = $this->createMock(ApiWrapper::class);
             $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(
                 function (ConfigurationProfileEntity $configurationProfile) use ($activeProfile): void {
-                    $this->assertSame($activeProfile, $configurationProfile, 'Must fall back to the active profile, not the unusable requested one');
+                    $this->assertSame($activeProfile, $configurationProfile);
                 },
             );
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getEntityById')->with($requestedProfileId)->willReturn($requestedProfile === null ? [] : [$requestedProfile]);
+            $settingsManager->method('resolveRequestedProfile')->with(null, $sourceBlogId)->willReturn(null);
             $settingsManager->expects(self::once())->method('getSingleSettingsProfile')->with($sourceBlogId)->willReturn($activeProfile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
@@ -251,6 +243,7 @@ namespace Smartling\Tests\Services {
 
             $submission = $this->createMock(SubmissionEntity::class);
             $submission->method('getId')->willReturn(17);
+            $submission->expects(self::never())->method('setConfigurationProfileId');
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
             $submissionManager->method('findOne')->willReturn($submission);
@@ -262,41 +255,19 @@ namespace Smartling\Tests\Services {
             $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, wpProxy: $wpProxy);
 
             $x->createSubmissions(UserTranslationRequest::fromArray([
-                'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
+                'source' => ['contentType' => 'post', 'id' => [$sourceId]],
                 'job' =>
                     [
-                        'id' => $jobUid,
-                        'name' => $jobName,
+                        'id' => 'abcdef123456',
+                        'name' => 'Job Name',
                         'description' => '',
                         'dueDate' => '',
                         'timeZone' => 'Europe/Kiev',
                         'authorize' => 'true',
                     ],
-                'targetBlogIds' => $targetBlogId,
+                'targetBlogIds' => 2,
                 'relations' => [],
-                'profileId' => $requestedProfileId,
             ]));
-        }
-
-        public static function invalidRequestedProfileProvider(): array
-        {
-            $foreignBlogLocale = new Locale();
-            $foreignBlogLocale->setBlogId(99); // not the current blog (1)
-            $foreignBlogProfile = new ConfigurationProfileEntity();
-            $foreignBlogProfile->setSourceLocale($foreignBlogLocale);
-            $foreignBlogProfile->setIsActive(1);
-
-            $sameBlogLocale = new Locale();
-            $sameBlogLocale->setBlogId(1);
-            $inactiveProfile = new ConfigurationProfileEntity();
-            $inactiveProfile->setSourceLocale($sameBlogLocale);
-            $inactiveProfile->setIsActive(0);
-
-            return [
-                'profile does not exist' => [null],
-                'profile belongs to a different blog' => [$foreignBlogProfile],
-                'profile is not active' => [$inactiveProfile],
-            ];
         }
 
         public function testCreateSubmissionsUsesRequestedProfileWhenValidAndActive()
@@ -324,7 +295,7 @@ namespace Smartling\Tests\Services {
             );
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getEntityById')->with($requestedProfileId)->willReturn([$requestedProfile]);
+            $settingsManager->method('resolveRequestedProfile')->with($requestedProfileId, $sourceBlogId)->willReturn($requestedProfile);
             $settingsManager->expects(self::never())->method('getSingleSettingsProfile');
 
             $siteHelper = $this->createMock(SiteHelper::class);
@@ -538,7 +509,7 @@ namespace Smartling\Tests\Services {
             $profile->method('getId')->willReturn($profileId);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->with(5, $sourceBlogId)->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);

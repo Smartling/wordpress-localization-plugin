@@ -13,10 +13,10 @@ class UserTranslationRequest
     private array $relations;
     private array $targetBlogIds;
     private JobInformation $jobInformation;
-    private int $profileId;
+    private ?int $profileId;
     private array $ids;
 
-    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, JobInformation $jobInformation, int $profileId, array $ids = [], string $description = '')
+    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, JobInformation $jobInformation, ?int $profileId = null, array $ids = [], string $description = '')
     {
         $this->contentId = $contentId;
         $this->contentType = $contentType;
@@ -62,7 +62,7 @@ class UserTranslationRequest
         return $this->jobInformation;
     }
 
-    public function getProfileId(): int
+    public function getProfileId(): ?int
     {
         return $this->profileId;
     }
@@ -84,7 +84,7 @@ class UserTranslationRequest
             $array['relations'] ?? [],
             explode(',', $array['targetBlogIds']),
             new JobInformation($array['job']['id'], $array['job']['authorize'] === 'true', $array['job']['name'], $array['job']['description'], $array['job']['dueDate'], $array['job']['timeZone']),
-            (int)$array['profileId'],
+            self::parseProfileId($array['profileId'] ?? null),
             $ids,
             $array['description'] ?? (count($ids) > 0 ? 'From Bulk Submit' : 'From Widget'),
         );
@@ -130,9 +130,22 @@ class UserTranslationRequest
         if (!array_key_exists('timeZone', $array['job'])) {
             throw new \InvalidArgumentException('Job time zone required');
         }
-        if (!array_key_exists('profileId', $array)) {
-            throw new \InvalidArgumentException('Profile id required');
+    }
+
+    public static function parseProfileId(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
         }
+        if (!is_int($value) && !(is_string($value) && ctype_digit($value))) {
+            throw new \InvalidArgumentException('Profile id must be a positive integer');
+        }
+        $profileId = (int)$value;
+        if ($profileId < 1) {
+            throw new \InvalidArgumentException('Profile id must be a positive integer');
+        }
+
+        return $profileId;
     }
 
     private static function toIntegerArray(array $ids): array

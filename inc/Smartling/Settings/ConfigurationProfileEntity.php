@@ -3,6 +3,7 @@
 namespace Smartling\Settings;
 
 use Smartling\Base\SmartlingEntityAbstract;
+use Smartling\Helpers\ArrayHelper;
 use Smartling\Vendor\Psr\Log\LoggerInterface;
 use Smartling\WP\Controller\ConfigurationProfileFormController as Form;
 
@@ -442,5 +443,25 @@ class ConfigurationProfileEntity extends SmartlingEntityAbstract
         $struct = $this->toArray(false);
         unset($struct['secret_key']);
         return $struct;
+    }
+
+    /**
+     * Data for the job wizard profile select and its target locale list.
+     */
+    public function toWizardArray(): array
+    {
+        $locales = $this->getTargetLocales();
+        ArrayHelper::sortLocales($locales);
+
+        return [
+            'id' => $this->getId(),
+            'name' => $this->getProfileName(),
+            'locales' => array_values(array_map(static fn(TargetLocale $l) => [
+                'blogId' => $l->getBlogId(),
+                'label' => $l->getLabel(),
+                'smartlingLocale' => $l->getSmartlingLocale(),
+                'enabled' => $l->isEnabled(),
+            ], array_filter($locales, static fn(TargetLocale $l) => $l->isEnabled()))),
+        ];
     }
 }

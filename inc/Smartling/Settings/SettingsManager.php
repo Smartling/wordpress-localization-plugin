@@ -120,6 +120,44 @@ class SettingsManager extends EntityManagerAbstract
     }
 
     /**
+     * Resolves the profile for a translation request.
+     * An explicitly requested profile must exist, belong to the blog and be active, otherwise the request is rejected.
+     * Without an explicit profile, the blog's only active profile is used; with none or several, null is returned.
+     *
+     * @throws SmartlingDbException
+     */
+    public function resolveRequestedProfile(?int $requestedProfileId, int $blogId): ?ConfigurationProfileEntity
+    {
+        if ($requestedProfileId !== null) {
+            $profile = ArrayHelper::first($this->getEntityById($requestedProfileId));
+            if (!$profile instanceof ConfigurationProfileEntity) {
+                $message = "Requested profileId=$requestedProfileId not found";
+                $this->getLogger()->warning($message);
+                throw new SmartlingDbException($message);
+            }
+            if ($profile->getSourceLocale()->getBlogId() !== $blogId || 1 !== $profile->getIsActive()) {
+                $message = "Requested profileId=$requestedProfileId is not an active profile for blogId=$blogId";
+                $this->getLogger()->warning($message);
+                throw new SmartlingDbException($message);
+            }
+            $this->getLogger()->debug("Using requested profileId=$requestedProfileId for blogId=$blogId");
+
+            return $profile;
+        }
+
+        $profiles = $this->findEntityByMainLocale($blogId);
+        if (1 === count($profiles)) {
+            $profile = ArrayHelper::first($profiles);
+            $this->getLogger()->debug("No profile requested, using the only active profileId={$profile->getId()} for blogId=$blogId");
+
+            return $profile;
+        }
+        $this->getLogger()->debug('No profile requested and ' . count($profiles) . " active profiles found for blogId=$blogId, profile will not be stored");
+
+        return null;
+    }
+
+    /**
      * Returns the profile the submission was requested with, so delivery doesn't depend on which profile is active now.
      * Falls back to the active profile of the source blog for submissions without a stored (or an existing) profile.
      *

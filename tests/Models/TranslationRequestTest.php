@@ -49,12 +49,45 @@ class TranslationRequestTest extends TestCase
         $this->assertEquals(9, $x->getProfileId());
     }
 
-    public function testFromArrayRequiresProfileId()
+    public function testFromArrayProfileIdIsOptional()
+    {
+        $array = $this->buildArray();
+        unset($array['profileId']);
+        self::assertNull(UserTranslationRequest::fromArray($array)->getProfileId());
+    }
+
+    public function testFromArrayRejectsInvalidProfileId()
     {
         $this->expectException(\InvalidArgumentException::class);
         $array = $this->buildArray();
-        unset($array['profileId']);
+        $array['profileId'] = 'abc';
         UserTranslationRequest::fromArray($array);
+    }
+
+    public function testParseProfileIdAcceptsMissingValue()
+    {
+        self::assertNull(UserTranslationRequest::parseProfileId(null));
+        self::assertNull(UserTranslationRequest::parseProfileId(''));
+    }
+
+    public function testParseProfileIdAcceptsPositiveInteger()
+    {
+        self::assertSame(5, UserTranslationRequest::parseProfileId('5'));
+        self::assertSame(5, UserTranslationRequest::parseProfileId(5));
+    }
+
+    /**
+     * @dataProvider invalidProfileIdProvider
+     */
+    public function testParseProfileIdRejectsInvalidValues(mixed $value)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        UserTranslationRequest::parseProfileId($value);
+    }
+
+    public static function invalidProfileIdProvider(): array
+    {
+        return [['abc'], ['0'], [0], [-3], ['-3'], ['1.5'], [[5]]];
     }
 
     public function testFromArrayBulkUploadWithEmptySourceId()

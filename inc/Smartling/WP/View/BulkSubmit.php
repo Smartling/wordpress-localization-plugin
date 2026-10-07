@@ -52,27 +52,14 @@ $widgetName = 'bulk-submit-locales';
         <?php $bulkSubmitTable->display() ?>
         <div id="error-messages" class="tab"></div>
         <?php
-        $profilesData = array_map(function(\Smartling\Settings\ConfigurationProfileEntity $p) {
-            $pLocales = $p->getTargetLocales();
-            ArrayHelper::sortLocales($pLocales);
-            return [
-                'id' => $p->getId(),
-                'name' => $p->getProfileName(),
-                'locales' => array_values(array_map(fn($l) => [
-                    'blogId' => $l->getBlogId(),
-                    'label' => $l->getLabel(),
-                    'smartlingLocale' => $l->getSmartlingLocale(),
-                    'enabled' => $l->isEnabled()
-                ], array_filter($pLocales, fn($l) => $l->isEnabled()))),
-            ];
-        }, $data->getApplicableProfiles());
+        $profilesData = array_map(static fn(\Smartling\Settings\ConfigurationProfileEntity $p) => $p->toWizardArray(), $data->getApplicableProfiles());
         ?>
         <div id="smartling-app"
              data-bulk-submit="true"
              data-content-type=""
              data-content-id="0"
-             data-blog-id="<?= $this->siteHelper->getCurrentBlogId() ?>"
-             data-profiles='<?= htmlspecialchars(json_encode(array_values($profilesData), JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG), ENT_QUOTES, 'UTF-8') ?>'
+             data-blog-id="<?= (int)$this->siteHelper->getCurrentBlogId() ?>"
+             data-profiles='<?= htmlspecialchars(json_encode(array_values($profilesData), JSON_THROW_ON_ERROR | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG), ENT_QUOTES, 'UTF-8') ?>'
              data-ajax-url="<?= admin_url('admin-ajax.php') ?>"
              data-admin-url="<?= admin_url('admin-ajax.php') ?>"
              data-nonce="<?= wp_create_nonce('smartling_translation') ?>"></div>
