@@ -234,7 +234,7 @@ class SettingsManagerTest extends TestCase
         $mock->resolveRequestedProfile(5, 1);
     }
 
-    public function testResolveRequestedProfileUsesTheOnlyActiveProfileWhenNoneRequested()
+    public function testResolveRequestedProfileFallsBackToActiveProfileWhenNoneRequested()
     {
         $only = $this->profileForBlog(3, 1, 1);
         $mock = $this->resolverMock();
@@ -244,20 +244,13 @@ class SettingsManagerTest extends TestCase
         self::assertSame($only, $mock->resolveRequestedProfile(null, 1));
     }
 
-    public function testResolveRequestedProfileReturnsNullWhenNoneRequestedAndSeveralActive()
+    public function testResolveRequestedProfileThrowsWhenNoneRequestedAndNoneActive()
     {
-        $mock = $this->resolverMock();
-        $mock->method('findEntityByMainLocale')->with(1)->willReturn([$this->profileForBlog(3, 1, 1), $this->profileForBlog(4, 1, 1)]);
-
-        self::assertNull($mock->resolveRequestedProfile(null, 1));
-    }
-
-    public function testResolveRequestedProfileReturnsNullWhenNoneRequestedAndNoneActive()
-    {
+        $this->expectException(SmartlingDbException::class);
         $mock = $this->resolverMock();
         $mock->method('findEntityByMainLocale')->with(1)->willReturn([]);
 
-        self::assertNull($mock->resolveRequestedProfile(null, 1));
+        $mock->resolveRequestedProfile(null, 1);
     }
 
     public function testGetEntitiesQueries()

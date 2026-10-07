@@ -122,39 +122,30 @@ class SettingsManager extends EntityManagerAbstract
     /**
      * Resolves the profile for a translation request.
      * An explicitly requested profile must exist, belong to the blog and be active, otherwise the request is rejected.
-     * Without an explicit profile, the blog's only active profile is used; with none or several, null is returned.
+     * Without an explicit profile, the blog's active profile is used.
      *
      * @throws SmartlingDbException
      */
-    public function resolveRequestedProfile(?int $requestedProfileId, int $blogId): ?ConfigurationProfileEntity
+    public function resolveRequestedProfile(?int $requestedProfileId, int $blogId): ConfigurationProfileEntity
     {
-        if ($requestedProfileId !== null) {
-            $profile = ArrayHelper::first($this->getEntityById($requestedProfileId));
-            if (!$profile instanceof ConfigurationProfileEntity) {
-                $message = "Requested profileId=$requestedProfileId not found";
-                $this->getLogger()->warning($message);
-                throw new SmartlingDbException($message);
-            }
-            if ($profile->getSourceLocale()->getBlogId() !== $blogId || 1 !== $profile->getIsActive()) {
-                $message = "Requested profileId=$requestedProfileId is not an active profile for blogId=$blogId";
-                $this->getLogger()->warning($message);
-                throw new SmartlingDbException($message);
-            }
-            $this->getLogger()->debug("Using requested profileId=$requestedProfileId for blogId=$blogId");
-
-            return $profile;
+        if ($requestedProfileId === null) {
+            return $this->getSingleSettingsProfile($blogId);
         }
 
-        $profiles = $this->findEntityByMainLocale($blogId);
-        if (1 === count($profiles)) {
-            $profile = ArrayHelper::first($profiles);
-            $this->getLogger()->debug("No profile requested, using the only active profileId={$profile->getId()} for blogId=$blogId");
-
-            return $profile;
+        $profile = ArrayHelper::first($this->getEntityById($requestedProfileId));
+        if (!$profile instanceof ConfigurationProfileEntity) {
+            $message = "Requested profileId=$requestedProfileId not found";
+            $this->getLogger()->warning($message);
+            throw new SmartlingDbException($message);
         }
-        $this->getLogger()->debug('No profile requested and ' . count($profiles) . " active profiles found for blogId=$blogId, profile will not be stored");
+        if ($profile->getSourceLocale()->getBlogId() !== $blogId || 1 !== $profile->getIsActive()) {
+            $message = "Requested profileId=$requestedProfileId is not an active profile for blogId=$blogId";
+            $this->getLogger()->warning($message);
+            throw new SmartlingDbException($message);
+        }
+        $this->getLogger()->debug("Using requested profileId=$requestedProfileId for blogId=$blogId");
 
-        return null;
+        return $profile;
     }
 
     /**

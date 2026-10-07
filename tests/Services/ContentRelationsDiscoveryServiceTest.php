@@ -110,7 +110,7 @@ namespace Smartling\Tests\Services {
             });
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -233,8 +233,7 @@ namespace Smartling\Tests\Services {
             );
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('resolveRequestedProfile')->with(null, $sourceBlogId)->willReturn(null);
-            $settingsManager->expects(self::once())->method('getSingleSettingsProfile')->with($sourceBlogId)->willReturn($activeProfile);
+            $settingsManager->method('resolveRequestedProfile')->with(null, $sourceBlogId)->willReturn($activeProfile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -413,7 +412,7 @@ namespace Smartling\Tests\Services {
             $profile->method('getProjectId')->willReturn($projectUid);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -592,7 +591,7 @@ namespace Smartling\Tests\Services {
             $profile->method('getProjectId')->willReturn($projectUid);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -685,7 +684,7 @@ namespace Smartling\Tests\Services {
             $profile->method('getProjectId')->willReturn($projectUid);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -868,7 +867,7 @@ namespace Smartling\Tests\Services {
             $profile->method('getProjectId')->willReturn($projectUid);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);

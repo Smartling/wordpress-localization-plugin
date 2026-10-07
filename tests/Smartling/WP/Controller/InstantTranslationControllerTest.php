@@ -151,7 +151,7 @@ class InstantTranslationControllerTest extends TestCase
         // Manager should store it
         $this->submissionManager->method('storeEntity')->willReturn($newSubmission);
 
-        $result = $method->invoke($this->controller, 1, 2, 'post', 123, null);
+        $result = $method->invoke($this->controller, 1, 2, 'post', 123, 7);
 
         $this->assertInstanceOf(SubmissionEntity::class, $result);
     }
@@ -169,7 +169,7 @@ class InstantTranslationControllerTest extends TestCase
         $this->submissionManager->method('findOne')->willReturn($existingSubmission);
         $this->submissionManager->method('storeEntity')->willReturn($existingSubmission);
 
-        $result = $method->invoke($this->controller, 1, 2, 'post', 123, null);
+        $result = $method->invoke($this->controller, 1, 2, 'post', 123, 7);
 
         $this->assertInstanceOf(SubmissionEntity::class, $result);
         $this->assertSame($existingSubmission, $result);
@@ -199,7 +199,7 @@ class InstantTranslationControllerTest extends TestCase
             1,
             [2, 3],
             [], // No relations
-            null
+            7
         );
 
         // Should create 2 submissions (1 main content × 2 target blogs)
@@ -239,7 +239,7 @@ class InstantTranslationControllerTest extends TestCase
             1,
             [2, 3],
             $relations,
-            null
+            7
         );
 
         // Should create:
@@ -280,7 +280,7 @@ class InstantTranslationControllerTest extends TestCase
             1,
             [2],
             $relations,
-            null
+            7
         );
 
         // Should create:

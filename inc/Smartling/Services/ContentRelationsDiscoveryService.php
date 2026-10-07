@@ -150,8 +150,7 @@ class ContentRelationsDiscoveryService
     public function createSubmissions(UserTranslationRequest $request): void
     {
         $curBlogId = $this->wordpressProxy->get_current_blog_id();
-        $profile = $this->settingsManager->resolveRequestedProfile($request->getProfileId(), $curBlogId) ??
-            $this->settingsManager->getSingleSettingsProfile($curBlogId);
+        $profile = $this->settingsManager->resolveRequestedProfile($request->getProfileId(), $curBlogId);
         $job = $request->getJobInformation();
         $jobInfo = new JobEntity($job->getName(), $job->getId(), $profile->getProjectId());
 

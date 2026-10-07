@@ -76,9 +76,10 @@ class InstantTranslationController implements WPHookInterface
                 $profileId = $this->settingsManager->resolveRequestedProfile(
                     UserTranslationRequest::parseProfileId($_POST['profileId'] ?? null),
                     $sourceBlogId,
-                )?->getId();
+                )->getId();
             } catch (\InvalidArgumentException | SmartlingDbException $e) {
-                $this->wpProxy->wp_send_json_error(['message' => $e->getMessage()], 400);
+                $this->getLogger()->warning('Unable to resolve requested profile: ' . $e->getMessage());
+                $this->wpProxy->wp_send_json_error(['message' => 'Invalid translation profile'], 400);
                 return;
             }
 
@@ -224,7 +225,7 @@ class InstantTranslationController implements WPHookInterface
         int $sourceBlogId,
         array $targetBlogIds,
         array $relations,
-        ?int $profileId,
+        int $profileId,
     ): array {
         $submissions = [];
 
@@ -294,7 +295,7 @@ class InstantTranslationController implements WPHookInterface
         int $targetBlogId,
         string $contentType,
         int $contentId,
-        ?int $profileId,
+        int $profileId,
     ): ?SubmissionEntity {
         try {
             $submission = $this->submissionManager->findOne([
@@ -319,9 +320,7 @@ class InstantTranslationController implements WPHookInterface
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
             }
 
-            if ($profileId !== null) {
-                $submission->setConfigurationProfileId($profileId);
-            }
+            $submission->setConfigurationProfileId($profileId);
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
             return $this->submissionManager->storeEntity($submission);
         } catch (\Exception $e) {

@@ -92,27 +92,34 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
     const [instantSubmissionIds, setInstantSubmissionIds] = useState([]);
     const [instantCompletedCount, setInstantCompletedCount] = useState(0);
 
-    const loadJobs = useCallback(async () => {
-        try {
-            const response = await jQuery.post(adminUrl, {
-                action: 'smartling_job_api_proxy',
-                _wpnonce: nonce,
-                innerAction: 'list-jobs',
-                params: { profileId: selectedProfileId }
-            });
-            if (response.status === 200) {
-                setJobs(response.data);
-            }
-        } catch (e) {
-            setError('Failed to load jobs');
-        } finally {
-            setLoading(false);
-        }
-    }, [adminUrl, selectedProfileId]);
-
     useEffect(() => {
-        loadJobs();
-    }, [loadJobs]);
+        // Ignore responses for a previously selected profile, a slow one must not overwrite the current job list
+        let stale = false;
+        (async () => {
+            try {
+                const response = await jQuery.post(adminUrl, {
+                    action: 'smartling_job_api_proxy',
+                    _wpnonce: nonce,
+                    innerAction: 'list-jobs',
+                    params: { profileId: selectedProfileId }
+                });
+                if (!stale && response.status === 200) {
+                    setJobs(response.data);
+                }
+            } catch (e) {
+                if (!stale) {
+                    setError('Failed to load jobs');
+                }
+            } finally {
+                if (!stale) {
+                    setLoading(false);
+                }
+            }
+        })();
+        return () => {
+            stale = true;
+        };
+    }, [adminUrl, nonce, selectedProfileId]);
 
     const handleProfileChange = (val) => {
         const newProfileId = parseInt(val, 10);
@@ -156,7 +163,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
         if (isBulkSubmitPage) {
             jQuery('input.bulkaction[type=checkbox]:checked').each(function() {
                 const parts = jQuery(this).attr('id').split('-');
-                const id = parseInt(parts.shift());
+                const id = parseInt(parts.shift(), 10);
                 const type = parts.join('-');
                 loadRelations(type, id, 1);
             });
@@ -356,7 +363,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
             data.ids = [];
             jQuery('input.bulkaction[type=checkbox]:checked').each(function() {
                 const parts = jQuery(this).attr('id').split('-');
-                data.ids.push(parseInt(parts.shift()));
+                data.ids.push(parseInt(parts.shift(), 10));
                 data.source.contentType = parts.join('-');
             });
         }
@@ -597,9 +604,9 @@ if (document.getElementById('smartling-app')) {
     const container = document.getElementById('smartling-app');
     const isBulkSubmitPage = container.dataset.bulkSubmit === 'true';
     const contentType = container.dataset.contentType || '';
-    const contentId = parseInt(container.dataset.contentId) || 0;
+    const contentId = parseInt(container.dataset.contentId, 10) || 0;
     const profiles = JSON.parse(container.dataset.profiles || '[]');
-    const blogId = parseInt(container.dataset.blogId) || 0;
+    const blogId = parseInt(container.dataset.blogId, 10) || 0;
     const ajaxUrl = container.dataset.ajaxUrl || '';
     const adminUrl = container.dataset.adminUrl || '';
     const nonce = container.dataset.nonce || '';

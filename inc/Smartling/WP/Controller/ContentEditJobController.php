@@ -109,9 +109,10 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                 $profile = $this->settingsManager->resolveRequestedProfile(
                     UserTranslationRequest::parseProfileId($params['profileId'] ?? null),
                     $blogId,
-                ) ?? $this->settingsManager->getSingleSettingsProfile($blogId);
+                );
             } catch (\InvalidArgumentException | SmartlingDbException $e) {
-                $this->wpProxy->wp_send_json(['status' => 400, 'message' => ['profileId' => $e->getMessage()]], 400);
+                $this->getLogger()->warning('Unable to resolve requested profile: ' . $e->getMessage());
+                $this->wpProxy->wp_send_json(['status' => 400, 'message' => ['profileId' => 'Invalid translation profile']], 400);
                 return;
             }
 
