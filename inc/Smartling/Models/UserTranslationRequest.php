@@ -7,35 +7,25 @@ use Smartling\Helpers\ArrayHelper;
 
 class UserTranslationRequest
 {
-    private int $contentId;
-    private string $contentType;
-    private string $description;
     private array $relations;
     private array $targetBlogIds;
-    private JobInformation $jobInformation;
-    private ?int $profileId;
     private array $ids;
 
     public function __construct(
-        int $contentId,
-        string $contentType,
+        private int $contentId,
+        private string $contentType,
         array $relations,
         array $targetBlogIds,
-        JobInformation $jobInformation,
+        private JobInformation $jobInformation,
         array $ids = [],
-        string $description = '',
-        ?int $profileId = null,
+        private string $description = '',
+        private ?int $profileId = null,
     )
     {
-        $this->contentId = $contentId;
-        $this->contentType = $contentType;
-        $this->description = $description;
         krsort($relations);
         $this->relations = $relations;
         $this->targetBlogIds = ArrayHelper::toArrayOfIntegers($targetBlogIds, 'Target blog id expected to be numeric');
-        $this->jobInformation = $jobInformation;
         $this->ids = self::toIntegerArray($ids);
-        $this->profileId = $profileId;
     }
 
     public function getContentId(): int
