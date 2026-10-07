@@ -216,13 +216,14 @@ namespace Smartling\Tests\Services {
             ]));
         }
 
-        public function testCreateSubmissionsDoesNotStampProfileWhenNoneCouldBeResolved()
+        public function testCreateSubmissionsStampsFallbackProfileWhenNoneCouldBeResolved()
         {
             $sourceBlogId = 1;
             $sourceId = 48;
 
             $activeProfile = $this->createMock(ConfigurationProfileEntity::class);
             $activeProfile->method('getProjectId')->willReturn('activeProjectUid');
+            $activeProfile->method('getId')->willReturn(3);
 
             $apiWrapper = $this->createMock(ApiWrapper::class);
             $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(
@@ -243,7 +244,7 @@ namespace Smartling\Tests\Services {
 
             $submission = $this->createMock(SubmissionEntity::class);
             $submission->method('getId')->willReturn(17);
-            $submission->expects(self::never())->method('setConfigurationProfileId');
+            $submission->expects(self::once())->method('setConfigurationProfileId')->with(3);
 
             $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
             $submissionManager->method('findOne')->willReturn($submission);

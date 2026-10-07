@@ -88,7 +88,6 @@ class ContentRelationsDiscoveryService
         ConfigurationProfileEntity $profile,
         array $targetBlogIds,
         bool $enqueue = true,
-        bool $stampProfile = true,
     ): array {
         $this->getLogger()->debug("Bulk upload request, contentIds=" . implode(',', $contentIds));
         $queueIds = [];
@@ -96,8 +95,7 @@ class ContentRelationsDiscoveryService
         foreach ($targetBlogIds as $targetBlogId) {
             foreach ($contentIds as $id) {
                 $submission = $this->submissionManager->findTargetBlogSubmission($contentType, $currentBlogId, $id, $targetBlogId);
-                $isNew = $submission === null;
-                if ($isNew) {
+                if ($submission === null) {
                     $submission = $this->submissionManager->getSubmissionEntity($contentType, $currentBlogId, $id, $targetBlogId, $this->localizationPluginProxy);
                     $title = $this->getTitle($submission);
                     if ($title !== '') {
@@ -109,12 +107,7 @@ class ContentRelationsDiscoveryService
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->setIsCloned(0);
                 // Bulk-submitting is an explicit new translation request: (re)stamp with the profile it was requested with.
-                // Without a resolved profile, existing submissions keep theirs and new ones stay unstamped.
-                if ($stampProfile) {
-                    $submission->setConfigurationProfileId($profile->getId());
-                } elseif ($isNew) {
-                    $submission->setConfigurationProfileId(null);
-                }
+                $submission->setConfigurationProfileId($profile->getId());
                 $submission = $this->submissionManager->storeEntity($submission);
                 $queueIds[] = $submission->getId();
                 $this->logSubmissionCreated($submission, 'Bulk upload request', $jobInfo);
@@ -137,7 +130,6 @@ class ContentRelationsDiscoveryService
                 $profile,
                 $targetBlogIds,
                 false,
-                $stampProfile,
             ));
         }
         if ($enqueue) {
@@ -159,7 +151,6 @@ class ContentRelationsDiscoveryService
     {
         $curBlogId = $this->wordpressProxy->get_current_blog_id();
         $requestedProfile = $this->settingsManager->resolveRequestedProfile($request->getProfileId(), $curBlogId);
-        $stampProfile = $requestedProfile !== null;
         $profile = $requestedProfile ?? $this->settingsManager->getSingleSettingsProfile($curBlogId);
         $job = $request->getJobInformation();
         $jobInfo = new JobEntity($job->getName(), $job->getId(), $profile->getProjectId());
@@ -172,8 +163,6 @@ class ContentRelationsDiscoveryService
                 $jobInfo,
                 $profile,
                 $request->getTargetBlogIds(),
-                true,
-                $stampProfile,
             );
             return;
         }
@@ -240,10 +229,8 @@ class ContentRelationsDiscoveryService
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->setIsCloned(0);
                 // Resubmitting an existing submission is an explicit new translation request, so restamp it with the
-                // profile it was requested with. Without a resolved profile it keeps whatever it had.
-                if ($stampProfile) {
-                    $submission->setConfigurationProfileId($profile->getId());
-                }
+                // profile it was requested with.
+                $submission->setConfigurationProfileId($profile->getId());
                 $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
                 $fileUris[] = $submission->getFileUri();
                 $queueIds[] = $submission->getId();
@@ -252,7 +239,7 @@ class ContentRelationsDiscoveryService
             $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
             $submissionTemplateArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
             // New submissions built from this template bypass getSubmissionEntity(), stamp them with the requested profile.
-            $submissionTemplateArray[SubmissionEntity::FIELD_CONFIGURATION_PROFILE_ID] = $stampProfile ? $profile->getId() : null;
+            $submissionTemplateArray[SubmissionEntity::FIELD_CONFIGURATION_PROFILE_ID] = $profile->getId();
 
             foreach ($sources as $source) {
                 $submissionArray = array_merge($submissionTemplateArray, [
