@@ -39,6 +39,8 @@ class SubmissionUploadTest extends SmartlingUnitTestCaseAbstract
             [],
             $targetBlogs,
             new JobInformation($job['translationJobUid'], false, $jobName, '', '', ''),
+            [],
+            '',
             $profile->getId(),
         ));
         $submissions = $submissionManager->find([SubmissionEntity::FIELD_SOURCE_ID => $postId]);
@@ -89,6 +91,8 @@ HTML);
             [2 => ['attachment' => [$attachmentId]]],
             $targetBlogs,
             new JobInformation($job['translationJobUid'], false, $jobName, '', '', ''),
+            [],
+            '',
             $profile->getId(),
         ));
         $this->assertCount($existingSubmissionCount + 2, $submissionManager->find([1 => 1]));

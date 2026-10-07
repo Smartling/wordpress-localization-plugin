@@ -16,7 +16,16 @@ class UserTranslationRequest
     private ?int $profileId;
     private array $ids;
 
-    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, JobInformation $jobInformation, ?int $profileId = null, array $ids = [], string $description = '')
+    public function __construct(
+        int $contentId,
+        string $contentType,
+        array $relations,
+        array $targetBlogIds,
+        JobInformation $jobInformation,
+        array $ids = [],
+        string $description = '',
+        ?int $profileId = null,
+    )
     {
         $this->contentId = $contentId;
         $this->contentType = $contentType;
@@ -25,8 +34,8 @@ class UserTranslationRequest
         $this->relations = $relations;
         $this->targetBlogIds = ArrayHelper::toArrayOfIntegers($targetBlogIds, 'Target blog id expected to be numeric');
         $this->jobInformation = $jobInformation;
-        $this->profileId = $profileId;
         $this->ids = self::toIntegerArray($ids);
+        $this->profileId = $profileId;
     }
 
     public function getContentId(): int
@@ -84,9 +93,9 @@ class UserTranslationRequest
             $array['relations'] ?? [],
             explode(',', $array['targetBlogIds']),
             new JobInformation($array['job']['id'], $array['job']['authorize'] === 'true', $array['job']['name'], $array['job']['description'], $array['job']['dueDate'], $array['job']['timeZone']),
-            self::parseProfileId($array['profileId'] ?? null),
             $ids,
             $array['description'] ?? (count($ids) > 0 ? 'From Bulk Submit' : 'From Widget'),
+            self::parseProfileId($array['profileId'] ?? null),
         );
     }
 

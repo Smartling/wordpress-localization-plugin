@@ -1,6 +1,7 @@
 <?php
 
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\WP\Controller\BulkSubmitController;
 use Smartling\WP\Table\BulkSubmitTableWidget;
 
@@ -52,7 +53,7 @@ $widgetName = 'bulk-submit-locales';
         <?php $bulkSubmitTable->display() ?>
         <div id="error-messages" class="tab"></div>
         <?php
-        $profilesData = array_map(static fn(\Smartling\Settings\ConfigurationProfileEntity $p) => $p->toWizardArray(), $data->getApplicableProfiles());
+        $profilesData = array_map(static fn(ConfigurationProfileEntity $p) => $p->toWizardArray(), $data->getApplicableProfiles());
         ?>
         <div id="smartling-app"
              data-bulk-submit="true"

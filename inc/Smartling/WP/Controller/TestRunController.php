@@ -199,9 +199,9 @@ class TestRunController extends WPAbstract implements WPHookInterface
                     ->getRelations($post->post_type, $post->ID, [$targetBlogId])->getReferences()],
                 [$targetBlogId],
                 new JobInformation($job->getJobUid(), true, $job->getJobName(), 'Test run job', '', 'UTC'),
-                $profile->getId(),
                 [],
-                'Test run'
+                'Test run',
+                $profile->getId(),
             ));
         }
 
