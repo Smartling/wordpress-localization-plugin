@@ -46,6 +46,9 @@ class RelatedContentInfo {
         $return = [];
         foreach ($flat as $item) {
             assert($item instanceof Content);
+            if ($item->isRemapOnly()) {
+                continue;
+            }
             if (!array_key_exists($item->getType(), $return)) {
                 $return[$item->getType()] = [];
             }
