@@ -6,6 +6,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
@@ -280,6 +281,39 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
         }
 
+        /**
+         * Picking the profile that actually covers every selected target blog - more than one profile can be
+         * active for this site, and the earlier $profile (the first active one) may not be it.
+         */
+        if ($continue) {
+            $targetBlogIds = array_map('intval', $data['blogs']);
+            $matchedProfile = null;
+            foreach ($this->getProfiles() as $candidateProfile) {
+                try {
+                    $this->settingsManager->assertTargetBlogIdsBelongToProfile($candidateProfile, $targetBlogIds);
+                    $matchedProfile = $candidateProfile;
+                    break;
+                } catch (SmartlingHumanReadableException) {
+                    continue;
+                }
+            }
+
+            if ($matchedProfile === null) {
+                $message = 'Selected target locales are not all covered by a single translation profile.';
+                $this->getLogger()->error(
+                    vsprintf('Failed adding content to upload queue: %s for %s', [$message, var_export($_POST, true)])
+                );
+                $result = [
+                    'status' => 'FAIL',
+                    'key' => self::ERROR_KEY_TARGET_BLOG_EMPTY,
+                    'message' => $message,
+                ];
+                $continue = false;
+            } else {
+                $profile = $matchedProfile;
+            }
+        }
+
         if ($continue) {
             $data['content']['id'] = explode(',', $data['content']['id']);
 
@@ -355,9 +389,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                     try {
                         $jobInfo = new JobEntityWithBatchUid('', $jobName, $data['job']['id'], $profile->getProjectId());
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId)) {
-                            $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
+                            $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo, false, $profile->getId());
                         } else {
-                            $submission = $this->getCore()->getTranslationHelper()->getExistingSubmissionOrCreateNew($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
+                            $submission = $this->getCore()->getTranslationHelper()->getExistingSubmissionOrCreateNew($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo, $profile->getId());
                         }
 
                         if (0 < $submission->getId()) {
@@ -432,6 +466,12 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         $post = get_post((int)($_POST['postId'] ?? 0));
         if (!($post instanceof \WP_Post)) {
             wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Post not found'], 404);
+            return;
+        }
+        if ($post->post_type !== $this->servedContentType) {
+            // One instance of this controller is registered per post type, all on the same AJAX
+            // action. Responding here would short-circuit the request before the instance whose
+            // servedContentType actually matches this post gets a turn, so just let it fall through.
             return;
         }
         if (!current_user_can('edit_post', $post->ID)) {

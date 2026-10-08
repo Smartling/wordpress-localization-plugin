@@ -7,7 +7,7 @@ use Exception;
 use Smartling\ApiWrapperInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
-use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
@@ -110,7 +110,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                     UserTranslationRequest::parseProfileId($params['profileId'] ?? null),
                     $blogId,
                 );
-            } catch (\InvalidArgumentException | SmartlingDbException $e) {
+            } catch (\InvalidArgumentException | SmartlingHumanReadableException $e) {
                 $this->getLogger()->warning('Unable to resolve requested profile: ' . $e->getMessage());
                 $this->wpProxy->wp_send_json(['status' => 400, 'message' => ['profileId' => 'Invalid translation profile']], 400);
                 return;
@@ -156,10 +156,18 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                         $timezone = $validateRequires('timezone');
                         $jobDescription = $params['description'];
                         $jobDueDate = $params['dueDate'];
-                        $jobLocalesRaw = explode(',', $validateRequires('locales'));
+                        $jobLocalesRaw = array_map('intval', explode(',', $validateRequires('locales')));
+                        if ($result['status'] === 200) {
+                            try {
+                                $this->settingsManager->assertTargetBlogIdsBelongToProfile($profile, $jobLocalesRaw);
+                            } catch (SmartlingHumanReadableException $e) {
+                                $result['status'] = 400;
+                                $result['message']['locales'] = $e->getMessage();
+                            }
+                        }
                         $jobLocales = [];
                         foreach ($jobLocalesRaw as $blogId) {
-                            $jobLocales[] = $this->settingsManager->getSmartlingLocaleIdBySettingsProfile($profile, (int)$blogId);
+                            $jobLocales[] = $this->settingsManager->getSmartlingLocaleIdBySettingsProfile($profile, $blogId);
                         }
                         if ($result['status'] === 200) {
                             try {

@@ -7,6 +7,7 @@ use Psr\Log\NullLogger;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
@@ -209,7 +210,7 @@ class SettingsManagerTest extends TestCase
 
     public function testResolveRequestedProfileRejectsUnknownProfile()
     {
-        $this->expectException(SmartlingDbException::class);
+        $this->expectException(SmartlingHumanReadableException::class);
         $mock = $this->resolverMock();
         $mock->method('getEntityById')->with(5)->willReturn([]);
 
@@ -218,7 +219,7 @@ class SettingsManagerTest extends TestCase
 
     public function testResolveRequestedProfileRejectsProfileOfDifferentBlog()
     {
-        $this->expectException(SmartlingDbException::class);
+        $this->expectException(SmartlingHumanReadableException::class);
         $mock = $this->resolverMock();
         $mock->method('getEntityById')->with(5)->willReturn([$this->profileForBlog(5, 99, 1)]);
 
@@ -227,7 +228,7 @@ class SettingsManagerTest extends TestCase
 
     public function testResolveRequestedProfileRejectsInactiveProfile()
     {
-        $this->expectException(SmartlingDbException::class);
+        $this->expectException(SmartlingHumanReadableException::class);
         $mock = $this->resolverMock();
         $mock->method('getEntityById')->with(5)->willReturn([$this->profileForBlog(5, 1, 0)]);
 
@@ -246,11 +247,52 @@ class SettingsManagerTest extends TestCase
 
     public function testResolveRequestedProfileThrowsWhenNoneRequestedAndNoneActive()
     {
-        $this->expectException(SmartlingDbException::class);
+        $this->expectException(SmartlingHumanReadableException::class);
         $mock = $this->resolverMock();
         $mock->method('findEntityByMainLocale')->with(1)->willReturn([]);
 
         $mock->resolveRequestedProfile(null, 1);
+    }
+
+    public function testAssertTargetBlogIdsBelongToProfileAllowsEnabledLocales()
+    {
+        $profile = $this->profileWithId(1);
+        $profile->setTargetLocales([$this->enabledLocale(2), $this->enabledLocale(3)]);
+        $mock = $this->resolverMock();
+
+        $mock->assertTargetBlogIdsBelongToProfile($profile, [2, 3]);
+        $this->addToAssertionCount(1);
+    }
+
+    public function testAssertTargetBlogIdsBelongToProfileRejectsBlogOutsideProfile()
+    {
+        $this->expectException(SmartlingHumanReadableException::class);
+        $profile = $this->profileWithId(1);
+        $profile->setTargetLocales([$this->enabledLocale(2)]);
+        $mock = $this->resolverMock();
+
+        $mock->assertTargetBlogIdsBelongToProfile($profile, [2, 99]);
+    }
+
+    public function testAssertTargetBlogIdsBelongToProfileRejectsDisabledLocale()
+    {
+        $this->expectException(SmartlingHumanReadableException::class);
+        $profile = $this->profileWithId(1);
+        $disabled = $this->enabledLocale(2);
+        $disabled->setEnabled(false);
+        $profile->setTargetLocales([$disabled]);
+        $mock = $this->resolverMock();
+
+        $mock->assertTargetBlogIdsBelongToProfile($profile, [2]);
+    }
+
+    private function enabledLocale(int $blogId): TargetLocale
+    {
+        $locale = new TargetLocale();
+        $locale->setBlogId($blogId);
+        $locale->setEnabled(true);
+
+        return $locale;
     }
 
     public function testGetEntitiesQueries()

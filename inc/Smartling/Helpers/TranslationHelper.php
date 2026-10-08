@@ -86,7 +86,7 @@ class TranslationHelper
         }
     }
 
-    public function prepareSubmissionEntity(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, ?int $targetEntity = null): SubmissionEntity
+    public function prepareSubmissionEntity(string $contentType, int $sourceBlog, int $sourceEntity, int $targetBlog, ?int $targetEntity = null, ?int $profileId = null): SubmissionEntity
     {
         $this->validateBlogs($sourceBlog, $targetBlog);
 
@@ -96,7 +96,8 @@ class TranslationHelper
             $sourceEntity,
             $targetBlog,
             $this->multilangProxy,
-            $targetEntity
+            $targetEntity,
+            $profileId,
         );
     }
 
@@ -107,7 +108,7 @@ class TranslationHelper
      * @throws SmartlingDataReadException
      * @throws SmartlingInvalidFactoryArgumentException
      */
-    public function prepareSubmission(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, bool $clone = false): SubmissionEntity
+    public function prepareSubmission(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, bool $clone = false, ?int $profileId = null): SubmissionEntity
     {
         if (0 === $sourceId) {
             throw new \InvalidArgumentException('Source id cannot be 0.');
@@ -116,7 +117,9 @@ class TranslationHelper
             $contentType,
             $sourceBlog,
             $sourceId,
-            $targetBlog
+            $targetBlog,
+            null,
+            $profileId,
         );
         if ($submission->getFileUri() === '') {
             $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
@@ -158,11 +161,11 @@ class TranslationHelper
     /**
      * @throws SmartlingDataReadException
      */
-    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobEntityWithBatchUid $jobInfo): SubmissionEntity {
-        $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->multilangProxy);
+    public function getExistingSubmissionOrCreateNew(string $contentType, int $sourceBlogId, int $contentId, int $targetBlogId, JobEntityWithBatchUid $jobInfo, ?int $profileId = null): SubmissionEntity {
+        $submission = $this->submissionManager->getSubmissionEntity($contentType, $sourceBlogId, $contentId, $targetBlogId, $this->multilangProxy, null, $profileId);
         if ($submission->getTargetId() === 0) {
             $this->getLogger()->debug("Got submission with 0 target id");
-            $submission = $this->tryPrepareRelatedContent($contentType, $sourceBlogId, $contentId, $targetBlogId, $jobInfo);
+            $submission = $this->tryPrepareRelatedContent($contentType, $sourceBlogId, $contentId, $targetBlogId, $jobInfo, false, $profileId);
         }
         return $submission;
     }
@@ -174,9 +177,9 @@ class TranslationHelper
      * @throws SmartlingDataReadException
      * @throws SmartlingInvalidFactoryArgumentException
      */
-    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity
+    public function tryPrepareRelatedContent(string $contentType, int $sourceBlog, int $sourceId, int $targetBlog, JobEntityWithBatchUid $jobInfo, bool $clone = false, ?int $profileId = null): SubmissionEntity
     {
-        $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone);
+        $relatedSubmission = $this->prepareSubmission($contentType, $sourceBlog, $sourceId, $targetBlog, $clone, $profileId);
 
         if (0 !== $sourceId && 0 === $relatedSubmission->getTargetId() &&
             SubmissionEntity::SUBMISSION_STATUS_FAILED !== $relatedSubmission->getStatus()

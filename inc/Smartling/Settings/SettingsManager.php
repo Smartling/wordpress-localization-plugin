@@ -10,6 +10,7 @@ use Smartling\Exception\BlogNotFoundException;
 use Smartling\Exception\EntityNotFoundException;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\QueryBuilder\Condition\Condition;
 use Smartling\Helpers\QueryBuilder\Condition\ConditionBlock;
@@ -124,28 +125,61 @@ class SettingsManager extends EntityManagerAbstract
      * An explicitly requested profile must exist, belong to the blog and be active, otherwise the request is rejected.
      * Without an explicit profile, the blog's active profile is used.
      *
-     * @throws SmartlingDbException
+     * Failures are reported as SmartlingHumanReadableException (rather than the broader SmartlingDbException thrown
+     * by unrelated DB/content errors elsewhere in the request) so callers can map profile-resolution failures to a
+     * clean 400 without mislabeling other failures as invalid profile errors.
+     *
+     * @throws SmartlingHumanReadableException
      */
     public function resolveRequestedProfile(?int $requestedProfileId, int $blogId): ConfigurationProfileEntity
     {
         if ($requestedProfileId === null) {
-            return $this->getSingleSettingsProfile($blogId);
+            try {
+                return $this->getSingleSettingsProfile($blogId);
+            } catch (SmartlingDbException $e) {
+                throw new SmartlingHumanReadableException($e->getMessage(), 'profile.not.found', 400);
+            }
         }
 
         $profile = ArrayHelper::first($this->getEntityById($requestedProfileId));
         if (!$profile instanceof ConfigurationProfileEntity) {
             $message = "Requested profileId=$requestedProfileId not found";
             $this->getLogger()->warning($message);
-            throw new SmartlingDbException($message);
+            throw new SmartlingHumanReadableException($message, 'profile.invalid', 400);
         }
         if ($profile->getSourceLocale()->getBlogId() !== $blogId || 1 !== $profile->getIsActive()) {
             $message = "Requested profileId=$requestedProfileId is not an active profile for blogId=$blogId";
             $this->getLogger()->warning($message);
-            throw new SmartlingDbException($message);
+            throw new SmartlingHumanReadableException($message, 'profile.invalid', 400);
         }
         $this->getLogger()->debug("Using requested profileId=$requestedProfileId for blogId=$blogId");
 
         return $profile;
+    }
+
+    /**
+     * @param int[] $targetBlogIds
+     * @throws SmartlingHumanReadableException
+     */
+    public function assertTargetBlogIdsBelongToProfile(ConfigurationProfileEntity $profile, array $targetBlogIds): void
+    {
+        $allowedBlogIds = [];
+        foreach ($profile->getTargetLocales() as $locale) {
+            if ($locale->isEnabled()) {
+                $allowedBlogIds[] = $locale->getBlogId();
+            }
+        }
+
+        $invalidBlogIds = array_diff($targetBlogIds, $allowedBlogIds);
+        if (0 < count($invalidBlogIds)) {
+            $message = sprintf(
+                'Target blogId(s) %s are not enabled target locales for profileId=%d',
+                implode(',', $invalidBlogIds),
+                $profile->getId(),
+            );
+            $this->getLogger()->warning($message);
+            throw new SmartlingHumanReadableException($message, 'target.blog.invalid', 400);
+        }
     }
 
     /**

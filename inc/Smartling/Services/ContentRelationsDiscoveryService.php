@@ -103,6 +103,7 @@ class ContentRelationsDiscoveryService
                     }
                     $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 }
+                $this->warnIfReprofilingInProgress($submission, $profile->getId());
                 $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->setIsCloned(0);
@@ -151,6 +152,7 @@ class ContentRelationsDiscoveryService
     {
         $curBlogId = $this->wordpressProxy->get_current_blog_id();
         $profile = $this->settingsManager->resolveRequestedProfile($request->getProfileId(), $curBlogId);
+        $this->settingsManager->assertTargetBlogIdsBelongToProfile($profile, $request->getTargetBlogIds());
         $job = $request->getJobInformation();
         $jobInfo = new JobEntity($job->getName(), $job->getId(), $profile->getProjectId());
 
@@ -225,6 +227,7 @@ class ContentRelationsDiscoveryService
                     'type' => $request->getContentType(),
                 ];
             } else {
+                $this->warnIfReprofilingInProgress($submission, $profile->getId());
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->setIsCloned(0);
                 // Resubmitting an existing submission is an explicit new translation request, so restamp it with the
@@ -585,6 +588,27 @@ class ContentRelationsDiscoveryService
         }
 
         return $result;
+    }
+
+    /**
+     * Re-stamping an existing submission to a different profile is an explicit, supported part of resubmitting
+     * under a user-chosen profile - but if it's still IN_PROGRESS under the old one, it loses its link to that
+     * project's file/job, and status checks/downloads will look at the new project instead. Warn so this is at
+     * least visible, without blocking the resubmission.
+     */
+    private function warnIfReprofilingInProgress(SubmissionEntity $submission, int $newProfileId): void
+    {
+        $oldProfileId = $submission->getConfigurationProfileId();
+        if ($oldProfileId !== null && $oldProfileId !== $newProfileId
+            && $submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS
+        ) {
+            $this->getLogger()->warning(sprintf(
+                'Resubmitting submissionId=%d from profileId=%d to profileId=%d while still in progress; it will lose its link to the previous profile\'s file/job.',
+                $submission->getId(),
+                $oldProfileId,
+                $newProfileId,
+            ));
+        }
     }
 
     private function storeWithJobInfo(SubmissionEntity $submission, JobEntity $jobInfo, string $description): SubmissionEntity

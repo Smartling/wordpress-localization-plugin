@@ -2,7 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
-use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\FTS\FtsService;
 use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\DateTimeHelper;
@@ -73,15 +73,17 @@ class InstantTranslationController implements WPHookInterface
             $sourceBlogId = $this->wpProxy->get_current_blog_id();
 
             try {
-                $profileId = $this->settingsManager->resolveRequestedProfile(
+                $profile = $this->settingsManager->resolveRequestedProfile(
                     UserTranslationRequest::parseProfileId($_POST['profileId'] ?? null),
                     $sourceBlogId,
-                )->getId();
-            } catch (\InvalidArgumentException | SmartlingDbException $e) {
+                );
+                $this->settingsManager->assertTargetBlogIdsBelongToProfile($profile, $targetBlogIds);
+            } catch (\InvalidArgumentException | SmartlingHumanReadableException $e) {
                 $this->getLogger()->warning('Unable to resolve requested profile: ' . $e->getMessage());
                 $this->wpProxy->wp_send_json_error(['message' => 'Invalid translation profile'], 400);
                 return;
             }
+            $profileId = $profile->getId();
 
             $allSubmissions = $this->buildSubmissions(
                 $contentType,
@@ -317,6 +319,17 @@ class InstantTranslationController implements WPHookInterface
                 $submission = $this->submissionFactory->fromArray($submissionArray);
                 $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
             } else {
+                $oldProfileId = $submission->getConfigurationProfileId();
+                if ($oldProfileId !== null && $oldProfileId !== $profileId
+                    && $submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS
+                ) {
+                    $this->getLogger()->warning(sprintf(
+                        'Resubmitting submissionId=%d from profileId=%d to profileId=%d while still in progress; it will lose its link to the previous profile\'s file/job.',
+                        $submission->getId(),
+                        $oldProfileId,
+                        $profileId,
+                    ));
+                }
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
             }
 

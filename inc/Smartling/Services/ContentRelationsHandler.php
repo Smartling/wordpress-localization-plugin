@@ -3,7 +3,6 @@
 namespace Smartling\Services;
 
 use Exception;
-use Smartling\Exception\SmartlingDbException;
 use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\AjaxAuthorizationFailure;
 use Smartling\Helpers\AjaxSecurityChecker;
@@ -102,8 +101,8 @@ class ContentRelationsHandler extends BaseAjaxServiceAbstract
         try {
             $this->service->createSubmissions(UserTranslationRequest::fromArray($data));
             $this->returnResponse(['status' => BaseAjaxServiceAbstract::RESPONSE_SUCCESS]);
-        } catch (SmartlingDbException $e) {
-            $this->returnError('content.submission.failed', 'Invalid translation profile');
+        } catch (SmartlingHumanReadableException $e) {
+            $this->returnError($e->getKey(), $e->getMessage(), $e->getResponseCode());
         } catch (Exception $e) {
             $this->returnError('content.submission.failed', $e->getMessage());
         }

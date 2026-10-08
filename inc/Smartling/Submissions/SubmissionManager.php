@@ -450,6 +450,12 @@ class SubmissionManager extends EntityManagerAbstract
 
     /**
      * Loads from database or creates a new instance of SubmissionEntity
+     *
+     * When $profileId is given (e.g. the profile the parent submission was requested under, for related content
+     * created while processing it), it is stamped unconditionally, since the caller knows better than any default.
+     * Otherwise, an entity that already has a stamped profile is left alone - only a submission with none gets the
+     * source blog's active profile as a best-effort default. Re-stamping an already-stamped submission would make
+     * it diverge from the batch/job it was actually created under.
      */
     public function getSubmissionEntity(
         string $contentType,
@@ -457,7 +463,8 @@ class SubmissionManager extends EntityManagerAbstract
         int $sourceEntity,
         int $targetBlog,
         ?LocalizationPluginProxyInterface $localizationProxy = null,
-        ?int $targetEntity = null
+        ?int $targetEntity = null,
+        ?int $profileId = null,
     ): SubmissionEntity
     {
         $params = [
@@ -486,7 +493,12 @@ class SubmissionManager extends EntityManagerAbstract
             $entity->setSourceTitle('no title');
             $entity->setCreatedAt(DateTimeHelper::nowAsString());
         }
-        $this->stampConfigurationProfile($entity);
+
+        if ($profileId !== null) {
+            $entity->setConfigurationProfileId($profileId);
+        } elseif ($entity->getConfigurationProfileId() === null) {
+            $this->stampConfigurationProfile($entity);
+        }
 
         return $entity;
     }

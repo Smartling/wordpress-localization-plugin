@@ -171,13 +171,24 @@ class SubmissionManagerTest extends TestCase
         $this->assertSame(9, $entity->getConfigurationProfileId());
     }
 
-    public function testGetSubmissionEntityRefreshesProfileOnExistingSubmission()
+    public function testGetSubmissionEntityKeepsProfileOnExistingSubmission()
     {
         $settingsManager = $this->createMock(SettingsManager::class);
-        $settingsManager->method('getSingleSettingsProfile')->willReturn($this->profileWithId(9));
+        $settingsManager->expects($this->never())->method('getSingleSettingsProfile');
         $existing = (new SubmissionEntity())->setSourceBlogId(1)->setConfigurationProfileId(4);
 
         $entity = $this->getManagerForProfileStamping($settingsManager, [$existing])->getSubmissionEntity('post', 1, 5, 2);
+
+        $this->assertSame(4, $entity->getConfigurationProfileId());
+    }
+
+    public function testGetSubmissionEntityStampsExplicitProfileIdEvenOnExistingSubmission()
+    {
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->expects($this->never())->method('getSingleSettingsProfile');
+        $existing = (new SubmissionEntity())->setSourceBlogId(1)->setConfigurationProfileId(4);
+
+        $entity = $this->getManagerForProfileStamping($settingsManager, [$existing])->getSubmissionEntity('post', 1, 5, 2, null, null, 9);
 
         $this->assertSame(9, $entity->getConfigurationProfileId());
     }
