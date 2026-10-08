@@ -61,7 +61,7 @@ async function refreshDownloadWidgetUntilReady(adminUrl, postId, targetBlogIds) 
     }
 }
 
-function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }) {
+function JobWizard({ isBulkSubmitPage, baseType, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }) {
     const [activeTab, setActiveTab] = useState('new');
     const [selectedProfileId, setSelectedProfileId] = useState(() => {
         const stored = getStoredProfileId(blogId);
@@ -93,8 +93,13 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
     const [instantCompletedCount, setInstantCompletedCount] = useState(0);
 
     useEffect(() => {
-        // Ignore responses for a previously selected profile, a slow one must not overwrite the current job list
+        // Ignore responses for a previously selected profile, a slow one must not overwrite the current job list.
+        // The old profile's jobs must not stay selectable while the new list loads (or forever, if it fails), so
+        // clear them - and any stale error from a previous attempt - up front rather than waiting for the response.
         let stale = false;
+        setJobs([]);
+        setLoading(true);
+        setError('');
         (async () => {
             try {
                 const response = await jQuery.post(adminUrl, {
@@ -396,7 +401,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
                 throw new Error(submissionResponse.message?.global || 'Failed to add content to upload queue.');
             }
             setSuccess('Content successfully added to upload queue.');
-            if (!isBulkSubmitPage) {
+            if (!isBulkSubmitPage && baseType === 'post') {
                 refreshDownloadWidgetUntilReady(adminUrl, contentId, selectedLocales);
             }
         } catch (e) {
@@ -603,6 +608,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
 if (document.getElementById('smartling-app')) {
     const container = document.getElementById('smartling-app');
     const isBulkSubmitPage = container.dataset.bulkSubmit === 'true';
+    const baseType = container.dataset.baseType || 'post';
     const contentType = container.dataset.contentType || '';
     const contentId = parseInt(container.dataset.contentId, 10) || 0;
     const profiles = JSON.parse(container.dataset.profiles || '[]');
@@ -614,7 +620,7 @@ if (document.getElementById('smartling-app')) {
     // Nothing to offer without an active profile
     if (profiles.length > 0) {
         render(
-            el(JobWizard, { isBulkSubmitPage, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }),
+            el(JobWizard, { isBulkSubmitPage, baseType, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }),
             container
         );
     }
