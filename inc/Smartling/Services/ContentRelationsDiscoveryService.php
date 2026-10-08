@@ -574,7 +574,7 @@ class ContentRelationsDiscoveryService
 
         if (isset($references['taxonomies'])) {
             foreach ($references['taxonomies'] as $taxonomy => $ids) {
-                $result[$taxonomy] = $ids;
+                $result[$taxonomy] = array_merge($result[$taxonomy] ?? [], $ids);
             }
         }
 

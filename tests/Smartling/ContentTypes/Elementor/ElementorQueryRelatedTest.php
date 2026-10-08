@@ -20,6 +20,9 @@ class ElementorQueryRelatedTest extends TestCase
         foreach ([LoopGrid::class, LoopCarousel::class] as $class) {
             $list = (new $class(['id' => 'w1', 'settings' => [
                 'template_id' => '7',
+                'post_query_post_type' => 'by_id',
+                'post_query_include' => ['terms'],
+                'post_query_exclude' => ['terms', 'manual_selection'],
                 'post_query_include_term_ids' => ['14', '15'],
                 'post_query_exclude_term_ids' => ['16'],
                 'post_query_posts_ids' => ['100'],
@@ -34,6 +37,9 @@ class ElementorQueryRelatedTest extends TestCase
     public function testPostsWidgetCollectsQueryRelatedContent(): void
     {
         $list = (new Posts(['id' => 'w1', 'settings' => [
+            'posts_post_type' => 'by_id',
+            'posts_include' => ['terms'],
+            'posts_exclude' => ['terms'],
             'posts_include_term_ids' => ['3'],
             'posts_exclude_term_ids' => ['4'],
             'posts_posts_ids' => ['50'],
@@ -46,6 +52,8 @@ class ElementorQueryRelatedTest extends TestCase
     public function testInvalidQueryValuesAreIgnored(): void
     {
         $list = (new LoopGrid(['id' => 'w1', 'settings' => [
+            'post_query_include' => ['terms'],
+            'post_query_exclude' => ['terms'],
             'post_query_include_term_ids' => 'not-an-array',
             'post_query_exclude_term_ids' => ['', 'abc', '0'],
         ]]))->getRelated()->getRelatedContentList();
@@ -57,6 +65,9 @@ class ElementorQueryRelatedTest extends TestCase
     {
         $info = (new LoopGrid(['id' => 'w1', 'settings' => [
             'template_id' => '7',
+            'post_query_post_type' => 'by_id',
+            'post_query_include' => ['terms'],
+            'post_query_exclude' => ['terms', 'manual_selection'],
             'post_query_include_term_ids' => ['14'],
             'post_query_exclude_term_ids' => ['16'],
             'post_query_posts_ids' => ['100'],
@@ -77,6 +88,7 @@ class ElementorQueryRelatedTest extends TestCase
     public function testOnlyExcludedContentSubmitsNothing(): void
     {
         $list = (new LoopGrid(['id' => 'w1', 'settings' => [
+            'post_query_exclude' => ['terms', 'manual_selection'],
             'post_query_exclude_term_ids' => ['16'],
             'post_query_exclude_ids' => ['101'],
         ]]))->getRelated()->getRelatedContentList();
@@ -87,6 +99,7 @@ class ElementorQueryRelatedTest extends TestCase
     public function testNonIntegerIdsAreIgnored(): void
     {
         $list = (new LoopGrid(['id' => 'w1', 'settings' => [
+            'post_query_post_type' => 'by_id',
             'post_query_posts_ids' => ['1e3', '1.5', ' ', '-4', '12'],
         ]]))->getRelated()->getRelatedContentList();
 
@@ -100,5 +113,44 @@ class ElementorQueryRelatedTest extends TestCase
                 $this->assertSame([], (new $class(['id' => 'w1', 'settings' => $settings]))->getRelated()->getRelatedContentList(), $class);
             }
         }
+    }
+
+    public function testIdsOfInactiveQueryModesAreIgnored(): void
+    {
+        $settings = [
+            'post_query_include_term_ids' => ['14'],
+            'post_query_exclude_term_ids' => ['16'],
+            'post_query_posts_ids' => ['100'],
+            'post_query_exclude_ids' => ['101'],
+        ];
+        $modes = [
+            'missing modes' => [],
+            'other post type' => ['post_query_post_type' => 'product', 'post_query_include' => [], 'post_query_exclude' => ['current_post']],
+            'empty modes' => ['post_query_post_type' => '', 'post_query_include' => '', 'post_query_exclude' => null],
+        ];
+        foreach ($modes as $name => $modeSettings) {
+            foreach ([LoopGrid::class, LoopCarousel::class] as $class) {
+                $this->assertSame([], (new $class(['id' => 'w1', 'settings' => $settings + $modeSettings]))->getRelated()->getRelatedContentList(), "$class: $name");
+                $this->assertSame([], (new $class(['id' => 'w1', 'settings' => $settings + $modeSettings]))->getRelated()->getOwnRelatedContent('w1'), "$class: $name");
+            }
+        }
+    }
+
+    public function testEachSettingFollowsItsOwnMode(): void
+    {
+        $info = (new Posts(['id' => 'w1', 'settings' => [
+            'posts_post_type' => 'by_id',
+            'posts_include' => ['authors'],
+            'posts_exclude' => ['manual_selection'],
+            'posts_include_term_ids' => ['3'],
+            'posts_exclude_term_ids' => ['4'],
+            'posts_posts_ids' => ['50'],
+            'posts_exclude_ids' => ['51'],
+        ]]))->getRelated();
+
+        $this->assertEqualsCanonicalizing(
+            ['settings/posts_posts_ids/0', 'settings/posts_exclude_ids/0'],
+            array_keys($info->getOwnRelatedContent('w1')),
+        );
     }
 }

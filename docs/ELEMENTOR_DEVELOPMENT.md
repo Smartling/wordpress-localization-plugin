@@ -455,3 +455,14 @@ public function getRelated(): RelatedContentInfo
 ```
 
 **Example:** `Elements/LoopGrid.php`, `Elements/Posts.php` (prefix `posts_`)
+
+**Only the active query mode is collected.** Elementor keeps the values of hidden controls (e.g. a manual selection left over after switching to "by category") but ignores them, so each list is collected only when its mode setting selects it:
+
+| Setting | Collected when |
+|---------|----------------|
+| `{prefix}include_term_ids` | `{prefix}include` contains `terms` |
+| `{prefix}exclude_term_ids` | `{prefix}exclude` contains `terms` |
+| `{prefix}posts_ids` | `{prefix}post_type` is `by_id` |
+| `{prefix}exclude_ids` | `{prefix}exclude` contains `manual_selection` |
+
+**Excluded content is remap-only.** `exclude_term_ids` and `exclude_ids` are never submitted for translation (`Content::isRemapOnly()`), because excluding something must not cause it to be translated. Their IDs are replaced with the translated ones only if the content **is already translated when the translation of the page is applied**. If an excluded term or post is translated later, the page keeps the source ID until the page is downloaded again (e.g. by re-submitting it). Support should expect this when a query still shows an excluded item after a later translation.

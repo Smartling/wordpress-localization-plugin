@@ -19,19 +19,34 @@ class ElementorQueryRelated
 {
     use LoggerSafeTrait;
 
-    private const TERM_ID_SUFFIXES = ['include_term_ids' => false, 'exclude_term_ids' => true];
-    private const POST_ID_SUFFIXES = ['posts_ids' => false, 'exclude_ids' => true];
+    /**
+     * Elementor keeps the values of hidden controls but ignores them unless the query mode matches, so the ids are
+     * only collected when the mode setting (relative to the widget prefix) has the expected value.
+     * suffix => [content type, remap only, mode setting suffix, expected mode value]
+     */
+    private const QUERY_SETTINGS = [
+        'include_term_ids' => [ContentTypeHelper::CONTENT_TYPE_TAXONOMY, false, 'include', 'terms'],
+        'exclude_term_ids' => [ContentTypeHelper::CONTENT_TYPE_TAXONOMY, true, 'exclude', 'terms'],
+        'posts_ids' => [ContentTypeHelper::CONTENT_TYPE_POST, false, 'post_type', 'by_id'],
+        'exclude_ids' => [ContentTypeHelper::CONTENT_TYPE_POST, true, 'exclude', 'manual_selection'],
+    ];
 
     public function addRelated(RelatedContentInfo $info, array $settings, string $containerId, string $prefix): RelatedContentInfo
     {
-        foreach (self::TERM_ID_SUFFIXES as $suffix => $remapOnly) {
-            $this->addIds($info, $settings, $containerId, $prefix . $suffix, ContentTypeHelper::CONTENT_TYPE_TAXONOMY, $remapOnly);
-        }
-        foreach (self::POST_ID_SUFFIXES as $suffix => $remapOnly) {
-            $this->addIds($info, $settings, $containerId, $prefix . $suffix, ContentTypeHelper::CONTENT_TYPE_POST, $remapOnly);
+        foreach (self::QUERY_SETTINGS as $suffix => [$contentType, $remapOnly, $modeSuffix, $mode]) {
+            if ($this->isModeActive($settings[$prefix . $modeSuffix] ?? null, $mode)) {
+                $this->addIds($info, $settings, $containerId, $prefix . $suffix, $contentType, $remapOnly);
+            } else {
+                $this->getLogger()->debug("Skipping {$prefix}{$suffix}, {$prefix}{$modeSuffix} does not select \"$mode\", containerId=$containerId");
+            }
         }
 
         return $info;
+    }
+
+    private function isModeActive(mixed $modeSetting, string $mode): bool
+    {
+        return is_array($modeSetting) ? in_array($mode, $modeSetting, true) : $modeSetting === $mode;
     }
 
     /**
