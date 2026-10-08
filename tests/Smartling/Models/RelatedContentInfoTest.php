@@ -63,4 +63,42 @@ class RelatedContentInfoTest extends TestCase
             '43b3287' => [$path => new Content(233, ContentTypeHelper::POST_TYPE_ATTACHMENT)],
         ]], $parentContentInfo->include($contentInfo1, '2171630')->getInfo());
     }
+
+    public function testContentWithIdKeepsFlagsAndDoesNotChangeOriginal()
+    {
+        $content = new Content(5, 'taxonomy', true, true);
+        $changed = $content->withId(9);
+
+        $this->assertSame(5, $content->getId());
+        $this->assertSame(9, $changed->getId());
+        $this->assertSame('taxonomy', $changed->getType());
+        $this->assertTrue($changed->isRemapOnly());
+        $this->assertTrue($changed->isTermTaxonomyId());
+    }
+
+    public function testMapContentReplacesAndRemovesContent()
+    {
+        $info = new RelatedContentInfo();
+        $info->addContent(new Content(1, 'post'), 'a', 'settings/x');
+        $info->addContent(new Content(2, 'post'), 'a', 'settings/y');
+        $info->addContent(new Content(3, 'post'), 'b', 'settings/z');
+        $nested = (new RelatedContentInfo())->include($info, 'container');
+
+        $mapped = $nested->mapContent(static fn(Content $c): ?Content => match ($c->getId()) {
+            1 => $c->withId(10),
+            2 => null,
+            default => $c,
+        });
+
+        $this->assertEquals(['post' => [10, 3]], $mapped->getRelatedContentList());
+        $this->assertEquals(['post' => [1, 2, 3]], $nested->getRelatedContentList(), 'original is unchanged');
+    }
+
+    public function testMapContentDropsEmptyContainers()
+    {
+        $info = new RelatedContentInfo();
+        $info->addContent(new Content(1, 'post'), 'a', 'settings/x');
+
+        $this->assertSame([], $info->mapContent(static fn(): ?Content => null)->getInfo());
+    }
 }

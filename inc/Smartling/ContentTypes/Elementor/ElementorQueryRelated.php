@@ -25,6 +25,7 @@ class ElementorQueryRelated
      * Elementor Pro (Elementor_Post_Query) keeps the values of hidden controls but ignores them unless the query mode
      * matches: with {prefix}post_type = by_id only posts_ids is used, otherwise posts_ids is ignored and the other lists
      * need their own mode ({prefix}include / {prefix}exclude) to contain the expected value.
+     * Term lists hold term_taxonomy_ids (get_term_by('term_taxonomy_id') and 'field' => 'term_taxonomy_id' in the query).
      * suffix => [content type, remap only, manual selection mode, mode setting suffix, expected mode value]
      */
     private const QUERY_SETTINGS = [
@@ -79,7 +80,7 @@ class ElementorQueryRelated
         foreach ($ids as $index => $id) {
             $id = $this->toId($id);
             if ($id !== null) {
-                $info->addContent(new Content($id, $contentType, $remapOnly), $containerId, "settings/$key/$index");
+                $info->addContent(new Content($id, $contentType, $remapOnly, $contentType === ContentTypeHelper::CONTENT_TYPE_TAXONOMY), $containerId, "settings/$key/$index");
             }
         }
     }

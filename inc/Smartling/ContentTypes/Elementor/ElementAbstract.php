@@ -151,6 +151,13 @@ abstract class ElementAbstract implements Element {
             $submission->getTargetBlogId(),
             $contentType,
         );
+        if ($targetId !== null && $content->isTermTaxonomyId()) {
+            $termId = $targetId;
+            $targetId = $externalContentElementor->getTermTaxonomyId($submission->getTargetBlogId(), $termId);
+            if ($targetId === null) {
+                $this->getLogger()->notice("Unable to get term_taxonomy_id for translated termId=$termId, path=$path, leaving original value");
+            }
+        }
         if ($targetId !== null) {
             if (is_string($this->getSettingByKey($path, $this->raw ?? []))) {
                 $targetId = (string)$targetId;

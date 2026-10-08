@@ -18,6 +18,7 @@ use Smartling\Helpers\PluginHelper;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\UserHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Models\Content;
 use Smartling\Models\ExternalData;
 use Smartling\Models\RelatedContentInfo;
 use Smartling\Submissions\SubmissionEntity;
@@ -70,6 +71,22 @@ abstract class ExternalContentElementorAbstract extends ExternalContentAbstract 
     public function getWpProxy(): WordpressFunctionProxyHelper
     {
         return $this->wpProxy;
+    }
+
+    public function getTermId(int $termTaxonomyId): ?int
+    {
+        $term = $this->wpProxy->getTermByTaxonomyId($termTaxonomyId);
+
+        return is_array($term) && isset($term['term_id']) ? (int)$term['term_id'] : null;
+    }
+
+    public function getTermTaxonomyId(int $blogId, int $termId): ?int
+    {
+        $term = $this->siteHelper->withBlog($blogId, fn() => $this->wpProxy->getTerm($termId));
+
+        return is_array($term) && isset($term['term_taxonomy_id']) && (int)$term['term_taxonomy_id'] > 0
+            ? (int)$term['term_taxonomy_id']
+            : null;
     }
 
     public function afterMetaWritten(SubmissionEntity $submission): void
@@ -131,7 +148,7 @@ abstract class ExternalContentElementorAbstract extends ExternalContentAbstract 
         return Pluggable::NOT_SUPPORTED;
     }
 
-    private function getData(array $data): ExternalData
+    private function getData(array $data, ?int $sourceBlogId = null): ExternalData
     {
         $related = new RelatedContentInfo();
         $strings = [];
@@ -142,14 +159,48 @@ abstract class ExternalContentElementorAbstract extends ExternalContentAbstract 
             $strings[] = $element->getTranslatableStrings();
         }
 
-        return new ExternalData(strings: $strings, relatedContentInfo: $related);
+        return new ExternalData(strings: $strings, relatedContentInfo: $this->convertTermTaxonomyIds($related, $sourceBlogId));
+    }
+
+    /**
+     * Some settings (Elementor Pro queries) store term_taxonomy_ids, while submissions and the rest of the
+     * plugin work with term_ids. Content that cannot be resolved to a term is dropped, because the id would be
+     * submitted and remapped as a different term otherwise.
+     */
+    private function convertTermTaxonomyIds(RelatedContentInfo $related, ?int $sourceBlogId): RelatedContentInfo
+    {
+        $hasTermTaxonomyIds = false;
+        $related->mapContent(static function (Content $content) use (&$hasTermTaxonomyIds): Content {
+            $hasTermTaxonomyIds = $hasTermTaxonomyIds || $content->isTermTaxonomyId();
+
+            return $content;
+        });
+        if (!$hasTermTaxonomyIds) {
+            return $related;
+        }
+
+        $convert = fn() => $related->mapContent(function (Content $content): ?Content {
+            if (!$content->isTermTaxonomyId()) {
+                return $content;
+            }
+            $termId = $this->getTermId($content->getId());
+            if ($termId === null) {
+                $this->getLogger()->notice("Unable to find term for term_taxonomy_id={$content->getId()}, skipping");
+
+                return null;
+            }
+
+            return $content->withId($termId);
+        });
+
+        return $sourceBlogId === null ? $convert() : $this->siteHelper->withBlog($sourceBlogId, $convert);
     }
 
     public function getContentFields(SubmissionEntity $submission, bool $raw): array
     {
         return $this->fieldsFilterHelper->flattenArray(
             (new ArrayHelper())->add(
-                ...$this->getData($this->readMeta($submission->getSourceId()))->getStrings()
+                ...$this->getData($this->readMeta($submission->getSourceId()), $submission->getSourceBlogId())->getStrings()
             )
         );
     }
@@ -177,7 +228,7 @@ abstract class ExternalContentElementorAbstract extends ExternalContentAbstract 
     private function mergeElementorData(array $original, array $strings, SubmissionEntity $submission): array
     {
         $result = [];
-        $relatedContentInfo = $this->getData($original)->getRelatedContentInfo();
+        $relatedContentInfo = $this->getData($original, $submission->getSourceBlogId())->getRelatedContentInfo();
         foreach ($original as $array) {
             $element = $this->elementFactory->fromArray($array);
             $result[] = $element->setTargetContent(
