@@ -4,7 +4,7 @@ Tags: translation, localization, multilingual, internationalization, smartling
 Requires at least: 5.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 5.8.0
+Stable tag: 5.8.1
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,10 +62,13 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
-= 5.8.0 =
-* Improved Elementor query support: term and post IDs used by Posts, Loop Grid and Loop Carousel queries are now detected and replaced with the translated ones (only for the active query mode). Excluded terms and posts are replaced only if they are already translated when the page translation is downloaded; if they are translated later, download the page again to update the query.
+= 5.8.1 =
+* Improved Elementor query support: term and post IDs used by Posts, Loop Grid and Loop Carousel queries are now detected and replaced with the translated ones, only for the query mode the widget actually uses. Query terms are stored by Elementor Pro as term taxonomy IDs and are converted accordingly. Excluded terms and posts are replaced only if they are already translated when the page translation is downloaded; if they are translated later, download the page again to update the query.
 * Added the `smartling_target_id` filter, which returns the translated ID of a post, attachment or term for use in custom code.
 * Fixed Elementor query terms being dropped from related content when the same taxonomy is also detected elsewhere in the document.
+* Fixed related content of Elementor elements being lost when a top-level element has an all-digit ID.
+
+= 5.8.0 =
 * Added support for PublishPress Revisions: translations of a revision are kept and linked to the original post when the revision is published. A revision is translated into a separate post in each target site, whose status on download follows the "Translation publishing mode" profile setting. If the original post already had a translation, that previous translation is no longer linked and keeps its status, so remove or replace it when publishing the new one.
 * Publishing a draft or changing its slug no longer marks its translation as outdated. Submissions created before this release can be marked as outdated once on the next save.
 * Improved the Visual Configurator: rules can now be scoped to a specific Elementor widget type and to particular object properties, with recursive path matching so custom widgets nested at any depth are picked up. The rule editor shows a live preview of matching content, and rules can be exported to and imported from JSON.
