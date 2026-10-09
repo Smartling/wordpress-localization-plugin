@@ -458,12 +458,14 @@ public function getRelated(): RelatedContentInfo
 
 **Only the active query mode is collected.** Elementor Pro (`Elementor_Post_Query`, checked against 3.33.2) keeps the values of hidden controls but ignores them unless the query mode matches, so each list is collected only when it is in use:
 
-| Setting | Collected when |
-|---------|----------------|
-| `{prefix}posts_ids` | `{prefix}post_type` is `by_id` (manual selection; the only list used in this mode) |
-| `{prefix}include_term_ids` | `{prefix}post_type` is not `by_id` and `{prefix}include` contains `terms` |
-| `{prefix}exclude_term_ids` | `{prefix}post_type` is not `by_id` and `{prefix}exclude` contains `terms` |
-| `{prefix}exclude_ids` | `{prefix}post_type` is not `by_id` and `{prefix}exclude` contains `manual_selection` |
+| `{prefix}post_type` | Lists used |
+|---------------------|------------|
+| `by_id` (manual selection) | only `posts_ids` |
+| `current_query` | none, the main query is used as is |
+| `related` | `exclude_term_ids` and `exclude_ids` (the terms of the current post are used instead of `include_term_ids`) |
+| anything else | `include_term_ids`, `exclude_term_ids`, `exclude_ids` (never `posts_ids`) |
+
+In the modes where a list is used it is collected only when its own mode setting selects it: `{prefix}include` must contain `terms` for `include_term_ids`, `{prefix}exclude` must contain `terms` for `exclude_term_ids` and `manual_selection` for `exclude_ids`.
 
 **Query term lists hold `term_taxonomy_id`s, not `term_id`s** (Elementor Pro resolves them with `get_term_by('term_taxonomy_id')` and queries `'field' => 'term_taxonomy_id'`). `ElementorQueryRelated` marks them with `Content::isTermTaxonomyId()`. `ExternalContentElementorAbstract::getData()` converts them to term IDs in the source blog, so related content discovery, submissions and the taxonomy lookup in `setRelations()` all work with `term_id`s like everywhere else. `setRelations()` converts the translated term ID back to its `term_taxonomy_id` in the target blog before writing it. Terms that cannot be resolved are skipped (and logged) instead of being submitted as a different term. Use the same flag for any other setting that stores a `term_taxonomy_id`.
 

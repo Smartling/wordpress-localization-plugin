@@ -101,4 +101,18 @@ class RelatedContentInfoTest extends TestCase
 
         $this->assertSame([], $info->mapContent(static fn(): ?Content => null)->getInfo());
     }
+
+    public function testMergePreservesNumericalContainerIds()
+    {
+        $first = new Content(1, ContentTypeHelper::POST_TYPE_ATTACHMENT);
+        $second = new Content(2, ContentTypeHelper::POST_TYPE_ATTACHMENT);
+        $numericalId = '1694689';
+
+        $merged = (new RelatedContentInfo([$numericalId => ['path1' => $first]]))
+            ->merge(new RelatedContentInfo(['abc' => ['path2' => $second], '5' => ['path3' => $second]]));
+
+        $this->assertSame([(int)$numericalId, 'abc', 5], array_keys($merged->getInfo()));
+        $this->assertSame($first, $merged->getOwnRelatedContent($numericalId)['path1']);
+        $this->assertSame($second, $merged->getOwnRelatedContent('5')['path3']);
+    }
 }

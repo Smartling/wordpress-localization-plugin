@@ -149,6 +149,7 @@ class ElementorQueryRelatedTest extends TestCase
             'missing modes' => [],
             'other post type' => ['post_query_post_type' => 'product', 'post_query_include' => [], 'post_query_exclude' => ['current_post']],
             'empty modes' => ['post_query_post_type' => '', 'post_query_include' => '', 'post_query_exclude' => null],
+            'current query with leftover active modes' => ['post_query_post_type' => 'current_query', 'post_query_include' => ['terms'], 'post_query_exclude' => ['terms', 'manual_selection']],
         ];
         foreach ($modes as $name => $modeSettings) {
             foreach ([LoopGrid::class, LoopCarousel::class] as $class) {
@@ -171,5 +172,22 @@ class ElementorQueryRelatedTest extends TestCase
         ]]))->getRelated();
 
         $this->assertEquals(['settings/posts_exclude_ids/0'], array_keys($info->getOwnRelatedContent('w1')));
+    }
+
+    public function testRelatedQueryIgnoresOnlyIncludedTerms(): void
+    {
+        $info = (new LoopGrid(['id' => 'w1', 'settings' => [
+            'post_query_post_type' => 'related',
+            'post_query_include' => ['terms'],
+            'post_query_exclude' => ['terms', 'manual_selection'],
+            'post_query_include_term_ids' => ['14'],
+            'post_query_exclude_term_ids' => ['16'],
+            'post_query_posts_ids' => ['100'],
+            'post_query_exclude_ids' => ['101'],
+        ]]))->getRelated();
+
+        $own = $info->getOwnRelatedContent('w1');
+        $this->assertEqualsCanonicalizing(['settings/post_query_exclude_term_ids/0', 'settings/post_query_exclude_ids/0'], array_keys($own));
+        $this->assertSame([], $info->getRelatedContentList(), 'excluded content is remap-only');
     }
 }

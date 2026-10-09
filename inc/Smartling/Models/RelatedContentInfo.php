@@ -123,7 +123,7 @@ class RelatedContentInfo {
     public function merge(self $info): self
     {
         $result = clone $this;
-        $result->info = array_merge($result->info, $info->info);
+        $result->info = $this->arrayMergePreserveKeys($result->info, $info->info);
 
         return $result;
     }

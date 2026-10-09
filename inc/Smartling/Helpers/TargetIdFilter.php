@@ -93,9 +93,12 @@ class TargetIdFilter implements WPHookInterface
             $targetId = max(self::NOT_FOUND, current($submissions)->getTargetId());
         }
         if ($targetId === self::NOT_FOUND) {
-            $this->getLogger()->notice(count($submissions) > 1
-                ? "Found more than one submission, target id is ambiguous, searchParams=$context"
-                : "No target id found, searchParams=$context");
+            // a missing translation is expected (e.g. called on the source blog) and this runs on front-end page views
+            if (count($submissions) > 1) {
+                $this->getLogger()->notice("Found more than one submission, target id is ambiguous, searchParams=$context");
+            } else {
+                $this->getLogger()->debug("No target id found, searchParams=$context");
+            }
         }
         $this->cache->set($key, $targetId, self::CACHE_EXPIRATION);
 
