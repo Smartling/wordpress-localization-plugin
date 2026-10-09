@@ -46,7 +46,6 @@ if (!$isBulkSubmitPage) : ?>
 <?php endif; ?>
             <div id="smartling-app"
                  data-bulk-submit="false"
-                 data-base-type="<?= $baseType ?>"
                  data-content-type="<?= $data['contentType'] ?? $baseType ?>"
                  data-content-id="<?= $id ?>"
                  data-blog-id="<?= (int)$this->siteHelper->getCurrentBlogId() ?>"

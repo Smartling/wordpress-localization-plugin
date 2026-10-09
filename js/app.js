@@ -20,48 +20,7 @@ function setStoredProfileId(blogId, profileId) {
     }
 }
 
-async function refreshDownloadWidgetUntilReady(adminUrl, postId, targetBlogIds) {
-    if (!document.getElementById('smartling-post-widget') || !targetBlogIds.length) {
-        return;
-    }
-
-    const DELAYS = [3000, 5000, 10000, 15000, 15000];
-    for (const delay of DELAYS) {
-        await new Promise(resolve => setTimeout(resolve, delay));
-
-        let response;
-        try {
-            response = await jQuery.post(adminUrl, {
-                action: 'smartling_refresh_post_widget',
-                postId,
-                _wpnonce: (typeof smartlingConnector !== 'undefined' ? smartlingConnector.nonce : '')
-            });
-        } catch (e) {
-            continue;
-        }
-        if (response.status !== 'SUCCESS' || !response.html) {
-            continue;
-        }
-
-        const widget = document.getElementById('smartling-post-widget');
-        if (!widget) {
-            return;
-        }
-        widget.outerHTML = response.html;
-
-        const updated = document.getElementById('smartling-post-widget');
-        const allReady = targetBlogIds.every(blogId => {
-            const blogInput = updated?.querySelector(`input[name="smartling[locales][${blogId}][blog]"]`);
-            const row = blogInput?.closest('.smtPostWidget-rowWrapper');
-            return row?.querySelector('.smtPostWidget-row a') != null;
-        });
-        if (allReady) {
-            return;
-        }
-    }
-}
-
-function JobWizard({ isBulkSubmitPage, baseType, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }) {
+function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }) {
     const [activeTab, setActiveTab] = useState('new');
     const [selectedProfileId, setSelectedProfileId] = useState(() => {
         const stored = getStoredProfileId(blogId);
@@ -136,6 +95,14 @@ function JobWizard({ isBulkSubmitPage, baseType, contentType, contentId, profile
         setJobName('');
         setDescription('');
         setDueDate('');
+        // Relations were fetched for the previous profile's target locales; clear them so the
+        // depth effect (keyed off the new locale list) starts a fresh fetch instead of appending
+        // to stale entries and inflating the progress bar's totalRequests count.
+        setL1Relations([]);
+        setL2Relations([]);
+        setSelectedRelations({});
+        setPendingRequests(0);
+        setTotalRequests(0);
     };
 
     const loadRelations = useCallback(async (type, id, level = 1) => {
@@ -401,9 +368,6 @@ function JobWizard({ isBulkSubmitPage, baseType, contentType, contentId, profile
                 throw new Error(submissionResponse.message?.global || 'Failed to add content to upload queue.');
             }
             setSuccess('Content successfully added to upload queue.');
-            if (!isBulkSubmitPage && baseType === 'post') {
-                refreshDownloadWidgetUntilReady(adminUrl, contentId, selectedLocales);
-            }
         } catch (e) {
             setError(e.message || 'Failed adding content to upload queue.');
         } finally {
@@ -608,7 +572,6 @@ function JobWizard({ isBulkSubmitPage, baseType, contentType, contentId, profile
 if (document.getElementById('smartling-app')) {
     const container = document.getElementById('smartling-app');
     const isBulkSubmitPage = container.dataset.bulkSubmit === 'true';
-    const baseType = container.dataset.baseType || 'post';
     const contentType = container.dataset.contentType || '';
     const contentId = parseInt(container.dataset.contentId, 10) || 0;
     const profiles = JSON.parse(container.dataset.profiles || '[]');
@@ -620,7 +583,7 @@ if (document.getElementById('smartling-app')) {
     // Nothing to offer without an active profile
     if (profiles.length > 0) {
         render(
-            el(JobWizard, { isBulkSubmitPage, baseType, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }),
+            el(JobWizard, { isBulkSubmitPage, contentType, contentId, profiles, blogId, ajaxUrl, adminUrl, nonce }),
             container
         );
     }

@@ -193,10 +193,7 @@ var downloadSelector = "#smartling-download";
             localizationOptions.init();
         }
         if ($(localizationOptions.selectors.post_widget).length > 0) {
-            // Delegated from document (rather than bound directly to the button) so the handler
-            // survives the widget being replaced wholesale after a refresh (see refreshDownloadWidgetUntilReady
-            // in app.js), which swaps in a brand new, unbound #smartling-download element.
-            $(document).on("click", localizationOptions.selectors.download, function () {
+            $(localizationOptions.selectors.download).on("click", function () {
                 ajaxDownload();
             });
         }

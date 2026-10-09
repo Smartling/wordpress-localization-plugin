@@ -14,6 +14,7 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Models\UserTranslationRequest;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\WP\WPAbstract;
@@ -218,25 +219,33 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
         }
 
-        $profile = ArrayHelper::first($this->getProfiles());
+        $profile = null;
 
         /**
-         * checking profiles
+         * checking profile - resolves the explicit profileId when the caller sends one (consistent with every
+         * other entry point), falling back to the blog's single active profile otherwise.
          */
-        if ($continue && !$profile) {
-            $this->getLogger()->error(
-                vsprintf(
-                    'Failed adding content to upload queue: %s for %s',
-                    [self::ERROR_MSG_NO_PROFILE_FOUND, var_export($_POST, true)])
-            );
+        if ($continue) {
+            try {
+                $profile = $this->settingsManager->resolveRequestedProfile(
+                    UserTranslationRequest::parseProfileId($data['profileId'] ?? null),
+                    $this->siteHelper->getCurrentBlogId(),
+                );
+            } catch (\InvalidArgumentException | SmartlingHumanReadableException $e) {
+                $this->getLogger()->error(
+                    vsprintf(
+                        'Failed adding content to upload queue: %s for %s',
+                        [$e->getMessage(), var_export($_POST, true)])
+                );
 
-            $result = [
-                'status' => 'FAIL',
-                'key' => self::ERROR_KEY_NO_PROFILE_FOUND,
-                'message' => self::ERROR_MSG_NO_PROFILE_FOUND,
-            ];
+                $result = [
+                    'status' => 'FAIL',
+                    'key' => self::ERROR_KEY_NO_PROFILE_FOUND,
+                    'message' => self::ERROR_MSG_NO_PROFILE_FOUND,
+                ];
 
-            $continue = false;
+                $continue = false;
+            }
         }
 
         /**
@@ -282,35 +291,22 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
         }
 
         /**
-         * Picking the profile that actually covers every selected target blog - more than one profile can be
-         * active for this site, and the earlier $profile (the first active one) may not be it.
+         * Validates that every selected target blog is actually covered by the resolved profile - the profile is
+         * either the one explicitly requested or the blog's single active one, never inferred from the blogs.
          */
         if ($continue) {
-            $targetBlogIds = array_map('intval', $data['blogs']);
-            $matchedProfile = null;
-            foreach ($this->getProfiles() as $candidateProfile) {
-                try {
-                    $this->settingsManager->assertTargetBlogIdsBelongToProfile($candidateProfile, $targetBlogIds);
-                    $matchedProfile = $candidateProfile;
-                    break;
-                } catch (SmartlingHumanReadableException) {
-                    continue;
-                }
-            }
-
-            if ($matchedProfile === null) {
-                $message = 'Selected target locales are not all covered by a single translation profile.';
+            try {
+                $this->settingsManager->assertTargetBlogIdsBelongToProfile($profile, array_map('intval', $data['blogs']));
+            } catch (SmartlingHumanReadableException $e) {
                 $this->getLogger()->error(
-                    vsprintf('Failed adding content to upload queue: %s for %s', [$message, var_export($_POST, true)])
+                    vsprintf('Failed adding content to upload queue: %s for %s', [$e->getMessage(), var_export($_POST, true)])
                 );
                 $result = [
                     'status' => 'FAIL',
                     'key' => self::ERROR_KEY_TARGET_BLOG_EMPTY,
-                    'message' => $message,
+                    'message' => $e->getMessage(),
                 ];
                 $continue = false;
-            } else {
-                $profile = $matchedProfile;
             }
         }
 
@@ -441,50 +437,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             add_action('save_post', [$this, 'save']); // old logic 2 be refactored
             add_action('wp_ajax_' . 'smartling_force_download_handler', [$this, 'ajaxDownloadHandler']);
             add_action('wp_ajax_' . 'smartling_upload_handler', [$this, 'ajaxUploadHandler']);
-            add_action('wp_ajax_' . 'smartling_refresh_post_widget', [$this, 'ajaxRefreshWidgetHandler']);
         }
-    }
-
-    /**
-     * Re-renders the widget for a post so the caller can swap it into the DOM, picking up
-     * submissions/target placeholders created after the page was first loaded (e.g. by the
-     * upload job wizard) without a full page reload.
-     */
-    public function ajaxRefreshWidgetHandler(): void
-    {
-        if (check_ajax_referer(self::AJAX_NONCE_ACTION, '_wpnonce', false) === false) {
-            $this->getLogger()->warning(sprintf('Invalid nonce for action "%s" from userId=%d', self::AJAX_NONCE_ACTION, get_current_user_id()));
-            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Invalid nonce'], 403);
-            return;
-        }
-        if (!current_user_can(SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP)) {
-            $this->getLogger()->warning(sprintf('User %d lacks capability "%s"', get_current_user_id(), SmartlingUserCapabilities::SMARTLING_CAPABILITY_WIDGET_CAP));
-            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Insufficient permissions'], 403);
-            return;
-        }
-
-        $post = get_post((int)($_POST['postId'] ?? 0));
-        if (!($post instanceof \WP_Post)) {
-            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Post not found'], 404);
-            return;
-        }
-        if ($post->post_type !== $this->servedContentType) {
-            // One instance of this controller is registered per post type, all on the same AJAX
-            // action. Responding here would short-circuit the request before the instance whose
-            // servedContentType actually matches this post gets a turn, so just let it fall through.
-            return;
-        }
-        if (!current_user_can('edit_post', $post->ID)) {
-            $this->getLogger()->warning(sprintf('User %d cannot edit post %d', get_current_user_id(), $post->ID));
-            wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_FAIL, 'message' => 'Insufficient permissions'], 403);
-            return;
-        }
-
-        ob_start();
-        $this->preView($post);
-        $html = ob_get_clean();
-
-        wp_send_json(['status' => self::RESPONSE_AJAX_STATUS_SUCCESS, 'html' => $html]);
     }
 
     /**

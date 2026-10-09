@@ -22,7 +22,9 @@ $widgetName = PostBasedWidgetControllerStd::WIDGET_DATA_NAME;
 $locales = [];
 foreach ($data['profiles'] ?? [$data['profile']] as $profile) {
     foreach ($profile->getTargetLocales() as $locale) {
-        $locales[$locale->getBlogId()] ??= $locale;
+        if ($locale->isEnabled()) {
+            $locales[$locale->getBlogId()] ??= $locale;
+        }
     }
 }
 $locales = array_values($locales);
