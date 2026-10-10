@@ -874,6 +874,22 @@ namespace Smartling\Tests\Services {
             ], [], '', [])));
         }
 
+        public function testNormalizeReferencesMergesTaxonomyReferencesWithDetectedTerms()
+        {
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('getTerm')->willReturn(['taxonomy' => 'category']);
+
+            $x = $this->getContentRelationDiscoveryService(wpProxy: $wpProxy);
+
+            $this->assertEquals(
+                ['category' => [5, 7]],
+                $x->normalizeReferences([
+                    'taxonomy' => [5],
+                    'taxonomies' => ['category' => [7]],
+                ]),
+            );
+        }
+
         public function testGetRelations()
         {
             $contentType = 'post';

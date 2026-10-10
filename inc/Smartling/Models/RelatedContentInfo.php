@@ -46,6 +46,9 @@ class RelatedContentInfo {
         $return = [];
         foreach ($flat as $item) {
             assert($item instanceof Content);
+            if ($item->isRemapOnly()) {
+                continue;
+            }
             if (!array_key_exists($item->getType(), $return)) {
                 $return[$item->getType()] = [];
             }
@@ -56,6 +59,37 @@ class RelatedContentInfo {
         }
 
         return $return;
+    }
+
+    /**
+     * @param callable(Content): ?Content $callback returns the content to keep, null removes it
+     */
+    public function mapContent(callable $callback): self
+    {
+        $result = clone $this;
+        $result->info = $this->mapContentRecursive($this->info, $callback);
+
+        return $result;
+    }
+
+    private function mapContentRecursive(array $info, callable $callback): array
+    {
+        $result = [];
+        foreach ($info as $key => $item) {
+            if ($item instanceof Content) {
+                $item = $callback($item);
+                if ($item !== null) {
+                    $result[$key] = $item;
+                }
+            } elseif (is_array($item)) {
+                $mapped = $this->mapContentRecursive($item, $callback);
+                if ($mapped !== []) {
+                    $result[$key] = $mapped;
+                }
+            }
+        }
+
+        return $result;
     }
 
     public function include(self $info, string $containerId): self
@@ -89,7 +123,7 @@ class RelatedContentInfo {
     public function merge(self $info): self
     {
         $result = clone $this;
-        $result->info = array_merge($result->info, $info->info);
+        $result->info = $this->arrayMergePreserveKeys($result->info, $info->info);
 
         return $result;
     }

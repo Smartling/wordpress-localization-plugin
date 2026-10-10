@@ -442,3 +442,31 @@ foreach ($this->settings['post_query_include_term_ids'] ?? [] as $index => $term
 - `inc/Smartling/Models/Content.php` — Content reference model
 - `tests/Smartling/ContentTypes/Elementor/` — Test examples
 - `tests/Smartling/ContentTypes/ExternalContentElementor4Test.php` — Elementor 4 handler tests
+
+### Pattern 5: Query Settings (Elementor 3)
+
+Widgets that run a `WP_Query` (Posts, Loop Grid, Loop Carousel) store the query as prefixed settings, e.g. `post_query_include_term_ids`, `post_query_exclude_term_ids`, `post_query_posts_ids`, `post_query_exclude_ids`. Use `ElementorQueryRelated::addRelated($info, $settings, $containerId, $prefix)` (composition, no trait) in `getRelated()` to register term IDs (taxonomy) and post IDs (post) as related content; `setRelations()` then rewrites each array entry with the translated ID.
+
+```php
+public function getRelated(): RelatedContentInfo
+{
+    return (new ElementorQueryRelated())->addRelated(parent::getRelated(), $this->settings, $this->id, 'post_query_');
+}
+```
+
+**Example:** `Elements/LoopGrid.php`, `Elements/Posts.php` (prefix `posts_`)
+
+**Only the active query mode is collected.** Elementor Pro (`Elementor_Post_Query`, checked against 3.33.2) keeps the values of hidden controls but ignores them unless the query mode matches, so each list is collected only when it is in use:
+
+| `{prefix}post_type` | Lists used |
+|---------------------|------------|
+| `by_id` (manual selection) | only `posts_ids` |
+| `current_query` | none, the main query is used as is |
+| `related` | `exclude_term_ids` and `exclude_ids` (the terms of the current post are used instead of `include_term_ids`) |
+| anything else | `include_term_ids`, `exclude_term_ids`, `exclude_ids` (never `posts_ids`) |
+
+In the modes where a list is used it is collected only when its own mode setting selects it: `{prefix}include` must contain `terms` for `include_term_ids`, `{prefix}exclude` must contain `terms` for `exclude_term_ids` and `manual_selection` for `exclude_ids`.
+
+**Query term lists hold `term_taxonomy_id`s, not `term_id`s** (Elementor Pro resolves them with `get_term_by('term_taxonomy_id')` and queries `'field' => 'term_taxonomy_id'`). `ElementorQueryRelated` marks them with `Content::isTermTaxonomyId()`. `ExternalContentElementorAbstract::getData()` converts them to term IDs in the source blog, so related content discovery, submissions and the taxonomy lookup in `setRelations()` all work with `term_id`s like everywhere else. `setRelations()` converts the translated term ID back to its `term_taxonomy_id` in the target blog before writing it. Terms that cannot be resolved are skipped (and logged) instead of being submitted as a different term. Use the same flag for any other setting that stores a `term_taxonomy_id`.
+
+**Excluded content is remap-only.** `exclude_term_ids` and `exclude_ids` are never submitted for translation (`Content::isRemapOnly()`), because excluding something must not cause it to be translated. Their IDs are replaced with the translated ones only if the content **is already translated when the translation of the page is applied**. If an excluded term or post is translated later, the page keeps the source ID until the page is downloaded again (e.g. by re-submitting it). Support should expect this when a query still shows an excluded item after a later translation.

@@ -5,10 +5,10 @@ namespace Smartling\ContentTypes\Elementor\Elements;
 use Smartling\ContentTypes\Elementor\ElementorQueryRelated;
 use Smartling\Models\RelatedContentInfo;
 
-class LoopCarousel extends Unknown {
+class LoopGrid extends Unknown {
     public function getType(): string
     {
-        return 'loop-carousel';
+        return 'loop-grid';
     }
 
     public function getRelated(): RelatedContentInfo

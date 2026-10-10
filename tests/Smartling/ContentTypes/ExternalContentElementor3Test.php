@@ -443,6 +443,76 @@ JSON;
         );
     }
 
+    private function getQueryElementorData(array $termTaxonomyIds): string
+    {
+        return json_encode([[
+            'id' => 'w1',
+            'elType' => 'widget',
+            'widgetType' => 'loop-carousel',
+            'settings' => [
+                'post_query_post_type' => 'product',
+                'post_query_include' => ['terms'],
+                'post_query_include_term_ids' => $termTaxonomyIds,
+            ],
+            'elements' => [],
+        ]], JSON_THROW_ON_ERROR);
+    }
+
+    public function testQueryTermTaxonomyIdsAreConvertedToTermIdsForRelatedContent()
+    {
+        $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $proxy->method('getPostMeta')->willReturn($this->getQueryElementorData(['101', '999']));
+        $proxy->method('getTermByTaxonomyId')->willReturnMap([
+            [101, ['term_id' => 11, 'term_taxonomy_id' => 101, 'taxonomy' => 'product_category']],
+            [999, null],
+        ]);
+
+        $this->assertEquals(
+            [ContentTypeHelper::CONTENT_TYPE_TAXONOMY => [11]],
+            $this->getExternalContentElementor($proxy)->getRelatedContent('', 0),
+        );
+    }
+
+    public function testQueryTermIdIsWrittenBackAsTermTaxonomyId()
+    {
+        $sourceTermTaxonomyId = 101;
+        $sourceTermId = 11;
+        $targetTermId = 21;
+        $targetTermTaxonomyId = 201;
+
+        $proxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $proxy->method('get_plugins')->willReturn(['elementor/elementor.php' => 'elementor']);
+        $proxy->method('is_plugin_active')->willReturn(true);
+        $proxy->method('getTermByTaxonomyId')->with($sourceTermTaxonomyId)->willReturn(['term_id' => $sourceTermId, 'taxonomy' => 'product_category']);
+        $proxy->method('getTerm')->willReturnMap([
+            [$sourceTermId, ['term_id' => $sourceTermId, 'term_taxonomy_id' => $sourceTermTaxonomyId, 'taxonomy' => 'product_category']],
+            [$targetTermId, ['term_id' => $targetTermId, 'term_taxonomy_id' => $targetTermTaxonomyId, 'taxonomy' => 'product_category']],
+        ]);
+
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getSourceBlogId')->willReturn(1);
+        $submission->method('getTargetBlogId')->willReturn(2);
+
+        $relatedSubmission = $this->createMock(SubmissionEntity::class);
+        $relatedSubmission->method('getTargetId')->willReturn($targetTermId);
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->expects($this->once())->method('findOne')->with([
+            SubmissionEntity::FIELD_SOURCE_BLOG_ID => 1,
+            SubmissionEntity::FIELD_SOURCE_ID => $sourceTermId,
+            SubmissionEntity::FIELD_TARGET_BLOG_ID => 2,
+            SubmissionEntity::FIELD_CONTENT_TYPE => 'product_category',
+        ])->willReturn($relatedSubmission);
+
+        $original = ['entity' => ['post_content' => ''], 'meta' => [
+            ExternalContentElementor3::META_FIELD_NAME => $this->getQueryElementorData(['101']),
+        ]];
+
+        $result = $this->getExternalContentElementor($proxy, $submissionManager)
+            ->setContentFields($original, $original, $submission)['meta'][ExternalContentElementor3::META_FIELD_NAME];
+
+        $this->assertSame(['201'], json_decode($result, true)[0]['settings']['post_query_include_term_ids']);
+    }
+
     private function getExternalContentElementor(?WordpressFunctionProxyHelper $proxy = null, ?SubmissionManager $submissionManager = null): ExternalContentElementor3
     {
         $contentTypeHelper = $this->createMock(ContentTypeHelper::class);

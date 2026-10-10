@@ -24,6 +24,7 @@ services:
       - [ "addService", [ "@service.submission-cleanup" ]]
       - [ "addService", [ "@plugin.publishpress-revisions" ]]
       - [ "addService", [ "@helper.shortcode" ]]
+      - [ "addService", [ "@helper.target-id-filter" ]]
       - [ "addService", [ "@helper.gutenberg" ]]
       - [ "addService", [ "@meta-field.processor.manager" ]]
       - [ "addService", [ "@service.blog-removal-handler"]]
