@@ -604,6 +604,13 @@ services:
       - "@plugin.info"
       - "@wp.proxy"
 
+  helper.target-id-filter:
+    class: Smartling\Helpers\TargetIdFilter
+    arguments:
+      - "@manager.submission"
+      - "@wp.proxy"
+      - "@site.cache"
+
   duplicate.submissions.cleaner:
     class: Smartling\WP\Controller\DuplicateSubmissionsCleaner
     arguments:

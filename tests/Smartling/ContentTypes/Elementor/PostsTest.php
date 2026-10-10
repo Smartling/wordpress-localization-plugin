@@ -75,7 +75,7 @@ class PostsTest extends TestCase
 
     public function testGetRelatedReturnsTermIds(): void
     {
-        $related = $this->makeWidget(['posts_include_term_ids' => [42, 99]])->getRelated();
+        $related = $this->makeWidget(['posts_include' => ['terms'], 'posts_include_term_ids' => [42, 99]])->getRelated();
 
         $this->assertEquals(
             [ContentTypeHelper::CONTENT_TYPE_TAXONOMY => [42, 99]],
@@ -85,7 +85,7 @@ class PostsTest extends TestCase
 
     public function testGetRelatedSkipsNonNumericTermIds(): void
     {
-        $related = $this->makeWidget(['posts_include_term_ids' => ['invalid', 42]])->getRelated();
+        $related = $this->makeWidget(['posts_include' => ['terms'], 'posts_include_term_ids' => ['invalid', 42]])->getRelated();
 
         $this->assertEquals(
             [ContentTypeHelper::CONTENT_TYPE_TAXONOMY => [42]],
@@ -97,6 +97,7 @@ class PostsTest extends TestCase
     {
         $related = $this->makeWidget([
             'custom_skin_template' => '9165',
+            'posts_include' => ['terms'],
             'posts_include_term_ids' => ["42", 99],
         ])->getRelated();
 

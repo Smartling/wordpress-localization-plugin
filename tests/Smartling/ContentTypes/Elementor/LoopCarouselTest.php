@@ -42,6 +42,7 @@ class LoopCarouselTest extends TestCase
     {
         $relatedList = (new LoopCarousel([
             'settings' => [
+                'post_query_include' => ['terms'],
                 'post_query_include_term_ids' => ['14', '15', '16']
             ]
         ]))->getRelated()->getRelatedContentList();

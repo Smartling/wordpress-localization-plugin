@@ -209,7 +209,7 @@ namespace {
                     'name' => 'Fake Name',
                     'slug' => 'fake-name',
                     'term_group' => 0,
-                    'term_taxonomy_id' => 0,
+                    'term_taxonomy_id' => is_numeric($term) ? (int)$term + 1000 : 0,
                     'taxonomy' => $taxonomy,
                     'description' => '',
                     'parent' => 0,

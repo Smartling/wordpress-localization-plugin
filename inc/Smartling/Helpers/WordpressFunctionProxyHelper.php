@@ -176,6 +176,13 @@ class WordpressFunctionProxyHelper
         return get_term(...func_get_args());
     }
 
+    public function getTermByTaxonomyId(int $termTaxonomyId): array|null
+    {
+        $term = get_term_by('term_taxonomy_id', $termTaxonomyId, '', ARRAY_A);
+
+        return is_array($term) ? $term : null;
+    }
+
     public function getTerm(int $termId): array|null|\WP_Error
     {
         return get_term($termId, '', ARRAY_A);
