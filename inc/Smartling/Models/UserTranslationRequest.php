@@ -7,23 +7,24 @@ use Smartling\Helpers\ArrayHelper;
 
 class UserTranslationRequest
 {
-    private int $contentId;
-    private string $contentType;
-    private string $description;
     private array $relations;
     private array $targetBlogIds;
-    private JobInformation $jobInformation;
     private array $ids;
 
-    public function __construct(int $contentId, string $contentType, array $relations, array $targetBlogIds, JobInformation $jobInformation, array $ids = [], string $description = '')
+    public function __construct(
+        private int $contentId,
+        private string $contentType,
+        array $relations,
+        array $targetBlogIds,
+        private JobInformation $jobInformation,
+        array $ids = [],
+        private string $description = '',
+        private ?int $profileId = null,
+    )
     {
-        $this->contentId = $contentId;
-        $this->contentType = $contentType;
-        $this->description = $description;
         krsort($relations);
         $this->relations = $relations;
         $this->targetBlogIds = ArrayHelper::toArrayOfIntegers($targetBlogIds, 'Target blog id expected to be numeric');
-        $this->jobInformation = $jobInformation;
         $this->ids = self::toIntegerArray($ids);
     }
 
@@ -60,6 +61,11 @@ class UserTranslationRequest
         return $this->jobInformation;
     }
 
+    public function getProfileId(): ?int
+    {
+        return $this->profileId;
+    }
+
     public function getIds(): array
     {
         return $this->ids;
@@ -79,6 +85,7 @@ class UserTranslationRequest
             new JobInformation($array['job']['id'], $array['job']['authorize'] === 'true', $array['job']['name'], $array['job']['description'], $array['job']['dueDate'], $array['job']['timeZone']),
             $ids,
             $array['description'] ?? (count($ids) > 0 ? 'From Bulk Submit' : 'From Widget'),
+            self::parseProfileId($array['profileId'] ?? null),
         );
     }
 
@@ -122,6 +129,22 @@ class UserTranslationRequest
         if (!array_key_exists('timeZone', $array['job'])) {
             throw new \InvalidArgumentException('Job time zone required');
         }
+    }
+
+    public static function parseProfileId(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (!is_int($value) && !(is_string($value) && ctype_digit($value))) {
+            throw new \InvalidArgumentException('Profile id must be a positive integer');
+        }
+        $profileId = (int)$value;
+        if ($profileId < 1) {
+            throw new \InvalidArgumentException('Profile id must be a positive integer');
+        }
+
+        return $profileId;
     }
 
     private static function toIntegerArray(array $ids): array

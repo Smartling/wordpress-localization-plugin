@@ -35,6 +35,7 @@ class TranslationRequestTest extends TestCase
                 2 => [$targetBlogId => ['attachment' => [5]]],
             ],
             'targetBlogIds' => (string)$targetBlogId,
+            'profileId' => 9,
         ]);
         $this->assertEquals($sourceId, $x->getContentId());
         $this->assertEquals($sourceContentType, $x->getContentType());
@@ -45,6 +46,48 @@ class TranslationRequestTest extends TestCase
         $this->assertEquals($jobName, $x->getJobInformation()->getName());
         $this->assertEquals($jobTimeZone, $x->getJobInformation()->getTimeZone());
         $this->assertEquals($jobUid, $x->getJobInformation()->getId());
+        $this->assertEquals(9, $x->getProfileId());
+    }
+
+    public function testFromArrayProfileIdIsOptional()
+    {
+        $array = $this->buildArray();
+        unset($array['profileId']);
+        self::assertNull(UserTranslationRequest::fromArray($array)->getProfileId());
+    }
+
+    public function testFromArrayRejectsInvalidProfileId()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $array = $this->buildArray();
+        $array['profileId'] = 'abc';
+        UserTranslationRequest::fromArray($array);
+    }
+
+    public function testParseProfileIdAcceptsMissingValue()
+    {
+        self::assertNull(UserTranslationRequest::parseProfileId(null));
+        self::assertNull(UserTranslationRequest::parseProfileId(''));
+    }
+
+    public function testParseProfileIdAcceptsPositiveInteger()
+    {
+        self::assertSame(5, UserTranslationRequest::parseProfileId('5'));
+        self::assertSame(5, UserTranslationRequest::parseProfileId(5));
+    }
+
+    /**
+     * @dataProvider invalidProfileIdProvider
+     */
+    public function testParseProfileIdRejectsInvalidValues(mixed $value)
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        UserTranslationRequest::parseProfileId($value);
+    }
+
+    public static function invalidProfileIdProvider(): array
+    {
+        return [['abc'], ['0'], [0], [-3], ['-3'], ['1.5'], [[5]]];
     }
 
     public function testFromArrayBulkUploadWithEmptySourceId()
@@ -65,6 +108,7 @@ class TranslationRequestTest extends TestCase
             'relations' => [],
             'targetBlogIds' => (string)$targetBlogId,
             'ids' => $ids,
+            'profileId' => 9,
         ]);
         $this->assertTrue($x->isBulk());
         $this->assertEquals($ids, $x->getIds());
@@ -104,6 +148,7 @@ class TranslationRequestTest extends TestCase
             'source' => ['id' => [5], 'contentType' => 'post'],
             'relations' => [],
             'targetBlogIds' => '2',
+            'profileId' => 9,
         ], $overrides);
     }
 }

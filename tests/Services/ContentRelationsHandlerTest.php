@@ -3,6 +3,8 @@
 namespace Smartling\Tests\Services;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
@@ -103,6 +105,75 @@ class ContentRelationsHandlerTest extends TestCase
         $this->assertSame(403, $x->capturedErrorCode);
     }
 
+    /**
+     * A SmartlingHumanReadableException thrown while resolving the profile or validating target blogs must surface
+     * its own key/message/response code to the client, not be swallowed into a generic failure.
+     */
+    public function testCreateSubmissionsHandlerMapsHumanReadableExceptionToItsOwnKeyAndCode(): void
+    {
+        $service = $this->createMock(ContentRelationsDiscoveryService::class);
+        $service->method('createSubmissions')->willThrowException(
+            new SmartlingHumanReadableException('Invalid target locale for selected profile', 'target.blog.invalid', 400)
+        );
+        $proxy = $this->makeWpProxy();
+
+        $x = new class($service, $proxy, new AjaxSecurityChecker($proxy)) extends ContentRelationsHandler {
+            public ?string $capturedErrorKey = null;
+            public ?string $capturedErrorMessage = null;
+            public ?int $capturedErrorCode = null;
+
+            public function returnResponse(array $data, $responseCode = 200): void
+            {
+                TestCase::fail('Should not return a success response');
+            }
+
+            public function returnError($key, $message, $responseCode = 400): void
+            {
+                $this->capturedErrorKey = $key;
+                $this->capturedErrorMessage = $message;
+                $this->capturedErrorCode = $responseCode;
+            }
+        };
+
+        $x->createSubmissionsHandler($this->buildData(['source' => ['id' => [1], 'contentType' => 'post'], 'targetBlogIds' => '2']));
+
+        $this->assertSame('target.blog.invalid', $x->capturedErrorKey);
+        $this->assertSame('Invalid target locale for selected profile', $x->capturedErrorMessage);
+        $this->assertSame(400, $x->capturedErrorCode);
+    }
+
+    /**
+     * A SmartlingDbException from unrelated code (DB layer, queue, content handlers, etc.) reachable from
+     * createSubmissions() must not be mislabeled as a profile error - its real message must still reach the client.
+     */
+    public function testCreateSubmissionsHandlerPreservesMessageForUnrelatedDbException(): void
+    {
+        $service = $this->createMock(ContentRelationsDiscoveryService::class);
+        $service->method('createSubmissions')->willThrowException(new SmartlingDbException('Queue table is locked'));
+        $proxy = $this->makeWpProxy();
+
+        $x = new class($service, $proxy, new AjaxSecurityChecker($proxy)) extends ContentRelationsHandler {
+            public ?string $capturedErrorKey = null;
+            public ?string $capturedErrorMessage = null;
+
+            public function returnResponse(array $data, $responseCode = 200): void
+            {
+                TestCase::fail('Should not return a success response');
+            }
+
+            public function returnError($key, $message, $responseCode = 400): void
+            {
+                $this->capturedErrorKey = $key;
+                $this->capturedErrorMessage = $message;
+            }
+        };
+
+        $x->createSubmissionsHandler($this->buildData(['source' => ['id' => [1], 'contentType' => 'post'], 'targetBlogIds' => '2']));
+
+        $this->assertSame('content.submission.failed', $x->capturedErrorKey);
+        $this->assertSame('Queue table is locked', $x->capturedErrorMessage);
+    }
+
     private function buildData(array $overrides = []): array
     {
         return array_merge([
@@ -115,6 +186,7 @@ class ContentRelationsHandlerTest extends TestCase
                 'timeZone' => 'Europe/Kyiv',
                 'authorize' => 'true',
             ],
+            'profileId' => 5,
         ], $overrides);
     }
 }

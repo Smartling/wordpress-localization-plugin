@@ -35,16 +35,8 @@ if ($post instanceof WP_Post) {
     }
 }
 
-$locales = $profile->getTargetLocales();
-ArrayHelper::sortLocales($locales);
-$localesData = array_map(function($locale) {
-    return [
-        'blogId' => $locale->getBlogId(),
-        'label' => $locale->getLabel(),
-        'smartlingLocale' => $locale->getSmartlingLocale(),
-        'enabled' => $locale->isEnabled()
-    ];
-}, array_filter($locales, fn($l) => $l->isEnabled()));
+$profiles = $data['profiles'] ?? [$profile];
+$profilesData = array_map(static fn(ConfigurationProfileEntity $p) => $p->toWizardArray(), $profiles);
 
 if (!$isBulkSubmitPage) : ?>
 <?php if ($needWrapper) : ?>
@@ -56,7 +48,8 @@ if (!$isBulkSubmitPage) : ?>
                  data-bulk-submit="false"
                  data-content-type="<?= $data['contentType'] ?? $baseType ?>"
                  data-content-id="<?= $id ?>"
-                 data-locales='<?= htmlspecialchars(json_encode(array_values($localesData), JSON_THROW_ON_ERROR | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>'
+                 data-blog-id="<?= (int)$this->siteHelper->getCurrentBlogId() ?>"
+                 data-profiles='<?= htmlspecialchars(json_encode(array_values($profilesData), JSON_THROW_ON_ERROR | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>'
                  data-ajax-url="<?= admin_url('admin-ajax.php') ?>"
                  data-admin-url="<?= admin_url('admin-ajax.php') ?>"
                  data-nonce="<?= wp_create_nonce('smartling_translation') ?>"></div>

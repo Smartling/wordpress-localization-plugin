@@ -59,6 +59,7 @@ namespace Smartling\Tests\Services {
     use Smartling\Services\ContentRelationsDiscoveryService;
     use Smartling\Services\ContentRelationsHandler;
     use Smartling\Settings\ConfigurationProfileEntity;
+    use Smartling\Settings\Locale;
     use Smartling\Settings\SettingsManager;
     use Smartling\Submissions\SubmissionEntity;
     use Smartling\Submissions\SubmissionFactory;
@@ -109,7 +110,7 @@ namespace Smartling\Tests\Services {
             });
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -151,6 +152,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
+                'profileId' => 5,
             ]));
         }
 
@@ -176,7 +178,7 @@ namespace Smartling\Tests\Services {
             $apiWrapper = $this->createMock(ApiWrapper::class);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->with(5, $sourceBlogId)->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -210,6 +212,124 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
+                'profileId' => 5,
+            ]));
+        }
+
+        public function testCreateSubmissionsStampsFallbackProfileWhenNoneCouldBeResolved()
+        {
+            $sourceBlogId = 1;
+            $sourceId = 48;
+
+            $activeProfile = $this->createMock(ConfigurationProfileEntity::class);
+            $activeProfile->method('getProjectId')->willReturn('activeProjectUid');
+            $activeProfile->method('getId')->willReturn(3);
+
+            $apiWrapper = $this->createMock(ApiWrapper::class);
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(
+                function (ConfigurationProfileEntity $configurationProfile) use ($activeProfile): void {
+                    $this->assertSame($activeProfile, $configurationProfile);
+                },
+            );
+
+            $settingsManager = $this->createMock(SettingsManager::class);
+            $settingsManager->method('resolveRequestedProfile')->with(null, $sourceBlogId)->willReturn($activeProfile);
+
+            $siteHelper = $this->createMock(SiteHelper::class);
+            $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
+
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+
+            $submission = $this->createMock(SubmissionEntity::class);
+            $submission->method('getId')->willReturn(17);
+            $submission->expects(self::once())->method('setConfigurationProfileId')->with(3);
+
+            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+            $submissionManager->method('findOne')->willReturn($submission);
+            $submissionManager->method('storeEntity')->willReturnArgument(0);
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, wpProxy: $wpProxy);
+
+            $x->createSubmissions(UserTranslationRequest::fromArray([
+                'source' => ['contentType' => 'post', 'id' => [$sourceId]],
+                'job' =>
+                    [
+                        'id' => 'abcdef123456',
+                        'name' => 'Job Name',
+                        'description' => '',
+                        'dueDate' => '',
+                        'timeZone' => 'Europe/Kiev',
+                        'authorize' => 'true',
+                    ],
+                'targetBlogIds' => 2,
+                'relations' => [],
+            ]));
+        }
+
+        public function testCreateSubmissionsUsesRequestedProfileWhenValidAndActive()
+        {
+            $sourceBlogId = 1;
+            $sourceId = 48;
+            $contentType = 'post';
+            $targetBlogId = 2;
+            $jobName = 'Job Name';
+            $jobUid = 'abcdef123456';
+            $requestedProfileId = 5;
+
+            $sourceLocale = new Locale();
+            $sourceLocale->setBlogId($sourceBlogId);
+            $requestedProfile = $this->createMock(ConfigurationProfileEntity::class);
+            $requestedProfile->method('getSourceLocale')->willReturn($sourceLocale);
+            $requestedProfile->method('getIsActive')->willReturn(1);
+            $requestedProfile->method('getProjectId')->willReturn('requestedProjectUid');
+
+            $apiWrapper = $this->createMock(ApiWrapper::class);
+            $apiWrapper->expects($this->once())->method('createAuditLogRecord')->willReturnCallback(
+                function (ConfigurationProfileEntity $configurationProfile) use ($requestedProfile): void {
+                    $this->assertSame($requestedProfile, $configurationProfile);
+                },
+            );
+
+            $settingsManager = $this->createMock(SettingsManager::class);
+            $settingsManager->method('resolveRequestedProfile')->with($requestedProfileId, $sourceBlogId)->willReturn($requestedProfile);
+            $settingsManager->expects(self::never())->method('getSingleSettingsProfile');
+
+            $siteHelper = $this->createMock(SiteHelper::class);
+            $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
+
+            $contentHelper = $this->createMock(ContentHelper::class);
+            $contentHelper->method('getSiteHelper')->willReturn($siteHelper);
+
+            $submission = $this->createMock(SubmissionEntity::class);
+            $submission->method('getId')->willReturn(17);
+
+            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+            $submissionManager->method('findOne')->willReturn($submission);
+            $submissionManager->method('storeEntity')->willReturnArgument(0);
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
+            $x = $this->getContentRelationDiscoveryService($apiWrapper, $contentHelper, $settingsManager, $submissionManager, wpProxy: $wpProxy);
+
+            $x->createSubmissions(UserTranslationRequest::fromArray([
+                'source' => ['contentType' => $contentType, 'id' => [$sourceId]],
+                'job' =>
+                    [
+                        'id' => $jobUid,
+                        'name' => $jobName,
+                        'description' => '',
+                        'dueDate' => '',
+                        'timeZone' => 'Europe/Kiev',
+                        'authorize' => 'true',
+                    ],
+                'targetBlogIds' => $targetBlogId,
+                'relations' => [],
+                'profileId' => $requestedProfileId,
             ]));
         }
 
@@ -272,6 +392,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [$targetBlogId => ['post' => [17], 'attachment' => [23]]],
+                'profileId' => 5,
             ]));
         }
         public function testBulkSubmitHandler()
@@ -291,7 +412,7 @@ namespace Smartling\Tests\Services {
             $profile->method('getProjectId')->willReturn($projectUid);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -361,6 +482,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'ids' => $sourceIds,
+                'profileId' => 5,
             ]));
         }
 
@@ -387,7 +509,7 @@ namespace Smartling\Tests\Services {
             $profile->method('getId')->willReturn($profileId);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->with(5, $sourceBlogId)->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -427,6 +549,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'ids' => $sourceIds,
+                'profileId' => 5,
             ]));
         }
 
@@ -468,7 +591,7 @@ namespace Smartling\Tests\Services {
             $profile->method('getProjectId')->willReturn($projectUid);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -561,7 +684,7 @@ namespace Smartling\Tests\Services {
             $profile->method('getProjectId')->willReturn($projectUid);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -613,6 +736,7 @@ namespace Smartling\Tests\Services {
                     ],
                 'targetBlogIds' => $targetBlogId,
                 'relations' => [],
+                'profileId' => 5,
             ]));
             $this->restoreDependencyInjection();
         }
@@ -743,7 +867,7 @@ namespace Smartling\Tests\Services {
             $profile->method('getProjectId')->willReturn($projectUid);
 
             $settingsManager = $this->createMock(SettingsManager::class);
-            $settingsManager->method('getSingleSettingsProfile')->willReturn($profile);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
 
             $siteHelper = $this->createMock(SiteHelper::class);
             $siteHelper->method('getCurrentBlogId')->willReturn($sourceBlogId);
@@ -804,6 +928,7 @@ namespace Smartling\Tests\Services {
                 'source' => ['id' => [$sourceId], 'contentType' => $contentType],
                 'relations' => [$targetBlogId => ['post' => [$depth1AttachmentId], 'attachment' => [$depth2AttachmentId]]],
                 'targetBlogIds' => (string)$targetBlogId,
+                'profileId' => 5,
             ]));
             if ($this->exception !== null) {
                 throw $this->exception;

@@ -28,7 +28,7 @@ trait SmartlingCoreExportApi
         return trim(str_replace($this->getUploadPathForSite($blogId), '', $foundRelativePath), '/');
     }
 
-    public function sendAttachmentForTranslation(int $sourceBlogId, int $targetBlogId, int $sourceId, JobEntityWithBatchUid $jobInfo, bool $clone = false): SubmissionEntity
+    public function sendAttachmentForTranslation(int $sourceBlogId, int $targetBlogId, int $sourceId, JobEntityWithBatchUid $jobInfo, bool $clone = false, ?int $profileId = null): SubmissionEntity
     {
         return $this->getTranslationHelper()->tryPrepareRelatedContent(
             'attachment',
@@ -36,7 +36,8 @@ trait SmartlingCoreExportApi
             $sourceId,
             $targetBlogId,
             $jobInfo,
-            $clone
+            $clone,
+            $profileId,
         );
     }
 

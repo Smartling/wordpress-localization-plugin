@@ -6,6 +6,7 @@ use Smartling\Base\ExportedAPI;
 use Smartling\Base\SmartlingCore;
 use Smartling\Bootstrap;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\CommonLogMessagesTrait;
@@ -13,6 +14,7 @@ use Smartling\Helpers\DateTimeHelper;
 use Smartling\Helpers\DiagnosticsHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Jobs\JobEntityWithBatchUid;
+use Smartling\Models\UserTranslationRequest;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Vendor\Smartling\AuditLog\Params\CreateRecordParameters;
 use Smartling\WP\WPAbstract;
@@ -217,25 +219,33 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
             }
         }
 
-        $profile = ArrayHelper::first($this->getProfiles());
+        $profile = null;
 
         /**
-         * checking profiles
+         * checking profile - resolves the explicit profileId when the caller sends one (consistent with every
+         * other entry point), falling back to the blog's single active profile otherwise.
          */
-        if ($continue && !$profile) {
-            $this->getLogger()->error(
-                vsprintf(
-                    'Failed adding content to upload queue: %s for %s',
-                    [self::ERROR_MSG_NO_PROFILE_FOUND, var_export($_POST, true)])
-            );
+        if ($continue) {
+            try {
+                $profile = $this->settingsManager->resolveRequestedProfile(
+                    UserTranslationRequest::parseProfileId($data['profileId'] ?? null),
+                    $this->siteHelper->getCurrentBlogId(),
+                );
+            } catch (\InvalidArgumentException | SmartlingHumanReadableException $e) {
+                $this->getLogger()->error(
+                    vsprintf(
+                        'Failed adding content to upload queue: %s for %s',
+                        [$e->getMessage(), var_export($_POST, true)])
+                );
 
-            $result = [
-                'status' => 'FAIL',
-                'key' => self::ERROR_KEY_NO_PROFILE_FOUND,
-                'message' => self::ERROR_MSG_NO_PROFILE_FOUND,
-            ];
+                $result = [
+                    'status' => 'FAIL',
+                    'key' => self::ERROR_KEY_NO_PROFILE_FOUND,
+                    'message' => self::ERROR_MSG_NO_PROFILE_FOUND,
+                ];
 
-            $continue = false;
+                $continue = false;
+            }
         }
 
         /**
@@ -277,6 +287,26 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                         ];
                     }
                 }
+            }
+        }
+
+        /**
+         * Validates that every selected target blog is actually covered by the resolved profile - the profile is
+         * either the one explicitly requested or the blog's single active one, never inferred from the blogs.
+         */
+        if ($continue) {
+            try {
+                $this->settingsManager->assertTargetBlogIdsBelongToProfile($profile, array_map('intval', $data['blogs']));
+            } catch (SmartlingHumanReadableException $e) {
+                $this->getLogger()->error(
+                    vsprintf('Failed adding content to upload queue: %s for %s', [$e->getMessage(), var_export($_POST, true)])
+                );
+                $result = [
+                    'status' => 'FAIL',
+                    'key' => self::ERROR_KEY_TARGET_BLOG_EMPTY,
+                    'message' => $e->getMessage(),
+                ];
+                $continue = false;
             }
         }
 
@@ -355,9 +385,9 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                     try {
                         $jobInfo = new JobEntityWithBatchUid('', $jobName, $data['job']['id'], $profile->getProjectId());
                         if ($this->getCore()->getTranslationHelper()->isRelatedSubmissionCreationNeeded($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId)) {
-                            $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
+                            $submission = $this->getCore()->getTranslationHelper()->tryPrepareRelatedContent($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo, false, $profile->getId());
                         } else {
-                            $submission = $this->getCore()->getTranslationHelper()->getExistingSubmissionOrCreateNew($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo);
+                            $submission = $this->getCore()->getTranslationHelper()->getExistingSubmissionOrCreateNew($contentType, $sourceBlog, (int)$sourceId, (int)$targetBlogId, $jobInfo, $profile->getId());
                         }
 
                         if (0 < $submission->getId()) {
@@ -472,6 +502,7 @@ class PostBasedWidgetControllerStd extends WPAbstract implements WPHookInterface
                             'submissions' => $submissions,
                             'post' => $post,
                             'profile' => ArrayHelper::first($profile),
+                            'profiles' => $profile,
                         ]
                     );
                 } else {

@@ -1,6 +1,7 @@
 <?php
 
 use Smartling\Helpers\ArrayHelper;
+use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\WP\Controller\BulkSubmitController;
 use Smartling\WP\Table\BulkSubmitTableWidget;
 
@@ -52,22 +53,14 @@ $widgetName = 'bulk-submit-locales';
         <?php $bulkSubmitTable->display() ?>
         <div id="error-messages" class="tab"></div>
         <?php
-        $locales = $data->getProfile()->getTargetLocales();
-        ArrayHelper::sortLocales($locales);
-        $localesData = array_map(function($locale) {
-            return [
-                'blogId' => $locale->getBlogId(),
-                'label' => $locale->getLabel(),
-                'smartlingLocale' => $locale->getSmartlingLocale(),
-                'enabled' => $locale->isEnabled()
-            ];
-        }, array_filter($locales, fn($l) => $l->isEnabled()));
+        $profilesData = array_map(static fn(ConfigurationProfileEntity $p) => $p->toWizardArray(), $data->getApplicableProfiles());
         ?>
         <div id="smartling-app"
              data-bulk-submit="true"
              data-content-type=""
              data-content-id="0"
-             data-locales='<?= htmlspecialchars(json_encode(array_values($localesData), JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG), ENT_QUOTES, 'UTF-8') ?>'
+             data-blog-id="<?= (int)$this->siteHelper->getCurrentBlogId() ?>"
+             data-profiles='<?= htmlspecialchars(json_encode(array_values($profilesData), JSON_THROW_ON_ERROR | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_TAG), ENT_QUOTES, 'UTF-8') ?>'
              data-ajax-url="<?= admin_url('admin-ajax.php') ?>"
              data-admin-url="<?= admin_url('admin-ajax.php') ?>"
              data-nonce="<?= wp_create_nonce('smartling_translation') ?>"></div>

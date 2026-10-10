@@ -7,6 +7,7 @@ use Psr\Log\NullLogger;
 use Smartling\DbAl\SmartlingToCMSDatabaseAccessWrapperInterface;
 use Smartling\Exception\SmartlingConfigException;
 use Smartling\Exception\SmartlingDbException;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\Locale;
 use Smartling\Settings\SettingsManager;
@@ -176,6 +177,122 @@ class SettingsManagerTest extends TestCase
         $submission = (new SubmissionEntity())->setSourceBlogId(1)->setConfigurationProfileId(7);
 
         self::assertSame($active, $mock->getProfileBySubmission($submission));
+    }
+
+    private function resolverMock(): SettingsManager
+    {
+        $mock = $this->createPartialMock(SettingsManager::class, ['getEntityById', 'findEntityByMainLocale', 'getLogger']);
+        $mock->method('getLogger')->willReturn(new NullLogger());
+
+        return $mock;
+    }
+
+    private function profileForBlog(int $id, int $blogId, int $active): ConfigurationProfileEntity
+    {
+        $profile = $this->profileWithId($id);
+        $locale = new Locale();
+        $locale->setBlogId($blogId);
+        $profile->setSourceLocale($locale);
+        $profile->setIsActive($active);
+
+        return $profile;
+    }
+
+    public function testResolveRequestedProfileUsesRequestedWhenValidAndActive()
+    {
+        $requested = $this->profileForBlog(5, 1, 1);
+        $mock = $this->resolverMock();
+        $mock->expects(self::once())->method('getEntityById')->with(5)->willReturn([$requested]);
+        $mock->expects(self::never())->method('findEntityByMainLocale');
+
+        self::assertSame($requested, $mock->resolveRequestedProfile(5, 1));
+    }
+
+    public function testResolveRequestedProfileRejectsUnknownProfile()
+    {
+        $this->expectException(SmartlingHumanReadableException::class);
+        $mock = $this->resolverMock();
+        $mock->method('getEntityById')->with(5)->willReturn([]);
+
+        $mock->resolveRequestedProfile(5, 1);
+    }
+
+    public function testResolveRequestedProfileRejectsProfileOfDifferentBlog()
+    {
+        $this->expectException(SmartlingHumanReadableException::class);
+        $mock = $this->resolverMock();
+        $mock->method('getEntityById')->with(5)->willReturn([$this->profileForBlog(5, 99, 1)]);
+
+        $mock->resolveRequestedProfile(5, 1);
+    }
+
+    public function testResolveRequestedProfileRejectsInactiveProfile()
+    {
+        $this->expectException(SmartlingHumanReadableException::class);
+        $mock = $this->resolverMock();
+        $mock->method('getEntityById')->with(5)->willReturn([$this->profileForBlog(5, 1, 0)]);
+
+        $mock->resolveRequestedProfile(5, 1);
+    }
+
+    public function testResolveRequestedProfileFallsBackToActiveProfileWhenNoneRequested()
+    {
+        $only = $this->profileForBlog(3, 1, 1);
+        $mock = $this->resolverMock();
+        $mock->expects(self::never())->method('getEntityById');
+        $mock->method('findEntityByMainLocale')->with(1)->willReturn([$only]);
+
+        self::assertSame($only, $mock->resolveRequestedProfile(null, 1));
+    }
+
+    public function testResolveRequestedProfileThrowsWhenNoneRequestedAndNoneActive()
+    {
+        $this->expectException(SmartlingHumanReadableException::class);
+        $mock = $this->resolverMock();
+        $mock->method('findEntityByMainLocale')->with(1)->willReturn([]);
+
+        $mock->resolveRequestedProfile(null, 1);
+    }
+
+    public function testAssertTargetBlogIdsBelongToProfileAllowsEnabledLocales()
+    {
+        $profile = $this->profileWithId(1);
+        $profile->setTargetLocales([$this->enabledLocale(2), $this->enabledLocale(3)]);
+        $mock = $this->resolverMock();
+
+        $mock->assertTargetBlogIdsBelongToProfile($profile, [2, 3]);
+        $this->addToAssertionCount(1);
+    }
+
+    public function testAssertTargetBlogIdsBelongToProfileRejectsBlogOutsideProfile()
+    {
+        $this->expectException(SmartlingHumanReadableException::class);
+        $profile = $this->profileWithId(1);
+        $profile->setTargetLocales([$this->enabledLocale(2)]);
+        $mock = $this->resolverMock();
+
+        $mock->assertTargetBlogIdsBelongToProfile($profile, [2, 99]);
+    }
+
+    public function testAssertTargetBlogIdsBelongToProfileRejectsDisabledLocale()
+    {
+        $this->expectException(SmartlingHumanReadableException::class);
+        $profile = $this->profileWithId(1);
+        $disabled = $this->enabledLocale(2);
+        $disabled->setEnabled(false);
+        $profile->setTargetLocales([$disabled]);
+        $mock = $this->resolverMock();
+
+        $mock->assertTargetBlogIdsBelongToProfile($profile, [2]);
+    }
+
+    private function enabledLocale(int $blogId): TargetLocale
+    {
+        $locale = new TargetLocale();
+        $locale->setBlogId($blogId);
+        $locale->setEnabled(true);
+
+        return $locale;
     }
 
     public function testGetEntitiesQueries()

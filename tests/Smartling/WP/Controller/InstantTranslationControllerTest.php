@@ -7,6 +7,7 @@ use Smartling\FTS\FtsService;
 use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionFactory;
 use Smartling\Submissions\SubmissionManager;
@@ -39,6 +40,7 @@ class InstantTranslationControllerTest extends TestCase
             $this->fileUriHelper,
             $this->wpProxy,
             $this->ajaxSecurity,
+            $this->createMock(SettingsManager::class),
         );
     }
 
@@ -149,7 +151,7 @@ class InstantTranslationControllerTest extends TestCase
         // Manager should store it
         $this->submissionManager->method('storeEntity')->willReturn($newSubmission);
 
-        $result = $method->invoke($this->controller, 1, 2, 'post', 123);
+        $result = $method->invoke($this->controller, 1, 2, 'post', 123, 7);
 
         $this->assertInstanceOf(SubmissionEntity::class, $result);
     }
@@ -167,7 +169,7 @@ class InstantTranslationControllerTest extends TestCase
         $this->submissionManager->method('findOne')->willReturn($existingSubmission);
         $this->submissionManager->method('storeEntity')->willReturn($existingSubmission);
 
-        $result = $method->invoke($this->controller, 1, 2, 'post', 123);
+        $result = $method->invoke($this->controller, 1, 2, 'post', 123, 7);
 
         $this->assertInstanceOf(SubmissionEntity::class, $result);
         $this->assertSame($existingSubmission, $result);
@@ -196,7 +198,8 @@ class InstantTranslationControllerTest extends TestCase
             123,
             1,
             [2, 3],
-            [] // No relations
+            [], // No relations
+            7
         );
 
         // Should create 2 submissions (1 main content × 2 target blogs)
@@ -235,7 +238,8 @@ class InstantTranslationControllerTest extends TestCase
             123,
             1,
             [2, 3],
-            $relations
+            $relations,
+            7
         );
 
         // Should create:
@@ -275,7 +279,8 @@ class InstantTranslationControllerTest extends TestCase
             123,
             1,
             [2],
-            $relations
+            $relations,
+            7
         );
 
         // Should create:
@@ -514,5 +519,20 @@ class InstantTranslationControllerTest extends TestCase
         $this->ftsService->expects($this->never())->method('checkAndApplyTranslation');
 
         $this->controller->handlePollStatus();
+    }
+
+    public function testGetOrCreateSubmissionStampsRequestedProfile(): void
+    {
+        $reflection = new \ReflectionClass($this->controller);
+        $method = $reflection->getMethod('getOrCreateSubmission');
+        $method->setAccessible(true);
+
+        $existingSubmission = $this->createMock(SubmissionEntity::class);
+        $existingSubmission->method('setStatus')->willReturnSelf();
+        $existingSubmission->expects($this->once())->method('setConfigurationProfileId')->with(7);
+        $this->submissionManager->method('findOne')->willReturn($existingSubmission);
+        $this->submissionManager->method('storeEntity')->willReturn($existingSubmission);
+
+        $method->invoke($this->controller, 1, 2, 'post', 123, 7);
     }
 }

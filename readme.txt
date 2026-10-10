@@ -63,6 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 5.8.1 =
+* Added profile selector for sites with multiple active profiles.
 * Improved Elementor query support: term and post IDs used by Posts, Loop Grid and Loop Carousel queries are now detected and replaced with the translated ones, only for the query mode the widget actually uses. Query terms are stored by Elementor Pro as term taxonomy IDs and are converted accordingly. Excluded terms and posts are replaced only if they are already translated when the page translation is downloaded; if they are translated later, download the page again to update the query.
 * Added the `smartling_target_id` filter, which returns the translated ID of a post, attachment or term for use in custom code.
 * Fixed Elementor query terms being dropped from related content when the same taxonomy is also detected elsewhere in the document.

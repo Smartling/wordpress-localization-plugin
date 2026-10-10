@@ -7,6 +7,7 @@ use Exception;
 use Smartling\ApiWrapperInterface;
 use Smartling\Bootstrap;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\Exceptions\SmartlingApiException;
 use Smartling\Helpers\ArrayHelper;
 use Smartling\Helpers\Cache;
@@ -17,6 +18,7 @@ use Smartling\Helpers\PluginInfo;
 use Smartling\Helpers\SiteHelper;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Models\UserTranslationRequest;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Vendor\Smartling\Jobs\JobStatus;
@@ -101,8 +103,18 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                 'status' => 200,
             ];
 
-            $profile = $this->settingsManager->getSingleSettingsProfile($this->siteHelper->getCurrentBlogId());
             $params = &$data['params'];
+            try {
+                $blogId = $this->siteHelper->getCurrentBlogId();
+                $profile = $this->settingsManager->resolveRequestedProfile(
+                    UserTranslationRequest::parseProfileId($params['profileId'] ?? null),
+                    $blogId,
+                );
+            } catch (\InvalidArgumentException | SmartlingHumanReadableException $e) {
+                $this->getLogger()->warning('Unable to resolve requested profile: ' . $e->getMessage());
+                $this->wpProxy->wp_send_json(['status' => 400, 'message' => ['profileId' => 'Invalid translation profile']], 400);
+                return;
+            }
 
             $validateRequires = static function ($fieldName) use (&$result, $params) {
                 $value = trim($params[$fieldName] ?? '');
@@ -144,10 +156,18 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                         $timezone = $validateRequires('timezone');
                         $jobDescription = $params['description'];
                         $jobDueDate = $params['dueDate'];
-                        $jobLocalesRaw = explode(',', $validateRequires('locales'));
+                        $jobLocalesRaw = array_map('intval', explode(',', $validateRequires('locales')));
+                        if ($result['status'] === 200) {
+                            try {
+                                $this->settingsManager->assertTargetBlogIdsBelongToProfile($profile, $jobLocalesRaw);
+                            } catch (SmartlingHumanReadableException $e) {
+                                $result['status'] = 400;
+                                $result['message']['locales'] = $e->getMessage();
+                            }
+                        }
                         $jobLocales = [];
                         foreach ($jobLocalesRaw as $blogId) {
-                            $jobLocales[] = $this->settingsManager->getSmartlingLocaleIdBySettingsProfile($profile, (int)$blogId);
+                            $jobLocales[] = $this->settingsManager->getSmartlingLocaleIdBySettingsProfile($profile, $blogId);
                         }
                         if ($result['status'] === 200) {
                             try {
@@ -273,6 +293,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                     $this->view(
                         [
                             'profile'     => $profile,
+                            'profiles'    => $applicableProfiles,
                             'contentType' => $contentType,
                         ]
                     );
@@ -289,6 +310,7 @@ class ContentEditJobController extends WPAbstract implements WPHookInterface
                         $this->view(
                             [
                                 'profile'     => $profile,
+                                'profiles'    => $applicableProfiles,
                                 'contentType' => $contentType,
                             ]
                         );

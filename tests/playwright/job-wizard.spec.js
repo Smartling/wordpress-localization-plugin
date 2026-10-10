@@ -19,16 +19,19 @@ test.describe('Job wizard — post edit page', () => {
         expect(nonce.length, 'data-nonce must be at least 8 characters').toBeGreaterThanOrEqual(8);
     });
 
-    test('#smartling-app has valid JSON in data-locales', async ({ page }) => {
+    test('#smartling-app has valid JSON in data-profiles', async ({ page }) => {
         await page.goto(`/wp-admin/post.php?post=${POST_ID}&action=edit`, { waitUntil: 'commit' });
         await page.waitForSelector('#smartling-app', { state: 'attached', timeout: 90000 });
 
-        const localesRaw = await page.getAttribute('#smartling-app', 'data-locales');
-        expect(localesRaw, 'data-locales attribute must be present').toBeTruthy();
+        const profilesRaw = await page.getAttribute('#smartling-app', 'data-profiles');
+        expect(profilesRaw, 'data-profiles attribute must be present').toBeTruthy();
 
-        let locales;
-        expect(() => { locales = JSON.parse(localesRaw); }, 'data-locales must be valid JSON').not.toThrow();
-        expect(Array.isArray(locales), 'data-locales must decode to an array').toBe(true);
+        let profiles;
+        expect(() => { profiles = JSON.parse(profilesRaw); }, 'data-profiles must be valid JSON').not.toThrow();
+        expect(Array.isArray(profiles), 'data-profiles must decode to an array').toBe(true);
+        for (const profile of profiles) {
+            expect(Array.isArray(profile.locales), 'each profile must have a locales array').toBe(true);
+        }
     });
 
     test('React job wizard renders job tabs', async ({ page }) => {

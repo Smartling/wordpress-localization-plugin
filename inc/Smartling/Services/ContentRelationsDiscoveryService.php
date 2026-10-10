@@ -103,13 +103,11 @@ class ContentRelationsDiscoveryService
                     }
                     $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
                 }
+                $this->warnIfReprofilingInProgress($submission, $profile->getId());
                 $submission->setJobInfo($jobInfo);
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->setIsCloned(0);
-                // Bulk-submitting is an explicit new translation request: (re)stamp with the
-                // profile this request's batch is being created under, for both a found
-                // existing submission (which bypasses getSubmissionEntity() above) and a new
-                // one (where this just confirms what getSubmissionEntity() already stamped).
+                // Bulk-submitting is an explicit new translation request: (re)stamp with the profile it was requested with.
                 $submission->setConfigurationProfileId($profile->getId());
                 $submission = $this->submissionManager->storeEntity($submission);
                 $queueIds[] = $submission->getId();
@@ -153,7 +151,8 @@ class ContentRelationsDiscoveryService
     public function createSubmissions(UserTranslationRequest $request): void
     {
         $curBlogId = $this->wordpressProxy->get_current_blog_id();
-        $profile = $this->settingsManager->getSingleSettingsProfile($curBlogId);
+        $profile = $this->settingsManager->resolveRequestedProfile($request->getProfileId(), $curBlogId);
+        $this->settingsManager->assertTargetBlogIdsBelongToProfile($profile, $request->getTargetBlogIds());
         $job = $request->getJobInformation();
         $jobInfo = new JobEntity($job->getName(), $job->getId(), $profile->getProjectId());
 
@@ -228,12 +227,11 @@ class ContentRelationsDiscoveryService
                     'type' => $request->getContentType(),
                 ];
             } else {
+                $this->warnIfReprofilingInProgress($submission, $profile->getId());
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
                 $submission->setIsCloned(0);
-                // Resubmitting an existing submission is an explicit new translation request,
-                // so (re)stamp it with the profile active right now, same as
-                // SubmissionManager::getSubmissionEntity() does - this path never goes through
-                // that method, so it would otherwise keep whatever profile (or none) it had.
+                // Resubmitting an existing submission is an explicit new translation request, so restamp it with the
+                // profile it was requested with.
                 $submission->setConfigurationProfileId($profile->getId());
                 $submission = $this->storeWithJobInfo($submission, $jobInfo, $request->getDescription());
                 $fileUris[] = $submission->getFileUri();
@@ -242,9 +240,7 @@ class ContentRelationsDiscoveryService
 
             $submissionTemplateArray[SubmissionEntity::FIELD_STATUS] = SubmissionEntity::SUBMISSION_STATUS_NEW;
             $submissionTemplateArray[SubmissionEntity::FIELD_SUBMISSION_DATE] = DateTimeHelper::nowAsString();
-            // New submissions built from this template bypass getSubmissionEntity() too; stamp
-            // them with the profile this request's batch is being created under (below), so
-            // UploadJob never has to guess at a profile for them later.
+            // New submissions built from this template bypass getSubmissionEntity(), stamp them with the requested profile.
             $submissionTemplateArray[SubmissionEntity::FIELD_CONFIGURATION_PROFILE_ID] = $profile->getId();
 
             foreach ($sources as $source) {
@@ -592,6 +588,27 @@ class ContentRelationsDiscoveryService
         }
 
         return $result;
+    }
+
+    /**
+     * Re-stamping an existing submission to a different profile is an explicit, supported part of resubmitting
+     * under a user-chosen profile - but if it's still IN_PROGRESS under the old one, it loses its link to that
+     * project's file/job, and status checks/downloads will look at the new project instead. Warn so this is at
+     * least visible, without blocking the resubmission.
+     */
+    private function warnIfReprofilingInProgress(SubmissionEntity $submission, int $newProfileId): void
+    {
+        $oldProfileId = $submission->getConfigurationProfileId();
+        if ($oldProfileId !== null && $oldProfileId !== $newProfileId
+            && $submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS
+        ) {
+            $this->getLogger()->warning(sprintf(
+                'Resubmitting submissionId=%d from profileId=%d to profileId=%d while still in progress; it will lose its link to the previous profile\'s file/job.',
+                $submission->getId(),
+                $oldProfileId,
+                $newProfileId,
+            ));
+        }
     }
 
     private function storeWithJobInfo(SubmissionEntity $submission, JobEntity $jobInfo, string $description): SubmissionEntity

@@ -2,6 +2,7 @@
 
 namespace Smartling\WP\Controller;
 
+use Smartling\Exception\SmartlingHumanReadableException;
 use Smartling\FTS\FtsService;
 use Smartling\Helpers\AjaxSecurityChecker;
 use Smartling\Helpers\DateTimeHelper;
@@ -9,6 +10,8 @@ use Smartling\Helpers\FileUriHelper;
 use Smartling\Helpers\LoggerSafeTrait;
 use Smartling\Helpers\SmartlingUserCapabilities;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
+use Smartling\Models\UserTranslationRequest;
+use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionFactory;
 use Smartling\Submissions\SubmissionManager;
@@ -28,6 +31,7 @@ class InstantTranslationController implements WPHookInterface
         private FileUriHelper $fileUriHelper,
         private WordpressFunctionProxyHelper $wpProxy,
         private AjaxSecurityChecker $ajaxSecurity,
+        private SettingsManager $settingsManager,
     ) {
     }
 
@@ -68,12 +72,26 @@ class InstantTranslationController implements WPHookInterface
 
             $sourceBlogId = $this->wpProxy->get_current_blog_id();
 
+            try {
+                $profile = $this->settingsManager->resolveRequestedProfile(
+                    UserTranslationRequest::parseProfileId($_POST['profileId'] ?? null),
+                    $sourceBlogId,
+                );
+                $this->settingsManager->assertTargetBlogIdsBelongToProfile($profile, $targetBlogIds);
+            } catch (\InvalidArgumentException | SmartlingHumanReadableException $e) {
+                $this->getLogger()->warning('Unable to resolve requested profile: ' . $e->getMessage());
+                $this->wpProxy->wp_send_json_error(['message' => 'Invalid translation profile'], 400);
+                return;
+            }
+            $profileId = $profile->getId();
+
             $allSubmissions = $this->buildSubmissions(
                 $contentType,
                 $contentId,
                 $sourceBlogId,
                 $targetBlogIds,
                 $relations,
+                $profileId,
             );
 
             if (empty($allSubmissions)) {
@@ -208,7 +226,8 @@ class InstantTranslationController implements WPHookInterface
         int $contentId,
         int $sourceBlogId,
         array $targetBlogIds,
-        array $relations
+        array $relations,
+        int $profileId,
     ): array {
         $submissions = [];
 
@@ -218,6 +237,7 @@ class InstantTranslationController implements WPHookInterface
                 $targetBlogId,
                 $contentType,
                 $contentId,
+                $profileId,
             );
             if ($mainSubmission !== null) {
                 $submissions[] = $mainSubmission;
@@ -229,7 +249,8 @@ class InstantTranslationController implements WPHookInterface
                     $sourceBlogId,
                     $targetBlogId,
                     $source['type'],
-                    $source['id']
+                    $source['id'],
+                    $profileId,
                 );
                 if ($relatedSubmission !== null) {
                     $submissions[] = $relatedSubmission;
@@ -275,7 +296,8 @@ class InstantTranslationController implements WPHookInterface
         int $sourceBlogId,
         int $targetBlogId,
         string $contentType,
-        int $contentId
+        int $contentId,
+        int $profileId,
     ): ?SubmissionEntity {
         try {
             $submission = $this->submissionManager->findOne([
@@ -297,9 +319,21 @@ class InstantTranslationController implements WPHookInterface
                 $submission = $this->submissionFactory->fromArray($submissionArray);
                 $submission->setFileUri($this->fileUriHelper->generateFileUri($submission));
             } else {
+                $oldProfileId = $submission->getConfigurationProfileId();
+                if ($oldProfileId !== null && $oldProfileId !== $profileId
+                    && $submission->getStatus() === SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS
+                ) {
+                    $this->getLogger()->warning(sprintf(
+                        'Resubmitting submissionId=%d from profileId=%d to profileId=%d while still in progress; it will lose its link to the previous profile\'s file/job.',
+                        $submission->getId(),
+                        $oldProfileId,
+                        $profileId,
+                    ));
+                }
                 $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_NEW);
             }
 
+            $submission->setConfigurationProfileId($profileId);
             $submission->setStatus(SubmissionEntity::SUBMISSION_STATUS_IN_PROGRESS);
             return $this->submissionManager->storeEntity($submission);
         } catch (\Exception $e) {

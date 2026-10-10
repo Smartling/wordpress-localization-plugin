@@ -6,6 +6,7 @@ use Smartling\Helpers\StringHelper;
 use Smartling\Helpers\WordpressContentTypeHelper;
 use Smartling\Settings\TargetLocale;
 use Smartling\Submissions\SubmissionEntity;
+use Smartling\WP\Controller\ConfigurationProfilesController;
 use Smartling\WP\Controller\PostBasedWidgetControllerStd;
 use Smartling\WP\WPAbstract;
 
@@ -18,7 +19,15 @@ $widgetName = PostBasedWidgetControllerStd::WIDGET_DATA_NAME;
 /**
  * @var TargetLocale[] $locales
  */
-$locales = $data['profile']->getTargetLocales();
+$locales = [];
+foreach ($data['profiles'] ?? [$data['profile']] as $profile) {
+    foreach ($profile->getTargetLocales() as $locale) {
+        if ($locale->isEnabled()) {
+            $locales[$locale->getBlogId()] ??= $locale;
+        }
+    }
+}
+$locales = array_values($locales);
 
 $filteredLocales = [];
 
@@ -141,7 +150,7 @@ if (!empty($locales)) {
         <div class="fields">
             No suitable target locales found.<br/>
             Please check your <a
-                    href="<?= get_site_url() ?>/wp-admin/network/admin.php?page=smartling_configuration_profile_setup&action=edit&profile=<?= $data['profile']->getId() ?>">settings.</a>
+                    href="<?= get_site_url() ?>/wp-admin/admin.php?page=<?= ConfigurationProfilesController::MENU_SLUG ?>">settings.</a>
         </div>
     </div>
 <?php } ?>

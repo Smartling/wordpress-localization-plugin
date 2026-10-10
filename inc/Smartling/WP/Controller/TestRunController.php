@@ -200,7 +200,8 @@ class TestRunController extends WPAbstract implements WPHookInterface
                 [$targetBlogId],
                 new JobInformation($job->getJobUid(), true, $job->getJobName(), 'Test run job', '', 'UTC'),
                 [],
-                'Test run'
+                'Test run',
+                $profile->getId(),
             ));
         }
 

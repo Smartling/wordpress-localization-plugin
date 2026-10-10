@@ -71,6 +71,14 @@ class BulkSubmitTableWidget extends SmartlingListTable
         return $this->profile;
     }
 
+    /**
+     * @return ConfigurationProfileEntity[]
+     */
+    public function getApplicableProfiles(): array
+    {
+        return $this->applicableProfiles;
+    }
+
     public function __construct(
         private AcfDynamicSupport $acfDynamicSupport,
         private ApiWrapperInterface $apiWrapper,
@@ -82,6 +90,7 @@ class BulkSubmitTableWidget extends SmartlingListTable
         protected ConfigurationProfileEntity $profile,
         protected WordpressFunctionProxyHelper $wpProxy,
         protected NonceVerifier $nonceVerifier,
+        protected array $applicableProfiles,
     ) {
         $this->setSource($_REQUEST);
 
