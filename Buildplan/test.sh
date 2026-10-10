@@ -17,6 +17,11 @@
 # CRE_USER_IDENTIFIER
 # CRE_TOKEN_SECRET
 
+# The image ships php-xdebug; in its default "develop" mode it appends a full
+# stack trace to every PHP notice/deprecation, flooding the CI logs. Nothing in
+# the test run needs Xdebug (no coverage, no step debugging), so turn it off.
+export XDEBUG_MODE=off
+
 # install composer
 COMPOSER_INSTALL_DIR="$LOCAL_GIT_DIR/inc/third-party/bin"
 if [ ! -d "$COMPOSER_INSTALL_DIR" ]; then
@@ -318,6 +323,7 @@ if [ "${WP_SERVER_READY}" -eq 0 ]; then
     echo "--- PHP server log ---"
     cat /var/log/php-e2e-server.log 2>/dev/null || echo "(empty)"
     echo "--- END ---"
+    E2E_SERVER_START_FAILED=1
 fi
 
 # Create test fixtures: one post + one Smartling profile
@@ -391,6 +397,9 @@ NODE_PATH="$(npm root -g)" \
     timeout 900 playwright test --reporter=junit,line
 
 E2E_EXIT_CODE=$?
+if [ "${E2E_SERVER_START_FAILED:-0}" -eq 1 ] && [ "${E2E_EXIT_CODE}" -eq 0 ]; then
+    E2E_EXIT_CODE=1
+fi
 if [ "${E2E_EXIT_CODE}" -eq 124 ]; then
     echo "WARNING: playwright test timed out after 900 s — Chromium may have hung on shutdown"
 fi
@@ -467,10 +476,18 @@ SHIM_EOF
 export WP_DB_HOST="${MYSQL_HOST:-localhost}"
 # ── END E2E ────────────────────────────────────────────────────────────────────
 
-echo "--- Starting PHPUnit ---"
-${PHPUNIT_BIN} -c ${PHPUNIT_XML}
-PHPUNIT_EXIT_CODE=$?
-echo "--- PHPUnit finished (exit code ${PHPUNIT_EXIT_CODE}) ---"
+# PHPUnit takes ~10 minutes; there is no point spending it on a build that
+# already failed. (The release.zip packaging below still runs, because the
+# Jenkins 'Archive release' stage expects the file to exist.)
+if [ "${E2E_EXIT_CODE}" -ne 0 ]; then
+    echo "--- Skipping PHPUnit: Playwright E2E failed (exit code ${E2E_EXIT_CODE}) ---"
+    PHPUNIT_EXIT_CODE=0
+else
+    echo "--- Starting PHPUnit ---"
+    ${PHPUNIT_BIN} -c ${PHPUNIT_XML}
+    PHPUNIT_EXIT_CODE=$?
+    echo "--- PHPUnit finished (exit code ${PHPUNIT_EXIT_CODE}) ---"
+fi
 
 service mysql stop
 

@@ -31,6 +31,13 @@ pipeline {
         }
 
         stage('Run tests') {
+            // The tests share external state (the Smartling project referenced
+            // by PROJECT_ID, and its distributed locks), so concurrent runs
+            // from multiple runners interfere with each other. Serialize them.
+            options {
+                lock(resource: 'wordpress-localization-plugin-tests')
+            }
+
             agent {
                 label 'master'
             }
