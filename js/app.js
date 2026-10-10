@@ -38,6 +38,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
     const [relations, setRelations] = useState([]);
     const [selectedRelations, setSelectedRelations] = useState({});
     const [loading, setLoading] = useState(true);
+    const [jobsLoading, setJobsLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -55,9 +56,12 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
         // Ignore responses for a previously selected profile, a slow one must not overwrite the current job list.
         // The old profile's jobs must not stay selectable while the new list loads (or forever, if it fails), so
         // clear them - and any stale error from a previous attempt - up front rather than waiting for the response.
+        // jobsLoading only gates the "Existing jobs" dropdown itself, not the whole wizard: the full-widget
+        // unmount/remount that `loading` triggers caused the widget's height to collapse and recover on every
+        // profile switch, which scrolled the page and briefly pushed it out of view.
         let stale = false;
         setJobs([]);
-        setLoading(true);
+        setJobsLoading(true);
         setError('');
         (async () => {
             try {
@@ -76,6 +80,7 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
                 }
             } finally {
                 if (!stale) {
+                    setJobsLoading(false);
                     setLoading(false);
                 }
             }
@@ -403,7 +408,10 @@ function JobWizard({ isBulkSubmitPage, contentType, contentId, profiles, blogId,
                 tab.name === 'existing' && el(SelectControl, {
                     label: 'Existing jobs',
                     value: selectedJob,
-                    options: [{ label: 'Select a job', value: '' }, ...jobs.map(j => ({ label: j.jobName, value: j.translationJobUid }))],
+                    disabled: jobsLoading,
+                    options: jobsLoading
+                        ? [{ label: 'Loading jobs...', value: '' }]
+                        : [{ label: 'Select a job', value: '' }, ...jobs.map(j => ({ label: j.jobName, value: j.translationJobUid }))],
                     onChange: (val) => {
                         setSelectedJob(val);
                         const job = jobs.find(j => j.translationJobUid === val);
