@@ -132,18 +132,24 @@ trait SmartlingCoreUploadTrait
             )
         );
 
+        $startedAt = microtime(true);
         try {
             $submission = $this->prepareUpload($submission);
+            $this->logXmlStage($submission, 'prepareUpload done', $startedAt);
 
             $originalContent = $this->readSourceContentWithMetadataAsArray($submission);
+            $this->logXmlStage($submission, 'source content read', $startedAt);
             $source = $this->externalContentManager->getExternalContent($originalContent, $submission, false);
+            $this->logXmlStage($submission, 'external content processed', $startedAt);
 
             $contentEntity = $this->getContentHelper()->readSourceContent($submission);
             $params = new BeforeSerializeContentEventParameters($source, $submission, $contentEntity, $source['meta']);
             do_action(ExportedAPI::EVENT_SMARTLING_BEFORE_SERIALIZE_CONTENT, $params);
             $source = $params->getPreparedFields();
+            $this->logXmlStage($submission, 'before serialize content event done', $startedAt);
             $this->prepareFieldProcessorValues($submission);
             $filteredValues = $this->getFieldsFilter()->processStringsBeforeEncoding($submission, $source);
+            $this->logXmlStage($submission, sprintf('fields filtered, fieldCount=%d', count($filteredValues)), $startedAt);
 
             if (0 === count($filteredValues) && !$submission->isCloned()) {
                 $message = vsprintf(
@@ -161,7 +167,9 @@ trait SmartlingCoreUploadTrait
             }
 
             $this->prepareFieldProcessorValues($submission);
-            return $this->xmlHelper->xmlEncode($filteredValues, $submission, array_merge($source, $originalContent));
+            $xml = $this->xmlHelper->xmlEncode($filteredValues, $submission, array_merge($source, $originalContent));
+            $this->logXmlStage($submission, sprintf('xml encoded, xmlSize=%d', strlen($xml)), $startedAt);
+            return $xml;
         } catch (EntityNotFoundException $e) {
             $this->getLogger()->error($e->getMessage());
             $this->getSubmissionManager()->setErrorMessage($submission, 'Submission references non existent content.');
@@ -176,6 +184,18 @@ trait SmartlingCoreUploadTrait
             throw $e;
         }
         return '';
+    }
+
+    private function logXmlStage(SubmissionEntity $submission, string $stage, float $startedAt): void
+    {
+        $this->getLogger()->debug(sprintf(
+            'XML generation for submissionId="%s": %s, elapsed=%.2fs, memory=%dB, peakMemory=%dB',
+            $submission->getId(),
+            $stage,
+            microtime(true) - $startedAt,
+            memory_get_usage(true),
+            memory_get_peak_usage(true),
+        ));
     }
 
     #[ArrayShape(['entity' => 'string[]', 'meta' => 'string[]'])]
@@ -435,6 +455,7 @@ trait SmartlingCoreUploadTrait
         $locales = $item->getSmartlingLocales()->getList();
         $profile = $this->getSettingsManager()->getProfileBySubmission($submission);
         try {
+            $this->getLogger()->debug("Generating XML for submissionId=\"{$submission->getId()}\"");
             $xml = $this->getXMLFiltered($submission);
             if ($xml === '') {
                 $this->getLogger()->debug('Skip upload of empty xml');
@@ -468,7 +489,9 @@ trait SmartlingCoreUploadTrait
                 implode(',', $locales),
             ));
 
-            if ($this->getApiWrapper()->uploadContent($submission, $xml, $item->getBatchUid(), $locales)) {
+            $uploaded = $this->getApiWrapper()->uploadContent($submission, $xml, $item->getBatchUid(), $locales);
+            $this->getLogger()->debug(sprintf('Finished fileUri="%s" upload, success=%s', $submission->getFileUri(), $uploaded ? 'true' : 'false'));
+            if ($uploaded) {
                 LiveNotificationController::pushNotification(
                     $profile->getProjectId(),
                     LiveNotificationController::getContentId($submission),
@@ -619,7 +642,7 @@ trait SmartlingCoreUploadTrait
             ], function () use ($item) {
                 $this->bulkSubmit($item);
             });
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $this->getSubmissionManager()->setErrorMessage(
                 $submission, vsprintf('Error occurred: %s', [$e->getMessage()])
             );

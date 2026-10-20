@@ -17,6 +17,10 @@ class UploadJob extends JobAbstract
 {
     public const JOB_HOOK_NAME = 'smartling-upload-task';
 
+    /** @var int[] */
+    private array $currentSubmissionIds = [];
+    private float $startedAt = 0.0;
+
     public function __construct(
         ApiWrapperInterface $api,
         Cache $cache,
@@ -51,9 +55,30 @@ class UploadJob extends JobAbstract
         $message .= ", blogId=$blogId";
         $this->getLogger()->debug("Started $message");
 
+        $this->startedAt = microtime(true);
+        $this->currentSubmissionIds = [];
+        // Runs in addition to Bootstrap::shutdownHandler(), which logs the fatal error itself
+        register_shutdown_function([$this, 'logUnfinishedUpload']);
+
         $this->processUploadQueue($blogId);
 
+        $this->currentSubmissionIds = [];
         $this->getLogger()->debug("Finished $message");
+    }
+
+    public function logUnfinishedUpload(): void
+    {
+        if ($this->currentSubmissionIds === []) {
+            return;
+        }
+        $this->getLogger()->emergency(sprintf(
+            'UploadJob terminated while processing submissionIds="%s", elapsed=%.2fs, peakMemory=%dB, memoryLimit="%s", maxExecutionTime="%s"',
+            implode(',', $this->currentSubmissionIds),
+            microtime(true) - $this->startedAt,
+            memory_get_peak_usage(true),
+            ini_get('memory_limit'),
+            ini_get('max_execution_time'),
+        ));
     }
 
     private function processUploadQueue(int $blogId): void
@@ -67,6 +92,7 @@ class UploadJob extends JobAbstract
                 break;
             }
             $submission = $item->getSubmissions()[0];
+            $this->currentSubmissionIds = array_map(static fn($s) => $s->getId(), $item->getSubmissions());
             $this->getLogger()->debug("Retrieved upload queue item for submissionId={$submission->getId()}");
             if ($submission->isCloned()) {
                 $this->getLogger()->debug("Skipping processing queue for submissionId={$submission->getId()}: was cloned");
@@ -131,6 +157,7 @@ class UploadJob extends JobAbstract
                 $this->failItem($item, 'Failing', $e->getMessage());
             }
             $this->uploadQueueManager->complete($item);
+            $this->currentSubmissionIds = [];
             $this->placeLockFlag(true);
         }
     }
