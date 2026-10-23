@@ -97,14 +97,45 @@ class XmlHelper
         $xml = $this->setTranslationComments($this->initXml(), $profile);
         $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
         $rootNode = $xml->createElement(self::XML_ROOT_NODE_NAME);
+        global $shortcode_tags;
+        $total = count($source);
+        $startedAt = microtime(true);
+        $this->getLogger()->debug(sprintf(
+            'Creating XML nodes: rowCount=%d, registeredShortcodeCount=%d, activePlugins="%s", activeNetworkPlugins="%s"',
+            $total,
+            count($shortcode_tags ?? []),
+            implode(',', (array)get_option('active_plugins', [])),
+            implode(',', array_keys((array)get_site_option('active_sitewide_plugins', []))),
+        ));
+        $index = 0;
         foreach ($source as $name => $value) {
+            ++$index;
+            $this->getLogger()->debug(sprintf(
+                'Creating XML node %d/%d: name="%s", valueLength=%d, elapsed=%.2fs, peakMemory=%dB',
+                $index,
+                $total,
+                $name,
+                strlen((string)$value),
+                microtime(true) - $startedAt,
+                memory_get_peak_usage(true),
+            ));
+            $rowStartedAt = microtime(true);
             $rootNode->appendChild($this->rowToXMLNode($xml, $name, $value, $settings['key'], $submission));
+            $rowElapsed = microtime(true) - $rowStartedAt;
+            if ($rowElapsed > 0.5) {
+                $this->getLogger()->debug(sprintf('Slow XML node %d/%d: name="%s", took=%.2fs', $index, $total, $name, $rowElapsed));
+            }
         }
         $xml->appendChild($rootNode);
+        $this->getLogger()->debug(sprintf('Created %d XML nodes in %.2fs, adding source', $total, microtime(true) - $startedAt));
 
         $this->addSource($rootNode, $xml, $originalContent);
+        $this->getLogger()->debug(sprintf('Added source, elapsed=%.2fs, peakMemory=%dB', microtime(true) - $startedAt, memory_get_peak_usage(true)));
 
-        return $xml->saveXML();
+        $result = $xml->saveXML();
+        $this->getLogger()->debug(sprintf('Saved XML, elapsed=%.2fs, size=%d', microtime(true) - $startedAt, strlen((string)$result)));
+
+        return $result;
     }
 
     private function addSource(\DOMNode $root, \DOMDocument $xml, $content): void
