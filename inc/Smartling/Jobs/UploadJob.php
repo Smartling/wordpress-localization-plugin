@@ -128,6 +128,14 @@ class UploadJob extends JobAbstract
             try {
                 $this->wpProxy->do_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, $item);
             } catch (\Throwable $e) {
+                $this->getLogger()->error(sprintf(
+                    'Upload failed for submissionIds="%s": %s: %s in %s:%d',
+                    implode(', ', array_map(static fn($s) => $s->getId(), $item->getSubmissions())),
+                    get_class($e),
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine(),
+                ));
                 $this->failItem($item, 'Failing', $e->getMessage());
             }
             $this->uploadQueueManager->complete($item);

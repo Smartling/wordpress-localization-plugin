@@ -27,7 +27,9 @@ class SmartlingCoreTraitTest extends TestCase
     public function testPrepareTargetContentClonedGuid()
     {
         $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
-        $wpProxy->method('apply_filters')->willReturnArgument(2);
+        $wpProxy->method('apply_filters')->willReturnCallback(
+            static fn(string $tag, mixed ...$args) => $tag === ExportedAPI::FILTER_SMARTLING_TARGET_ENTITY_FIELD ? $args[0] : $args[1],
+        );
 
         $x = new SmartlingCore(
             $this->createMock(AcfDynamicSupport::class),
@@ -71,5 +73,68 @@ class SmartlingCoreTraitTest extends TestCase
         $submission->expects($this->never())->method('setLastError');
 
         $x->prepareTargetContent($submission);
+    }
+
+    public function testPrepareTargetContentAppliesTargetEntityFieldFilter()
+    {
+        $calls = [];
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('apply_filters')->willReturnCallback(
+            function (string $tag, mixed ...$args) use (&$calls) {
+                if ($tag === ExportedAPI::FILTER_SMARTLING_TARGET_ENTITY_FIELD) {
+                    $calls[] = $args;
+
+                    return $args[1] === 'post_mime_type' ? 'sanitized' : $args[0];
+                }
+
+                return $args[1];
+            },
+        );
+
+        $x = new SmartlingCore(
+            $this->createMock(AcfDynamicSupport::class),
+            $this->createMock(ExternalContentManager::class),
+            $this->createMock(FileUriHelper::class),
+            $this->createMock(GutenbergBlockHelper::class),
+            $this->createMock(PostContentHelper::class),
+            $this->createMock(UploadQueueManager::class),
+            $this->createMock(XmlHelper::class),
+            $this->createMock(TestRunHelper::class),
+            $wpProxy,
+        );
+
+        $entity = new PostEntityStd();
+        $entity->post_mime_type = 'draft-revision';
+        $entity->post_title = 'title';
+
+        $contentHelper = $this->createMock(ContentHelper::class);
+        $contentHelper->method('readSourceContent')->willReturn($entity);
+        $contentHelper->expects($this->once())->method('writeTargetContent')
+            ->willReturnCallback(function (SubmissionEntity $_, Entity $entity) {
+                $this->assertSame('sanitized', $entity->post_mime_type);
+                $this->assertSame('title', $entity->post_title);
+
+                return $entity;
+            });
+
+        $x->setContentHelper($contentHelper);
+        $x->setContentSerializationHelper($this->createMock(ContentSerializationHelper::class));
+        $x->setFieldsFilter($this->createMock(FieldsFilterHelper::class));
+        $x->setSettingsManager($this->createMock(SettingsManager::class));
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->method('storeEntity')->willReturnArgument(0);
+        $x->setSubmissionManager($submissionManager);
+        $x->setTranslationHelper($this->createMock(TranslationHelper::class));
+
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getTargetId')->willReturn(0);
+        $submission->method('isCloned')->willReturn(true);
+
+        $x->prepareTargetContent($submission);
+
+        $this->assertContains('post_mime_type', array_column($calls, 1));
+        foreach ($calls as $call) {
+            $this->assertSame($submission, $call[2]);
+        }
     }
 }

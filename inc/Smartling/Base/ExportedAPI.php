@@ -132,6 +132,16 @@ interface ExportedAPI
     public const FILTER_SMARTLING_METADATA_FIELD_PROCESS = 'smartling_metadata_string_process';
 
     /**
+     * Filter to modify a field of the target entity (for example a post) before it is created from the source entity.
+     * Unlike {@see FILTER_SMARTLING_METADATA_FIELD_PROCESS}, the value is the first argument, so the value returned by
+     * a callback is what the next callback and the target entity receive.
+     * @param mixed field value
+     * @param string entity field name
+     * @param SubmissionEntity
+     */
+    public const FILTER_SMARTLING_TARGET_ENTITY_FIELD = 'smartling_target_entity_field';
+
+    /**
      * Filter to modify meta value on translation
      * @param SubmissionEntity
      * @param mixed field name
