@@ -228,7 +228,7 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
     /**
      * The target of a revision must be an ordinary post: no revision status and no parent (the original is the parent).
      */
-    public function sanitizeTargetField(mixed $value, mixed $name, mixed $submission = null)
+    public function sanitizeTargetField(mixed $value, mixed $name, mixed $submission = null): mixed
     {
         if ($name === 'post_mime_type' && in_array($value, self::REVISION_STATUSES, true)) {
             return '';
