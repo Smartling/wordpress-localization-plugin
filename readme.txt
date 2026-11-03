@@ -63,8 +63,7 @@ Additional information on the Smartling Connector for WordPress can be found [he
 
 == Changelog ==
 = 5.8.2 =
-* Fixed uploads failing silently, leaving the Smartling job empty, when PublishPress Revisions is active and a post has array-valued metadata such as `_rvy_updated_by`. Revision status and parent are now reset on the translated post as intended.
-* Upload failures are now logged as errors with the exception class and location.
+* Fixed uploads failing silently, leaving the Smartling job empty, when PublishPress Revisions is active and a post has array-valued metadata
 
 = 5.8.1 =
 * Added profile selector for sites with multiple active profiles.
