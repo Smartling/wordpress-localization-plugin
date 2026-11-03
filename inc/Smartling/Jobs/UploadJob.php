@@ -12,6 +12,7 @@ use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Models\UploadQueueItem;
 use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionManager;
+use Smartling\Vendor\Psr\Log\LogLevel;
 
 class UploadJob extends JobAbstract
 {
@@ -128,26 +129,35 @@ class UploadJob extends JobAbstract
             try {
                 $this->wpProxy->do_action(ExportedAPI::ACTION_SMARTLING_SEND_FOR_TRANSLATION, $item);
             } catch (\Throwable $e) {
-                $this->getLogger()->error(sprintf(
-                    'Upload failed for submissionIds="%s": %s: %s in %s:%d',
-                    implode(', ', array_map(static fn($s) => $s->getId(), $item->getSubmissions())),
-                    get_class($e),
+                $this->failItem(
+                    $item,
+                    'Failing',
                     $e->getMessage(),
-                    $e->getFile(),
-                    $e->getLine(),
-                ));
-                $this->failItem($item, 'Failing', $e->getMessage());
+                    sprintf('%s: %s in %s:%d', get_class($e), $e->getMessage(), $e->getFile(), $e->getLine()),
+                    LogLevel::ERROR,
+                );
             }
             $this->uploadQueueManager->complete($item);
             $this->placeLockFlag(true);
         }
     }
 
-    private function failItem(UploadQueueItem $item, string $logVerb, string $errorMessage, ?string $logMessage = null): void
-    {
+    private function failItem(
+        UploadQueueItem $item,
+        string $logVerb,
+        string $errorMessage,
+        ?string $logMessage = null,
+        string $logLevel = LogLevel::NOTICE,
+    ): void {
         $logMessage ??= $errorMessage;
         foreach ($item->getSubmissions() as $submission) {
-            $this->getLogger()->notice("$logVerb submissionId={$submission->getId()}: $logMessage");
+            $message = "$logVerb submissionId={$submission->getId()}: $logMessage";
+            // named methods, not log(): LevelLogger adds its string context only in those
+            if ($logLevel === LogLevel::ERROR) {
+                $this->getLogger()->error($message);
+            } else {
+                $this->getLogger()->notice($message);
+            }
             $this->submissionManager->setErrorMessage($submission, $errorMessage);
         }
     }

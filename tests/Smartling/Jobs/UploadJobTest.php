@@ -105,8 +105,12 @@ class UploadJobTest extends TestCase
 
         $logger = $this->createMock(LoggerInterface::class);
         $errors = [];
+        $notices = [];
         $logger->method('error')->willReturnCallback(function ($message) use (&$errors) {
             $errors[] = (string)$message;
+        });
+        $logger->method('notice')->willReturnCallback(function ($message) use (&$notices) {
+            $notices[] = (string)$message;
         });
         $property = new \ReflectionProperty(\Smartling\Jobs\JobAbstract::class, 'logger');
         $property->setValue($job, $logger);
@@ -114,7 +118,8 @@ class UploadJobTest extends TestCase
         $job->run('');
 
         $this->assertCount(1, $errors);
-        $this->assertStringContainsString('submissionIds="1"', $errors[0]);
+        $this->assertSame([], $notices, 'the failure must be logged once, not as both an error and a notice');
+        $this->assertStringContainsString('submissionId=1', $errors[0]);
         $this->assertStringContainsString('TypeError', $errors[0]);
         $this->assertStringContainsString('array given', $errors[0]);
         $this->assertStringContainsString('UploadJobTest.php', $errors[0]);
