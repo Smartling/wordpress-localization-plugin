@@ -4,7 +4,7 @@ Tags: translation, localization, multilingual, internationalization, smartling
 Requires at least: 5.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 5.8.1
+Stable tag: 5.8.2
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 5.8.2 =
+* Fixed uploads failing silently, leaving the Smartling job empty, when PublishPress Revisions is active and a post has array-valued metadata
+
 = 5.8.1 =
 * Added profile selector for sites with multiple active profiles.
 * Improved Elementor query support: term and post IDs used by Posts, Loop Grid and Loop Carousel queries are now detected and replaced with the translated ones, only for the query mode the widget actually uses. Query terms are stored by Elementor Pro as term taxonomy IDs and are converted accordingly. Excluded terms and posts are replaced only if they are already translated when the page translation is downloaded; if they are translated later, download the page again to update the query.

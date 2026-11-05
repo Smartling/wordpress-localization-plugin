@@ -73,7 +73,7 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
         $this->wpProxy->add_action('before_delete_post', [$this, 'moveSubmissions'], 5);
         $this->wpProxy->add_action('revision_applied', [$this, 'resumeChangeDetection']);
         $this->wpProxy->add_action('shutdown', [$this, 'resumeAllChangeDetection']);
-        $this->wpProxy->add_filter(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, [$this, 'sanitizeTargetField'], 5, 3);
+        $this->wpProxy->add_filter(ExportedAPI::FILTER_SMARTLING_TARGET_ENTITY_FIELD, [$this, 'sanitizeTargetField'], 10, 3);
     }
 
     /**
@@ -228,7 +228,7 @@ class PublishPressRevisions extends PluggableAbstract implements WPHookInterface
     /**
      * The target of a revision must be an ordinary post: no revision status and no parent (the original is the parent).
      */
-    public function sanitizeTargetField(mixed $name, mixed $value, mixed $submission = null)
+    public function sanitizeTargetField(mixed $value, mixed $name, mixed $submission = null): mixed
     {
         if ($name === 'post_mime_type' && in_array($value, self::REVISION_STATUSES, true)) {
             return '';

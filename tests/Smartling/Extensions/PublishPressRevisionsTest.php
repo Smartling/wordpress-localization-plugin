@@ -3,6 +3,7 @@
 namespace Smartling\Tests\Extensions;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\LocalizationPluginProxyInterface;
 use Smartling\Extensions\PublishPressRevisions;
 use Smartling\Helpers\ContentSerializationHelper;
@@ -205,10 +206,10 @@ class PublishPressRevisionsTest extends TestCase
     {
         $x = $this->x();
         foreach (PublishPressRevisions::REVISION_STATUSES as $status) {
-            $this->assertSame('', $x->sanitizeTargetField('post_mime_type', $status));
+            $this->assertSame('', $x->sanitizeTargetField($status, 'post_mime_type'));
         }
-        $this->assertSame('image/png', $x->sanitizeTargetField('post_mime_type', 'image/png'));
-        $this->assertSame('title', $x->sanitizeTargetField('post_title', 'title'));
+        $this->assertSame('image/png', $x->sanitizeTargetField('image/png', 'post_mime_type'));
+        $this->assertSame('title', $x->sanitizeTargetField('title', 'post_title'));
     }
 
     public function testParentIsResetOnlyForRevisions(): void
@@ -221,7 +222,109 @@ class PublishPressRevisionsTest extends TestCase
         $wp->method('getPostMeta')->willReturn('');
         $x = $this->x(null, null, $wp);
 
-        $this->assertSame(0, $x->sanitizeTargetField('post_parent', 10, $this->submission(20, 0)));
-        $this->assertSame(10, $x->sanitizeTargetField('post_parent', 10, $this->submission(30, 0)));
+        $this->assertSame(0, $x->sanitizeTargetField(10, 'post_parent', $this->submission(20, 0)));
+        $this->assertSame(10, $x->sanitizeTargetField(10, 'post_parent', $this->submission(30, 0)));
+    }
+
+    /**
+     * @return array<string, array<int, array<int, callable>>> tag => priority => callbacks
+     */
+    private function registerAndCaptureFilters(PublishPressRevisions $x, WordpressFunctionProxyHelper $wp): array
+    {
+        $captured = [];
+        $wp->method('add_filter')->willReturnCallback(function (string $tag, callable $callback, int $priority = 10) use (&$captured) {
+            $captured[$tag][$priority][] = $callback;
+
+            return true;
+        });
+        $x->register();
+
+        return $captured;
+    }
+
+    private function supportedWordpress(): WordpressFunctionProxyHelper
+    {
+        $wp = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wp->method('get_current_blog_id')->willReturn(1);
+        $wp->method('get_plugins')->willReturn(['revisionary/revisionary.php' => ['Version' => '3.5.0']]);
+        $wp->method('is_plugin_active')->willReturn(true);
+
+        return $wp;
+    }
+
+    private function revisionsWithSupportedPlugin(WordpressFunctionProxyHelper $wp): PublishPressRevisions
+    {
+        $pluginHelper = $this->createMock(PluginHelper::class);
+        $pluginHelper->method('versionInRange')->willReturn(true);
+
+        return new PublishPressRevisions(
+            $pluginHelper,
+            $wp,
+            $this->createMock(LocalizationPluginProxyInterface::class),
+            $this->createMock(SubmissionManager::class),
+            $this->createMock(DetectChangesHelper::class),
+            $this->createMock(ContentSerializationHelper::class),
+        );
+    }
+
+    /**
+     * Mimics WordPress apply_filters(): callbacks run by priority, and the value returned by one callback replaces the
+     * first argument for the next one.
+     *
+     * @param array<int, array<int, callable>> $callbacks priority => callbacks
+     */
+    private function applyFilters(array $callbacks, mixed ...$args): mixed
+    {
+        ksort($callbacks);
+        $value = $args[0];
+        foreach ($callbacks as $priorityCallbacks) {
+            foreach ($priorityCallbacks as $callback) {
+                $value = $callback($value, ...array_slice($args, 1));
+            }
+        }
+
+        return $value;
+    }
+
+    public function testMetadataFieldNameIsNotReplacedByFieldValue(): void
+    {
+        $wp = $this->supportedWordpress();
+        $captured = $this->registerAndCaptureFilters($this->revisionsWithSupportedPlugin($wp), $wp);
+
+        $namesSeenByFieldProcessor = [];
+        // what MetaFieldProcessorManager::handlePostTranslationFields does: takes the name first, returns the value
+        $captured[ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS][10][] =
+            function (mixed $fieldName, mixed $fieldValue) use (&$namesSeenByFieldProcessor) {
+                $namesSeenByFieldProcessor[] = $fieldName;
+                // MetaFieldProcessorManager::getProcessor() accepts only string names
+                $this->assertIsString($fieldName);
+
+                return $fieldValue;
+            };
+
+        $arrayValue = [160 => '2026-10-23 19:39:17'];
+        $result = $this->applyFilters(
+            $captured[ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS],
+            '_rvy_updated_by',
+            $arrayValue,
+            $this->submission(20, 0),
+        );
+
+        $this->assertSame(['_rvy_updated_by'], $namesSeenByFieldProcessor);
+        $this->assertSame($arrayValue, $result);
+    }
+
+    public function testTargetFieldsAreSanitizedByDedicatedFilterWithValueAsFirstArgument(): void
+    {
+        $wp = $this->supportedWordpress();
+        $wp->method('get_post')->willReturn((object)['post_mime_type' => 'draft-revision']);
+        $wp->method('getPostMeta')->willReturn('');
+        $captured = $this->registerAndCaptureFilters($this->revisionsWithSupportedPlugin($wp), $wp);
+
+        $callbacks = $captured[ExportedAPI::FILTER_SMARTLING_TARGET_ENTITY_FIELD] ?? [];
+        $this->assertNotEmpty($callbacks, 'sanitizing of target fields must be registered on its own filter');
+        $this->assertSame('', $this->applyFilters($callbacks, 'draft-revision', 'post_mime_type', $this->submission(20, 0)));
+        $this->assertSame(0, $this->applyFilters($callbacks, 10, 'post_parent', $this->submission(20, 0)));
+        $this->assertSame('title', $this->applyFilters($callbacks, 'title', 'post_title', $this->submission(20, 0)));
     }
 }

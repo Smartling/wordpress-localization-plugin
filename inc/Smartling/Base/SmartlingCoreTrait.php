@@ -70,7 +70,8 @@ trait SmartlingCoreTrait
 
         if ($targetContent instanceof EntityAbstract) {
             foreach ($filteredData['entity'] ?? [] as $k => $v) {
-                $targetContent->{$k} = $this->wpProxy->apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $k, $v, $submission);
+                $processed = $this->wpProxy->apply_filters(ExportedAPI::FILTER_SMARTLING_METADATA_FIELD_PROCESS, $k, $v, $submission);
+                $targetContent->{$k} = $this->wpProxy->apply_filters(ExportedAPI::FILTER_SMARTLING_TARGET_ENTITY_FIELD, $processed, $k, $submission);
             }
         }
 

@@ -19,6 +19,7 @@ use Smartling\Settings\SettingsManager;
 use Smartling\Submissions\SubmissionEntity;
 use Smartling\Submissions\SubmissionManager;
 use Smartling\Tests\Mocks\WordpressFunctionsMockHelper;
+use Smartling\Vendor\Psr\Log\LoggerInterface;
 
 class UploadJobTest extends TestCase
 {
@@ -83,6 +84,45 @@ class UploadJobTest extends TestCase
         $this->buildJob($uploadQueueManager, $submissionManager, static function () {
             throw new \Error('boom');
         })->run('');
+    }
+
+    /**
+     * An exception thrown while sending content (for example a TypeError from a field processor) fails the
+     * submission, and the cause must reach the log at error level with the exception class and location, not only
+     * as a notice, so it is not mistaken for a routine skip.
+     */
+    public function testUploadThrowableIsLoggedAsErrorWithExceptionClassAndLocation()
+    {
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getId')->willReturn(1);
+        $submission->method('getFileUri')->willReturn('file.xml');
+        $submission->method('getSourceBlogId')->willReturn(1);
+        $item = $this->buildItem($submission);
+
+        $job = $this->buildJob($this->buildQueueManager($item), null, static function () {
+            throw new \TypeError('array given');
+        });
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $errors = [];
+        $notices = [];
+        $logger->method('error')->willReturnCallback(function ($message) use (&$errors) {
+            $errors[] = (string)$message;
+        });
+        $logger->method('notice')->willReturnCallback(function ($message) use (&$notices) {
+            $notices[] = (string)$message;
+        });
+        $property = new \ReflectionProperty(\Smartling\Jobs\JobAbstract::class, 'logger');
+        $property->setValue($job, $logger);
+
+        $job->run('');
+
+        $this->assertCount(1, $errors);
+        $this->assertSame([], $notices, 'the failure must be logged once, not as both an error and a notice');
+        $this->assertStringContainsString('submissionId=1', $errors[0]);
+        $this->assertStringContainsString('TypeError', $errors[0]);
+        $this->assertStringContainsString('array given', $errors[0]);
+        $this->assertStringContainsString('UploadJobTest.php', $errors[0]);
     }
 
     /**
