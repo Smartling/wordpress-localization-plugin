@@ -95,11 +95,29 @@ class XmlHelper
             $profile = null;
         }
         $xml = $this->setTranslationComments($this->initXml(), $profile);
+        // Resolved once per file: looking the profile up for every row made XML generation cost grow with the row count (WP-1025)
         $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
         $rootNode = $xml->createElement(self::XML_ROOT_NODE_NAME);
+        $startedAt = hrtime(true);
+        $slowestRowName = '';
+        $slowestRowNanoseconds = 0;
         foreach ($source as $name => $value) {
-            $rootNode->appendChild($this->rowToXMLNode($xml, $name, $value, $settings['key'], $submission));
+            $rowStartedAt = hrtime(true);
+            $rootNode->appendChild($this->rowToXMLNode($xml, $name, $value, $settings, $submission));
+            $rowNanoseconds = hrtime(true) - $rowStartedAt;
+            if ($rowNanoseconds > $slowestRowNanoseconds) {
+                $slowestRowNanoseconds = $rowNanoseconds;
+                $slowestRowName = (string)$name;
+            }
         }
+        $this->getLogger()->info(sprintf(
+            'Created XML rows for submissionId=%s: rows=%d, seconds=%.3f, slowestRow="%s", slowestRowSeconds=%.3f',
+            $submission->getId(),
+            count($source),
+            (hrtime(true) - $startedAt) / 1e9,
+            $slowestRowName,
+            $slowestRowNanoseconds / 1e9,
+        ));
         $xml->appendChild($rootNode);
 
         $this->addSource($rootNode, $xml, $originalContent);
@@ -114,11 +132,14 @@ class XmlHelper
         $root->appendChild($node);
     }
 
-    private function rowToXMLNode(DOMDocument $document, $name, $value, $keySettings, SubmissionEntity $submission)
+    /**
+     * @param array $settings result of ContentSerializationHelper::prepareFieldProcessorValues() for the submission
+     */
+    private function rowToXMLNode(DOMDocument $document, $name, $value, array $settings, SubmissionEntity $submission)
     {
         $node = $document->createElement(self::XML_STRING_NODE_NAME);
         $node->setAttributeNode(new DOMAttr('name', $name));
-        foreach ($keySettings as $key => $fields) {
+        foreach ($settings['key'] as $key => $fields) {
             foreach ($fields as $field) {
                 if (str_contains($name, $field)) {
                     $node->setAttributeNode(new DOMAttr('key', $key));
@@ -129,7 +150,7 @@ class XmlHelper
         $params = new TranslationStringFilterParameters();
         $params->setDom($document);
         $params->setNode($node);
-        $params->setFilterSettings($this->contentSerializationHelper->prepareFieldProcessorValues($submission));
+        $params->setFilterSettings($settings);
         $params->setSubmission($submission);
         $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING, $params);
 
@@ -178,6 +199,7 @@ class XmlHelper
     {
         $nodeList = $xpath->query('/' . self::XML_ROOT_NODE_NAME . '/' . self::XML_STRING_NODE_NAME);
         $fields = [];
+        $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
         for ($i = 0; $i < $nodeList->length; $i++) {
             $item = $nodeList->item($i);
             if ($item === null) {
@@ -187,7 +209,7 @@ class XmlHelper
             $params = new TranslationStringFilterParameters();
             $params->setDom($item->ownerDocument);
             $params->setNode($item);
-            $params->setFilterSettings($this->contentSerializationHelper->prepareFieldProcessorValues($submission));
+            $params->setFilterSettings($settings);
             $params->setSubmission($submission);
 
             $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, $params);

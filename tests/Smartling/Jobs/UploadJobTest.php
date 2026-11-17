@@ -5,6 +5,7 @@ namespace Smartling\Tests\Smartling\Jobs;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
+use Smartling\Base\ExportedAPI;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Helpers\Cache;
@@ -372,6 +373,103 @@ class UploadJobTest extends TestCase
         });
 
         return $uploadQueueManager;
+    }
+
+    /**
+     * Hosts kill long requests (WP Engine after about 90 seconds) without running shutdown handlers, so the job stops
+     * taking new items after its time budget instead of being killed in the middle of one (WP-1025).
+     * @dataProvider timeBudgetDataProvider
+     */
+    public function testTimeBudget(int $items, int $secondsPerItem, mixed $filteredBudget, int $expectedProcessed): void
+    {
+        $queue = [];
+        for ($i = 0; $i < $items; $i++) {
+            $queue[] = $this->buildItem();
+        }
+        $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+        $uploadQueueManager->method('length')->willReturn($items);
+        $uploadQueueManager->expects($this->exactly($expectedProcessed))->method('dequeue')
+            ->willReturnCallback(static function () use (&$queue) {
+                return array_shift($queue);
+            });
+        $uploadQueueManager->expects($this->exactly($expectedProcessed))->method('complete');
+
+        $job = $this->buildJobWithClock($uploadQueueManager, $secondsPerItem, $filteredBudget);
+        $job->run('');
+    }
+
+    public function timeBudgetDataProvider(): array
+    {
+        return [
+            'stops between items once the budget is used up' => [4, 25, 60, 3],
+            'all items within the budget' => [3, 10, 60, 3],
+            'the first item is always processed' => [2, 100, 60, 1],
+            'budget of 0 processes the whole queue' => [5, 100, 0, 5],
+            'negative budget processes the whole queue' => [5, 100, -1, 5],
+            'filter returning a numeric string' => [4, 25, '30', 2],
+        ];
+    }
+
+    public function testTimeBudgetDefaultIsPassedToFilter(): void
+    {
+        $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+        $uploadQueueManager->method('length')->willReturn(0);
+
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('get_current_blog_id')->willReturn(1);
+        $wpProxy->expects($this->once())->method('apply_filters')
+            ->with(ExportedAPI::FILTER_SMARTLING_UPLOAD_JOB_TIME_BUDGET, UploadJob::DEFAULT_TIME_BUDGET_SECONDS)
+            ->willReturnArgument(1);
+
+        (new UploadJob(
+            $this->createMock(ApiWrapperInterface::class),
+            $this->createMock(Cache::class),
+            $this->createMock(FileUriHelper::class),
+            $this->createMock(SettingsManager::class),
+            $this->createMock(SubmissionManager::class),
+            $uploadQueueManager,
+            $wpProxy,
+            0,
+            'hourly',
+        ))->run('');
+    }
+
+    /**
+     * Each item sent for translation advances the job's clock by $secondsPerItem.
+     */
+    private function buildJobWithClock(UploadQueueManager $uploadQueueManager, int $secondsPerItem, mixed $filteredBudget): UploadJob
+    {
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getProfileBySubmission')->willReturn($this->createMock(ConfigurationProfileEntity::class));
+
+        $job = null;
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        $wpProxy->method('get_current_blog_id')->willReturn(1);
+        $wpProxy->method('apply_filters')->willReturn($filteredBudget);
+        $wpProxy->method('do_action')->willReturnCallback(static function () use (&$job, $secondsPerItem) {
+            $job->now += $secondsPerItem;
+        });
+
+        $job = new class(
+            $this->createMock(ApiWrapperInterface::class),
+            $this->createMock(Cache::class),
+            $this->createMock(FileUriHelper::class),
+            $settingsManager,
+            $this->createMock(SubmissionManager::class),
+            $uploadQueueManager,
+            $wpProxy,
+            0,
+            'hourly',
+        ) extends UploadJob {
+            public float $now = 1000.0;
+
+            protected function getCurrentTime(): float
+            {
+                return $this->now;
+            }
+        };
+
+        return $job;
     }
 
     private function buildJob(

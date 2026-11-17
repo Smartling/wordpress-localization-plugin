@@ -167,6 +167,16 @@ interface ExportedAPI
     public const FILTER_SMARTLING_INJECT_SHORTCODE = 'smartling_inject_shortcode';
 
     /**
+     * Filter for the number of seconds after which an upload job run stops taking new items from the upload queue.
+     * The item in progress is always finished, the remaining ones are uploaded by the next run.
+     * Hosts that kill long requests (WP Engine kills them after about 90 seconds) need it below their limit.
+     * The default is 0: return 0 or less to process the whole queue in one run.
+     * @param int
+     * @return int
+     */
+    public const FILTER_SMARTLING_UPLOAD_JOB_TIME_BUDGET = 'smartling_upload_job_time_budget';
+
+    /**
      * Handler should add an array that defines a post type.
      * @param array
      * @return array

@@ -3,6 +3,7 @@
 namespace Smartling\Tests\Smartling\Base;
 
 use PHPUnit\Framework\TestCase;
+use Smartling\ApiWrapperInterface;
 use Smartling\ContentTypes\ExternalContentManager;
 use Smartling\DbAl\UploadQueueManager;
 use Smartling\Exception\SmartlingTargetPlaceholderCreationFailedException;
@@ -465,6 +466,95 @@ class SmartlingCoreTest extends TestCase
         $core->expects(self::once())->method('bulkSubmit')->with($item);
 
         $core->sendForTranslation($item);
+    }
+
+    /**
+     * Hosts kill long requests without running shutdown handlers. Once the file is in Smartling, the queue item
+     * must already be gone, or a kill before UploadJob completes it leads to re-uploads and failed submissions (WP-1025).
+     */
+    public function testBulkSubmitCompletesQueueItemRightAfterSuccessfulUpload()
+    {
+        $calls = [];
+        $item = $this->bulkSubmitItem();
+        $apiWrapper = $this->createMock(ApiWrapperInterface::class);
+        $apiWrapper->expects(self::once())->method('uploadContent')
+            ->with($item->getSubmissions()[0], '<xml/>', 'batchUid', ['de-DE'])
+            ->willReturnCallback(static function () use (&$calls) {
+                $calls[] = 'uploadContent';
+                return true;
+            });
+        $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+        $uploadQueueManager->expects(self::once())->method('complete')->with($item)
+            ->willReturnCallback(static function () use (&$calls) {
+                $calls[] = 'complete';
+            });
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->expects(self::never())->method('setErrorMessage');
+
+        $this->buildCoreForBulkSubmit($apiWrapper, $uploadQueueManager, $submissionManager)->bulkSubmit($item);
+
+        self::assertSame(['uploadContent', 'complete'], $calls);
+    }
+
+    /**
+     * A failed upload leaves completing the item to UploadJob, after the error was recorded on the submissions.
+     */
+    public function testBulkSubmitDoesNotCompleteQueueItemWhenUploadFails()
+    {
+        $item = $this->bulkSubmitItem();
+        $apiWrapper = $this->createMock(ApiWrapperInterface::class);
+        $apiWrapper->method('uploadContent')->willThrowException(new \RuntimeException('batch.not.suitable'));
+        $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+        $uploadQueueManager->expects(self::never())->method('complete');
+        $submissionManager = $this->createMock(SubmissionManager::class);
+        $submissionManager->expects(self::once())->method('setErrorMessage')
+            ->with($item->getSubmissions()[0], self::stringContains('batch.not.suitable'));
+
+        $this->buildCoreForBulkSubmit($apiWrapper, $uploadQueueManager, $submissionManager)->bulkSubmit($item);
+    }
+
+    private function bulkSubmitItem(): UploadQueueItem
+    {
+        $submission = $this->createMock(SubmissionEntity::class);
+        $submission->method('getId')->willReturn(1);
+        $submission->method('getFileUri')->willReturn('file.xml');
+        $submission->method('getContentType')->willReturn('page');
+        $submission->method('getSourceBlogId')->willReturn(1);
+        $submission->method('getSourceId')->willReturn(10);
+
+        return new UploadQueueItem([$submission], 'batchUid', new IntStringPairCollection([new IntStringPair(1, 'de-DE')]), 42);
+    }
+
+    private function buildCoreForBulkSubmit(
+        ApiWrapperInterface $apiWrapper,
+        UploadQueueManager $uploadQueueManager,
+        SubmissionManager $submissionManager,
+    ): SmartlingCore {
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getProfileBySubmission')->willReturn($this->createMock(ConfigurationProfileEntity::class));
+
+        $core = $this->getMockBuilder(SmartlingCore::class)
+            ->setConstructorArgs([
+                $this->createMock(AcfDynamicSupport::class),
+                $this->createMock(ExternalContentManager::class),
+                $this->createMock(FileUriHelper::class),
+                $this->createMock(GutenbergBlockHelper::class),
+                $this->createMock(PostContentHelper::class),
+                $uploadQueueManager,
+                $this->createMock(XmlHelper::class),
+                $this->createMock(TestRunHelper::class),
+                $this->createMock(WordpressFunctionProxyHelper::class),
+            ])
+            ->onlyMethods(['getApiWrapper', 'getLogger', 'getSettingsManager', 'getSubmissionManager', 'getXMLFiltered', 'prepareUpload'])
+            ->getMock();
+        $core->method('getApiWrapper')->willReturn($apiWrapper);
+        $core->method('getLogger')->willReturn($this->createMock(LoggerWithStringContext::class));
+        $core->method('getSettingsManager')->willReturn($settingsManager);
+        $core->method('getSubmissionManager')->willReturn($submissionManager);
+        $core->method('getXMLFiltered')->willReturn('<xml/>');
+        $core->method('prepareUpload')->willReturnArgument(0);
+
+        return $core;
     }
 
     private function cloneAttachmentProfile(): ConfigurationProfileEntity

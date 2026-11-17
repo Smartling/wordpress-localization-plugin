@@ -5,6 +5,8 @@ parameters:
   cron.interval.download: "5m"
   cron.interval.throttle: 120
   cron.job.default_ttl: 180
+  # upload job stops taking new queue items after this many seconds, 0 = no limit, see ExportedAPI::FILTER_SMARTLING_UPLOAD_JOB_TIME_BUDGET
+  cron.upload.time_budget_seconds: 0
 
 services:
   custom.scheduler.interval.helper:
@@ -30,6 +32,7 @@ services:
       - "@wp.proxy"
       - "%cron.interval.throttle%"
       - "%cron.interval.upload%"
+      - "%cron.upload.time_budget_seconds%"
 
   #
   # Cron collects info about submissions in statuses 'In Progress' and 'Completed'

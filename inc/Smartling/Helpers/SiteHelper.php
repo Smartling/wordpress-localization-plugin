@@ -37,6 +37,11 @@ class SiteHelper
     protected static array $_flatBlogIdCache = [];
 
     /**
+     * @var string[] blog id => label, for the rest of the request
+     */
+    protected static array $blogLabelCache = [];
+
+    /**
      * Fallback for direct run if WordPress functionality is not reachable
      * @throws SmartlingDirectRunRuntimeException
      */
@@ -185,6 +190,16 @@ class SiteHelper
      * @throws BlogNotFoundException
      */
     public function getBlogLabelById(LocalizationPluginProxyInterface $localizationPluginProxyInterface, int $blogId): string
+    {
+        // Every profile load resolves the labels of its source and target blogs, and resolving one switches blogs.
+        // On some multisites each switch costs more than the previous one, so labels are resolved once per request (WP-1025).
+        return static::$blogLabelCache[$blogId] ??= $this->resolveBlogLabel($localizationPluginProxyInterface, $blogId);
+    }
+
+    /**
+     * @throws BlogNotFoundException
+     */
+    protected function resolveBlogLabel(LocalizationPluginProxyInterface $localizationPluginProxyInterface, int $blogId): string
     {
         $blogName = $this->getBlogNameById($blogId);
         $locale = $localizationPluginProxyInterface->getBlogLocaleById($blogId);
