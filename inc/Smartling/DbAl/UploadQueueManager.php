@@ -197,8 +197,7 @@ SQL,
     }
 
     /**
-     * Removes the item from the queue. The upload completes the item as soon as its file is in Smartling, and
-     * UploadJob completes every item it processed afterwards; the second call for the same item is a no-op.
+     * Removes the item from the queue. A second call for the same item is a no-op.
      */
     public function complete(UploadQueueItem $item): void
     {

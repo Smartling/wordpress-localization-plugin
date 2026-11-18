@@ -67,9 +67,7 @@ class UploadJob extends JobAbstract
         $startedAt = $this->getCurrentTime();
         $timeBudgetSeconds = (int)$this->wpProxy->apply_filters(ExportedAPI::FILTER_SMARTLING_UPLOAD_JOB_TIME_BUDGET, $this->timeBudgetSeconds);
         while ($processed++ < $max) {
-            // Checked between items only, the item in progress is always finished. A host that kills the request
-            // (WP Engine, after about 90 seconds) would otherwise kill it in the middle of whichever item is
-            // running at that point, and that item would wait for its claim to go stale before it is retried (WP-1025).
+            // Checked between items only, so the item in progress always finishes
             $elapsedSeconds = $this->getCurrentTime() - $startedAt;
             if ($processed > 1 && $timeBudgetSeconds > 0 && $elapsedSeconds >= $timeBudgetSeconds) {
                 $this->getLogger()->info(sprintf(

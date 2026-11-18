@@ -191,8 +191,7 @@ class SiteHelper
      */
     public function getBlogLabelById(LocalizationPluginProxyInterface $localizationPluginProxyInterface, int $blogId): string
     {
-        // Every profile load resolves the labels of its source and target blogs, and resolving one switches blogs.
-        // On some multisites each switch costs more than the previous one, so labels are resolved once per request (WP-1025).
+        // Resolving a label switches blogs, which is slow on some multisites (WP-1025)
         return static::$blogLabelCache[$blogId] ??= $this->resolveBlogLabel($localizationPluginProxyInterface, $blogId);
     }
 

@@ -95,7 +95,7 @@ class XmlHelper
             $profile = null;
         }
         $xml = $this->setTranslationComments($this->initXml(), $profile);
-        // Resolved once per file: looking the profile up for every row made XML generation cost grow with the row count (WP-1025)
+        // Once per file, not per row (WP-1025)
         $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
         $rootNode = $xml->createElement(self::XML_ROOT_NODE_NAME);
         foreach ($source as $name => $value) {

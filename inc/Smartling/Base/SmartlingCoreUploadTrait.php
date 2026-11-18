@@ -469,10 +469,7 @@ trait SmartlingCoreUploadTrait
             ));
 
             if ($this->getApiWrapper()->uploadContent($submission, $xml, $item->getBatchUid(), $locales)) {
-                // The file is in Smartling now. Remove the queue item before anything else, so that a process killed
-                // from here on (hosts kill long requests without running shutdown handlers) does not leave a claimed
-                // item behind: it would be re-claimed after it goes stale, uploaded again or rejected by the already
-                // executed batch, and finally fail all its submissions although the upload succeeded (WP-1025).
+                // Complete before anything else: a process killed after the upload must not leave the item to be retried (WP-1025)
                 $this->getUploadQueueManager()->complete($item);
                 LiveNotificationController::pushNotification(
                     $profile->getProjectId(),

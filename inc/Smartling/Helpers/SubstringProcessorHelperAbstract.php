@@ -269,9 +269,8 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
     }
 
     /**
-     * Uses the settings XmlHelper resolved once for the whole file and passed with the string. Looking the profile
-     * up for every shortcode or block made XML generation cost grow with the content size (WP-1025).
-     * Falls back to a lookup when the caller passed no (or incomplete) settings.
+     * Uses the settings passed with the string, to avoid a profile lookup per shortcode or block (WP-1025).
+     * Falls back to a lookup when they are missing or incomplete.
      */
     private function getProfileFilterSettings(): array
     {
