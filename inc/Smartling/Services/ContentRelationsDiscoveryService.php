@@ -122,7 +122,7 @@ class ContentRelationsDiscoveryService
                 $carry[] = $item->ID;
                 return $carry;
             }, []);
-            $queueIds = $this->arrayHelper->add($queueIds, $this->bulkUpload(
+            $queueIds = array_merge($queueIds, $this->bulkUpload(
                 $authorize,
                 $menuItemIds,
                 ContentTypeNavigationMenuItem::WP_CONTENT_TYPE,
@@ -134,18 +134,23 @@ class ContentRelationsDiscoveryService
             ));
         }
         if ($enqueue) {
-            $queueIds = array_unique($queueIds);
-            $this->uploadQueueManager->enqueue(new IntegerIterator($queueIds), $this->apiWrapper->createBatch(
-                $profile,
-                $jobInfo->getJobUid(),
-                array_values(array_unique(array_map(static function (SubmissionEntity $submission) {
-                    return $submission->getFileUri();
-                }, $this->submissionManager->find([SubmissionEntity::FIELD_ID => $queueIds])))),
-                $authorize,
-            ));
+            $this->enqueueBulk($queueIds, $profile, $jobInfo, $authorize);
         }
 
         return $queueIds;
+    }
+
+    private function enqueueBulk(array $queueIds, ConfigurationProfileEntity $profile, JobEntity $jobInfo, bool $authorize): void
+    {
+        $queueIds = array_values(array_unique($queueIds));
+        $this->uploadQueueManager->enqueue(new IntegerIterator($queueIds), $this->apiWrapper->createBatch(
+            $profile,
+            $jobInfo->getJobUid(),
+            array_values(array_unique(array_map(static function (SubmissionEntity $submission) {
+                return $submission->getFileUri();
+            }, $this->submissionManager->find([SubmissionEntity::FIELD_ID => $queueIds])))),
+            $authorize,
+        ));
     }
 
     public function createSubmissions(UserTranslationRequest $request): void
@@ -157,14 +162,39 @@ class ContentRelationsDiscoveryService
         $jobInfo = new JobEntity($job->getName(), $job->getId(), $profile->getProjectId());
 
         if ($request->isBulk()) {
-            $this->bulkUpload($request->getJobInformation()->isAuthorize(),
+            $authorize = $request->getJobInformation()->isAuthorize();
+            $queueIds = $this->bulkUpload(
+                $authorize,
                 $request->getIds(),
                 $request->getContentType(),
                 $curBlogId,
                 $jobInfo,
                 $profile,
                 $request->getTargetBlogIds(),
+                false,
             );
+            // Related content selected in the bulk submit job wizard, keyed by target blog id, then content type
+            foreach ($request->getTargetBlogIds() as $targetBlogId) {
+                foreach ($request->getRelationsOrdered()[$targetBlogId] ?? [] as $contentType => $ids) {
+                    if ($contentType === $request->getContentType()) {
+                        $ids = array_diff($ids, $request->getIds());
+                    }
+                    if (count($ids) === 0) {
+                        continue;
+                    }
+                    $queueIds = array_merge($queueIds, $this->bulkUpload(
+                        $authorize,
+                        array_map('intval', array_values($ids)),
+                        $contentType,
+                        $curBlogId,
+                        $jobInfo,
+                        $profile,
+                        [$targetBlogId],
+                        false,
+                    ));
+                }
+            }
+            $this->enqueueBulk($queueIds, $profile, $jobInfo, $authorize);
             return;
         }
 

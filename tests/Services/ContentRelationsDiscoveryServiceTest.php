@@ -553,6 +553,113 @@ namespace Smartling\Tests\Services {
             ]));
         }
 
+        /**
+         * The bulk submit job wizard lets the user select related content (WP-973), the selection must be
+         * submitted along with the bulk-selected items, in the same batch (WP-1027).
+         */
+        public function testBulkSubmitHandlerSubmitsSelectedRelations()
+        {
+            $sourceBlogId = 1;
+            $targetBlogId = 2;
+            $contentType = 'customers';
+            $jobUid = 'abcdef123456';
+            $batchUid = 'batchUid';
+
+            $profile = $this->createMock(ConfigurationProfileEntity::class);
+
+            $settingsManager = $this->createMock(SettingsManager::class);
+            $settingsManager->method('resolveRequestedProfile')->willReturn($profile);
+
+            $submissionIds = [
+                "$contentType-48" => 1,
+                "$contentType-49" => 2,
+                'attachment-100' => 3,
+                'attachment-101' => 4,
+                'customers-category-7' => 5,
+            ];
+            $stored = [];
+            $submissionManager = $this->getMockBuilder(SubmissionManager::class)->disableOriginalConstructor()->getMock();
+            $submissionManager->method('findTargetBlogSubmission')->willReturnCallback(
+                function (string $type, int $sourceBlog, int $contentId, int $targetBlog) use ($submissionIds, $sourceBlogId, $targetBlogId) {
+                    $this->assertEquals($sourceBlogId, $sourceBlog);
+                    $this->assertEquals($targetBlogId, $targetBlog);
+                    $this->assertArrayHasKey("$type-$contentId", $submissionIds);
+                    $submission = $this->createMock(SubmissionEntity::class);
+                    $submission->method('getId')->willReturn($submissionIds["$type-$contentId"]);
+                    $submission->method('getContentType')->willReturn($type);
+                    $submission->method('getSourceId')->willReturn($contentId);
+                    $submission->method('getFileUri')->willReturn("$type-$contentId.xml");
+                    return $submission;
+                });
+            $submissionManager->method('storeEntity')->willReturnCallback(function (SubmissionEntity $submission) use (&$stored) {
+                $stored[] = $submission->getContentType() . '-' . $submission->getSourceId();
+                return $submission;
+            });
+            $submissionManager->method('find')->willReturnCallback(function (array $params) use ($submissionIds) {
+                $result = [];
+                foreach ($params[SubmissionEntity::FIELD_ID] as $id) {
+                    $submission = $this->createMock(SubmissionEntity::class);
+                    $submission->method('getFileUri')->willReturn(array_search($id, $submissionIds, true) . '.xml');
+                    $result[] = $submission;
+                }
+                return $result;
+            });
+
+            $apiWrapper = $this->createMock(ApiWrapper::class);
+            $apiWrapper->expects($this->once())->method('createBatch')->with(
+                $profile,
+                $jobUid,
+                ["$contentType-48.xml", "$contentType-49.xml", 'attachment-100.xml', 'attachment-101.xml', 'customers-category-7.xml'],
+                true,
+            )->willReturn($batchUid);
+
+            $uploadQueueManager = $this->createMock(UploadQueueManager::class);
+            $uploadQueueManager->expects($this->once())->method('enqueue')->willReturnCallback(
+                function (\ArrayIterator $ids, string $batch) use ($batchUid) {
+                    $this->assertEquals([1, 2, 3, 4, 5], $ids->getArrayCopy());
+                    $this->assertEquals($batchUid, $batch);
+                });
+
+            $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+            $wpProxy->method('get_current_blog_id')->willReturn($sourceBlogId);
+
+            $x = $this->getContentRelationDiscoveryService(
+                $apiWrapper,
+                settingsManager: $settingsManager,
+                submissionManager: $submissionManager,
+                wpProxy: $wpProxy,
+                uploadQueueManager: $uploadQueueManager,
+            );
+
+            $x->createSubmissions(UserTranslationRequest::fromArray([
+                'source' => ['contentType' => $contentType, 'id' => []],
+                'job' => [
+                    'id' => $jobUid,
+                    'name' => 'Job Name',
+                    'description' => '',
+                    'dueDate' => '',
+                    'timeZone' => 'Europe/Kiev',
+                    'authorize' => 'true',
+                ],
+                'targetBlogIds' => (string)$targetBlogId,
+                'ids' => [48, 49],
+                'relations' => [$targetBlogId => [
+                    'attachment' => ['100', '101'],
+                    // a bulk-selected item that is also related to another bulk-selected item must not be submitted twice
+                    $contentType => ['49'],
+                    'customers-category' => ['7'],
+                ]],
+            ]));
+
+            $this->assertEquals([
+                "$contentType-48",
+                "$contentType-49",
+                'attachment-100',
+                'attachment-101',
+                'customers-category-7',
+            ], $stored);
+        }
+
         public function testExistingMenuItemsGetSubmittedOnExistingMenuBulkSubmit()
         {
             $sourceBlogId = 1;
@@ -1108,6 +1215,7 @@ namespace Smartling\Tests\Services {
             GutenbergBlockHelper $gutenbergBlockHelper = null,
             MediaAttachmentRulesManager $mediaAttachmentRulesManager = null,
             ReplacerFactory $replacerFactory = null,
+            UploadQueueManager $uploadQueueManager = null,
         )
         {
             if ($apiWrapper === null) {
@@ -1158,7 +1266,7 @@ namespace Smartling\Tests\Services {
                 $fieldsFilterHelper,
                 $this->createMock(FileUriHelper::class),
                 $metaFieldProcessorManager,
-                $this->createMock(UploadQueueManager::class),
+                $uploadQueueManager ?? $this->createMock(UploadQueueManager::class),
                 $this->createMock(LocalizationPluginProxyInterface::class),
                 $this->createMock(AbsoluteLinkedAttachmentCoreHelper::class),
                 $this->createMock(ShortcodeHelper::class),
