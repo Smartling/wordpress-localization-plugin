@@ -67,6 +67,9 @@ Additional information on the Smartling Connector for WordPress can be found [he
 * Fixed files being uploaded again and the submissions then marked as failed when the host stopped the upload process right after the file was uploaded
 * Added the `smartling_upload_job_time_budget` filter: the number of seconds after which an upload job run stops starting new uploads and leaves the rest of the queue for the next run. Off by default; useful on hosts that stop long requests
 
+= 5.8.3 =
+* Fixed related content selected on the Bulk Submit page not being sent for translation
+
 = 5.8.2 =
 * Fixed uploads failing silently, leaving the Smartling job empty, when PublishPress Revisions is active and a post has array-valued metadata
 
