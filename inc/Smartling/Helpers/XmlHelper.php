@@ -98,26 +98,9 @@ class XmlHelper
         // Resolved once per file: looking the profile up for every row made XML generation cost grow with the row count (WP-1025)
         $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
         $rootNode = $xml->createElement(self::XML_ROOT_NODE_NAME);
-        $startedAt = hrtime(true);
-        $slowestRowName = '';
-        $slowestRowNanoseconds = 0;
         foreach ($source as $name => $value) {
-            $rowStartedAt = hrtime(true);
             $rootNode->appendChild($this->rowToXMLNode($xml, $name, $value, $settings, $submission));
-            $rowNanoseconds = hrtime(true) - $rowStartedAt;
-            if ($rowNanoseconds > $slowestRowNanoseconds) {
-                $slowestRowNanoseconds = $rowNanoseconds;
-                $slowestRowName = (string)$name;
-            }
         }
-        $this->getLogger()->info(sprintf(
-            'Created XML rows for submissionId=%s: rows=%d, seconds=%.3f, slowestRow="%s", slowestRowSeconds=%.3f',
-            $submission->getId(),
-            count($source),
-            (hrtime(true) - $startedAt) / 1e9,
-            $slowestRowName,
-            $slowestRowNanoseconds / 1e9,
-        ));
         $xml->appendChild($rootNode);
 
         $this->addSource($rootNode, $xml, $originalContent);
