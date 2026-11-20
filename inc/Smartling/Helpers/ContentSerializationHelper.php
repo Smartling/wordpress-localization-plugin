@@ -10,6 +10,11 @@ class ContentSerializationHelper
 {
     use LoggerSafeTrait;
 
+    /**
+     * Key in the prepareFieldProcessorValues() result: whether the ignore and copy-by-name rules are regular expressions.
+     */
+    public const FILTER_FIELD_NAME_REGEXP = 'fieldNameRegExp';
+
     public function __construct(private ContentHelper $contentHelper, private SettingsManager $settingsManager)
     {
     }
@@ -97,6 +102,7 @@ class ContentSerializationHelper
                 'name'   => [],
                 'regexp' => [],
             ],
+            self::FILTER_FIELD_NAME_REGEXP => false,
         ];
 
         try {
@@ -106,6 +112,7 @@ class ContentSerializationHelper
             $filter['key']['seo'] = array_map('trim', explode(PHP_EOL, $profile->getFilterFlagSeo()));
             $filter['copy']['name'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldName()));
             $filter['copy']['regexp'] = array_map('trim', explode(PHP_EOL, $profile->getFilterCopyByFieldValueRegex()));
+            $filter[self::FILTER_FIELD_NAME_REGEXP] = $profile->getFilterFieldNameRegExp();
 
             LogContextMixinHelper::addToContext('projectId', $profile->getProjectId());
         } catch (SmartlingDbException) {

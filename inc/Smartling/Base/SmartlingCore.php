@@ -48,6 +48,11 @@ class SmartlingCore extends SmartlingCoreAbstract
         $this->wpProxy->add_action(ExportedAPI::ACTION_SMARTLING_SYNC_MEDIA_ATTACHMENT, [$this, 'syncAttachment']);
     }
 
+    public function getUploadQueueManager(): UploadQueueManager
+    {
+        return $this->uploadQueueManager;
+    }
+
     public function cloneContent(SubmissionEntity $submission): void
     {
         $this->getLogger()->withStringContext([

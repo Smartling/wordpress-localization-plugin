@@ -4,7 +4,7 @@ Tags: translation, localization, multilingual, internationalization, smartling
 Requires at least: 5.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 5.8.3
+Stable tag: 5.8.4
 License: GPLv2 or later
 
 Translate content in WordPress quickly and seamlessly with Smartling, the industry-leading Translation Management System.
@@ -62,6 +62,11 @@ Additional information on the Smartling Connector for WordPress can be found [he
 3. Track translation status within WordPress from the Submissions Board. View overall progress of submitted translation requests as well as resend updated content.
 
 == Changelog ==
+= 5.8.4 =
+* Fixed uploads of content with many fields slowing down with every field on some multisites, which could make the host stop the upload before it finished
+* Fixed files being uploaded again and the submissions then marked as failed when the host stopped the upload process right after the file was uploaded
+* Added the `smartling_upload_job_time_budget` filter: the number of seconds after which an upload job run stops starting new uploads and leaves the rest of the queue for the next run. Off by default; useful on hosts that stop long requests
+
 = 5.8.3 =
 * Fixed related content selected on the Bulk Submit page not being sent for translation
 

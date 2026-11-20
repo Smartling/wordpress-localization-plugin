@@ -469,6 +469,8 @@ trait SmartlingCoreUploadTrait
             ));
 
             if ($this->getApiWrapper()->uploadContent($submission, $xml, $item->getBatchUid(), $locales)) {
+                // Complete before anything else: a process killed after the upload must not leave the item to be retried (WP-1025)
+                $this->getUploadQueueManager()->complete($item);
                 LiveNotificationController::pushNotification(
                     $profile->getProjectId(),
                     LiveNotificationController::getContentId($submission),

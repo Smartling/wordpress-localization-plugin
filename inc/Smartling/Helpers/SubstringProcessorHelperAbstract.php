@@ -252,11 +252,10 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
      */
     private function passProfileFilters(array $attributes)
     {
-        $submission = $this->getParams()->getSubmission();
         $fFilter = $this->getFieldsFilter();
 
-        $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
-        $removeAsRegExp = $this->settingsManager->getProfileBySubmission($submission)->getFilterFieldNameRegExp();
+        $settings = $this->getProfileFilterSettings();
+        $removeAsRegExp = $settings[ContentSerializationHelper::FILTER_FIELD_NAME_REGEXP];
         $attributes = $fFilter->removeFields($attributes, $settings['ignore'], $removeAsRegExp);
         $attributes = $fFilter->removeFields($attributes, $settings['copy']['name'], $removeAsRegExp);
 
@@ -267,6 +266,24 @@ abstract class SubstringProcessorHelperAbstract implements WPHookInterface
         $attributes = $fFilter->removeEmptyFields($attributes);
 
         return $attributes;
+    }
+
+    /**
+     * Uses the settings passed with the string, to avoid a profile lookup per shortcode or block (WP-1025).
+     * Falls back to a lookup when they are missing or incomplete.
+     */
+    private function getProfileFilterSettings(): array
+    {
+        $settings = $this->getParams()->getFilterSettings();
+        if (is_array($settings)
+            && is_array($settings['ignore'] ?? null)
+            && is_array($settings['copy']['name'] ?? null)
+            && is_array($settings['copy']['regexp'] ?? null)
+            && is_bool($settings[ContentSerializationHelper::FILTER_FIELD_NAME_REGEXP] ?? null)) {
+            return $settings;
+        }
+
+        return $this->contentSerializationHelper->prepareFieldProcessorValues($this->getParams()->getSubmission());
     }
 
     protected function preSendFiltering(array $attributes)

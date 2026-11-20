@@ -7,6 +7,8 @@ use PHPUnit\Framework\TestCase;
 use Smartling\ApiWrapperInterface;
 use Smartling\Exception\SmartlingDbException;
 use Smartling\Models\IntegerIterator;
+use Smartling\Models\IntStringPairCollection;
+use Smartling\Models\UploadQueueItem;
 use Smartling\Models\UploadQueueEntity;
 use Smartling\Settings\ConfigurationProfileEntity;
 use Smartling\Settings\SettingsManager;
@@ -292,6 +294,77 @@ class UploadQueueManagerTest extends TestCase {
      * unconfirmed claim, a second dequeue($blogId) call could claim (or have already
      * claimed) the same row, dispatching the same content for translation twice.
      */
+    /**
+     * The upload completes the item as soon as its file is in Smartling, then UploadJob completes
+     * every item it processed: the second call must not touch the queue or log a failed delete (WP-1025).
+     */
+    public function testCompleteDeletesItemOnlyOnce()
+    {
+        $queries = [];
+        $manager = $this->buildManagerWithQueryResults([1], $queries);
+        $item = new UploadQueueItem([], 'batchUid', new IntStringPairCollection(), 7);
+
+        $manager->complete($item);
+        $manager->complete($item);
+
+        $this->assertCount(1, $queries);
+        $this->assertStringStartsWith('DELETE', $queries[0]);
+    }
+
+    /**
+     * When the early delete fails, UploadJob's later call must try again instead of treating the item as completed.
+     */
+    public function testCompleteRetriesDeleteThatFailed()
+    {
+        $queries = [];
+        $manager = $this->buildManagerWithQueryResults([false, 1], $queries);
+        $item = new UploadQueueItem([], 'batchUid', new IntStringPairCollection(), 7);
+
+        $manager->complete($item);
+        $manager->complete($item);
+        $manager->complete($item);
+
+        $this->assertCount(2, $queries);
+    }
+
+    public function testCompleteTracksItemsSeparately()
+    {
+        $queries = [];
+        $manager = $this->buildManagerWithQueryResults([1, 1], $queries);
+
+        $manager->complete(new UploadQueueItem([], 'batchUid', new IntStringPairCollection(), 7));
+        $manager->complete(new UploadQueueItem([], 'batchUid', new IntStringPairCollection(), 8));
+
+        $this->assertCount(2, $queries);
+    }
+
+    /**
+     * @param array $results sequential query() return values
+     */
+    private function buildManagerWithQueryResults(array $results, array &$queries): UploadQueueManager
+    {
+        $this->mockDbAl();
+        $db = $this->getMockBuilder(DB::class)
+            ->setConstructorArgs([new class {
+                public string $base_prefix = '';
+                public function getRowArray() {}
+                public function query() {}
+            }])
+            ->onlyMethods(['getRowArray', 'query'])
+            ->getMock();
+        $db->method('query')->willReturnCallback(function ($query) use ($results, &$queries) {
+            $queries[] = $query;
+            return $results[count($queries) - 1];
+        });
+
+        return new UploadQueueManager(
+            $this->createMock(ApiWrapperInterface::class),
+            $this->createMock(SettingsManager::class),
+            $db,
+            $this->createMock(SubmissionManager::class),
+        );
+    }
+
     public function testDequeueDoesNotHandOutItemWhenClaimFails()
     {
         $this->mockDbAl();

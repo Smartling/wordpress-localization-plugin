@@ -29,6 +29,12 @@ class UploadQueueManager {
     public const STALE_CLAIM_SECONDS = 900;
 
     private string $tableName;
+
+    /**
+     * @var true[] ids of the items this request removed from the queue in complete()
+     */
+    private array $completedIds = [];
+
     public function __construct(
         private ApiWrapperInterface $api,
         private SettingsManager $settingsManager,
@@ -190,10 +196,19 @@ SQL,
         return $block;
     }
 
+    /**
+     * Removes the item from the queue. A second call for the same item is a no-op.
+     */
     public function complete(UploadQueueItem $item): void
     {
-        if (!$this->delete($item->getId())) {
-            $this->getLogger()->error("Failed to delete completed upload queue item id={$item->getId()}");
+        $id = $item->getId();
+        if (array_key_exists($id, $this->completedIds)) {
+            return;
+        }
+        if ($this->delete($id)) {
+            $this->completedIds[$id] = true;
+        } else {
+            $this->getLogger()->error("Failed to delete completed upload queue item id=$id");
         }
     }
 

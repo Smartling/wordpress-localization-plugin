@@ -95,10 +95,11 @@ class XmlHelper
             $profile = null;
         }
         $xml = $this->setTranslationComments($this->initXml(), $profile);
+        // Once per file, not per row (WP-1025)
         $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
         $rootNode = $xml->createElement(self::XML_ROOT_NODE_NAME);
         foreach ($source as $name => $value) {
-            $rootNode->appendChild($this->rowToXMLNode($xml, $name, $value, $settings['key'], $submission));
+            $rootNode->appendChild($this->rowToXMLNode($xml, $name, $value, $settings, $submission));
         }
         $xml->appendChild($rootNode);
 
@@ -114,11 +115,14 @@ class XmlHelper
         $root->appendChild($node);
     }
 
-    private function rowToXMLNode(DOMDocument $document, $name, $value, $keySettings, SubmissionEntity $submission)
+    /**
+     * @param array $settings result of ContentSerializationHelper::prepareFieldProcessorValues() for the submission
+     */
+    private function rowToXMLNode(DOMDocument $document, $name, $value, array $settings, SubmissionEntity $submission)
     {
         $node = $document->createElement(self::XML_STRING_NODE_NAME);
         $node->setAttributeNode(new DOMAttr('name', $name));
-        foreach ($keySettings as $key => $fields) {
+        foreach ($settings['key'] as $key => $fields) {
             foreach ($fields as $field) {
                 if (str_contains($name, $field)) {
                     $node->setAttributeNode(new DOMAttr('key', $key));
@@ -129,7 +133,7 @@ class XmlHelper
         $params = new TranslationStringFilterParameters();
         $params->setDom($document);
         $params->setNode($node);
-        $params->setFilterSettings($this->contentSerializationHelper->prepareFieldProcessorValues($submission));
+        $params->setFilterSettings($settings);
         $params->setSubmission($submission);
         $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING, $params);
 
@@ -178,6 +182,7 @@ class XmlHelper
     {
         $nodeList = $xpath->query('/' . self::XML_ROOT_NODE_NAME . '/' . self::XML_STRING_NODE_NAME);
         $fields = [];
+        $settings = $this->contentSerializationHelper->prepareFieldProcessorValues($submission);
         for ($i = 0; $i < $nodeList->length; $i++) {
             $item = $nodeList->item($i);
             if ($item === null) {
@@ -187,7 +192,7 @@ class XmlHelper
             $params = new TranslationStringFilterParameters();
             $params->setDom($item->ownerDocument);
             $params->setNode($item);
-            $params->setFilterSettings($this->contentSerializationHelper->prepareFieldProcessorValues($submission));
+            $params->setFilterSettings($settings);
             $params->setSubmission($submission);
 
             $params = apply_filters(ExportedAPI::FILTER_SMARTLING_TRANSLATION_STRING_RECEIVED, $params);

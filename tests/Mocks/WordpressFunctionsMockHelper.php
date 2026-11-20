@@ -41,6 +41,13 @@ namespace {
             }
         }
 
+        if (!function_exists('network_site_url')) {
+            function network_site_url($path = '', $scheme = null)
+            {
+                return 'http://localhost/' . ltrim($path, '/');
+            }
+        }
+
         if (!function_exists('get_current_site')) {
             function get_current_site()
             {

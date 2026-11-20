@@ -17,6 +17,7 @@ use Smartling\Vendor\Psr\Log\LogLevel;
 class UploadJob extends JobAbstract
 {
     public const JOB_HOOK_NAME = 'smartling-upload-task';
+    public const DEFAULT_TIME_BUDGET_SECONDS = 0;
 
     public function __construct(
         ApiWrapperInterface $api,
@@ -28,6 +29,7 @@ class UploadJob extends JobAbstract
         private WordpressFunctionProxyHelper $wpProxy,
         int $throttleIntervalSeconds,
         string $jobRunInterval,
+        private int $timeBudgetSeconds = self::DEFAULT_TIME_BUDGET_SECONDS,
     ) {
         parent::__construct($api, $cache, $settingsManager, $submissionManager, $throttleIntervalSeconds, $jobRunInterval);
     }
@@ -62,7 +64,20 @@ class UploadJob extends JobAbstract
         $processed = 0;
         $profiles = [];
         $max = $this->uploadQueueManager->length();
+        $startedAt = $this->getCurrentTime();
+        $timeBudgetSeconds = (int)$this->wpProxy->apply_filters(ExportedAPI::FILTER_SMARTLING_UPLOAD_JOB_TIME_BUDGET, $this->timeBudgetSeconds);
         while ($processed++ < $max) {
+            // Checked between items only, so the item in progress always finishes
+            $elapsedSeconds = $this->getCurrentTime() - $startedAt;
+            if ($processed > 1 && $timeBudgetSeconds > 0 && $elapsedSeconds >= $timeBudgetSeconds) {
+                $this->getLogger()->info(sprintf(
+                    'Stopping upload queue processing after %.1f seconds (time budget %d seconds), %d queue items left for the next run',
+                    $elapsedSeconds,
+                    $timeBudgetSeconds,
+                    $this->uploadQueueManager->length(),
+                ));
+                break;
+            }
             $item = $this->uploadQueueManager->dequeue($blogId);
             if ($item === null) {
                 break;
@@ -140,6 +155,11 @@ class UploadJob extends JobAbstract
             $this->uploadQueueManager->complete($item);
             $this->placeLockFlag(true);
         }
+    }
+
+    protected function getCurrentTime(): float
+    {
+        return microtime(true);
     }
 
     private function failItem(

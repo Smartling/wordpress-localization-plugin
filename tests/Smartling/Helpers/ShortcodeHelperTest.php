@@ -4,6 +4,7 @@ namespace Smartling\Tests\Smartling\Helpers;
 
 use DOMDocument;
 use PHPUnit\Framework\TestCase;
+use Smartling\Extensions\Acf\AcfDynamicSupport;
 use Smartling\Helpers\ContentSerializationHelper;
 use Smartling\Helpers\EventParameters\TranslationStringFilterParameters;
 use Smartling\Helpers\FieldsFilterHelper;
@@ -11,6 +12,7 @@ use Smartling\Helpers\PlaceholderHelper;
 use Smartling\Helpers\ShortcodeHelper;
 use Smartling\Helpers\WordpressFunctionProxyHelper;
 use Smartling\Settings\SettingsManager;
+use Smartling\Submissions\SubmissionEntity;
 use Smartling\Tests\Traits\InvokeMethodTrait;
 
 class ShortcodeHelperTest extends TestCase
@@ -382,6 +384,117 @@ class ShortcodeHelperTest extends TestCase
         }
 
         return $data;
+    }
+
+    /**
+     * XmlHelper resolves the profile filter settings once per file and passes them with every string.
+     * Looking the profile up again for every shortcode made XML generation cost grow with the content size (WP-1025).
+     * @dataProvider preSendFilteringDataProvider
+     */
+    public function testPreSendFilteringUsesFilterSettingsFromParams(array $settings, array $attributes, array $expected): void
+    {
+        $contentSerializationHelper = $this->createMock(ContentSerializationHelper::class);
+        $contentSerializationHelper->expects(self::never())->method('prepareFieldProcessorValues');
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->expects(self::never())->method('getProfileBySubmission');
+
+        $helper = $this->getShortcodeHelperWithRealFieldsFilter($contentSerializationHelper, $settingsManager);
+        $helper->setParams($this->getParams($settings));
+
+        self::assertSame($expected, $this->invokeMethod($helper, 'preSendFiltering', [$attributes]));
+    }
+
+    public function preSendFilteringDataProvider(): array
+    {
+        $attributes = [
+            'sc/title' => 'Hello',
+            'sc/note' => 'Note',
+            'sc/link' => 'https://example.com',
+            'sc/width' => '10px',
+            'sc/ids' => '1,2,3',
+            'sc/empty' => '',
+        ];
+
+        return [
+            'field names as names' => [
+                $this->filterSettings(['note'], ['link'], ['^\d+px$'], false),
+                $attributes,
+                ['sc/title' => 'Hello'],
+            ],
+            'field names as regular expressions' => [
+                $this->filterSettings(['^no'], ['^li'], [], true),
+                $attributes,
+                ['sc/title' => 'Hello', 'sc/width' => '10px'],
+            ],
+            'field name regexp off does not treat names as patterns' => [
+                $this->filterSettings(['^no'], [], [], false),
+                $attributes,
+                ['sc/title' => 'Hello', 'sc/note' => 'Note', 'sc/link' => 'https://example.com', 'sc/width' => '10px'],
+            ],
+        ];
+    }
+
+    /**
+     * Callers that pass no settings with the string still get the profile filters applied.
+     */
+    public function testPreSendFilteringResolvesFilterSettingsWhenParamsHaveNone(): void
+    {
+        $contentSerializationHelper = $this->createMock(ContentSerializationHelper::class);
+        $contentSerializationHelper->expects(self::once())->method('prepareFieldProcessorValues')
+            ->willReturn($this->filterSettings(['note'], [], [], false));
+
+        $helper = $this->getShortcodeHelperWithRealFieldsFilter($contentSerializationHelper, $this->createMock(SettingsManager::class));
+        $helper->setParams($this->getParams([]));
+
+        self::assertSame(
+            ['sc/title' => 'Hello'],
+            $this->invokeMethod($helper, 'preSendFiltering', [['sc/title' => 'Hello', 'sc/note' => 'Note']]),
+        );
+    }
+
+    private function filterSettings(array $ignore, array $copyByName, array $copyByValueRegexp, bool $fieldNameRegExp): array
+    {
+        return [
+            'ignore' => $ignore,
+            'key' => ['seo' => []],
+            'copy' => ['name' => $copyByName, 'regexp' => $copyByValueRegexp],
+            ContentSerializationHelper::FILTER_FIELD_NAME_REGEXP => $fieldNameRegExp,
+        ];
+    }
+
+    private function getParams(array $settings): TranslationStringFilterParameters
+    {
+        $params = new TranslationStringFilterParameters();
+        $params->setFilterSettings($settings);
+        $params->setSubmission($this->createMock(SubmissionEntity::class));
+
+        return $params;
+    }
+
+    private function getShortcodeHelperWithRealFieldsFilter(
+        ContentSerializationHelper $contentSerializationHelper,
+        SettingsManager $settingsManager,
+    ): ShortcodeHelper {
+        $wpProxy = $this->createMock(WordpressFunctionProxyHelper::class);
+        // real removal rules; field processors (a WordPress filter) are out of scope here
+        $fieldsFilter = $this->getMockBuilder(FieldsFilterHelper::class)
+            ->setConstructorArgs([
+                $this->getMockBuilder(AcfDynamicSupport::class)->disableOriginalConstructor()->getMock(),
+                $contentSerializationHelper,
+                $settingsManager,
+                $wpProxy,
+            ])
+            ->onlyMethods(['passFieldProcessorsBeforeSendFilters'])
+            ->getMock();
+        $fieldsFilter->method('passFieldProcessorsBeforeSendFilters')->willReturnArgument(1);
+
+        return new ShortcodeHelper(
+            $contentSerializationHelper,
+            $fieldsFilter,
+            new PlaceholderHelper(),
+            $settingsManager,
+            $wpProxy,
+        );
     }
 
     private function getShortcodeHelper(WordpressFunctionProxyHelper $wpProxy = null): ShortcodeHelper

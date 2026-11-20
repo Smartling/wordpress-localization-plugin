@@ -78,6 +78,28 @@ class ContentSerializationHelperTest extends TestCase
         self::assertSame(['seo_field'], $filter['key']['seo']);
         self::assertSame(['copy_field'], $filter['copy']['name']);
         self::assertSame(['copy_regex'], $filter['copy']['regexp']);
+        self::assertFalse($filter[ContentSerializationHelper::FILTER_FIELD_NAME_REGEXP]);
+    }
+
+    /**
+     * Shortcode and Gutenberg attribute filtering reads the flag from these settings instead of
+     * looking the profile up again for every attribute set (WP-1025).
+     */
+    public function testPrepareFieldProcessorValuesIncludesFieldNameRegExpFlag(): void
+    {
+        $profile = new ConfigurationProfileEntity();
+        $profile->setFilterSkip('');
+        $profile->setFilterFlagSeo('');
+        $profile->setFilterCopyByFieldName('');
+        $profile->setFilterCopyByFieldValueRegex('');
+        $profile->setFilterFieldNameRegexp(true);
+
+        $settingsManager = $this->createMock(SettingsManager::class);
+        $settingsManager->method('getProfileBySubmission')->willReturn($profile);
+
+        $helper = new ContentSerializationHelper($this->createMock(ContentHelper::class), $settingsManager);
+
+        self::assertTrue($helper->prepareFieldProcessorValues($this->submission(1))[ContentSerializationHelper::FILTER_FIELD_NAME_REGEXP]);
     }
 
     public function testPrepareFieldProcessorValuesFallsBackToEmptyFilterWithoutProfile(): void
@@ -88,6 +110,11 @@ class ContentSerializationHelperTest extends TestCase
         $helper = new ContentSerializationHelper($this->createMock(ContentHelper::class), $settingsManager);
         $filter = $helper->prepareFieldProcessorValues($this->submission(1));
 
-        self::assertSame(['ignore' => [], 'key' => ['seo' => []], 'copy' => ['name' => [], 'regexp' => []]], $filter);
+        self::assertSame([
+            'ignore' => [],
+            'key' => ['seo' => []],
+            'copy' => ['name' => [], 'regexp' => []],
+            ContentSerializationHelper::FILTER_FIELD_NAME_REGEXP => false,
+        ], $filter);
     }
 }
